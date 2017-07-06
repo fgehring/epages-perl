@@ -9018,3 +9018,91 @@ C<EXE_FILES: >
 
 =back
 
+=head2 Thu Jul  6 13:11:30 2017: C<Module> L<File::Slurper|File::Slurper>
+
+=over 4
+
+=item *
+
+C<installed into: /srv/epages/eproot/Perl/lib/linux>
+
+=item *
+
+C<EXE_FILES: >
+
+=item *
+
+C<VERSION: 0.009>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=back
+
+=head2 Thu Jul  6 13:11:30 2017: C<Module> L<Font::AFM|Font::AFM>
+
+=over 4
+
+=item *
+
+C<installed into: /srv/epages/eproot/Perl/lib/linux>
+
+=item *
+
+C<EXE_FILES: >
+
+=item *
+
+C<VERSION: 1.20>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=back
+
+=head2 Thu Jul  6 13:11:30 2017: C<Module> L<HTML::Formatter|HTML::Formatter>
+
+=over 4
+
+=item *
+
+C<installed into: /srv/epages/eproot/Perl/lib/linux>
+
+=item *
+
+C<EXE_FILES: >
+
+=item *
+
+C<VERSION: 2.16>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=back
+
+=head2 Thu Jul  6 13:11:30 2017: C<Module> L<PerlIO::utf8_strict|PerlIO::utf8_strict>
+
+=over 4
+
+=item *
+
+C<installed into: /srv/epages/eproot/Perl/lib/linux>
+
+=item *
+
+C<EXE_FILES: >
+
+=item *
+
+C<VERSION: 0.007>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=back
+
