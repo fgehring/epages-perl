@@ -9106,3 +9106,25 @@ C<LINKTYPE: dynamic>
 
 =back
 
+=head2 Wed Jul 12 15:13:06 2017: C<Module> L<Devel::Trace|Devel::Trace>
+
+=over 4
+
+=item *
+
+C<installed into: /srv/epages/eproot/Perl/lib/site_perl>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=item *
+
+C<VERSION: 0.12>
+
+=item *
+
+C<EXE_FILES: >
+
+=back
+
