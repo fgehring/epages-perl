@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPIx::Regexp::Util 3"
-.TH PPIx::Regexp::Util 3 "2011-04-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPIx::Regexp::Util 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -165,6 +165,15 @@ This module can export the following subroutines:
 This subroutine returns true if its first argument is an instance of the
 class specified by its second argument. Unlike \f(CW\*(C`UNIVERSAL::isa\*(C'\fR, the
 result is always false unless the first argument is a reference.
+.SS "_\|_to_ordinal_en"
+.IX Subsection "__to_ordinal_en"
+This subroutine takes as its argument an integer and returns a string
+representing its ordinal in English. For example
+.PP
+.Vb 2
+\& say _\|_to_ordinal_en( 17 );
+\& # 17th
+.Ve
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 Params::Util, which I recommend, but in the case of
@@ -180,7 +189,7 @@ Support is by the author. Please file bug reports at
 Thomas R. Wyant, \s-1III\s0 \fIwyant at cpan dot org\fR
 .SH "COPYRIGHT AND LICENSE"
 .IX Header "COPYRIGHT AND LICENSE"
-Copyright (C) 2010\-2011 by Thomas R. Wyant, \s-1III\s0
+Copyright (C) 2010\-2017 by Thomas R. Wyant, \s-1III\s0
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

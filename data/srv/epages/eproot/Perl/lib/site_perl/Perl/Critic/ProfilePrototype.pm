@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/ProfilePrototype.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::ProfilePrototype;
 
 use 5.006001;
@@ -18,7 +11,7 @@ use Perl::Critic::Policy qw{};
 use Perl::Critic::Utils qw{ :characters };
 use overload ( q{""} => 'to_string' );
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -168,7 +161,9 @@ sub to_string {
 
     Perl::Critic::Policy::set_format( $self->_proto_format() );
 
-    return $prototype . "\n\n" . join q{}, map { "$_" } @{ $self->_get_policies() };
+    my $policy_prototypes = join qq{\n}, map { "$_" } @{ $self->_get_policies() };
+    $policy_prototypes =~ s/\s+ \z//xms; # Trim trailing whitespace
+    return $prototype . "\n\n" . $policy_prototypes . "\n";
 }
 
 #-----------------------------------------------------------------------------
@@ -198,7 +193,6 @@ ${prefix}add_themes                         =
 ${prefix}severity                           = %s
 ${prefix}maximum_violations_per_document    = %v
 %{\\n%\\x7b# \\x7df\\n${prefix}%n = %D\\n}O%{${prefix}Cannot programmatically discover what parameters this policy takes.\\n}U
-
 END_OF_FORMAT
 
 }

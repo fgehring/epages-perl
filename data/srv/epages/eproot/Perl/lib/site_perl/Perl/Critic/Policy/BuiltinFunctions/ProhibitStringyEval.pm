@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/BuiltinFunctions/ProhibitStringyEval.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::BuiltinFunctions::ProhibitStringyEval;
 
 use 5.006001;
@@ -18,7 +11,7 @@ use PPI::Document;
 use Perl::Critic::Utils qw{ :booleans :severities :classification :ppi $SCOLON };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -38,7 +31,7 @@ sub supported_parameters {
     );
 }
 sub default_severity     { return $SEVERITY_HIGHEST   }
-sub default_themes       { return qw( core pbp bugs ) }
+sub default_themes       { return qw( core pbp bugs certrule ) }
 sub applies_to           { return 'PPI::Token::Word'  }
 
 #-----------------------------------------------------------------------------
@@ -46,7 +39,7 @@ sub applies_to           { return 'PPI::Token::Word'  }
 sub violates {
     my ( $self, $elem, undef ) = @_;
 
-    return if $elem ne 'eval';
+    return if $elem->content() ne 'eval';
     return if not is_function_call($elem);
 
     my $argument = first_arg($elem);
@@ -161,9 +154,9 @@ L<Perl::Critic::Policy::Lax::ProhibitStringyEval::ExceptForRequire|Perl::Critic:
 
 =head1 SEE ALSO
 
-L<Perl::Critic::Policy::ControlStrucutres::RequireBlockGrep|Perl::Critic::Policy::ControlStrucutres::RequireBlockGrep>
+L<Perl::Critic::Policy::BuiltInFunctions::RequireBlockGrep|Perl::Critic::Policy::BuiltInFunctions::RequireBlockGrep>
 
-L<Perl::Critic::Policy::ControlStrucutres::RequireBlockMap|Perl::Critic::Policy::ControlStrucutres::RequireBlockMap>
+L<Perl::Critic::Policy::BuiltInFunctions::RequireBlockMap|Perl::Critic::Policy::BuiltInFunctions::RequireBlockMap>
 
 
 =head1 AUTHOR

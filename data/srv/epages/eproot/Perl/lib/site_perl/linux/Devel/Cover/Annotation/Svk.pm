@@ -1,4 +1,4 @@
-# Copyright 2005-2011, Paul Johnson (pjcj@cpan.org)
+# Copyright 2005-2017, Paul Johnson (paul@pjcj.net)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,25 +10,22 @@ package Devel::Cover::Annotation::Svk;
 use strict;
 use warnings;
 
-our $VERSION = "0.79";
+our $VERSION = '1.25'; # VERSION
 
 use Getopt::Long;
 use Digest::MD5;
 
-sub md5_fh
-{
+sub md5_fh {
     my $fh = shift;
     my $ctx = Digest::MD5->new;
     $ctx->addfile($fh);
     $ctx->hexdigest
 }
 
-sub new
-{
+sub new {
     my $class = shift;
     my $annotate_arg = $ENV{DEVEL_COVER_SVK_ANNOTATE} || "";
-    my $self =
-    {
+    my $self = {
         annotations => [ qw( version author date ) ],
         command     => "svk annotate $annotate_arg [[file]]",
         @_
@@ -38,8 +35,7 @@ sub new
 
     open my $c, "-|", "svk info"
         or warn "cover: Not a svk checkout: $!\n", return;
-    while (<$c>)
-    {
+    while (<$c>) {
         chomp;
         next unless s/^Depot Path: //;
         $self->{depotbase} = $_;
@@ -48,10 +44,9 @@ sub new
 
     open $c, "-|", "svk ls -Rf $self->{depotbase}"
         or warn "cover: Can't run svk ls: $!\n", return;
-    while (<$c>)
-    {
+    while (<$c>) {
         chomp;
-        s{^\Q$self->{depotbase}\E/}{};
+        s|^\Q$self->{depotbase}\E/||;
         next unless -f $_;
 
         open my $f, $_ or warn "cover: Can't open $_: $!\n", next;
@@ -61,8 +56,7 @@ sub new
     $self
 }
 
-sub get_annotations
-{
+sub get_annotations {
     my $self = shift;
     my ($file) = @_;
 
@@ -80,8 +74,7 @@ sub get_annotations
     open my $c, "-|", $command
         or warn "cover: Can't run $command: $!\n", return;
     <$c>; <$c>;  # ignore first two lines
-    while (<$c>)
-    {
+    while (<$c>) {
         my @a = /(\d+)\s*\(\s*(\S+)\s*(.*?)\):/;
         # hack for linking the revision number
         $a[0] = qq|<a href="$ENV{SVNWEB_URL}/revision/?rev=$a[0]">$a[0]</a>|
@@ -91,8 +84,7 @@ sub get_annotations
     close $c or warn "cover: Failed running $command: $!\n"
 }
 
-sub get_options
-{
+sub get_options {
     my ($self, $opt) = @_;
     $self->{$_} = 1 for @{$self->{annotations}};
     die "Bad option" unless
@@ -105,28 +97,24 @@ sub get_options
                      ));
 }
 
-sub count
-{
+sub count {
     my $self = shift;
     $self->{author} + $self->{date} + $self->{version}
 }
 
-sub header
-{
+sub header {
     my $self = shift;
     my ($annotation) = @_;
     $self->{annotations}[$annotation]
 }
 
-sub width
-{
+sub width {
     my $self = shift;
     my ($annotation) = @_;
     (7, 10, 10)[$annotation]
 }
 
-sub text
-{
+sub text {
     my $self = shift;
     my ($file, $line, $annotation) = @_;
     return "" unless $line;
@@ -134,15 +122,13 @@ sub text
     $self->{_annotations}{$file}[$line - 1][$annotation]
 }
 
-sub error
-{
+sub error {
     my $self = shift;
     my ($file, $line, $annotation) = @_;
     0
 }
 
-sub class
-{
+sub class {
     my $self = shift;
     my ($file, $line, $annotation) = @_;
     ""
@@ -156,9 +142,13 @@ __END__
 
 Devel::Cover::Annotation::Svk - Annotate with svk information
 
+=head1 VERSION
+
+version 1.25
+
 =head1 SYNOPSIS
 
- cover -report xxx -annotation svk
+ cover -report text -annotation svk  # Or any other report type
 
 =head1 DESCRIPTION
 
@@ -173,13 +163,9 @@ This module is designed to be called from the C<cover> program.
 
 Huh?
 
-=head1 VERSION
-
-Version 0.79 - 5th August 2011
-
 =head1 LICENCE
 
-Copyright 2005-2011, Paul Johnson (pjcj@cpan.org)
+Copyright 2005-2017, Paul Johnson (paul@pjcj.net)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

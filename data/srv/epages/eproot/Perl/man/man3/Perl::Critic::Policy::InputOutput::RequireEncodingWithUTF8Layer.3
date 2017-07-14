@@ -124,13 +124,13 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Policy::InputOutput::RequireEncodingWithUTF8Layer 3"
-.TH Perl::Critic::Policy::InputOutput::RequireEncodingWithUTF8Layer 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Policy::InputOutput::RequireEncodingWithUTF8Layer 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-Perl::Critic::Policy::InputOutput::RequireEncodingWithUTF8Layer \- Write "open $fh, q{<:encoding(UTF\-8)}, $filename;" instead of "open $fh, q{{<:utf8}, $filename;".
+Perl::Critic::Policy::InputOutput::RequireEncodingWithUTF8Layer \- Write "open $fh, q{<:encoding(UTF\-8)}, $filename;" instead of "open $fh, q{<:utf8}, $filename;".
 .SH "AFFILIATION"
 .IX Header "AFFILIATION"
 This Policy is part of the core Perl::Critic
@@ -160,8 +160,8 @@ See the Encode documentation for the difference between
 Unicode standard, and \f(CW\*(C`UTF8\*(C'\fR is liberalized.
 .PP
 For consistency's sake, this policy checks files opened for output as
-well as input, For complete coverage it also checks \f(CW\*(C`binmode()\*(C'\fR calls,
-where the direction the operation can not be determined.
+well as input. For complete coverage it also checks \f(CW\*(C`binmode()\*(C'\fR calls,
+where the direction of operation can not be determined.
 .SH "CONFIGURATION"
 .IX Header "CONFIGURATION"
 This Policy is not configurable except for the standard options.

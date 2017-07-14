@@ -1,4 +1,4 @@
-# Copyright 2011, Paul Johnson (pjcj@cpan.org)
+# Copyright 2011-2017, Paul Johnson (paul@pjcj.net)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,18 +10,16 @@ package Devel::Cover::DB::Digests;
 use strict;
 use warnings;
 
-our $VERSION = "0.79";
+our $VERSION = '1.25'; # VERSION
 
-use Devel::Cover::DB::Structure 0.79;
-use Devel::Cover::DB::IO        0.79;
+use Devel::Cover::DB::Structure;
+use Devel::Cover::DB::IO;
 
 my $File = "digests";
 
-sub new
-{
+sub new {
     my $class = shift;
-    my $self  =
-    {
+    my $self  = {
         digests => {},
         @_
     };
@@ -34,54 +32,45 @@ sub new
     $self
 }
 
-sub read
-{
+sub read {
     my $self = shift;
     my $io = Devel::Cover::DB::IO->new;
     $self->{digests} = $io->read($self->{file}) if -e $self->{file};
     $self
 }
 
-sub write
-{
+sub write {
     my $self = shift;
     my $io = Devel::Cover::DB::IO->new;
     $io->write($self->{digests}, $self->{file});
     $self
 }
 
-sub get
-{
+sub get {
     my $self = shift;
     my ($digest) = @_;
     $self->{digests}{$digest}
 }
 
-sub set
-{
+sub set {
     my $self = shift;
     my ($file, $digest) = @_;
     $self->{digests}{$digest} = $file;
 }
 
-sub canonical_file
-{
+sub canonical_file {
     my $self = shift;
     my ($file) = @_;
 
     my $cfile = $file;
     my $digest = Devel::Cover::DB::Structure->digest($file);
-    if ($digest)
-    {
+    if ($digest) {
         my $dfile = $self->get($digest);
-        if ($dfile && $dfile ne $file)
-        {
-            warn "Devel::Cover: Adding coverage for $file to $dfile\n"
+        if ($dfile && $dfile ne $file) {
+            print STDERR "Devel::Cover: Adding coverage for $file to $dfile\n"
                 unless $Devel::Cover::Silent;
             $cfile = $dfile;
-        }
-        else
-        {
+        } else {
             $self->set($file, $digest);
         }
     }
@@ -99,6 +88,10 @@ __END__
 
 Devel::Cover::DB::Digests - store digests for Devel::Cover::DB
 
+=head1 VERSION
+
+version 1.25
+
 =head1 SYNOPSIS
 
  use Devel::Cover::DB::Digests;
@@ -113,6 +106,7 @@ This module stores digests for Devel::Cover::DB.
 =head1 SEE ALSO
 
  Devel::Cover
+ Devel::Cover::DB
 
 =head1 METHODS
 
@@ -120,7 +114,7 @@ This module stores digests for Devel::Cover::DB.
 
  my $digests = Devel::Cover::DB::Digests->new(db => $DB);
 
-Contructs the digests object.
+Constructs the digests object.
 
 =head2 read
 
@@ -138,13 +132,9 @@ Write the digests to the DB.
 
 Huh?
 
-=head1 VERSION
-
-Version 0.79 - 5th August 2011
-
 =head1 LICENCE
 
-Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
+Copyright 2011-2017, Paul Johnson (paul@pjcj.net)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

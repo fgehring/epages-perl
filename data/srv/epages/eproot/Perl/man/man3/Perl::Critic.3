@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic 3"
-.TH Perl::Critic 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -142,54 +142,35 @@ Perl::Critic \- Critique Perl source code for best\-practices.
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-Perl::Critic is an extensible framework for creating and applying
-coding standards to Perl source code.  Essentially, it is a static
-source code analysis engine.  Perl::Critic is distributed with a
-number of Perl::Critic::Policy modules that
-attempt to enforce various coding guidelines.  Most Policy modules are
-based on Damian Conway's book \fBPerl Best Practices\fR.  However,
-Perl::Critic is \fBnot\fR limited to \s-1PBP\s0 and will even support Policies
-that contradict Conway.  You can enable, disable, and customize those
-Polices through the Perl::Critic interface.  You can also create new
-Policy modules that suit your own tastes.
+Perl::Critic is an extensible framework for creating and applying coding
+standards to Perl source code.  Essentially, it is a static source code
+analysis engine.  Perl::Critic is distributed with a number of
+Perl::Critic::Policy modules that attempt to enforce various coding
+guidelines.  Most Policy modules are based on Damian Conway's book \fBPerl Best
+Practices\fR.  However, Perl::Critic is \fBnot\fR limited to \s-1PBP\s0 and will even
+support Policies that contradict Conway.  You can enable, disable, and
+customize those Polices through the Perl::Critic interface.  You can also
+create new Policy modules that suit your own tastes.
 .PP
-For a command-line interface to Perl::Critic, see the documentation
-for perlcritic.  If you want to integrate Perl::Critic
-with your build process, Test::Perl::Critic
-provides an interface that is suitable for test programs.  Also,
-Test::Perl::Critic::Progressive is
-useful for gradually applying coding standards to legacy code.  For
-the ultimate convenience (at the expense of some flexibility) see the
-criticism pragma.
+For a command-line interface to Perl::Critic, see the documentation for
+perlcritic.  If you want to integrate Perl::Critic with your build process,
+Test::Perl::Critic provides an interface that is suitable for test
+programs.  Also, Test::Perl::Critic::Progressive is useful for gradually
+applying coding standards to legacy code.  For the ultimate convenience (at
+the expense of some flexibility) see the criticism pragma.
 .PP
-Win32 and ActivePerl users can find \s-1PPM\s0 distributions of Perl::Critic at
-<http://theoryx5.uwinnipeg.ca/ppms/> and Alexandr Ciornii's downloadable
-executable at <http://chorny.net/perl/perlcritic.html>.
-.PP
-If you'd like to try Perl::Critic without installing
-anything, there is a web-service available at
-<http://perlcritic.com>.  The web-service does not yet support all
-the configuration features that are available in the native
+If you'd like to try Perl::Critic without installing anything, there is a
+web-service available at <http://perlcritic.com>.  The web-service does not
+yet support all the configuration features that are available in the native
 Perl::Critic \s-1API\s0, but it should give you a good idea of what it does.
-You can also invoke the perlcritic web-service from the command-line
-by doing an HTTP-post, such as one of these:
 .PP
-.Vb 3
-\&    $> POST http://perlcritic.com/perl/critic.pl < MyModule.pm
-\&    $> lwp\-request \-m POST http://perlcritic.com/perl/critic.pl < MyModule.pm
-\&    $> wget \-q \-O \- \-\-post\-file=MyModule.pm http://perlcritic.com/perl/critic.pl
-.Ve
-.PP
-Please note that the perlcritic web-service is still alpha code.  The
-\&\s-1URL\s0 and interface to the service are subject to change.
-.PP
-Also, the Perl Development Kit (\s-1PDK\s0 8.0) from ActiveState includes a very
-slick graphical interface to Perl-Critic.  For details, go to
-<http://www.activestate.com/perl_dev_kit>
+Also, ActivePerl includes a very slick graphical interface to Perl-Critic
+called \f(CW\*(C`perlcritic\-gui\*(C'\fR.  You can get a free community edition of ActivePerl
+from <http://www.activestate.com>.
 .SH "INTERFACE SUPPORT"
 .IX Header "INTERFACE SUPPORT"
-This is considered to be a public class.  Any changes to its interface
-will go through a deprecation cycle.
+This is considered to be a public class.  Any changes to its interface will go
+through a deprecation cycle.
 .SH "CONSTRUCTOR"
 .IX Header "CONSTRUCTOR"
 .ie n .IP """new( [ \-profile => $FILE, \-severity => $N, \-theme => $string, \-include => \e@PATTERNS, \-exclude => \e@PATTERNS, \-top => $N, \-only => $B, \-profile\-strictness => $PROFILE_STRICTNESS_{WARN|FATAL|QUIET}, \-force => $B, \-verbose => $N ], \-color => $B, \-pager => $string, \-allow\-unsafe => $B, \-criticism\-fatal => $B)""" 4
@@ -200,35 +181,32 @@ will go through a deprecation cycle.
 .el .IP "\f(CWnew()\fR" 4
 .IX Item "new()"
 .PD
-Returns a reference to a new Perl::Critic object.  Most arguments are
-just passed directly into
-Perl::Critic::Config, but I have described
-them here as well.  The default value for all arguments can be defined
-in your \fI.perlcriticrc\fR file.  See the \*(L"\s-1CONFIGURATION\s0\*(R" section for
-more information about that.  All arguments are optional key-value
-pairs as follows:
+Returns a reference to a new Perl::Critic object.  Most arguments are just
+passed directly into Perl::Critic::Config, but I have described them here
+as well.  The default value for all arguments can be defined in your
+\&\fI.perlcriticrc\fR file.  See the \*(L"\s-1CONFIGURATION\s0\*(R" section for more
+information about that.  All arguments are optional key-value pairs as
+follows:
 .Sp
-\&\fB\-profile\fR is a path to a configuration file. If \f(CW$FILE\fR is not
-defined, Perl::Critic::Config attempts to find a \fI.perlcriticrc\fR
-configuration file in the current directory, and then in your home
-directory.  Alternatively, you can set the \f(CW\*(C`PERLCRITIC\*(C'\fR environment
-variable to point to a file in another location.  If a configuration
-file can't be found, or if \f(CW$FILE\fR is an empty string, then all
-Policies will be loaded with their default configuration.  See
-\&\*(L"\s-1CONFIGURATION\s0\*(R" for more information.
+\&\fB\-profile\fR is a path to a configuration file. If \f(CW$FILE\fR is not defined,
+Perl::Critic::Config attempts to find a \fI.perlcriticrc\fR configuration file in
+the current directory, and then in your home directory.  Alternatively, you
+can set the \f(CW\*(C`PERLCRITIC\*(C'\fR environment variable to point to a file in another
+location.  If a configuration file can't be found, or if \f(CW$FILE\fR is an empty
+string, then all Policies will be loaded with their default configuration.
+See \*(L"\s-1CONFIGURATION\s0\*(R" for more information.
 .Sp
-\&\fB\-severity\fR is the minimum severity level.  Only Policy modules that
-have a severity greater than \f(CW$N\fR will be applied.  Severity values
-are integers ranging from 1 (least severe violations) to 5 (most
-severe violations).  The default is 5.  For a given \f(CW\*(C`\-profile\*(C'\fR,
-decreasing the \f(CW\*(C`\-severity\*(C'\fR will usually reveal more Policy violations.
-You can set the default value for this option in your \fI.perlcriticrc\fR
-file.  Users can redefine the severity level for any Policy in their
-\&\fI.perlcriticrc\fR file.  See \*(L"\s-1CONFIGURATION\s0\*(R" for more information.
+\&\fB\-severity\fR is the minimum severity level.  Only Policy modules that have a
+severity greater than \f(CW$N\fR will be applied.  Severity values are integers
+ranging from 1 (least severe violations) to 5 (most severe violations).  The
+default is 5.  For a given \f(CW\*(C`\-profile\*(C'\fR, decreasing the \f(CW\*(C`\-severity\*(C'\fR will
+usually reveal more Policy violations. You can set the default value for this
+option in your \fI.perlcriticrc\fR file.  Users can redefine the severity level
+for any Policy in their \fI.perlcriticrc\fR file.  See \*(L"\s-1CONFIGURATION\s0\*(R" for
+more information.
 .Sp
-If it is difficult for you to remember whether severity \*(L"5\*(R" is the
-most or least restrictive level, then you can use one of these named
-values:
+If it is difficult for you to remember whether severity \*(L"5\*(R" is the most or
+least restrictive level, then you can use one of these named values:
 .Sp
 .Vb 7
 \&    SEVERITY NAME   ...is equivalent to...   SEVERITY NUMBER
@@ -240,117 +218,110 @@ values:
 \&    \-severity => \*(Aqbrutal\*(Aq                     \-severity => 1
 .Ve
 .Sp
-The names reflect how severely the code is criticized: a \f(CW\*(C`gentle\*(C'\fR
-criticism reports only the most severe violations, and so on down to a
-\&\f(CW\*(C`brutal\*(C'\fR criticism which reports even the most minor violations.
+The names reflect how severely the code is criticized: a \f(CW\*(C`gentle\*(C'\fR criticism
+reports only the most severe violations, and so on down to a \f(CW\*(C`brutal\*(C'\fR
+criticism which reports even the most minor violations.
 .Sp
-\&\fB\-theme\fR is special expression that determines which Policies to
-apply based on their respective themes.  For example, the following
-would load only Policies that have a 'bugs' \s-1AND\s0 'pbp' theme:
+\&\fB\-theme\fR is special expression that determines which Policies to apply based
+on their respective themes.  For example, the following would load only
+Policies that have a 'bugs' \s-1AND\s0 'pbp' theme:
 .Sp
 .Vb 1
 \&  my $critic = Perl::Critic\->new( \-theme => \*(Aqbugs && pbp\*(Aq );
 .Ve
 .Sp
-Unless the \f(CW\*(C`\-severity\*(C'\fR option is explicitly given, setting \f(CW\*(C`\-theme\*(C'\fR
-silently causes the \f(CW\*(C`\-severity\*(C'\fR to be set to 1.  You can set the
-default value for this option in your \fI.perlcriticrc\fR file.  See the
-\&\*(L"\s-1POLICY\s0 \s-1THEMES\s0\*(R" section for more information about themes.
+Unless the \f(CW\*(C`\-severity\*(C'\fR option is explicitly given, setting \f(CW\*(C`\-theme\*(C'\fR silently
+causes the \f(CW\*(C`\-severity\*(C'\fR to be set to 1.  You can set the default value for
+this option in your \fI.perlcriticrc\fR file.  See the \*(L"\s-1POLICY\s0 \s-1THEMES\s0\*(R" section
+for more information about themes.
 .Sp
-\&\fB\-include\fR is a reference to a list of string \f(CW@PATTERNS\fR.  Policy
-modules that match at least one \f(CW\*(C`m/$PATTERN/ixms\*(C'\fR will always be
-loaded, irrespective of all other settings.  For example:
+\&\fB\-include\fR is a reference to a list of string \f(CW@PATTERNS\fR.  Policy modules
+that match at least one \f(CW\*(C`m/$PATTERN/ixms\*(C'\fR will always be loaded, irrespective
+of all other settings.  For example:
 .Sp
 .Vb 1
-\&    my $critic = Perl::Critic\->new(\-include => [\*(Aqlayout\*(Aq] \-severity => 4);
+\&    my $critic = Perl::Critic\->new(\-include => [\*(Aqlayout\*(Aq], \-severity => 4);
 .Ve
 .Sp
-This would cause Perl::Critic to apply all the \f(CW\*(C`CodeLayout::*\*(C'\fR Policy
-modules even though they have a severity level that is less than 4.
-You can set the default value for this option in your \fI.perlcriticrc\fR
-file.  You can also use \f(CW\*(C`\-include\*(C'\fR in conjunction with the
-\&\f(CW\*(C`\-exclude\*(C'\fR option.  Note that \f(CW\*(C`\-exclude\*(C'\fR takes precedence over
-\&\f(CW\*(C`\-include\*(C'\fR when a Policy matches both patterns.
+This would cause Perl::Critic to apply all the \f(CW\*(C`CodeLayout::*\*(C'\fR Policy modules
+even though they have a severity level that is less than 4. You can set the
+default value for this option in your \fI.perlcriticrc\fR file.  You can also use
+\&\f(CW\*(C`\-include\*(C'\fR in conjunction with the \f(CW\*(C`\-exclude\*(C'\fR option.  Note that \f(CW\*(C`\-exclude\*(C'\fR
+takes precedence over \f(CW\*(C`\-include\*(C'\fR when a Policy matches both patterns.
 .Sp
-\&\fB\-exclude\fR is a reference to a list of string \f(CW@PATTERNS\fR.  Policy
-modules that match at least one \f(CW\*(C`m/$PATTERN/ixms\*(C'\fR will not be loaded,
-irrespective of all other settings.  For example:
+\&\fB\-exclude\fR is a reference to a list of string \f(CW@PATTERNS\fR.  Policy modules
+that match at least one \f(CW\*(C`m/$PATTERN/ixms\*(C'\fR will not be loaded, irrespective of
+all other settings.  For example:
 .Sp
 .Vb 1
-\&    my $critic = Perl::Critic\->new(\-exclude => [\*(Aqstrict\*(Aq] \-severity => 1);
+\&    my $critic = Perl::Critic\->new(\-exclude => [\*(Aqstrict\*(Aq], \-severity => 1);
 .Ve
 .Sp
 This would cause Perl::Critic to not apply the \f(CW\*(C`RequireUseStrict\*(C'\fR and
-\&\f(CW\*(C`ProhibitNoStrict\*(C'\fR Policy modules even though they have a severity
-level that is greater than 1.  You can set the default value for this
-option in your \fI.perlcriticrc\fR file.  You can also use \f(CW\*(C`\-exclude\*(C'\fR in
-conjunction with the \f(CW\*(C`\-include\*(C'\fR option.  Note that \f(CW\*(C`\-exclude\*(C'\fR takes
-precedence over \f(CW\*(C`\-include\*(C'\fR when a Policy matches both patterns.
+\&\f(CW\*(C`ProhibitNoStrict\*(C'\fR Policy modules even though they have a severity level that
+is greater than 1.  You can set the default value for this option in your
+\&\fI.perlcriticrc\fR file.  You can also use \f(CW\*(C`\-exclude\*(C'\fR in conjunction with the
+\&\f(CW\*(C`\-include\*(C'\fR option.  Note that \f(CW\*(C`\-exclude\*(C'\fR takes precedence over \f(CW\*(C`\-include\*(C'\fR
+when a Policy matches both patterns.
 .Sp
-\&\fB\-single\-policy\fR is a string \f(CW\*(C`PATTERN\*(C'\fR.  Only one policy that
-matches \f(CW\*(C`m/$PATTERN/ixms\*(C'\fR will be used.  Policies that do not match
-will be excluded.  This option has precedence over the \f(CW\*(C`\-severity\*(C'\fR,
-\&\f(CW\*(C`\-theme\*(C'\fR, \f(CW\*(C`\-include\*(C'\fR, \f(CW\*(C`\-exclude\*(C'\fR, and \f(CW\*(C`\-only\*(C'\fR options.  You can
-set the default value for this option in your \fI.perlcriticrc\fR file.
+\&\fB\-single\-policy\fR is a string \f(CW\*(C`PATTERN\*(C'\fR.  Only one policy that matches
+\&\f(CW\*(C`m/$PATTERN/ixms\*(C'\fR will be used.  Policies that do not match will be excluded.
+This option has precedence over the \f(CW\*(C`\-severity\*(C'\fR, \f(CW\*(C`\-theme\*(C'\fR, \f(CW\*(C`\-include\*(C'\fR,
+\&\f(CW\*(C`\-exclude\*(C'\fR, and \f(CW\*(C`\-only\*(C'\fR options.  You can set the default value for this
+option in your \fI.perlcriticrc\fR file.
 .Sp
-\&\fB\-top\fR is the maximum number of Violations to return when ranked by
-their severity levels.  This must be a positive integer.  Violations
-are still returned in the order that they occur within the file.
-Unless the \f(CW\*(C`\-severity\*(C'\fR option is explicitly given, setting \f(CW\*(C`\-top\*(C'\fR
-silently causes the \f(CW\*(C`\-severity\*(C'\fR to be set to 1.  You can set the
-default value for this option in your \fI.perlcriticrc\fR file.
+\&\fB\-top\fR is the maximum number of Violations to return when ranked by their
+severity levels.  This must be a positive integer.  Violations are still
+returned in the order that they occur within the file. Unless the \f(CW\*(C`\-severity\*(C'\fR
+option is explicitly given, setting \f(CW\*(C`\-top\*(C'\fR silently causes the \f(CW\*(C`\-severity\*(C'\fR
+to be set to 1.  You can set the default value for this option in your
+\&\fI.perlcriticrc\fR file.
 .Sp
-\&\fB\-only\fR is a boolean value.  If set to a true value, Perl::Critic
-will only choose from Policies that are mentioned in the user's
-profile.  If set to a false value (which is the default), then
-Perl::Critic chooses from all the Policies that it finds at your site.
-You can set the default value for this option in your \fI.perlcriticrc\fR
-file.
+\&\fB\-only\fR is a boolean value.  If set to a true value, Perl::Critic will only
+choose from Policies that are mentioned in the user's profile.  If set to a
+false value (which is the default), then Perl::Critic chooses from all the
+Policies that it finds at your site. You can set the default value for this
+option in your \fI.perlcriticrc\fR file.
 .Sp
 \&\fB\-profile\-strictness\fR is an enumerated value, one of
-\&\*(L"$PROFILE_STRICTNESS_WARN\*(R" in Perl::Critic::Utils::Constants (the
-default),
+\&\*(L"$PROFILE_STRICTNESS_WARN\*(R" in Perl::Critic::Utils::Constants (the default),
 \&\*(L"$PROFILE_STRICTNESS_FATAL\*(R" in Perl::Critic::Utils::Constants, and
-\&\*(L"$PROFILE_STRICTNESS_QUIET\*(R" in Perl::Critic::Utils::Constants.  If set
-to \*(L"$PROFILE_STRICTNESS_FATAL\*(R" in Perl::Critic::Utils::Constants,
-Perl::Critic will make certain warnings about problems found in a
-\&\fI.perlcriticrc\fR or file specified via the \fB\-profile\fR option fatal.
-For example, Perl::Critic normally only \f(CW\*(C`warn\*(C'\fRs about profiles
-referring to non-existent Policies, but this value makes this
-situation fatal.  Correspondingly,
+\&\*(L"$PROFILE_STRICTNESS_QUIET\*(R" in Perl::Critic::Utils::Constants.  If set to
+\&\*(L"$PROFILE_STRICTNESS_FATAL\*(R" in Perl::Critic::Utils::Constants, Perl::Critic
+will make certain warnings about problems found in a \fI.perlcriticrc\fR or file
+specified via the \fB\-profile\fR option fatal. For example, Perl::Critic normally
+only \f(CW\*(C`warn\*(C'\fRs about profiles referring to non-existent Policies, but this
+value makes this situation fatal.  Correspondingly,
 \&\*(L"$PROFILE_STRICTNESS_QUIET\*(R" in Perl::Critic::Utils::Constants makes
 Perl::Critic shut up about these things.
 .Sp
-\&\fB\-force\fR is a boolean value that controls whether Perl::Critic
-observes the magical \f(CW"## no critic"\fR annotations in your code.
-If set to a true value, Perl::Critic will analyze all code.  If set to
-a false value (which is the default) Perl::Critic will ignore code
-that is tagged with these annotations.  See \*(L"\s-1BENDING\s0 \s-1THE\s0 \s-1RULES\s0\*(R" for
-more information.  You can set the default value for this option in
-your \fI.perlcriticrc\fR file.
+\&\fB\-force\fR is a boolean value that controls whether Perl::Critic observes the
+magical \f(CW"## no critic"\fR annotations in your code. If set to a true value,
+Perl::Critic will analyze all code.  If set to a false value (which is the
+default) Perl::Critic will ignore code that is tagged with these annotations.
+See \*(L"\s-1BENDING\s0 \s-1THE\s0 \s-1RULES\s0\*(R" for more information.  You can set the default
+value for this option in your \fI.perlcriticrc\fR file.
 .Sp
-\&\fB\-verbose\fR can be a positive integer (from 1 to 11), or a literal
-format specification.  See
-Perl::Critic::Violation for an explanation
-of format specifications.  You can set the default value for this
+\&\fB\-verbose\fR can be a positive integer (from 1 to 11), or a literal format
+specification.  See Perl::Critic::Violation for an
+explanation of format specifications.  You can set the default value for this
 option in your \fI.perlcriticrc\fR file.
 .Sp
 \&\fB\-unsafe\fR directs Perl::Critic to allow the use of Policies that are marked
 as \*(L"unsafe\*(R" by the author.  Such policies may compile untrusted code or do
 other nefarious things.
 .Sp
-\&\fB\-color\fR and \fB\-pager\fR are not used by Perl::Critic but is provided for the benefit
-of perlcritic.
+\&\fB\-color\fR and \fB\-pager\fR are not used by Perl::Critic but is provided for the
+benefit of perlcritic.
 .Sp
-\&\fB\-criticism\-fatal\fR is not used by Perl::Critic but is provided for
-the benefit of criticism.
+\&\fB\-criticism\-fatal\fR is not used by Perl::Critic but is provided for the
+benefit of criticism.
 .Sp
-\&\fB\-color\-severity\-highest\fR, \fB\-color\-severity\-high\fR,
-\&\fB\-color\-severity\-medium\fR, \fB\-color\-severity\-low\fR, and
-\&\fB\-color\-severity\-lowest\fR are not used by Perl::Critic, but are provided for
-the benefit of perlcritic. Each is set to the Term::ANSIColor
-color specification to be used to display violations of the corresponding
-severity.
+\&\fB\-color\-severity\-highest\fR, \fB\-color\-severity\-high\fR, \fB\-color\-severity\-
+medium\fR, \fB\-color\-severity\-low\fR, and \fB\-color\-severity\-lowest\fR are not used by
+Perl::Critic, but are provided for the benefit of perlcritic.
+Each is set to the Term::ANSIColor color specification to be used to display
+violations of the corresponding severity.
 .Sp
 \&\fB\-files\-with\-violations\fR and \fB\-files\-without\-violations\fR are not used by
 Perl::Critic, but are provided for the benefit of perlcritic, to
@@ -361,57 +332,52 @@ cause only the relevant filenames to be displayed.
 .el .IP "\f(CWcritique( $source_code )\fR" 4
 .IX Item "critique( $source_code )"
 Runs the \f(CW$source_code\fR through the Perl::Critic engine using all the
-Policies that have been loaded into this engine.  If \f(CW$source_code\fR
-is a scalar reference, then it is treated as a string of actual Perl
-code.  If \f(CW$source_code\fR is a reference to an instance of
-PPI::Document, then that instance is used directly.
-Otherwise, it is treated as a path to a local file containing Perl
-code.  This method returns a list of
-Perl::Critic::Violation objects for each
-violation of the loaded Policies.  The list is sorted in the order
-that the Violations appear in the code.  If there are no violations,
-this method returns an empty list.
+Policies that have been loaded into this engine.  If \f(CW$source_code\fR is a
+scalar reference, then it is treated as a string of actual Perl code.  If
+\&\f(CW$source_code\fR is a reference to an instance of PPI::Document, then that
+instance is used directly. Otherwise, it is treated as a path to a local file
+containing Perl code.  This method returns a list of
+Perl::Critic::Violation objects for each violation of the loaded Policies.
+The list is sorted in the order that the Violations appear in the code.  If
+there are no violations, this method returns an empty list.
 .ie n .IP """add_policy( \-policy => $policy_name, \-params => \e%param_hash )""" 4
 .el .IP "\f(CWadd_policy( \-policy => $policy_name, \-params => \e%param_hash )\fR" 4
 .IX Item "add_policy( -policy => $policy_name, -params => %param_hash )"
-Creates a Policy object and loads it into this Critic.  If the object
-cannot be instantiated, it will throw a fatal exception.  Otherwise,
-it returns a reference to this Critic.
+Creates a Policy object and loads it into this Critic.  If the object cannot
+be instantiated, it will throw a fatal exception.  Otherwise, it returns a
+reference to this Critic.
 .Sp
-\&\fB\-policy\fR is the name of a
-Perl::Critic::Policy subclass module.  The
-\&\f(CW\*(AqPerl::Critic::Policy\*(Aq\fR portion of the name can be omitted for
-brevity.  This argument is required.
+\&\fB\-policy\fR is the name of a Perl::Critic::Policy subclass module.  The
+\&\f(CW\*(AqPerl::Critic::Policy\*(Aq\fR portion of the name can be omitted for brevity.
+This argument is required.
 .Sp
-\&\fB\-params\fR is an optional reference to a hash of Policy parameters.
-The contents of this hash reference will be passed into to the
-constructor of the Policy module.  See the documentation in the
-relevant Policy module for a description of the arguments it supports.
+\&\fB\-params\fR is an optional reference to a hash of Policy parameters. The
+contents of this hash reference will be passed into to the constructor of the
+Policy module.  See the documentation in the relevant Policy module for a
+description of the arguments it supports.
 .ie n .IP """ policies() """ 4
 .el .IP "\f(CW policies() \fR" 4
 .IX Item " policies() "
-Returns a list containing references to all the Policy objects that
-have been loaded into this engine.  Objects will be in the order that
-they were loaded.
+Returns a list containing references to all the Policy objects that have been
+loaded into this engine.  Objects will be in the order that they were loaded.
 .ie n .IP """ config() """ 4
 .el .IP "\f(CW config() \fR" 4
 .IX Item " config() "
-Returns the Perl::Critic::Config object that
-was created for or given to this Critic.
+Returns the Perl::Critic::Config object that was created for or given to
+this Critic.
 .ie n .IP """ statistics() """ 4
 .el .IP "\f(CW statistics() \fR" 4
 .IX Item " statistics() "
-Returns the Perl::Critic::Statistics
-object that was created for this Critic.  The Statistics object
-accumulates data for all files that are analyzed by this Critic.
+Returns the Perl::Critic::Statistics object that was created for this
+Critic.  The Statistics object accumulates data for all files that are
+analyzed by this Critic.
 .SH "FUNCTIONAL INTERFACE"
 .IX Header "FUNCTIONAL INTERFACE"
-For those folks who prefer to have a functional interface, The
-\&\f(CW\*(C`critique\*(C'\fR method can be exported on request and called as a static
-function.  If the first argument is a hashref, its contents are used
-to construct a new Perl::Critic object internally.  The keys of that
-hash should be the same as those supported by the \f(CW\*(C`Perl::Critic::new\*(C'\fR
-method.  Here are some examples:
+For those folks who prefer to have a functional interface, The \f(CW\*(C`critique\*(C'\fR
+method can be exported on request and called as a static function.  If the
+first argument is a hashref, its contents are used to construct a new
+Perl::Critic object internally.  The keys of that hash should be the same as
+those supported by the \f(CW\*(C`Perl::Critic::new()\*(C'\fR method.  Here are some examples:
 .PP
 .Vb 1
 \&    use Perl::Critic qw(critique);
@@ -430,26 +396,24 @@ None of the other object-methods are currently supported as static
 functions.  Sorry.
 .SH "CONFIGURATION"
 .IX Header "CONFIGURATION"
-Most of the settings for Perl::Critic and each of the Policy modules
-can be controlled by a configuration file.  The default configuration
-file is called \fI.perlcriticrc\fR.  Perl::Critic will look for this file
-in the current directory first, and then in your home directory.
-Alternatively, you can set the \f(CW\*(C`PERLCRITIC\*(C'\fR environment variable to
-explicitly point to a different file in another location.  If none of
-these files exist, and the \f(CW\*(C`\-profile\*(C'\fR option is not given to the
-constructor, then all the modules that are found in the
+Most of the settings for Perl::Critic and each of the Policy modules can be
+controlled by a configuration file.  The default configuration file is called
+\&\fI.perlcriticrc\fR.  Perl::Critic will look for this file in the current
+directory first, and then in your home directory. Alternatively, you can set
+the \f(CW\*(C`PERLCRITIC\*(C'\fR environment variable to explicitly point to a different file
+in another location.  If none of these files exist, and the \f(CW\*(C`\-profile\*(C'\fR option
+is not given to the constructor, then all the modules that are found in the
 Perl::Critic::Policy namespace will be loaded with their default
 configuration.
 .PP
-The format of the configuration file is a series of INI-style blocks
-that contain key-value pairs separated by '='. Comments should start
-with '#' and can be placed on a separate line or after the name-value
-pairs if you desire.
+The format of the configuration file is a series of INI-style blocks that
+contain key-value pairs separated by '='. Comments should start with '#' and
+can be placed on a separate line or after the name-value pairs if you desire.
 .PP
-Default settings for Perl::Critic itself can be set \fBbefore the first
-named block.\fR For example, putting any or all of these at the top of
-your configuration file will set the default value for the
-corresponding constructor argument.
+Default settings for Perl::Critic itself can be set \fBbefore the first named
+block.\fR For example, putting any or all of these at the top of your
+configuration file will set the default value for the corresponding
+constructor argument.
 .PP
 .Vb 12
 \&    severity  = 3                                     #Integer or named level
@@ -466,8 +430,7 @@ corresponding constructor argument.
 \&    pager     = less                                  #pager to pipe output to
 .Ve
 .PP
-The remainder of the configuration file is a series of blocks like
-this:
+The remainder of the configuration file is a series of blocks like this:
 .PP
 .Vb 7
 \&    [Perl::Critic::Policy::Category::PolicyName]
@@ -479,20 +442,18 @@ this:
 \&    arg2 = value2
 .Ve
 .PP
-\&\f(CW\*(C`Perl::Critic::Policy::Category::PolicyName\*(C'\fR is the full name of a
-module that implements the policy.  The Policy modules distributed
-with Perl::Critic have been grouped into categories according to the
-table of contents in Damian Conway's book \fBPerl Best Practices\fR. For
-brevity, you can omit the \f(CW\*(AqPerl::Critic::Policy\*(Aq\fR part of the module
-name.
+\&\f(CW\*(C`Perl::Critic::Policy::Category::PolicyName\*(C'\fR is the full name of a module
+that implements the policy.  The Policy modules distributed with Perl::Critic
+have been grouped into categories according to the table of contents in Damian
+Conway's book \fBPerl Best Practices\fR. For brevity, you can omit the
+\&\f(CW\*(AqPerl::Critic::Policy\*(Aq\fR part of the module name.
 .PP
-\&\f(CW\*(C`severity\*(C'\fR is the level of importance you wish to assign to the
-Policy.  All Policy modules are defined with a default severity value
-ranging from 1 (least severe) to 5 (most severe).  However, you may
-disagree with the default severity and choose to give it a higher or
-lower severity, based on your own coding philosophy.  You can set the
-\&\f(CW\*(C`severity\*(C'\fR to an integer from 1 to 5, or use one of the equivalent
-names:
+\&\f(CW\*(C`severity\*(C'\fR is the level of importance you wish to assign to the Policy.  All
+Policy modules are defined with a default severity value ranging from 1 (least
+severe) to 5 (most severe).  However, you may disagree with the default
+severity and choose to give it a higher or lower severity, based on your own
+coding philosophy.  You can set the \f(CW\*(C`severity\*(C'\fR to an integer from 1 to 5, or
+use one of the equivalent names:
 .PP
 .Vb 7
 \&    SEVERITY NAME ...is equivalent to... SEVERITY NUMBER
@@ -504,37 +465,35 @@ names:
 \&    brutal                                             1
 .Ve
 .PP
-The names reflect how severely the code is criticized: a \f(CW\*(C`gentle\*(C'\fR
-criticism reports only the most severe violations, and so on down to a
-\&\f(CW\*(C`brutal\*(C'\fR criticism which reports even the most minor violations.
+The names reflect how severely the code is criticized: a \f(CW\*(C`gentle\*(C'\fR criticism
+reports only the most severe violations, and so on down to a \f(CW\*(C`brutal\*(C'\fR
+criticism which reports even the most minor violations.
 .PP
-\&\f(CW\*(C`set_themes\*(C'\fR sets the theme for the Policy and overrides its default
-theme.  The argument is a string of one or more whitespace-delimited
-alphanumeric words.  Themes are case-insensitive.  See \*(L"\s-1POLICY\s0
-\&\s-1THEMES\s0\*(R" for more information.
-.PP
-\&\f(CW\*(C`add_themes\*(C'\fR appends to the default themes for this Policy.  The
-argument is a string of one or more whitespace-delimited words.
-Themes are case-insensitive.  See \*(L"\s-1POLICY\s0 \s-1THEMES\s0\*(R" for more
+\&\f(CW\*(C`set_themes\*(C'\fR sets the theme for the Policy and overrides its default theme.
+The argument is a string of one or more whitespace-delimited alphanumeric
+words.  Themes are case-insensitive.  See \*(L"\s-1POLICY\s0 \s-1THEMES\s0\*(R" for more
 information.
 .PP
-\&\f(CW\*(C`maximum_violations_per_document\*(C'\fR limits the number of Violations the
-Policy will return for a given document.  Some Policies have a default
-limit; see the documentation for the individual Policies to see
-whether there is one.  To force a Policy to not have a limit, specify
-\&\*(L"no_limit\*(R" or the empty string for the value of this parameter.
+\&\f(CW\*(C`add_themes\*(C'\fR appends to the default themes for this Policy.  The argument is
+a string of one or more whitespace-delimited words. Themes are case\-
+insensitive.  See \*(L"\s-1POLICY\s0 \s-1THEMES\s0\*(R" for more information.
 .PP
-The remaining key-value pairs are configuration parameters that will
-be passed into the constructor for that Policy.  The constructors for
-most Policy objects do not support arguments, and those that do should
-have reasonable defaults.  See the documentation on the appropriate
-Policy module for more details.
+\&\f(CW\*(C`maximum_violations_per_document\*(C'\fR limits the number of Violations the Policy
+will return for a given document.  Some Policies have a default limit; see the
+documentation for the individual Policies to see whether there is one.  To
+force a Policy to not have a limit, specify \*(L"no_limit\*(R" or the empty string for
+the value of this parameter.
 .PP
-Instead of redefining the severity for a given Policy, you can
-completely disable a Policy by prepending a '\-' to the name of the
-module in your configuration file.  In this manner, the Policy will
-never be loaded, regardless of the \f(CW\*(C`\-severity\*(C'\fR given to the
-Perl::Critic constructor.
+The remaining key-value pairs are configuration parameters that will be passed
+into the constructor for that Policy.  The constructors for most Policy
+objects do not support arguments, and those that do should have reasonable
+defaults.  See the documentation on the appropriate Policy module for more
+details.
+.PP
+Instead of redefining the severity for a given Policy, you can completely
+disable a Policy by prepending a '\-' to the name of the module in your
+configuration file.  In this manner, the Policy will never be loaded,
+regardless of the \f(CW\*(C`\-severity\*(C'\fR given to the Perl::Critic constructor.
 .PP
 A simple configuration might look like this:
 .PP
@@ -579,44 +538,44 @@ A simple configuration might look like this:
 \&    # so no additional configuration is required for them.
 .Ve
 .PP
-For additional configuration examples, see the \fIperlcriticrc\fR file
-that is included in this \fIexamples\fR directory of this distribution.
+For additional configuration examples, see the \fIperlcriticrc\fR file that is
+included in this \fIexamples\fR directory of this distribution.
 .PP
-Damian Conway's own Perl::Critic configuration is also included in
-this distribution as \fIexamples/perlcriticrc\-conway\fR.
+Damian Conway's own Perl::Critic configuration is also included in this
+distribution as \fIexamples/perlcriticrc\-conway\fR.
 .SH "THE POLICIES"
 .IX Header "THE POLICIES"
-A large number of Policy modules are distributed with Perl::Critic.
-They are described briefly in the companion document
-Perl::Critic::PolicySummary and in more
-detail in the individual modules themselves.  Say \f(CW"perlcritic \-doc
-PATTERN"\fR to see the perldoc for all Policy modules that match the
-regex \f(CW\*(C`m/PATTERN/ixms\*(C'\fR
+A large number of Policy modules are distributed with Perl::Critic. They are
+described briefly in the companion document Perl::Critic::PolicySummary and
+in more detail in the individual modules themselves.  Say \f(CW"perlcritic \-doc
+PATTERN"\fR to see the perldoc for all Policy modules that match the regex
+\&\f(CW\*(C`m/PATTERN/ixms\*(C'\fR
 .PP
-There are a number of distributions of additional policies on \s-1CPAN\s0.
-If Perl::Critic doesn't contain a policy that you
-want, some one may have already written it.  See the \*(L"\s-1SEE\s0 \s-1ALSO\s0\*(R"
-section below for a list of some of these distributions.
+There are a number of distributions of additional policies on \s-1CPAN\s0. If
+Perl::Critic doesn't contain a policy that you want, some one may have
+already written it.  See the \*(L"\s-1SEE\s0 \s-1ALSO\s0\*(R" section below for a list of some
+of these distributions.
 .SH "POLICY THEMES"
 .IX Header "POLICY THEMES"
-Each Policy is defined with one or more \*(L"themes\*(R".  Themes can be used
-to create arbitrary groups of Policies.  They are intended to provide
-an alternative mechanism for selecting your preferred set of Policies.
-For example, you may wish disable a certain subset of Policies when
-analyzing test programs.  Conversely, you may wish to enable only a
-specific subset of Policies when analyzing modules.
+Each Policy is defined with one or more \*(L"themes\*(R".  Themes can be used to
+create arbitrary groups of Policies.  They are intended to provide an
+alternative mechanism for selecting your preferred set of Policies. For
+example, you may wish disable a certain subset of Policies when analyzing test
+programs.  Conversely, you may wish to enable only a specific subset of
+Policies when analyzing modules.
 .PP
-The Policies that ship with Perl::Critic have been broken into the
-following themes.  This is just our attempt to provide some basic
-logical groupings.  You are free to invent new themes that suit your
-needs.
+The Policies that ship with Perl::Critic have been broken into the following
+themes.  This is just our attempt to provide some basic logical groupings.
+You are free to invent new themes that suit your needs.
 .PP
-.Vb 10
+.Vb 12
 \&    THEME             DESCRIPTION
 \&    \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
 \&    core              All policies that ship with Perl::Critic
 \&    pbp               Policies that come directly from "Perl Best Practices"
 \&    bugs              Policies that that prevent or reveal bugs
+\&    certrec           Policies that CERT recommends
+\&    certrule          Policies that CERT considers rules
 \&    maintenance       Policies that affect the long\-term health of the code
 \&    cosmetic          Policies that only have a superficial effect
 \&    complexity        Policies that specificaly relate to code complexity
@@ -624,37 +583,36 @@ needs.
 \&    tests             Policies that are specific to test programs
 .Ve
 .PP
-Any Policy may fit into multiple themes.  Say \f(CW"perlcritic \-list"\fR to
-get a listing of all available Policies and the themes that are
-associated with each one.  You can also change the theme for any
-Policy in your \fI.perlcriticrc\fR file.  See the \*(L"\s-1CONFIGURATION\s0\*(R"
-section for more information about that.
+Any Policy may fit into multiple themes.  Say \f(CW"perlcritic \-list"\fR to get a
+listing of all available Policies and the themes that are associated with each
+one.  You can also change the theme for any Policy in your \fI.perlcriticrc\fR
+file.  See the \*(L"\s-1CONFIGURATION\s0\*(R" section for more information about that.
 .PP
-Using the \f(CW\*(C`\-theme\*(C'\fR option, you can create an arbitrarily complex rule
-that determines which Policies will be loaded.  Precedence is the same
-as regular Perl code, and you can use parentheses to enforce
-precedence as well.  Supported operators are:
+Using the \f(CW\*(C`\-theme\*(C'\fR option, you can create an arbitrarily complex rule that
+determines which Policies will be loaded.  Precedence is the same as regular
+Perl code, and you can use parentheses to enforce precedence as well.
+Supported operators are:
 .PP
 .Vb 5
-\&    Operator    Altertative    Example
+\&    Operator    Alternative    Example
 \&    \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
 \&    &&          and            \*(Aqpbp && core\*(Aq
 \&    ||          or             \*(Aqpbp || (bugs && security)\*(Aq
 \&    !           not            \*(Aqpbp && ! (portability || complexity)\*(Aq
 .Ve
 .PP
-Theme names are case-insensitive.  If the \f(CW\*(C`\-theme\*(C'\fR is set to an empty
-string, then it evaluates as true all Policies.
+Theme names are case-insensitive.  If the \f(CW\*(C`\-theme\*(C'\fR is set to an empty string,
+then it evaluates as true all Policies.
 .SH "BENDING THE RULES"
 .IX Header "BENDING THE RULES"
-Perl::Critic takes a hard-line approach to your code: either you
-comply or you don't.  In the real world, it is not always practical
-(nor even possible) to fully comply with coding standards.  In such
-cases, it is wise to show that you are knowingly violating the
-standards and that you have a Damn Good Reason (\s-1DGR\s0) for doing so.
+Perl::Critic takes a hard-line approach to your code: either you comply or you
+don't.  In the real world, it is not always practical (nor even possible) to
+fully comply with coding standards.  In such cases, it is wise to show that
+you are knowingly violating the standards and that you have a Damn Good Reason
+(\s-1DGR\s0) for doing so.
 .PP
-To help with those situations, you can direct Perl::Critic to ignore
-certain lines or blocks of code by using annotations:
+To help with those situations, you can direct Perl::Critic to ignore certain
+lines or blocks of code by using annotations:
 .PP
 .Vb 2
 \&    require \*(AqLegacyLibaray1.pl\*(Aq;  ## no critic
@@ -681,13 +639,12 @@ critic"\fR annotation is on the same line as a code statement, then only that
 line of code is overlooked.  To direct perlcritic to ignore the \f(CW"## no
 critic"\fR annotations, use the \f(CW\*(C`\-\-force\*(C'\fR option.
 .PP
-A bare \f(CW"## no critic"\fR annotation disables all the active Policies.  If
-you wish to disable only specific Policies, add a list of Policy names
-as arguments, just as you would for the \f(CW"no strict"\fR or \f(CW"no
-warnings"\fR pragmas.  For example, this would disable the
-\&\f(CW\*(C`ProhibitEmptyQuotes\*(C'\fR and \f(CW\*(C`ProhibitPostfixControls\*(C'\fR policies until
-the end of the block or until the next \f(CW"## use critic"\fR annotation
-(whichever comes first):
+A bare \f(CW"## no critic"\fR annotation disables all the active Policies.  If you
+wish to disable only specific Policies, add a list of Policy names as
+arguments, just as you would for the \f(CW"no strict"\fR or \f(CW"no warnings"\fR
+pragmas.  For example, this would disable the \f(CW\*(C`ProhibitEmptyQuotes\*(C'\fR and
+\&\f(CW\*(C`ProhibitPostfixControls\*(C'\fR policies until the end of the block or until the
+next \f(CW"## use critic"\fR annotation (whichever comes first):
 .PP
 .Vb 1
 \&    ## no critic (EmptyQuotes, PostfixControls)
@@ -702,9 +659,9 @@ the end of the block or until the next \f(CW"## use critic"\fR annotation
 \&    $long_int = 10000000000;
 .Ve
 .PP
-Since the Policy names are matched against the \f(CW"## no critic"\fR
-arguments as regular expressions, you can abbreviate the Policy names
-or disable an entire family of Policies in one shot like this:
+Since the Policy names are matched against the \f(CW"## no critic"\fR arguments as
+regular expressions, you can abbreviate the Policy names or disable an entire
+family of Policies in one shot like this:
 .PP
 .Vb 1
 \&    ## no critic (NamingConventions)
@@ -716,15 +673,15 @@ or disable an entire family of Policies in one shot like this:
 \&    sub camelHumpSub {}
 .Ve
 .PP
-The argument list must be enclosed in parentheses and must contain one
-or more comma-separated barewords (e.g. don't use quotes).  The
-\&\f(CW"## no critic"\fR annotations can be nested, and Policies named by an
-inner annotation will be disabled along with those already disabled an
-outer annotation.
+The argument list must be enclosed in parentheses or brackets and must contain
+one or more comma-separated barewords (e.g. don't use quotes).
+The \f(CW"## no critic"\fR annotations can be nested, and Policies named by an inner
+annotation will be disabled along with those already disabled an outer
+annotation.
 .PP
-Some Policies like \f(CW\*(C`Subroutines::ProhibitExcessComplexity\*(C'\fR apply to
-an entire block of code.  In those cases, \f(CW"## no critic"\fR must
-appear on the line where the violation is reported.  For example:
+Some Policies like \f(CW\*(C`Subroutines::ProhibitExcessComplexity\*(C'\fR apply to an entire
+block of code.  In those cases, the \f(CW"## no critic"\fR annotation must appear
+on the line where the violation is reported.  For example:
 .PP
 .Vb 3
 \&    sub complicated_function {  ## no critic (ProhibitExcessComplexity)
@@ -732,48 +689,44 @@ appear on the line where the violation is reported.  For example:
 \&    }
 .Ve
 .PP
-Policies such as \f(CW\*(C`Documentation::RequirePodSections\*(C'\fR apply to the
-entire document, in which case violations are reported at line 1.
+Policies such as \f(CW\*(C`Documentation::RequirePodSections\*(C'\fR apply to the entire
+document, in which case violations are reported at line 1.
 .PP
 Use this feature wisely.  \f(CW"## no critic"\fR annotations should be used in the
-smallest possible scope, or only on individual lines of code. And you
-should always be as specific as possible about which Policies you want
-to disable (i.e. never use a bare \f(CW"## no critic"\fR).  If Perl::Critic
-complains about your code, try and find a compliant solution before
-resorting to this feature.
+smallest possible scope, or only on individual lines of code. And you should
+always be as specific as possible about which Policies you want to disable
+(i.e. never use a bare \f(CW"## no critic"\fR).  If Perl::Critic complains about
+your code, try and find a compliant solution before resorting to this feature.
 .SH "THE Perl::Critic PHILOSOPHY"
 .IX Header "THE Perl::Critic PHILOSOPHY"
-Coding standards are deeply personal and highly subjective.  The goal
-of Perl::Critic is to help you write code that conforms with a set of
-best practices.  Our primary goal is not to dictate what those
-practices are, but rather, to implement the practices discovered by
-others.  Ultimately, you make the rules \*(-- Perl::Critic is merely a
-tool for encouraging consistency.  If there is a policy that you think
-is important or that we have overlooked, we would be very grateful for
-contributions, or you can simply load your own private set of policies
-into Perl::Critic.
+Coding standards are deeply personal and highly subjective.  The goal of
+Perl::Critic is to help you write code that conforms with a set of best
+practices.  Our primary goal is not to dictate what those practices are, but
+rather, to implement the practices discovered by others.  Ultimately, you make
+the rules \*(-- Perl::Critic is merely a tool for encouraging consistency.  If
+there is a policy that you think is important or that we have overlooked, we
+would be very grateful for contributions, or you can simply load your own
+private set of policies into Perl::Critic.
 .SH "EXTENDING THE CRITIC"
 .IX Header "EXTENDING THE CRITIC"
-The modular design of Perl::Critic is intended to facilitate the
-addition of new Policies.  You'll need to have some understanding of
-\&\s-1PPI\s0, but most Policy modules are pretty straightforward and
-only require about 20 lines of code.  Please see the
-Perl::Critic::DEVELOPER file included in
-this distribution for a step-by-step demonstration of how to create
-new Policy modules.
+The modular design of Perl::Critic is intended to facilitate the addition of
+new Policies.  You'll need to have some understanding of \s-1PPI\s0, but most
+Policy modules are pretty straightforward and only require about 20 lines of
+code.  Please see the Perl::Critic::DEVELOPER file included in this
+distribution for a step-by-step demonstration of how to create new Policy
+modules.
 .PP
-If you develop any new Policy modules, feel free to send them to \f(CW\*(C`<jeff@imaginative\-software.com>\*(C'\fR and I'll be happy to put them into the
-Perl::Critic distribution.  Or if you would like to work on the
-Perl::Critic project directly, check out our repository at
-<http://perlcritic.tigris.org>.  To subscribe to our mailing list,
-send a message to mailto:dev\-subscribe@perlcritic.tigris.org <mailto:dev-subscribe@perlcritic.tigris.org>.
+If you develop any new Policy modules, feel free to send them to \f(CW\*(C`<team@perlcritic.com>\*(C'\fR and I'll be happy to consider putting them into the
+Perl::Critic distribution.  Or if you would like to work on the Perl::Critic
+project directly, you can fork our repository at
+https://github.com/Perl\-Critic/Perl\-Critic.git <https://github.com/Perl-Critic/Perl-Critic.git>.
 .PP
-The Perl::Critic team is also available for hire.  If your
-organization has its own coding standards, we can create custom
-Policies to enforce your local guidelines.  Or if your code base is
-prone to a particular defect pattern, we can design Policies that will
-help you catch those costly defects \fBbefore\fR they go into production.
-To discuss your needs with the Perl::Critic team, just contact \f(CW\*(C`<jeff@imaginative\-software.com>\*(C'\fR.
+The Perl::Critic team is also available for hire.  If your organization has
+its own coding standards, we can create custom Policies to enforce your local
+guidelines.  Or if your code base is prone to a particular defect pattern, we
+can design Policies that will help you catch those costly defects \fBbefore\fR
+they go into production. To discuss your needs with the Perl::Critic team,
+just contact \f(CW\*(C`<team@perlcritic.com>\*(C'\fR.
 .SH "PREREQUISITES"
 .IX Header "PREREQUISITES"
 Perl::Critic requires the following modules:
@@ -786,9 +739,13 @@ Email::Address
 .PP
 Exception::Class
 .PP
+File::HomeDir
+.PP
 File::Spec
 .PP
 File::Spec::Unix
+.PP
+File::Which
 .PP
 IO::String
 .PP
@@ -818,32 +775,22 @@ String::Format
 .PP
 Task::Weaken
 .PP
+Term::ANSIColor
+.PP
 Text::ParseWords
 .PP
 version
-.PP
-The following modules are optional, but recommended for complete
-functionality:
-.PP
-File::HomeDir
-.PP
-File::Which
 .SH "CONTACTING THE DEVELOPMENT TEAM"
 .IX Header "CONTACTING THE DEVELOPMENT TEAM"
-You are encouraged to subscribe to the mailing list; send a message to
-mailto:users\-subscribe@perlcritic.tigris.org <mailto:users-subscribe@perlcritic.tigris.org>.  See also the archives at
-<http://perlcritic.tigris.org/servlets/SummarizeList?listName=users>.
-You can also contact the author at \f(CW\*(C`<jeff@imaginative\-software.com>\*(C'\fR.
-.PP
-At least one member of the development team has started hanging around
-in <irc://irc.perl.org/#perlcritic>.
-.PP
-You can also follow Perl::Critic on Twitter, at
-<https://twitter.com/perlcritic>.
+You are encouraged to subscribe to the public mailing list at
+https://groups.google.com/d/forum/perl\-critic <https://groups.google.com/d/forum/perl-critic>.
+At least one member of the development team is usually hanging around
+in <irc://irc.perl.org/#perlcritic> and you can follow Perl::Critic on
+Twitter, at <https://twitter.com/perlcritic>.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-There are a number of distributions of additional Policies available.
-A few are listed here:
+There are a number of distributions of additional Policies available. A few
+are listed here:
 .PP
 Perl::Critic::More
 .PP
@@ -867,23 +814,15 @@ There is also a distribution that will install all the Perl::Critic related
 modules known to the development team:
 .PP
 Task::Perl::Critic
-.PP
-If you want to make sure you have absolutely everything, you can use this:
-.PP
-Task::Perl::Critic::IncludingOptionalDependencies
 .SH "BUGS"
 .IX Header "BUGS"
-Scrutinizing Perl code is hard for humans, let alone machines.  If you
-find any bugs, particularly false-positives or false-negatives from a
-Perl::Critic::Policy, please submit them to
-http://rt.cpan.org/NoAuth/Bugs.html?Dist=Perl\-Critic <http://rt.cpan.org/NoAuth/Bugs.html?Dist=Perl-Critic>.  Thanks.
-.PP
-Most policies will produce false-negatives if they cannot understand a
-particular block of code.
+Scrutinizing Perl code is hard for humans, let alone machines.  If you find
+any bugs, particularly false-positives or false-negatives from a
+Perl::Critic::Policy, please submit them at
+https://github.com/Perl\-Critic/Perl\-Critic/issues <https://github.com/Perl-Critic/Perl-Critic/issues>.  Thanks.
 .SH "CREDITS"
 .IX Header "CREDITS"
-Adam Kennedy \- For creating \s-1PPI\s0, the heart and soul of
-Perl::Critic.
+Adam Kennedy \- For creating \s-1PPI\s0, the heart and soul of Perl::Critic.
 .PP
 Damian Conway \- For writing \fBPerl Best Practices\fR, finally :)
 .PP
@@ -897,16 +836,16 @@ Giuseppe Maxia \- For all the great ideas and positive encouragement.
 .PP
 and Sharon, my wife \- For putting up with my all-night code sessions.
 .PP
-Thanks also to the Perl Foundation for providing a grant to support
-Chris Dolan's project to implement twenty \s-1PBP\s0 policies.
+Thanks also to the Perl Foundation for providing a grant to support Chris
+Dolan's project to implement twenty \s-1PBP\s0 policies.
 <http://www.perlfoundation.org/april_1_2007_new_grant_awards>
 .SH "AUTHOR"
 .IX Header "AUTHOR"
 Jeffrey Ryan Thalhammer <jeff@imaginative\-software.com>
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 2005\-2011 Imaginative Software Systems.  All rights reserved.
+Copyright (c) 2005\-2013 Imaginative Software Systems.  All rights reserved.
 .PP
-This program is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.  The full text of this license
-can be found in the \s-1LICENSE\s0 file included with this module.
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.  The full text of this license can be found in
+the \s-1LICENSE\s0 file included with this module.

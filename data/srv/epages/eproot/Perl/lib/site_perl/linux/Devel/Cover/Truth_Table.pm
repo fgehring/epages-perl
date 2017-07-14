@@ -11,12 +11,12 @@ use warnings;
 # Notes      :
 #-------------------------------------------------------------------------------
 sub error {
-	my $self = shift;
-	my $line = shift;
-	foreach my $c (@{$self->get($line)}) {
-		return 1 if $c->error;
-	}
-	return;
+        my $self = shift;
+        my $line = shift;
+        foreach my $c (@{$self->get($line)}) {
+                return 1 if $c->error;
+        }
+        return;
 }
 
 
@@ -27,14 +27,14 @@ sub error {
 # Notes      :
 #-------------------------------------------------------------------------------
 sub branch_coverage {
-	my $self = shift;
-	my $line = shift;
-	my @txt;
-	foreach my $c (@{$self->get($line)}) {
-		push @txt, ($c->[0][0] ? ' T ' : '---') .
-		           ($c->[0][1] ? ' F ' : '---');
-	}
-	return @txt;
+        my $self = shift;
+        my $line = shift;
+        my @txt;
+        foreach my $c (@{$self->get($line)}) {
+                push @txt, ($c->[0][0] ? ' T ' : '---') .
+                           ($c->[0][1] ? ' F ' : '---');
+        }
+        return @txt;
 }
 
 
@@ -44,25 +44,25 @@ sub branch_coverage {
 # Notes      :
 #-------------------------------------------------------------------------------
 sub truth_table {
-	my $self = shift;
-	my $line = shift;
-	my $c = $self->get($line);
+        my $self = shift;
+        my $line = shift;
+        my $c = $self->get($line);
 
         return if @$c > 16;  # Too big - can't get any useful info anyway.
 
-	my @lops;
-	foreach my $c (@$c) {
-		my $op = $c->[1]{type};
-		my @hit = map {defined() && $_ > 0 ? 1 : 0} @{$c->[0]};
-		@hit = reverse @hit if $op =~ /^or_[23]$/;
-		my $t = {
-			tt   => Devel::Cover::Truth_Table->new_primitive($op, @hit),
-			cvg  => $c->[1],
-			expr => join(' ', @{$c->[1]}{qw/left op right/}),
-		};
-		push(@lops, $t);
-	}
-	return map {[$_->{tt}->sort, $_->{expr}]} merge_lineops(@lops);
+        my @lops;
+        foreach my $c (@$c) {
+                my $op = $c->[1]{type};
+                my @hit = map {defined() && $_ > 0 ? 1 : 0} @{$c->[0]};
+                @hit = reverse @hit if $op =~ /^or_[23]$/;
+                my $t = {
+                        tt   => Devel::Cover::Truth_Table->new_primitive($op, @hit),
+                        cvg  => $c->[1],
+                        expr => join(' ', @{$c->[1]}{qw/left op right/}),
+                };
+                push(@lops, $t);
+        }
+        return map {[$_->{tt}->sort, $_->{expr}]} merge_lineops(@lops);
 }
 
 
@@ -73,46 +73,46 @@ sub truth_table {
 # Notes      :
 #-------------------------------------------------------------------------------
 sub merge_lineops {
-	my @ops = @_;
-	my $rotations;
-	while ($#ops > 0) {
-		my $rm;
-		for (1 .. $#ops) {
-			if ($ops[0]{expr} eq $ops[$_]{cvg}{left}) {
-				$ops[$_]{tt}->left_merge($ops[0]{tt});
-				$ops[0] = $ops[$_];
-				$rm = $_; last;
-			}
-			elsif ($ops[0]{expr} eq $ops[$_]{cvg}{right}) {
-				$ops[$_]{tt}->right_merge($ops[0]{tt});
-				$ops[0] = $ops[$_];
-				$rm = $_; last;
-			}
-			elsif ($ops[$_]{expr} eq $ops[0]{cvg}{left}) {
-				$ops[0]{tt}->left_merge($ops[$_]{tt});
-				$rm = $_; last;
-			}
-			elsif ($ops[$_]{expr} eq $ops[0]{cvg}{right}) {
-				$ops[0]{tt}->right_merge($ops[$_]{tt});
-				$rm = $_; last;
-			}
-		}
-		if ($rm) {
-			splice(@ops, $rm, 1);
-			$rotations = 0;
-		}
-		else {
-			# First op didn't merge with anything. Rotate @ops in hopes
-			# of finding something that can be merged.
-			unshift(@ops, pop @ops);
+        my @ops = @_;
+        my $rotations;
+        while ($#ops > 0) {
+                my $rm;
+                for (1 .. $#ops) {
+                        if ($ops[0]{expr} eq $ops[$_]{cvg}{left}) {
+                                $ops[$_]{tt}->left_merge($ops[0]{tt});
+                                $ops[0] = $ops[$_];
+                                $rm = $_; last;
+                        }
+                        elsif ($ops[0]{expr} eq $ops[$_]{cvg}{right}) {
+                                $ops[$_]{tt}->right_merge($ops[0]{tt});
+                                $ops[0] = $ops[$_];
+                                $rm = $_; last;
+                        }
+                        elsif ($ops[$_]{expr} eq $ops[0]{cvg}{left}) {
+                                $ops[0]{tt}->left_merge($ops[$_]{tt});
+                                $rm = $_; last;
+                        }
+                        elsif ($ops[$_]{expr} eq $ops[0]{cvg}{right}) {
+                                $ops[0]{tt}->right_merge($ops[$_]{tt});
+                                $rm = $_; last;
+                        }
+                }
+                if ($rm) {
+                        splice(@ops, $rm, 1);
+                        $rotations = 0;
+                }
+                else {
+                        # First op didn't merge with anything. Rotate @ops in hopes
+                        # of finding something that can be merged.
+                        unshift(@ops, pop @ops);
 
-			# Hmm... we've come full circle and *still* haven't found
-			# anything to merge. Did the source code have multiple
-			# statements on the same line?
-			last if ($rotations++ > $#ops);
-		}
-	}
-	return @ops;
+                        # Hmm... we've come full circle and *still* haven't found
+                        # anything to merge. Did the source code have multiple
+                        # statements on the same line?
+                        last if ($rotations++ > $#ops);
+                }
+        }
+        return @ops;
 }
 
 
@@ -121,66 +121,66 @@ use warnings;
 use strict;
 
 sub new {
-	my $proto = shift;
-	my $class = ref($proto) || $proto;
-	my @args = @_;
-        # use Data::Dumper; print Dumper \@args;
-	return bless {
-		inputs    => $args[0],
-		result    => $args[1],
-		covered   => $args[2],
-		criterion => $args[2],
-	}, $class;
+        my $proto = shift;
+        my $class = ref($proto) || $proto;
+        my @args = @_;
+        # use Devel::Cover::Dumper; print Dumper \@args;
+        return bless {
+                inputs    => $args[0],
+                result    => $args[1],
+                covered   => $args[2],
+                criterion => $args[2],
+        }, $class;
 }
 
 sub inputs {
-	my $self = shift;
-	return @{$self->{inputs}};
+        my $self = shift;
+        return @{$self->{inputs}};
 }
 
 sub leftcol {
-	my $self = shift;
-	return $self->{inputs}[0];
+        my $self = shift;
+        return $self->{inputs}[0];
 }
 
 sub rightcol {
-	my $self = shift;
-	return $self->{inputs}[-1];
+        my $self = shift;
+        return $self->{inputs}[-1];
 }
 
 sub leftelems {
-	my $self = shift;
-	my $n = $#{$self->{inputs}};
-	return @{$self->{inputs}}[0 .. $n - 1];
+        my $self = shift;
+        my $n = $#{$self->{inputs}};
+        return @{$self->{inputs}}[0 .. $n - 1];
 }
 
 sub rightelems {
-	my $self = shift;
-	my $n = $#{$self->{inputs}};
-	return @{$self->{inputs}}[1 .. $n];
+        my $self = shift;
+        my $n = $#{$self->{inputs}};
+        return @{$self->{inputs}}[1 .. $n];
 }
 
 sub string {
-	return "@{$_[0]{inputs}}";
+        return "@{$_[0]{inputs}}";
 }
 
 sub result {
-	return $_[0]{result};
+        return $_[0]{result};
 }
 
 sub covered {
-	return $_[0]{covered};
+        return $_[0]{covered};
 }
 
 sub error {
         return 1;
-	return $_[0]{error}[$_[1]];
+        return $_[0]{error}[$_[1]];
 }
 
 package Devel::Cover::Truth_Table;
 use warnings;
 use strict;
-our $VERSION = "0.79";
+our $VERSION = '1.25'; # VERSION
 
 #-------------------------------------------------------------------------------
 # Subroutine : new()
@@ -188,9 +188,9 @@ our $VERSION = "0.79";
 # Notes      : Probably best to keep usage of this internal...
 #-------------------------------------------------------------------------------
 sub new {
-	my $proto = shift;
-	my $class = ref($proto) || $proto;
-	return bless [@_], $class;
+        my $proto = shift;
+        my $class = ref($proto) || $proto;
+        return bless [@_], $class;
 }
 
 
@@ -201,17 +201,17 @@ sub new {
 # Notes      :
 #-------------------------------------------------------------------------------
 sub new_primitive {
-	my ($proto, $type, @coverage) = @_;
+        my ($proto, $type, @coverage) = @_;
 
-	my %table = (
-		and_2 => \&boolean_tt,
-		and_3 => \&and_tt,
-		or_2  => \&boolean_tt,
-		or_3  => \&or_tt,
-		xor_4 => \&xor_tt,
-	);
+        my %table = (
+                and_2 => \&boolean_tt,
+                and_3 => \&and_tt,
+                or_2  => \&boolean_tt,
+                or_3  => \&or_tt,
+                xor_4 => \&xor_tt,
+        );
 
-	return $proto->new($table{$type}->(@coverage));
+        return $proto->new($table{$type}->(@coverage));
 }
 
 
@@ -224,9 +224,9 @@ sub error {
     my $self = shift;
     if (@_) { print "[[[", $self->[shift]->error, "]]]\n"; die }
     return $self->[shift]->error if @_;
-	foreach (@$self) {
-	    return 1 if $_->error;
-	}
+        foreach (@$self) {
+            return 1 if $_->error;
+        }
     return;
 }
 
@@ -237,12 +237,12 @@ sub error {
 # Notes      : Don't care states (X) count as one path, not two.
 #-------------------------------------------------------------------------------
 sub percentage {
-	my $self = shift;
-	my ($p, $c) = (scalar @$self, 0);
-	foreach (@$self) {
-		$c++ if $_->covered;
-	}
-	return ($c == $p) ? 100 : 100 * $c / $p;
+        my $self = shift;
+        my ($p, $c) = (scalar @$self, 0);
+        foreach (@$self) {
+                $c++ if $_->covered;
+        }
+        return ($c == $p) ? 100 : 100 * $c / $p;
 }
 
 
@@ -263,24 +263,24 @@ sub percentage {
 #       1 |  1 |    1     |    1
 #
 sub and_tt {
-	return(Devel::Cover::Truth_Table::Row->new([0, 'X'], 0, shift),
+        return(Devel::Cover::Truth_Table::Row->new([0, 'X'], 0, shift),
            Devel::Cover::Truth_Table::Row->new([1,  0 ], 0, shift),
            Devel::Cover::Truth_Table::Row->new([1,  1 ], 1, shift));
 }
 sub or_tt {
-	return(Devel::Cover::Truth_Table::Row->new([0,  0 ], 0, shift),
-	       Devel::Cover::Truth_Table::Row->new([0,  1 ], 1, shift),
-	       Devel::Cover::Truth_Table::Row->new([1, 'X'], 1, shift));
+        return(Devel::Cover::Truth_Table::Row->new([0,  0 ], 0, shift),
+               Devel::Cover::Truth_Table::Row->new([0,  1 ], 1, shift),
+               Devel::Cover::Truth_Table::Row->new([1, 'X'], 1, shift));
 }
 sub xor_tt {
-	return(Devel::Cover::Truth_Table::Row->new([0, 0], 0, shift),
-	       Devel::Cover::Truth_Table::Row->new([0, 1], 1, shift),
-	       Devel::Cover::Truth_Table::Row->new([1, 0], 1, shift),
-	       Devel::Cover::Truth_Table::Row->new([1, 1], 0, shift));
+        return(Devel::Cover::Truth_Table::Row->new([0, 0], 0, shift),
+               Devel::Cover::Truth_Table::Row->new([0, 1], 1, shift),
+               Devel::Cover::Truth_Table::Row->new([1, 0], 1, shift),
+               Devel::Cover::Truth_Table::Row->new([1, 1], 0, shift));
 }
 sub boolean_tt {
-	return(Devel::Cover::Truth_Table::Row->new([0], 0, shift),
-	       Devel::Cover::Truth_Table::Row->new([1], 1, shift));
+        return(Devel::Cover::Truth_Table::Row->new([0], 0, shift),
+               Devel::Cover::Truth_Table::Row->new([1], 1, shift));
 }
 
 
@@ -290,9 +290,9 @@ sub boolean_tt {
 # Notes      :
 #-------------------------------------------------------------------------------
 sub sort {
-	my $self = shift;
-	@$self = sort {$a->string cmp $b->string} @$self;
-	return $self;
+        my $self = shift;
+        @$self = sort {$a->string cmp $b->string} @$self;
+        return $self;
 }
 
 
@@ -305,18 +305,18 @@ sub sort {
 # Notes      :
 #-------------------------------------------------------------------------------
 sub text {
-	my $self = shift;
-	my $h = 'A';
-	my @h = map {$h++} ($self->[0]->inputs);
-	my $hdr = "@h |exp|hit";
-	my @text;
-	push @text, $hdr, '-' x length($hdr);
-	foreach (@$self) {
-		push @text, sprintf("%s | %s |%s", $_->string(),
-			$_->result(), $_->covered() ? '+++' : '---');
-	}
-	push @text, '-' x length($hdr);
-	return @text;
+        my $self = shift;
+        my $h = 'A';
+        my @h = map {$h++} ($self->[0]->inputs);
+        my $hdr = "@h |exp|hit";
+        my @text;
+        push @text, $hdr, '-' x length($hdr);
+        foreach (@$self) {
+                push @text, sprintf("%s | %s |%s", $_->string(),
+                        $_->result(), $_->covered() ? '+++' : '---');
+        }
+        push @text, '-' x length($hdr);
+        return @text;
 }
 
 
@@ -326,25 +326,25 @@ sub text {
 # Notes      :
 #-------------------------------------------------------------------------------
 sub html {
-	my $self  = shift;
-	my @class = (shift || 'uncovered', shift || 'covered');
-	my $html  = "<table><tr>";
-	my $h     = 'A';
-	for ($self->[0]->inputs) {
-		$html .= "<th>$h</th>";
-		$h++;
-	}
-	$html .= "<th>dec</th></tr>";
+        my $self  = shift;
+        my @class = (shift || 'uncovered', shift || 'covered');
+        my $html  = "<table><tr>";
+        my $h     = 'A';
+        for ($self->[0]->inputs) {
+                $html .= "<th>$h</th>";
+                $h++;
+        }
+        $html .= "<th>dec</th></tr>";
 
         my $c = 0;
-	foreach (@$self) {
-		my $class = $class[!$_->error($c++) || $_->covered];
-		$html .= qq'<tr align="center"><td class="$class">';
-		$html .= join(qq'</td><td class="$class">', $_->inputs, $_->result);
-		$html .= "</td></tr>";
-	}
-	$html .= "</table>";
-	return $html;
+        foreach (@$self) {
+                my $class = $class[!$_->error($c++) || $_->covered];
+                $html .= qq'<tr align="center"><td class="$class">';
+                $html .= join(qq'</td><td class="$class">', $_->inputs, $_->result);
+                $html .= "</td></tr>";
+        }
+        $html .= "</table>";
+        return $html;
 }
 
 
@@ -384,7 +384,7 @@ sub html {
 #    0  1  1  |        1
 #    1  X  1  |        1
 #
-# Note that we don't have to calulate the result, it's taken directly
+# Note that we don't have to calculate the result, it's taken directly
 # from table B. We can do this because we've replaced b1 with an
 # something that evaluates to the same thing.
 #
@@ -406,30 +406,30 @@ sub html {
 # Notes      :
 #-------------------------------------------------------------------------------
 sub right_merge {
-	my ($tt1, $tt2) = @_;
+        my ($tt1, $tt2) = @_;
 
-	# find the rows of tt2 that have a result of false/true
-	my @merge = ([grep {! $_->result} @$tt2], [grep {$_->result} @$tt2]);
-	# if the rightmost column of tt1 is 'X', we don't care what the
-	# input from tt2 was
-	my @dontcare = map {'X'} $tt2->[0]->inputs;
+        # find the rows of tt2 that have a result of false/true
+        my @merge = ([grep {! $_->result} @$tt2], [grep {$_->result} @$tt2]);
+        # if the rightmost column of tt1 is 'X', we don't care what the
+        # input from tt2 was
+        my @dontcare = map {'X'} $tt2->[0]->inputs;
 
-	my @tt;
-	foreach my $row1 (@$tt1) {
-		if ($row1->rightcol eq 'X') {
-			push(@tt, Devel::Cover::Truth_Table::Row->new([$row1->leftelems, @dontcare],
-				$row1->result, $row1->covered));
-		}
-		else {
-			# expand value from tt1 with rows from tt2 that result in
-			# that value
-			foreach my $row2 (@{$merge[$row1->rightcol]}) {
-				push(@tt, Devel::Cover::Truth_Table::Row->new([$row1->leftelems, $row2->inputs],
-					$row1->result, $row1->covered && $row2->covered));
-			}
-		}
-	}
-	$_[0] = $tt2->new(@tt);
+        my @tt;
+        foreach my $row1 (@$tt1) {
+                if ($row1->rightcol eq 'X') {
+                        push(@tt, Devel::Cover::Truth_Table::Row->new([$row1->leftelems, @dontcare],
+                                $row1->result, $row1->covered));
+                }
+                else {
+                        # expand value from tt1 with rows from tt2 that result in
+                        # that value
+                        foreach my $row2 (@{$merge[$row1->rightcol]}) {
+                                push(@tt, Devel::Cover::Truth_Table::Row->new([$row1->leftelems, $row2->inputs],
+                                        $row1->result, $row1->covered && $row2->covered));
+                        }
+                }
+        }
+        $_[0] = $tt2->new(@tt);
 }
 
 #-------------------------------------------------------------------------------
@@ -438,23 +438,23 @@ sub right_merge {
 # Notes      :
 #-------------------------------------------------------------------------------
 sub left_merge {
-	my ($tt1, $tt2) = @_;
+        my ($tt1, $tt2) = @_;
 
-	# find the rows of tt2 that have a result of false/true
-	my @merge = ([grep {! $_->result} @$tt2], [grep {$_->result} @$tt2]);
+        # find the rows of tt2 that have a result of false/true
+        my @merge = ([grep {! $_->result} @$tt2], [grep {$_->result} @$tt2]);
 
-	my @tt;
-	foreach my $row1 (@$tt1) {
-		my $rightmatters  = grep {$_ ne 'X'} $row1->rightelems;
-		foreach my $row2 (@{$merge[$row1->leftcol]}) {
-			# expand value from tt1 with rows from tt2 that result in
-			# that value
-			push(@tt, Devel::Cover::Truth_Table::Row->new([$row2->inputs, $row1->rightelems],
-				$row1->result,
-				($rightmatters) ? $row1->covered && $row2->covered : $row2->covered));
-		}
-	}
-	$_[0] = $tt2->new(@tt);
+        my @tt;
+        foreach my $row1 (@$tt1) {
+                my $rightmatters  = grep {$_ ne 'X'} $row1->rightelems;
+                foreach my $row2 (@{$merge[$row1->leftcol]}) {
+                        # expand value from tt1 with rows from tt2 that result in
+                        # that value
+                        push(@tt, Devel::Cover::Truth_Table::Row->new([$row2->inputs, $row1->rightelems],
+                                $row1->result,
+                                ($rightmatters) ? $row1->covered && $row2->covered : $row2->covered));
+                }
+        }
+        $_[0] = $tt2->new(@tt);
 }
 
 1;
@@ -463,8 +463,11 @@ sub left_merge {
 
 =head1 NAME
 
-Devel::Cover::Truth_Table - Create and manipulate truth tables for
-coverage objects.
+Devel::Cover::Truth_Table - Truth tables for coverage objects.
+
+=head1 VERSION
+
+version 1.25
 
 =head1 SYNOPSIS
 
@@ -564,10 +567,6 @@ Devel::Cover
 =head1 BUGS
 
 None that I'm aware of...
-
-=head1 VERSION
-
-Version 0.79 - 5th August 2011
 
 =head1 LICENSE
 

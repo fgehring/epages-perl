@@ -35,11 +35,11 @@ use PPI::Token::_QuoteEngine::Full ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = qw{
-		PPI::Token::_QuoteEngine::Full
-		PPI::Token::QuoteLike
-	};
+        $VERSION = '1.224';
+        @ISA     = qw{
+                PPI::Token::_QuoteEngine::Full
+                PPI::Token::QuoteLike
+        };
 }
 
 
@@ -59,7 +59,7 @@ will be compiled into the match portion of the regexp.
 =cut
 
 sub get_match_string {
-	return $_[0]->_section_content( 0 );
+        return $_[0]->_section_content( 0 );
 }
 
 =pod
@@ -73,7 +73,7 @@ is provided for orthogonality with C<PPI::Token::Regexp>.
 =cut
 
 sub get_substitute_string {
-	return undef;
+        return undef;
 }
 
 =pod
@@ -86,7 +86,7 @@ compiled into the regexp.
 =cut
 
 sub get_modifiers {
-	return $_[0]->_modifiers();
+        return $_[0]->_modifiers();
 }
 
 =pod
@@ -100,7 +100,7 @@ compiled into a match string.
 =cut
 
 sub get_delimiters {
-	return $_[0]->_delimiters();
+        return $_[0]->_delimiters();
 }
 
 1;

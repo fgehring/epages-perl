@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/TestingAndDebugging/ProhibitNoWarnings.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::TestingAndDebugging::ProhibitNoWarnings;
 
 use 5.006001;
@@ -14,10 +7,11 @@ use Readonly;
 
 use List::MoreUtils qw(all);
 
+use Perl::Critic::Exception::Fatal::Internal qw{ throw_internal };
 use Perl::Critic::Utils qw{ :characters :severities :data_conversion };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -45,7 +39,7 @@ sub supported_parameters {
 }
 
 sub default_severity { return $SEVERITY_HIGH            }
-sub default_themes   { return qw( core bugs pbp )       }
+sub default_themes   { return qw( core bugs pbp certrec )       }
 sub applies_to       { return 'PPI::Statement::Include' }
 
 #-----------------------------------------------------------------------------
@@ -74,26 +68,58 @@ sub violates {
     return if $elem->type()   ne 'no';
     return if $elem->pragma() ne 'warnings';
 
-    # Arguments to 'no warnings' are usually a list of literals or a
-    # qw() list.  Rather than trying to parse the various PPI elements,
-    # I just use a regex to split the statement into words.  This is
-    # kinda lame, but it does the trick for now.
-
-    # TODO consider: a possible alternate implementation:
-    #   my $re = join q{|}, keys %{$self->{allow}};
-    #   return if $re && $statement =~ m/\b(?:$re)\b/mx;
-    # May need to detaint for that to work...  Not sure.
-
-    my $statement = $elem->statement();
-    return if not $statement;
-    my @words = $statement =~ m/ ( [[:lower:]]+ ) /gxms;
-    @words = grep { $_ ne 'qw' && $_ ne 'no' && $_ ne 'warnings' } @words;
+    my @words = _extract_potential_categories( $elem );
+    @words >= 2
+        and 'no' eq $words[0]
+        and 'warnings' eq $words[1]
+        or throw_internal
+            q<'no warnings' word list did not begin with qw{ no warnings }>;
+    splice @words, 0, 2;
 
     return if $self->{_allow_with_category_restriction} and @words;
     return if @words && all { exists $self->{_allow}->{$_} } @words;
 
     #If we get here, then it must be a violation
     return $self->violation( $DESC, $EXPL, $elem );
+}
+
+#-----------------------------------------------------------------------------
+
+# Traverse the element, accumulating and ultimately returning things
+# that might be warnings categories. These are:
+# * Words (because of the 'foo' in 'no warnings foo => "bar"');
+# * Quotes (because of 'no warnings "foo"');
+# * qw{} strings (obviously);
+# * Nodes (because of 'no warnings ( "foo", "bar" )').
+# We don't lop off the 'no' and 'warnings' because we recurse.
+# RT #74647.
+
+{
+
+    Readonly::Array my @HANDLER => (
+        [ 'PPI::Token::Word' => sub { return $_[0]->content() } ],
+        [ 'PPI::Token::QuoteLike::Words'  =>
+            sub { return $_[0]->literal() }, ],
+        [ 'PPI::Token::Quote' => sub { return $_[0]->string() } ],
+        [ 'PPI::Node' => sub { _extract_potential_categories( $_[0] ) } ],
+    );
+
+    sub _extract_potential_categories {
+        my ( $elem ) = @_;
+
+        my @words;
+        foreach my $child ( $elem->schildren() ) {
+            foreach my $hdlr ( @HANDLER ) {
+                $child->isa( $hdlr->[0] )
+                    or next;
+                push @words, $hdlr->[1]->( $child );
+                last;
+            }
+        }
+
+        return @words;
+    }
+
 }
 
 1;

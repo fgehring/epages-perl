@@ -23,7 +23,7 @@ type should actually exist in the tree.
 
 =head2 Elements vs Children
 
-A B<PPI::Structure> has an unusual existance. Unlike a L<PPI::Document>
+A B<PPI::Structure> has an unusual existence. Unlike a L<PPI::Document>
 or L<PPI::Statement>, which both simply contain other elements, a
 structure B<both> contains and consists of content.
 
@@ -47,7 +47,7 @@ loops, literal lists, and braces used for precedence-ordering purposes.
 =head2 L<PPI::Structure::For>
 
 Although B<not> used for the C<foreach> loop list, this B<is> used for
-the special case of the round-brace three-part semicolon-seperated C<for>
+the special case of the round-brace three-part semicolon-separated C<for>
 loop expression (the traditional C style for loop).
 
 =head2 L<PPI::Structure::Given>
@@ -67,7 +67,7 @@ for C<if> and C<while> blocks.
 
 This curly-brace and common structure is used for all form of code
 blocks. This includes those for C<if>, C<do> and similar, as well
-as C<grep>, C<map>, C<sort>, C<sub> and (labelled or anonymous) 
+as C<grep>, C<map>, C<sort>, C<sub> and (labelled or anonymous)
 scoping blocks.
 
 =head2 L<PPI::Structure::Constructor>
@@ -96,9 +96,9 @@ use PPI::Exception ();
 
 use vars qw{$VERSION @ISA *_PARENT};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Node';
-	*_PARENT = *PPI::Element::_PARENT;
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Node';
+        *_PARENT = *PPI::Element::_PARENT;
 }
 
 use PPI::Structure::Block       ();
@@ -119,21 +119,21 @@ use PPI::Structure::When        ();
 # Constructor
 
 sub new {
-	my $class = shift;
-	my $Token = PPI::Token::__LEXER__opens($_[0]) ? shift : return undef;
+        my $class = shift;
+        my $Token = PPI::Token::__LEXER__opens($_[0]) ? shift : return undef;
 
-	# Create the object
-	my $self = bless {
-		children => [],
-		start    => $Token,
-		}, $class;
+        # Create the object
+        my $self = bless {
+                children => [],
+                start    => $Token,
+                }, $class;
 
-	# Set the start braces parent link
-	Scalar::Util::weaken(
-		$_PARENT{Scalar::Util::refaddr $Token} = $self
-	);
+        # Set the start braces parent link
+        Scalar::Util::weaken(
+                $_PARENT{Scalar::Util::refaddr $Token} = $self
+        );
 
-	$self;
+        $self;
 }
 
 
@@ -186,21 +186,20 @@ sub finish { $_[0]->{finish} }
 =head2 braces
 
 The C<braces> method is a utility method which returns the brace type,
-regardless of whether has both braces defined, or just the starting
-brace, or just the ending brace.
+regardless of whether both or just one of the braces is defined.
 
-Returns on of the three strings C<'[]'>, C<'{}'>, or C<'()'>, or C<undef>
+Returns one of the three strings C<'[]'>, C<'{}'>, or C<'()'>, or C<undef>
 on error (primarily not having a start brace, as mentioned above).
 
 =cut
 
 sub braces {
-	my $self = $_[0]->{start} ? shift : return undef;
-	return {
-		'[' => '[]',
-		'(' => '()',
-		'{' => '{}',
-	}->{ $self->{start}->{content} };
+        my $self = $_[0]->{start} ? shift : return undef;
+        return {
+                '[' => '[]',
+                '(' => '()',
+                '{' => '{}',
+        }->{ $self->{start}->{content} };
 }
 
 =pod
@@ -218,7 +217,7 @@ for the braces, and does not recurse downwards.
 =cut
 
 sub complete {
-	!! ($_[0]->{start} and $_[0]->{finish});
+        !! ($_[0]->{start} and $_[0]->{finish});
 }
 
 
@@ -230,39 +229,39 @@ sub complete {
 
 # For us, the "elements" concept includes the brace tokens
 sub elements {
-	my $self = shift;
+        my $self = shift;
 
-	if ( wantarray ) {
-		# Return a list in array context
-		return ( $self->{start} || (), @{$self->{children}}, $self->{finish} || () );
-	} else {
-		# Return the number of elements in scalar context.
-		# This is memory-cheaper than creating another big array
-		return scalar(@{$self->{children}})
-			+ ($self->{start}  ? 1 : 0)
-			+ ($self->{finish} ? 1 : 0);
-	}
+        if ( wantarray ) {
+                # Return a list in array context
+                return ( $self->{start} || (), @{$self->{children}}, $self->{finish} || () );
+        } else {
+                # Return the number of elements in scalar context.
+                # This is memory-cheaper than creating another big array
+                return scalar(@{$self->{children}})
+                        + ($self->{start}  ? 1 : 0)
+                        + ($self->{finish} ? 1 : 0);
+        }
 }
 
 # For us, the first element is probably the opening brace
 sub first_element {
-	# Technically, if we have no children and no opening brace,
-	# then the first element is the closing brace.
-	$_[0]->{start} or $_[0]->{children}->[0] or $_[0]->{finish};
+        # Technically, if we have no children and no opening brace,
+        # then the first element is the closing brace.
+        $_[0]->{start} or $_[0]->{children}->[0] or $_[0]->{finish};
 }
 
 # For us, the last element is probably the closing brace
 sub last_element {
-	# Technically, if we have no children and no closing brace,
-	# then the last element is the opening brace
-	$_[0]->{finish} or $_[0]->{children}->[-1] or $_[0]->{start};
+        # Technically, if we have no children and no closing brace,
+        # then the last element is the opening brace
+        $_[0]->{finish} or $_[0]->{children}->[-1] or $_[0]->{start};
 }
 
 # Location is same as the start token, if any
 sub location {
-	my $self  = shift;
-	my $first = $self->first_element or return undef;
-	$first->location;
+        my $self  = shift;
+        my $first = $self->first_element or return undef;
+        $first->location;
 }
 
 
@@ -274,55 +273,55 @@ sub location {
 
 # Get the full set of tokens, including start and finish
 sub tokens {
-	my $self = shift;
-	my @tokens = (
-		$self->{start}  || (),
-		$self->SUPER::tokens(@_),
-		$self->{finish} || (),
-		);
-	@tokens;
+        my $self = shift;
+        my @tokens = (
+                $self->{start}  || (),
+                $self->SUPER::tokens(@_),
+                $self->{finish} || (),
+                );
+        @tokens;
 }
 
 # Like the token method ->content, get our merged contents.
 # This will recurse downwards through everything
 ### Reimplement this using List::Utils stuff
 sub content {
-	my $self = shift;
-	my $content = $self->{start} ? $self->{start}->content : '';
-	foreach my $child ( @{$self->{children}} ) {
-		$content .= $child->content;
-	}
-	$content .= $self->{finish}->content if $self->{finish};
-	$content;
+        my $self = shift;
+        my $content = $self->{start} ? $self->{start}->content : '';
+        foreach my $child ( @{$self->{children}} ) {
+                $content .= $child->content;
+        }
+        $content .= $self->{finish}->content if $self->{finish};
+        $content;
 }
 
 # Is the structure completed
 sub _complete {
-	!! ( defined $_[0]->{finish} );
+        !! ( defined $_[0]->{finish} );
 }
 
 # You can insert either another structure, or a token
 sub insert_before {
-	my $self    = shift;
-	my $Element = _INSTANCE(shift, 'PPI::Element') or return undef;
-	if ( $Element->isa('PPI::Structure') ) {
-		return $self->__insert_before($Element);
-	} elsif ( $Element->isa('PPI::Token') ) {
-		return $self->__insert_before($Element);
-	}
-	'';
+        my $self    = shift;
+        my $Element = _INSTANCE(shift, 'PPI::Element') or return undef;
+        if ( $Element->isa('PPI::Structure') ) {
+                return $self->__insert_before($Element);
+        } elsif ( $Element->isa('PPI::Token') ) {
+                return $self->__insert_before($Element);
+        }
+        '';
 }
 
 # As above, you can insert either another structure, or a token
 sub insert_after {
-	my $self    = shift;
-	my $Element = _INSTANCE(shift, 'PPI::Element') or return undef;
-	if ( $Element->isa('PPI::Structure') ) {
-		return $self->__insert_after($Element);
-	} elsif ( $Element->isa('PPI::Token') ) {
-		return $self->__insert_after($Element);
-	}
-	'';
+        my $self    = shift;
+        my $Element = _INSTANCE(shift, 'PPI::Element') or return undef;
+        if ( $Element->isa('PPI::Structure') ) {
+                return $self->__insert_after($Element);
+        } elsif ( $Element->isa('PPI::Token') ) {
+                return $self->__insert_after($Element);
+        }
+        '';
 }
 
 1;

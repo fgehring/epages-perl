@@ -1,0 +1,14 @@
+/srv/epages/eproot/Perl/bin/cpanfile-dump
+/srv/epages/eproot/Perl/bin/mymeta-cpanfile
+/srv/epages/eproot/Perl/lib/site_perl/Module/CPANfile.pm
+/srv/epages/eproot/Perl/lib/site_perl/Module/CPANfile/Environment.pm
+/srv/epages/eproot/Perl/lib/site_perl/Module/CPANfile/Prereq.pm
+/srv/epages/eproot/Perl/lib/site_perl/Module/CPANfile/Prereqs.pm
+/srv/epages/eproot/Perl/lib/site_perl/Module/CPANfile/Requirement.pm
+/srv/epages/eproot/Perl/lib/site_perl/cpanfile-faq.pod
+/srv/epages/eproot/Perl/lib/site_perl/cpanfile.pod
+/srv/epages/eproot/Perl/man/man1/cpanfile-dump.1
+/srv/epages/eproot/Perl/man/man1/mymeta-cpanfile.1
+/srv/epages/eproot/Perl/man/man3/Module::CPANfile.3
+/srv/epages/eproot/Perl/man/man3/cpanfile-faq.3
+/srv/epages/eproot/Perl/man/man3/cpanfile.3

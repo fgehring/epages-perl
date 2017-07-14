@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Warn 3"
-.TH Warn 3 "2011-02-24" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Warn 3 "2016-12-23" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -145,7 +145,7 @@ Test::Warn \- Perl extension to test methods for warnings
 \&  warning_like  {foo(\-dri => "/")} qr/unknown param/i, "an unknown parameter test";
 \&  warnings_like {bar(1,1)} [qr/width.*small/i, qr/height.*small/i];
 \&
-\&  warning_is    {foo()} {carped => "didn\*(Aqt found the right parameters"};
+\&  warning_is    {foo()} {carped => "didn\*(Aqt find the right parameters"};
 \&  warnings_like {foo()} [qr/undefined/,qr/undefined/,{carped => qr/no result/i}];
 \&
 \&  warning_like {foo(undef)}                 \*(Aquninitialized\*(Aq;
@@ -169,29 +169,30 @@ now would be the time to go take a look.
 .IX Subsection "FUNCTIONS"
 .IP "warning_is \s-1BLOCK\s0 \s-1STRING\s0, \s-1TEST_NAME\s0" 4
 .IX Item "warning_is BLOCK STRING, TEST_NAME"
-Tests that \s-1BLOCK\s0 gives exactly the one specified warning.
-The test fails if the \s-1BLOCK\s0 warns more then one times or doesn't warn.
+Tests that \s-1BLOCK\s0 gives the specified warning exactly once.
+The test fails if the \s-1BLOCK\s0 warns more than once or does not warn at all.
 If the string is undef, 
 then the tests succeeds if the \s-1BLOCK\s0 doesn't give any warning.
-Another way to say that there aren't any warnings in the block,
-is \f(CW\*(C`warnings_are {foo()} [], "no warnings in"\*(C'\fR.
+Another way to say that there are no warnings in the block
+is \f(CW\*(C`warnings_are {foo()} [], "no warnings"\*(C'\fR.
 .Sp
-If you want to test for a warning given by carp,
-You have to write something like:
+If you want to test for a warning given by Carp,
+you have to write something like:
 \&\f(CW\*(C`warning_is {carp "msg"} {carped => \*(Aqmsg\*(Aq}, "Test for a carped warning"\*(C'\fR.
-The test will fail,
-if a \*(L"normal\*(R" warning is found instead of a \*(L"carped\*(R" one.
+The test will fail if a \*(L"normal\*(R" warning is found instead of a \*(L"carped\*(R" one.
 .Sp
 Note: \f(CW\*(C`warn "foo"\*(C'\fR would print something like \f(CW\*(C`foo at \-e line 1\*(C'\fR. 
-This method ignores everything after the at. That means, to match this warning
+This method ignores everything after the \*(L"at\*(R". Thus to match this warning
 you would have to call \f(CW\*(C`warning_is {warn "foo"} "foo", "Foo succeeded"\*(C'\fR.
 If you need to test for a warning at an exactly line,
-try better something like \f(CW\*(C`warning_like {warn "foo"} qr/at XYZ.dat line 5/\*(C'\fR.
+try something like \f(CW\*(C`warning_like {warn "foo"} qr/at XYZ.dat line 5/\*(C'\fR.
+.Sp
+Warn messages with a trailing newline (like \f(CW\*(C`warn "foo\en"\*(C'\fR) don't produce the \f(CW\*(C`at \-e line 1\*(C'\fR message by Perl. Up to Test::Warn 0.30 such warning weren't supported by \f(CW\*(C`warning_is {warn "foo\en"} "foo\en"\*(C'\fR. Starting with version 0.31 they are supported, but also marked as experimental.
 .Sp
 warning_is and warning_are are only aliases to the same method.
 So you also could write
 \&\f(CW\*(C`warning_is {foo()} [], "no warning"\*(C'\fR or something similar.
-I decided to give two methods to have some better readable method names.
+I decided to give two methods the same name to improve readability.
 .Sp
 A true value is returned if the test succeeds, false otherwise.
 .Sp
@@ -199,28 +200,28 @@ The test name is optional, but recommended.
 .IP "warnings_are \s-1BLOCK\s0 \s-1ARRAYREF\s0, \s-1TEST_NAME\s0" 4
 .IX Item "warnings_are BLOCK ARRAYREF, TEST_NAME"
 Tests to see that \s-1BLOCK\s0 gives exactly the specified warnings.
-The test fails if the \s-1BLOCK\s0 warns a different number than the size of the ARRAYREf
-would have expected.
-If the \s-1ARRAYREF\s0 is equal to [], 
+The test fails if the warnings from \s-1BLOCK\s0 are not exactly the ones in \s-1ARRAYREF\s0.
+If the \s-1ARRAYREF\s0 is equal to [],
 then the test succeeds if the \s-1BLOCK\s0 doesn't give any warning.
 .Sp
 Please read also the notes to warning_is as these methods are only aliases.
 .Sp
-If you want more than one tests for carped warnings look that way:
+If you want more than one test for carped warnings, try this:
 \&\f(CW\*(C`warnings_are {carp "c1"; carp "c2"} {carped =\*(C'\fR ['c1','c2'];> or
 \&\f(CW\*(C`warnings_are {foo()} ["Warning 1", {carped =\*(C'\fR [\*(L"Carp 1\*(R", \*(L"Carp 2\*(R"]}, \*(L"Warning 2\*(R"]>.
-Note that \f(CW\*(C`{carped =\*(C'\fR ...}> has always to be a hash ref.
+Note that \f(CW\*(C`{carped =\*(C'\fR ...}> must always be a hash ref.
 .IP "warning_like \s-1BLOCK\s0 \s-1REGEXP\s0, \s-1TEST_NAME\s0" 4
 .IX Item "warning_like BLOCK REGEXP, TEST_NAME"
-Tests that \s-1BLOCK\s0 gives exactly one warning and it can be matched to the given regexp.
+Tests that \s-1BLOCK\s0 gives exactly one warning and it can be matched by
+the given regexp.
 If the string is undef, 
-then the tests succeeds iff the \s-1BLOCK\s0 doesn't give any warning.
+then the tests succeeds if the \s-1BLOCK\s0 doesn't give any warning.
 .Sp
-The \s-1REGEXP\s0 is matched after the whole warn line,
-which consists in general of \*(L"\s-1WARNING\s0 at _\|_FILE_\|_ line _\|_LINE_\|_\*(R".
-So you can check for a warning in at File Foo.pm line 5 with
+The \s-1REGEXP\s0 is matched against the whole warning line,
+which in general has the form \*(L"\s-1WARNING\s0 at _\|_FILE_\|_ line _\|_LINE_\|_\*(R".
+So you can check for a warning in the file Foo.pm on line 5 with
 \&\f(CW\*(C`warning_like {bar()} qr/at Foo.pm line 5/, "Testname"\*(C'\fR.
-I don't know whether it's sensful to do such a test :\-(
+I don't know whether it makes sense to do such a test :\-(
 However, you should be prepared as a matching with 'at', 'file', '\ed'
 or similar will always pass. 
 Think to the qr/^foo/ if you want to test for warning \*(L"foo something\*(R" in file foo.pl.
@@ -246,17 +247,14 @@ The test name is optional, but recommended.
 Tests whether a \s-1BLOCK\s0 gives exactly one warning of the passed category.
 The categories are grouped in a tree,
 like it is expressed in perllexwarn.
-Note, that they have the hierarchical structure from perl 5.8.0,
-wich has a little bit changed to 5.6.1 or earlier versions
-(You can access the internal used tree with \f(CW$Test::Warn::Categorization::tree\fR, 
-although I wouldn't recommend it)
+Also see \*(L"\s-1BUGS\s0 \s-1AND\s0 \s-1LIMITATIONS\s0\*(R".
 .Sp
 Thanks to the grouping in a tree,
 it's simple possible to test for an 'io' warning,
 instead for testing for a 'closed|exec|layer|newline|pipe|unopened' warning.
 .Sp
-Note, that warnings occuring at compile time,
-can only be catched in an eval block. So
+Note, that warnings occurring at compile time,
+can only be caught in an eval block. So
 .Sp
 .Vb 3
 \&  warning_like {eval q/"$x"; $x;/} 
@@ -310,8 +308,15 @@ of code.
 \&\f(CW\*(C`warning_like\*(C'\fR,
 \&\f(CW\*(C`warnings_like\*(C'\fR,
 \&\f(CW\*(C`warnings_exist\*(C'\fR by default.
-.SH "BUGS"
-.IX Header "BUGS"
+.SH "BUGS AND LIMITATIONS"
+.IX Header "BUGS AND LIMITATIONS"
+Category check is done as qr/category_name/. In some case this works, like for
+category 'uninitialized'. For 'utf8' it does not work. Perl does not have a list
+of warnings, so it is not possible to generate one for Test::Warn.
+If you want to add a warning to a category, send a pull request. Modifications
+should be done to \f(CW%warnings_in_category\fR. You should look into perl source to check
+how warning is looking exactly.
+.PP
 Please note that warnings with newlines inside are making a lot of trouble.
 The only sensible way to handle them is to use are the \f(CW\*(C`warning_like\*(C'\fR or
 \&\f(CW\*(C`warnings_like\*(C'\fR methods. Background for these problems is that there is no
@@ -330,12 +335,12 @@ tell me if you find a bug.
 Improve this documentation.
 .PP
 The code has some parts doubled \- especially in the test scripts.
-This is really awkward and has to be changed.
+This is really awkward and must be changed.
 .PP
-Please feel free to suggest me any improvements.
+Please feel free to suggest improvements.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-Have a look to the similar Test::Exception module. Test::Trap
+Have a look to the similar modules: Test::Exception, Test::Trap.
 .SH "THANKS"
 .IX Header "THANKS"
 Many thanks to Adrian Howard, chromatic and Michael G. Schwern,
@@ -347,7 +352,7 @@ Janek Schleicher, <bigj \s-1AT\s0 kamelfreund.de>
 .IX Header "COPYRIGHT AND LICENSE"
 Copyright 2002 by Janek Schleicher
 .PP
-Copyright 2007\-2011 by Alexandr Ciornii, <http://chorny.net/>
+Copyright 2007\-2014 by Alexandr Ciornii, <http://chorny.net/>
 .PP
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

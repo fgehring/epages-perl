@@ -1,15 +1,9 @@
 package HTML::Parser;
 
-# Copyright 1996-2009, Gisle Aas.
-# Copyright 1999-2000, Michael A. Chase.
-#
-# This library is free software; you can redistribute it and/or
-# modify it under the same terms as Perl itself.
-
 use strict;
 use vars qw($VERSION @ISA);
 
-$VERSION = "3.68";
+$VERSION = "3.72";
 
 require HTML::Entities;
 
@@ -32,53 +26,53 @@ sub init
     my %arg = @_;
     my $api_version = delete $arg{api_version} || (@_ ? 3 : 2);
     if ($api_version >= 4) {
-	require Carp;
-	Carp::croak("API version $api_version not supported " .
-		    "by HTML::Parser $VERSION");
+        require Carp;
+        Carp::croak("API version $api_version not supported " .
+                    "by HTML::Parser $VERSION");
     }
 
     if ($api_version < 3) {
-	# Set up method callbacks compatible with HTML-Parser-2.xx
-	$self->handler(text    => "text",    "self,text,is_cdata");
-	$self->handler(end     => "end",     "self,tagname,text");
-	$self->handler(process => "process", "self,token0,text");
-	$self->handler(start   => "start",
-		                  "self,tagname,attr,attrseq,text");
+        # Set up method callbacks compatible with HTML-Parser-2.xx
+        $self->handler(text    => "text",    "self,text,is_cdata");
+        $self->handler(end     => "end",     "self,tagname,text");
+        $self->handler(process => "process", "self,token0,text");
+        $self->handler(start   => "start",
+                                  "self,tagname,attr,attrseq,text");
 
-	$self->handler(comment =>
-		       sub {
-			   my($self, $tokens) = @_;
-			   for (@$tokens) {
-			       $self->comment($_);
-			   }
-		       }, "self,tokens");
+        $self->handler(comment =>
+                       sub {
+                           my($self, $tokens) = @_;
+                           for (@$tokens) {
+                               $self->comment($_);
+                           }
+                       }, "self,tokens");
 
-	$self->handler(declaration =>
-		       sub {
-			   my $self = shift;
-			   $self->declaration(substr($_[0], 2, -1));
-		       }, "self,text");
+        $self->handler(declaration =>
+                       sub {
+                           my $self = shift;
+                           $self->declaration(substr($_[0], 2, -1));
+                       }, "self,text");
     }
 
     if (my $h = delete $arg{handlers}) {
-	$h = {@$h} if ref($h) eq "ARRAY";
-	while (my($event, $cb) = each %$h) {
-	    $self->handler($event => @$cb);
-	}
+        $h = {@$h} if ref($h) eq "ARRAY";
+        while (my($event, $cb) = each %$h) {
+            $self->handler($event => @$cb);
+        }
     }
 
     # In the end we try to assume plain attribute or handler
     while (my($option, $val) = each %arg) {
-	if ($option =~ /^(\w+)_h$/) {
-	    $self->handler($1 => @$val);
-	}
-        elsif ($option =~ /^(text|start|end|process|declaration|comment)$/) {
-	    require Carp;
-	    Carp::croak("Bad constructor option '$option'");
+        if ($option =~ /^(\w+)_h$/) {
+            $self->handler($1 => @$val);
         }
-	else {
-	    $self->$option($val);
-	}
+        elsif ($option =~ /^(text|start|end|process|declaration|comment)$/) {
+            require Carp;
+            Carp::croak("Bad constructor option '$option'");
+        }
+        else {
+            $self->$option($val);
+        }
     }
 
     return $self;
@@ -93,13 +87,13 @@ sub parse_file
         # Assume $file is a filename
         local(*F);
         open(F, "<", $file) || return undef;
-	binmode(F);  # should we? good for byte counts
+        binmode(F);  # should we? good for byte counts
         $opened++;
         $file = *F;
     }
     my $chunk = '';
     while (read($file, $chunk, 512)) {
-	$self->parse($chunk) || last;
+        $self->parse($chunk) || last;
     }
     close($file) if $opened;
     $self->eof;
@@ -111,7 +105,7 @@ sub netscape_buggy_comment  # legacy
     my $self = shift;
     require Carp;
     Carp::carp("netscape_buggy_comment() is deprecated.  " .
-	       "Please use the strict_comment() method instead");
+               "Please use the strict_comment() method instead");
     my $old = !$self->strict_comment;
     $self->strict_comment(!shift) if @_;
     return $old;
@@ -218,13 +212,13 @@ This creates a new parser object with a text event handler subroutine
 that receives the original text with general entities decoded.
 
  $p = HTML::Parser->new(api_version => 3,
-			start_h => [ 'my_start', "self,tokens" ]);
+                        start_h => [ 'my_start', "self,tokens" ]);
 
 This creates a new parser object with a start event handler method
 that receives the $p and the tokens array.
 
  $p = HTML::Parser->new(api_version => 3,
-		        handlers => { text => [\@array, "event,text"],
+                        handlers => { text => [\@array, "event,text"],
                                       comment => [\@array, "event,text"],
                                     });
 
@@ -373,7 +367,7 @@ Empty element tags look like start tags, but end with the character
 sequence "/>" instead of ">".  When recognized by C<HTML::Parser> they
 cause an artificial end event in addition to the start event.  The
 C<text> for the artificial end event will be empty and the C<tokenpos>
-array will be undefined even though the the token array will have one
+array will be undefined even though the token array will have one
 element containing the tag name.
 
 =item $p->marked_sections
@@ -650,9 +644,7 @@ names are forced to lower case.
 General entities are decoded in the attribute values and
 one layer of matching quotes enclosing the attribute values is removed.
 
-The Unicode character set is assumed for entity decoding.  With Perl
-version 5.6 or earlier only the Latin-1 range is supported, and
-entities for characters outside the range 0..255 are left unchanged.
+The Unicode character set is assumed for entity decoding.
 
 =item C<@attr>
 
@@ -992,13 +984,13 @@ This is equivalent to the following method calls:
    $p->handler(process => "process", "self, token0, text");
    $p->handler(comment =>
              sub {
-		 my($self, $tokens) = @_;
-		 for (@$tokens) {$self->comment($_);}},
+                 my($self, $tokens) = @_;
+                 for (@$tokens) {$self->comment($_);}},
              "self, tokens");
    $p->handler(declaration =>
              sub {
-		 my $self = shift;
-		 $self->declaration(substr($_[0], 2, -1));},
+                 my $self = shift;
+                 $self->declaration(substr($_[0], 2, -1));},
              "self, text");
 
 Setting up these handlers can also be requested with the "api_version =>
@@ -1047,7 +1039,7 @@ parsing as soon as the title end tag is seen:
     my $self = shift;
     $self->handler(text => sub { print shift }, "dtext");
     $self->handler(end  => sub { shift->eof if shift eq "title"; },
-		           "tagname,self");
+                           "tagname,self");
   }
 
   my $p = HTML::Parser->new(api_version => 3);
@@ -1192,12 +1184,14 @@ The result of decoding will be a mix of encoded and decoded characters
 for any entities that expand to characters with code above 127.  This
 is not a good thing.
 
-The solution is to use the Encode::encode_utf8() on the data before
-feeding it to the $p->parse().  For $p->parse_file() pass a file that
-has been opened in ":utf8" mode.
+The recommended solution is to apply Encode::decode_utf8() on the data before
+feeding it to the $p->parse().  For $p->parse_file() pass a file that has been
+opened in ":utf8" mode.
 
-The parser can process raw undecoded UTF-8 sanely if the C<utf8_mode>
-is enabled or if the "attr", "@attr" or "dtext" argspecs is avoided.
+The alternative solution is to enable the C<utf8_mode> and not decode before
+passing strings to $p->parse().  The parser can process raw undecoded UTF-8
+sanely if the C<utf8_mode> is enabled, or if the "attr", "@attr" or "dtext"
+argspecs are avoided.
 
 =item Parsing string decoded with wrong endianness
 
@@ -1231,7 +1225,7 @@ be found at L<http://www.is-thought.co.uk/book/sgml-8.htm>.
 
 =head1 COPYRIGHT
 
- Copyright 1996-2008 Gisle Aas. All rights reserved.
+ Copyright 1996-2016 Gisle Aas. All rights reserved.
  Copyright 1999-2000 Michael A. Chase.  All rights reserved.
 
 This library is free software; you can redistribute it and/or

@@ -1,4 +1,4 @@
-# Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
+# Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,7 +10,7 @@ package Devel::Cover::Time;
 use strict;
 use warnings;
 
-our $VERSION = "0.79";
+our $VERSION = '1.25'; # VERSION
 
 use base "Devel::Cover::Criterion";
 
@@ -20,8 +20,7 @@ sub total       { 1 }
 sub percentage  { ${$_[0]} ? 100 : 0 }
 sub error       { 0 }
 
-sub calculate_summary
-{
+sub calculate_summary {
     my $self = shift;
     my ($db, $file) = @_;
 
@@ -29,8 +28,7 @@ sub calculate_summary
     $db->{summary}{Total}{time}{total} += $$self;
 }
 
-sub calculate_percentage
-{
+sub calculate_percentage {
     my $class = shift;
     my ($db, $s) = @_;
     my $t = $db->{summary}{Total}{time}{total};
@@ -44,6 +42,10 @@ __END__
 =head1 NAME
 
 Devel::Cover::Time - Code coverage metrics for Perl
+
+=head1 VERSION
+
+version 1.25
 
 =head1 SYNOPSIS
 
@@ -63,19 +65,15 @@ Module for storing time coverage information.
 
  my $db = Devel::Cover::DB->new(db => "my_coverage_db");
 
-Contructs the DB from the specified database.
+Constructs the DB from the specified database.
 
 =head1 BUGS
 
 Huh?
 
-=head1 VERSION
-
-Version 0.79 - 5th August 2011
-
 =head1 LICENCE
 
-Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
+Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

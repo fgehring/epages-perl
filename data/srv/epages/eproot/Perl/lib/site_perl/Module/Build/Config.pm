@@ -1,17 +1,17 @@
 package Module::Build::Config;
 
 use strict;
-use vars qw($VERSION);
-$VERSION = '0.4203';
+use warnings;
+our $VERSION = '0.4224';
 $VERSION = eval $VERSION;
 use Config;
 
 sub new {
   my ($pack, %args) = @_;
   return bless {
-		stack => {},
-		values => $args{values} || {},
-	       }, $pack;
+                stack => {},
+                values => $args{values} || {},
+               }, $pack;
 }
 
 sub get {

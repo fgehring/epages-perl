@@ -123,8 +123,8 @@
 .rm #[ #] #H #V #F C
 .\" ========================================================================
 .\"
-.IX Title "Time::Seconds 3"
-.TH Time::Seconds 3 "2011-01-09" "perl v5.12.3" "Perl Programmers Reference Guide"
+.IX Title "Seconds 3"
+.TH Seconds 3 "2015-10-20" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -159,9 +159,9 @@ Time::Seconds also exports the following constants:
 \&    ONE_WEEK
 \&    ONE_HOUR
 \&    ONE_MINUTE
-\&        ONE_MONTH
-\&        ONE_YEAR
-\&        ONE_FINANCIAL_MONTH
+\&    ONE_MONTH
+\&    ONE_YEAR
+\&    ONE_FINANCIAL_MONTH
 \&    LEAP_YEAR
 \&    NON_LEAP_YEAR
 .Ve
@@ -172,17 +172,20 @@ seconds only, so you cannot, for example, do this: \f(CW\*(C`print ONE_WEEK\->mi
 .IX Header "METHODS"
 The following methods are available:
 .PP
-.Vb 9
+.Vb 10
 \&    my $val = Time::Seconds\->new(SECONDS)
 \&    $val\->seconds;
 \&    $val\->minutes;
 \&    $val\->hours;
 \&    $val\->days;
 \&    $val\->weeks;
-\&        $val\->months;
-\&        $val\->financial_months; # 30 days
+\&    $val\->months;
+\&    $val\->financial_months; # 30 days
 \&    $val\->years;
+\&    $val\->pretty; # gives English representation of the delta
 .Ve
+.PP
+The usual arithmetic (+,\-,+=,\-=) is also available on the objects.
 .PP
 The methods make the assumption that there are 24 hours in a day, 7 days in
 a week, 365.24225 days in a year and 12 months in a year.
@@ -193,10 +196,13 @@ Matt Sergeant, matt@sergeant.org
 .PP
 Tobias Brox, tobiasb@tobiasb.funcom.com
 .PP
-Bali\*:XXzs Szabi\*:XX (dLux), dlux@kapu.hu
-.SH "LICENSE"
-.IX Header "LICENSE"
-Please see Time::Piece for the license.
+Bala\*'zs Szabo\*' (dLux), dlux@kapu.hu
+.SH "COPYRIGHT AND LICENSE"
+.IX Header "COPYRIGHT AND LICENSE"
+Copyright 2001, Larry Wall.
+.PP
+This module is free software, you may distribute it under the same terms
+as Perl.
 .SH "Bugs"
 .IX Header "Bugs"
 Currently the methods aren't as efficient as they could be, for reasons of

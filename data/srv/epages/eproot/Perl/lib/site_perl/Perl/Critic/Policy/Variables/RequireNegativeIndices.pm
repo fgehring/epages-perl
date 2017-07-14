@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/Variables/RequireNegativeIndices.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::Variables::RequireNegativeIndices;
 
 use 5.006001;
@@ -15,7 +8,7 @@ use Readonly;
 use Perl::Critic::Utils qw{ :severities };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -202,30 +195,26 @@ distribution.
 
 =head1 DESCRIPTION
 
-Conway points out that
+Perl treats a negative array subscript as an offset from the end. Given
+this, the preferred way to get the last element is C<$x[-1]>, not
+C<$x[$#x]> or C<$x[@x-1]>, and the preferred way to get the next-to-last
+is C<$x[-2]>, not C<$x[$#x-1> or C<$x[@x-2]>.
 
-    $arr[$#arr];
-    $arr[$#arr-1];
-    $arr[@arr-1];
-    $arr[@arr-2];
+The biggest argument against the non-preferred forms is that B<their
+semantics change> when the computed index becomes negative. If C<@x>
+contains at least two elements, C<$x[$#x-1]> and C<$x[@x-2]> are
+equivalent to C<$x[-2]>. But if it contains a single element,
+C<$x[$#x-1]> and C<$x[@x-2]> are both equivalent to C<$x[-1]>. Simply
+put, the preferred form is more likely to do what you actually want.
 
-are equivalent to
-
-    $arr[-1];
-    $arr[-2];
-    $arr[-1];
-    $arr[-2];
-
-and the latter are more readable, performant and maintainable.  The
-latter is because the programmer no longer needs to keep two variable
-names matched.
+As Conway points out, the preferred forms also perform better, are more
+readable, and are easier to maintain.
 
 This policy notices all of the simple forms of the above problem, but
 does not recognize any of these more complex examples:
 
     $some->[$data_structure]->[$#{$some->[$data_structure]} -1];
-    my $ref = \@arr;
-    $ref->[$#arr];
+    my $ref = \@arr; $ref->[$#arr];
 
 
 =head1 CONFIGURATION

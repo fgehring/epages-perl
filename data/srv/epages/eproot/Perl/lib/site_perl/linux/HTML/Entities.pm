@@ -34,9 +34,7 @@ character entities.  The module provides the following functions:
 =item decode_entities( $string, ... )
 
 This routine replaces HTML entities found in the $string with the
-corresponding Unicode character.  Under perl 5.6 and earlier only
-characters in the Latin-1 range are replaced. Unrecognized
-entities are left alone.
+corresponding Unicode character.  Unrecognized entities are left alone.
 
 If multiple strings are provided as argument they are each decoded
 separately and the same number of strings are returned.
@@ -148,7 +146,7 @@ require Exporter;
 @EXPORT = qw(encode_entities decode_entities _decode_entities);
 @EXPORT_OK = qw(%entity2char %char2entity encode_entities_numeric);
 
-$VERSION = "3.68";
+$VERSION = "3.69";
 sub Version { $VERSION; }
 
 require HTML::Parser;  # for fast XS implemented decode_entities
@@ -156,75 +154,75 @@ require HTML::Parser;  # for fast XS implemented decode_entities
 
 %entity2char = (
  # Some normal chars that have special meaning in SGML context
- amp    => '&',  # ampersand 
+ amp    => '&',  # ampersand
 'gt'    => '>',  # greater than
 'lt'    => '<',  # less than
  quot   => '"',  # double quote
  apos   => "'",  # single quote
 
  # PUBLIC ISO 8879-1986//ENTITIES Added Latin 1//EN//HTML
- AElig	=> chr(198),  # capital AE diphthong (ligature)
- Aacute	=> chr(193),  # capital A, acute accent
- Acirc	=> chr(194),  # capital A, circumflex accent
- Agrave	=> chr(192),  # capital A, grave accent
- Aring	=> chr(197),  # capital A, ring
- Atilde	=> chr(195),  # capital A, tilde
- Auml	=> chr(196),  # capital A, dieresis or umlaut mark
- Ccedil	=> chr(199),  # capital C, cedilla
- ETH	=> chr(208),  # capital Eth, Icelandic
- Eacute	=> chr(201),  # capital E, acute accent
- Ecirc	=> chr(202),  # capital E, circumflex accent
- Egrave	=> chr(200),  # capital E, grave accent
- Euml	=> chr(203),  # capital E, dieresis or umlaut mark
- Iacute	=> chr(205),  # capital I, acute accent
- Icirc	=> chr(206),  # capital I, circumflex accent
- Igrave	=> chr(204),  # capital I, grave accent
- Iuml	=> chr(207),  # capital I, dieresis or umlaut mark
- Ntilde	=> chr(209),  # capital N, tilde
- Oacute	=> chr(211),  # capital O, acute accent
- Ocirc	=> chr(212),  # capital O, circumflex accent
- Ograve	=> chr(210),  # capital O, grave accent
- Oslash	=> chr(216),  # capital O, slash
- Otilde	=> chr(213),  # capital O, tilde
- Ouml	=> chr(214),  # capital O, dieresis or umlaut mark
- THORN	=> chr(222),  # capital THORN, Icelandic
- Uacute	=> chr(218),  # capital U, acute accent
- Ucirc	=> chr(219),  # capital U, circumflex accent
- Ugrave	=> chr(217),  # capital U, grave accent
- Uuml	=> chr(220),  # capital U, dieresis or umlaut mark
- Yacute	=> chr(221),  # capital Y, acute accent
- aacute	=> chr(225),  # small a, acute accent
- acirc	=> chr(226),  # small a, circumflex accent
- aelig	=> chr(230),  # small ae diphthong (ligature)
- agrave	=> chr(224),  # small a, grave accent
- aring	=> chr(229),  # small a, ring
- atilde	=> chr(227),  # small a, tilde
- auml	=> chr(228),  # small a, dieresis or umlaut mark
- ccedil	=> chr(231),  # small c, cedilla
- eacute	=> chr(233),  # small e, acute accent
- ecirc	=> chr(234),  # small e, circumflex accent
- egrave	=> chr(232),  # small e, grave accent
- eth	=> chr(240),  # small eth, Icelandic
- euml	=> chr(235),  # small e, dieresis or umlaut mark
- iacute	=> chr(237),  # small i, acute accent
- icirc	=> chr(238),  # small i, circumflex accent
- igrave	=> chr(236),  # small i, grave accent
- iuml	=> chr(239),  # small i, dieresis or umlaut mark
- ntilde	=> chr(241),  # small n, tilde
- oacute	=> chr(243),  # small o, acute accent
- ocirc	=> chr(244),  # small o, circumflex accent
- ograve	=> chr(242),  # small o, grave accent
- oslash	=> chr(248),  # small o, slash
- otilde	=> chr(245),  # small o, tilde
- ouml	=> chr(246),  # small o, dieresis or umlaut mark
- szlig	=> chr(223),  # small sharp s, German (sz ligature)
- thorn	=> chr(254),  # small thorn, Icelandic
- uacute	=> chr(250),  # small u, acute accent
- ucirc	=> chr(251),  # small u, circumflex accent
- ugrave	=> chr(249),  # small u, grave accent
- uuml	=> chr(252),  # small u, dieresis or umlaut mark
- yacute	=> chr(253),  # small y, acute accent
- yuml	=> chr(255),  # small y, dieresis or umlaut mark
+ AElig  => chr(198),  # capital AE diphthong (ligature)
+ Aacute => chr(193),  # capital A, acute accent
+ Acirc  => chr(194),  # capital A, circumflex accent
+ Agrave => chr(192),  # capital A, grave accent
+ Aring  => chr(197),  # capital A, ring
+ Atilde => chr(195),  # capital A, tilde
+ Auml   => chr(196),  # capital A, dieresis or umlaut mark
+ Ccedil => chr(199),  # capital C, cedilla
+ ETH    => chr(208),  # capital Eth, Icelandic
+ Eacute => chr(201),  # capital E, acute accent
+ Ecirc  => chr(202),  # capital E, circumflex accent
+ Egrave => chr(200),  # capital E, grave accent
+ Euml   => chr(203),  # capital E, dieresis or umlaut mark
+ Iacute => chr(205),  # capital I, acute accent
+ Icirc  => chr(206),  # capital I, circumflex accent
+ Igrave => chr(204),  # capital I, grave accent
+ Iuml   => chr(207),  # capital I, dieresis or umlaut mark
+ Ntilde => chr(209),  # capital N, tilde
+ Oacute => chr(211),  # capital O, acute accent
+ Ocirc  => chr(212),  # capital O, circumflex accent
+ Ograve => chr(210),  # capital O, grave accent
+ Oslash => chr(216),  # capital O, slash
+ Otilde => chr(213),  # capital O, tilde
+ Ouml   => chr(214),  # capital O, dieresis or umlaut mark
+ THORN  => chr(222),  # capital THORN, Icelandic
+ Uacute => chr(218),  # capital U, acute accent
+ Ucirc  => chr(219),  # capital U, circumflex accent
+ Ugrave => chr(217),  # capital U, grave accent
+ Uuml   => chr(220),  # capital U, dieresis or umlaut mark
+ Yacute => chr(221),  # capital Y, acute accent
+ aacute => chr(225),  # small a, acute accent
+ acirc  => chr(226),  # small a, circumflex accent
+ aelig  => chr(230),  # small ae diphthong (ligature)
+ agrave => chr(224),  # small a, grave accent
+ aring  => chr(229),  # small a, ring
+ atilde => chr(227),  # small a, tilde
+ auml   => chr(228),  # small a, dieresis or umlaut mark
+ ccedil => chr(231),  # small c, cedilla
+ eacute => chr(233),  # small e, acute accent
+ ecirc  => chr(234),  # small e, circumflex accent
+ egrave => chr(232),  # small e, grave accent
+ eth    => chr(240),  # small eth, Icelandic
+ euml   => chr(235),  # small e, dieresis or umlaut mark
+ iacute => chr(237),  # small i, acute accent
+ icirc  => chr(238),  # small i, circumflex accent
+ igrave => chr(236),  # small i, grave accent
+ iuml   => chr(239),  # small i, dieresis or umlaut mark
+ ntilde => chr(241),  # small n, tilde
+ oacute => chr(243),  # small o, acute accent
+ ocirc  => chr(244),  # small o, circumflex accent
+ ograve => chr(242),  # small o, grave accent
+ oslash => chr(248),  # small o, slash
+ otilde => chr(245),  # small o, tilde
+ ouml   => chr(246),  # small o, dieresis or umlaut mark
+ szlig  => chr(223),  # small sharp s, German (sz ligature)
+ thorn  => chr(254),  # small thorn, Icelandic
+ uacute => chr(250),  # small u, acute accent
+ ucirc  => chr(251),  # small u, circumflex accent
+ ugrave => chr(249),  # small u, grave accent
+ uuml   => chr(252),  # small u, dieresis or umlaut mark
+ yacute => chr(253),  # small y, acute accent
+ yuml   => chr(255),  # small y, dieresis or umlaut mark
 
  # Some extra Latin 1 chars that are listed in the HTML3.2 draft (21-May-96)
  copy   => chr(169),  # copyright sign
@@ -441,27 +439,27 @@ sub encode_entities
     return undef unless defined $_[0];
     my $ref;
     if (defined wantarray) {
-	my $x = $_[0];
-	$ref = \$x;     # copy
+        my $x = $_[0];
+        $ref = \$x;     # copy
     } else {
-	$ref = \$_[0];  # modify in-place
+        $ref = \$_[0];  # modify in-place
     }
     if (defined $_[1] and length $_[1]) {
-	unless (exists $subst{$_[1]}) {
-	    # Because we can't compile regex we fake it with a cached sub
-	    my $chars = $_[1];
-	    $chars =~ s,(?<!\\)([]/]),\\$1,g;
-	    $chars =~ s,(?<!\\)\\\z,\\\\,;
-	    my $code = "sub {\$_[0] =~ s/([$chars])/\$char2entity{\$1} || num_entity(\$1)/ge; }";
-	    $subst{$_[1]} = eval $code;
-	    die( $@ . " while trying to turn range: \"$_[1]\"\n "
-	      . "into code: $code\n "
-	    ) if $@;
-	}
-	&{$subst{$_[1]}}($$ref);
+        unless (exists $subst{$_[1]}) {
+            # Because we can't compile regex we fake it with a cached sub
+            my $chars = $_[1];
+            $chars =~ s,(?<!\\)([]/]),\\$1,g;
+            $chars =~ s,(?<!\\)\\\z,\\\\,;
+            my $code = "sub {\$_[0] =~ s/([$chars])/\$char2entity{\$1} || num_entity(\$1)/ge; }";
+            $subst{$_[1]} = eval $code;
+            die( $@ . " while trying to turn range: \"$_[1]\"\n "
+              . "into code: $code\n "
+            ) if $@;
+        }
+        &{$subst{$_[1]}}($$ref);
     } else {
-	# Encode control chars, high bit chars and '<', '&', '>', ''' and '"'
-	$$ref =~ s/([^\n\r\t !\#\$%\(-;=?-~])/$char2entity{$1} || num_entity($1)/ge;
+        # Encode control chars, high bit chars and '<', '&', '>', ''' and '"'
+        $$ref =~ s/([^\n\r\t !\#\$%\(-;=?-~])/$char2entity{$1} || num_entity($1)/ge;
     }
     $$ref;
 }

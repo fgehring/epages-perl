@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::DEVELOPER 3"
-.TH Perl::Critic::DEVELOPER 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::DEVELOPER 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -161,7 +161,7 @@ PPI::Document tree and invokes each of the
 Perl::Critic::Policy subclasses at the
 appropriate node.  The Policy can inspect the node, look at the
 surrounding nodes, and do whatever else it wants.  If the Policy
-decides that that a coding standard has been violated, it returns one
+decides that a coding standard has been violated, it returns one
 or more Perl::Critic::Violation objects.
 If there are no violations, then the Policy returns nothing.
 .PP
@@ -952,7 +952,7 @@ An example parser (without enough error handling) for the above
 example declaration:
 .PP
 .Vb 1
-\&    use File::Slurp qw< slurp >;
+\&    use Path::Tiny;
 \&
 \&    use Perl::Critic::Exception::Configuration::Option::Policy::ParameterValue
 \&        qw{ throw_policy_value };
@@ -971,7 +971,7 @@ example declaration:
 \&                    message_suffix => \*(Aqis not readable.\*(Aq;
 \&            }
 \&
-\&            @thingies = slurp $config_string;
+\&            @thingies = path($config_string)\->slurp;
 \&        }
 \&
 \&        $self\->{_thingies} = \e@thingies;
@@ -1230,7 +1230,7 @@ only to say:
 .SH "TESTING YOUR POLICY"
 .IX Header "TESTING YOUR POLICY"
 The Perl::Critic distribution also contains a framework for testing your
-Policy.  See Test::Perl::Critic::Policy for the details.
+Policy.  See Perl::Critic::TestUtils for the details.
 .SH "HINT"
 .IX Header "HINT"
 When you're trying to figure out what \s-1PPI\s0 is going to hand you

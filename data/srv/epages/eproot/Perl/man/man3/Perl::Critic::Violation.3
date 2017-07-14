@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Violation 3"
-.TH Perl::Critic::Violation 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Violation 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -261,7 +261,8 @@ that created this Violation.
 .IX Item "source()"
 Returns the string of source code that caused this exception.  If the
 code spans multiple lines (e.g. multi-line statements, subroutines or
-other blocks), then only the first line will be returned.
+other blocks), then only the line containing the violation will be
+returned.
 .ie n .IP """element_class()""" 4
 .el .IP "\f(CWelement_class()\fR" 4
 .IX Item "element_class()"

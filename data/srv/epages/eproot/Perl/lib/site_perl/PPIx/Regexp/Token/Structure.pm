@@ -40,19 +40,20 @@ use base qw{ PPIx::Regexp::Token };
 use PPIx::Regexp::Constant qw{
     COOKIE_CLASS
     COOKIE_QUANT
+    COOKIE_REGEX_SET
     MINIMUM_PERL
     TOKEN_LITERAL
 };
 
 # Tokens we are responsible for making, under at least some
 # circumstances.
-use PPIx::Regexp::Token::Comment	();
-use PPIx::Regexp::Token::Modifier	();
-use PPIx::Regexp::Token::Backreference	();
-use PPIx::Regexp::Token::Backtrack	();
-use PPIx::Regexp::Token::Recursion	();
+use PPIx::Regexp::Token::Comment        ();
+use PPIx::Regexp::Token::Modifier       ();
+use PPIx::Regexp::Token::Backreference  ();
+use PPIx::Regexp::Token::Backtrack      ();
+use PPIx::Regexp::Token::Recursion      ();
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
 # Return true if the token can be quantified, and false otherwise
 
@@ -62,6 +63,29 @@ sub can_be_quantified {
     ref $self or return;
     return $quant{ $self->content() };
 };
+
+{
+
+    my %explanation = (
+        ''              => 'Match regexp',
+        '('             => 'Capture or grouping',
+        '(?['   => 'Extended character class',
+        ')'             => 'End capture or grouping',
+        '['             => 'Character class',
+        ']'             => 'End character class',
+        '])'    => 'End extended character class',
+        'm'             => 'Match regexp',
+        'qr'    => 'Regexp object definition',
+        's'     => 'Replace regexp with string or expression',
+        '{'             => 'Explicit quantifier',
+        '}'             => 'End explicit quantifier',
+    );
+
+    sub __explanation {
+        return \%explanation;
+    }
+
+}
 
 sub is_quantifier {
     my ( $self ) = @_;
@@ -81,12 +105,13 @@ sub is_quantifier {
     # generate the initial token object.
 
     my %perl_version_introduced = (
-	qr	=> '5.005',
+        qr      => '5.005',
+        '(?['   => '5.017008',
     );
 
     sub perl_version_introduced {
-	my ( $self ) = @_;
-	return $perl_version_introduced{ $self->content() } || MINIMUM_PERL;
+        my ( $self ) = @_;
+        return $perl_version_introduced{ $self->content() } || MINIMUM_PERL;
     }
 }
 
@@ -98,172 +123,210 @@ sub is_quantifier {
     # classes to make them into.
 
     my @paren_token = map {
-	[ $_ => $_->__PPIX_TOKEN__recognize() ]
+        [ $_ => $_->__PPIX_TOKEN__recognize() ]
     }
-	'PPIx::Regexp::Token::Comment',
-	'PPIx::Regexp::Token::Modifier',
-	'PPIx::Regexp::Token::Backreference',
-	'PPIx::Regexp::Token::Backtrack',
-	'PPIx::Regexp::Token::Recursion',
+        'PPIx::Regexp::Token::Comment',
+        'PPIx::Regexp::Token::Modifier',
+        'PPIx::Regexp::Token::Backreference',
+        'PPIx::Regexp::Token::Backtrack',
+        'PPIx::Regexp::Token::Recursion',
     ;
 
     sub __PPIX_TOKENIZER__regexp {
-	my ( $class, $tokenizer, $character ) = @_;
+        my ( undef, $tokenizer, $character ) = @_;
 
-	# We are not interested in anything but delimiters.
-	$delim{$character} or return;
+        # We are not interested in anything but delimiters.
+        $delim{$character} or return;
 
-	# Inside a character class, all the delimiters are normal characters
-	# except for the close square bracket.
-	if ( $tokenizer->cookie( COOKIE_CLASS ) ) {
-	    $character eq ']'
-		or return $tokenizer->make_token( 1, TOKEN_LITERAL );
-	}
+        # Inside a character class, all the delimiters are normal characters
+        # except for the close square bracket.
+        if ( $tokenizer->cookie( COOKIE_CLASS ) ) {
+            $character eq ']'
+                or return $tokenizer->make_token( 1, TOKEN_LITERAL );
+            $tokenizer->cookie( COOKIE_CLASS, undef );
+            return 1;
+        }
 
-	# Open parentheses have various interesting possibilities ...
-	if ( $character eq '(' ) {
+        # Open parentheses have various interesting possibilities ...
+        if ( $character eq '(' ) {
 
-	    # Sometimes the whole bunch of parenthesized characters seems
-	    # naturally to be a token.
-	    foreach ( @paren_token ) {
-		my ( $class, @recognize ) = @{ $_ };
-		foreach ( @recognize ) {
-		    my ( $regexp, $arg ) = @{ $_ };
-		    my $accept = $tokenizer->find_regexp( $regexp ) or next;
-		    return $tokenizer->make_token( $accept, $class, $arg );
-		}
-	    }
+            # Sometimes the whole bunch of parenthesized characters seems
+            # naturally to be a token.
+            foreach ( @paren_token ) {
+                my ( $class, @recognize ) = @{ $_ };
+                foreach ( @recognize ) {
+                    my ( $regexp, $arg ) = @{ $_ };
+                    my $accept = $tokenizer->find_regexp( $regexp ) or next;
+                    return $tokenizer->make_token( $accept, $class, $arg );
+                }
+            }
 
-	    # We expect certain tokens only after a left paren.
-	    $tokenizer->expect(
-		'PPIx::Regexp::Token::GroupType::Modifier',
-		'PPIx::Regexp::Token::GroupType::NamedCapture',
-		'PPIx::Regexp::Token::GroupType::Assertion',
-		'PPIx::Regexp::Token::GroupType::Code',
-		'PPIx::Regexp::Token::GroupType::BranchReset',
-		'PPIx::Regexp::Token::GroupType::Subexpression',
-		'PPIx::Regexp::Token::GroupType::Switch',
-	    );
+            # Modifier changes are local to this parenthesis group
+            $tokenizer->modifier_duplicate();
 
-	    # Modifier changes are local to this parenthesis group
-	    $tokenizer->modifier_duplicate();
+            # The regex-set functionality introduced with 5.17.8 is most
+            # conveniently handled by treating the initial '(?[' and
+            # final '])' as ::Structure tokens. Fortunately for us,
+            # perl5178delta documents that these may not have interior
+            # spaces.
 
-	    # Accept the parenthesis.
-	    return 1;
-	}
+            if ( my $accept = $tokenizer->find_regexp(
+                    qr{ \A [(] [?] [[] }smx     # ] ) - help for vim
+                )
+            ) {
+                $tokenizer->cookie( COOKIE_REGEX_SET, sub { return 1 } );
+                $tokenizer->modifier_modify( x => 1 );  # Implicitly /x
+                return $accept;
+            }
 
-	# Close parentheses end modifier localization
-	if ( $character eq ')' ) {
-	    $tokenizer->modifier_pop();
-	    return 1;
-	}
+            # We expect certain tokens only after a left paren.
+            $tokenizer->expect(
+                'PPIx::Regexp::Token::GroupType::Modifier',
+                'PPIx::Regexp::Token::GroupType::NamedCapture',
+                'PPIx::Regexp::Token::GroupType::Assertion',
+                'PPIx::Regexp::Token::GroupType::Code',
+                'PPIx::Regexp::Token::GroupType::BranchReset',
+                'PPIx::Regexp::Token::GroupType::Subexpression',
+                'PPIx::Regexp::Token::GroupType::Switch',
+            );
 
-	# Open curlys are complicated because they may or may not represent
-	# the beginning of a quantifier, depending on what comes before the
-	# close curly. So we set a cookie to monitor the token stream for
-	# interlopers. If all goes well, the right curly will find the
-	# cookie and know it is supposed to be a quantifier.
-	if ( $character eq '{' ) {
+            # Accept the parenthesis.
+            return 1;
+        }
 
-	    # If the prior token can not be quantified, all this is
-	    # unnecessary.
-	    $tokenizer->prior( 'can_be_quantified' )
-		or return 1;
+        # Close parentheses end modifier localization
+        if ( $character eq ')' ) {
+            $tokenizer->modifier_pop();
+            return 1;
+        }
 
-	    # We make our token now, before setting the cookie. Otherwise
-	    # the cookie has to deal with this token.
-	    my $token = $tokenizer->make_token( 1 );
+        # Open curlys are complicated because they may or may not represent
+        # the beginning of a quantifier, depending on what comes before the
+        # close curly. So we set a cookie to monitor the token stream for
+        # interlopers. If all goes well, the right curly will find the
+        # cookie and know it is supposed to be a quantifier.
+        if ( $character eq '{' ) {
 
-	    # A cookie for the next '}'.
-	    my $commas = 0;
-	    $tokenizer->cookie( COOKIE_QUANT, sub {
-		    my ( $tokenizer, $token ) = @_;
-		    $token or return 1;
+            # If the prior token can not be quantified, all this is
+            # unnecessary.
+            $tokenizer->prior_significant_token( 'can_be_quantified' )
+                or return 1;
 
-		    # Of literals, we accept exactly one comma provided it
-		    # is not immediately after a '{'. We also accept
-		    # anything that matches '\d';
-		    if ( $token->isa( TOKEN_LITERAL ) ) {
-			my $character = $token->content();
-			if ( $character eq ',' ) {
-			    $commas++ and return;
-			    return $tokenizer->prior( 'content' ) ne '{';
-			}
-			return $character =~ m/ \A \d \z /smx;
-		    }
+            # We make our token now, before setting the cookie. Otherwise
+            # the cookie has to deal with this token.
+            my $token = $tokenizer->make_token( 1 );
 
-		    # Since we do not know what is in an interpolation, we
-		    # trustingly accept it.
-		    if ( $token->isa( 'PPIx::Regexp::Token::Interpolation' )
-		    ) {
-			return 1;
-		    }
+            # A cookie for the next '}'.
+            my $commas = 0;
+            $tokenizer->cookie( COOKIE_QUANT, sub {
+                    my ( $tokenizer, $token ) = @_;
+                    $token or return 1;
 
-		    return;
-		},
-	    );
+                    # Of literals, we accept exactly one comma provided it
+                    # is not immediately after a '{'. We also accept
+                    # anything that matches '\d';
+                    if ( $token->isa( TOKEN_LITERAL ) ) {
+                        my $character = $token->content();
+                        if ( $character eq ',' ) {
+                            $commas++ and return;
+                            return $tokenizer->prior_significant_token(
+                                'content' ) ne '{';
+                        }
+                        return $character =~ m/ \A \d \z /smx;
+                    }
 
-	    return $token;
-	}
+                    # Since we do not know what is in an interpolation, we
+                    # trustingly accept it.
+                    if ( $token->isa( 'PPIx::Regexp::Token::Interpolation' )
+                    ) {
+                        return 1;
+                    }
 
-	# The close curly bracket is a little complicated because if the
-	# cookie posted by the left curly bracket is still around, we are a
-	# quantifier, otherwise not.
-	if ( $character eq '}' ) {
-	    $tokenizer->cookie( COOKIE_QUANT, undef )
-		or return 1;
-	    $tokenizer->prior( 'class' )->isa( __PACKAGE__ )
-		and return 1;
-	    my $token = $tokenizer->make_token( 1 );
-	    $token->{is_quantifier} = 1;
-	    return $token;
-	}
+                    return;
+                },
+            );
 
-	# The parse rules are different inside a character class, so we set
-	# another cookie. Sigh. If your tool is a hammer ...
-	if ( $character eq '[' ) {
+            return $token;
+        }
 
-	    # Set our cookie. Since it always returns 1, it does not matter
-	    # where in the following mess we set it.
-	    $tokenizer->cookie( COOKIE_CLASS, sub { return 1 } );
+        # The close curly bracket is a little complicated because if the
+        # cookie posted by the left curly bracket is still around, we are a
+        # quantifier, otherwise not.
+        if ( $character eq '}' ) {
+            $tokenizer->cookie( COOKIE_QUANT, undef )
+                or return 1;
+            $tokenizer->prior_significant_token( 'class' )->isa( __PACKAGE__ )
+                and return 1;
+            my $token = $tokenizer->make_token( 1 );
+            $token->{is_quantifier} = 1;
+            return $token;
+        }
 
-	    # Make our token now, since the easiest place to deal with the
-	    # beginning-of-character-class strangeness seems to be right
-	    # here.
-	    my @tokens = $tokenizer->make_token( 1 );
+        # The parse rules are different inside a character class, so we set
+        # another cookie. Sigh. If your tool is a hammer ...
+        if ( $character eq '[' ) {
 
-	    # Get the next character, returning tokens if there is none.
-	    defined ( $character = $tokenizer->peek() )
-		or return @tokens;
+            # Set our cookie. Since it always returns 1, it does not matter
+            # where in the following mess we set it.
+            $tokenizer->cookie( COOKIE_CLASS, sub { return 1 } );
 
-	    # If we have a caret, it is a negation operator. Make its token
-	    # and fetch the next character, returning if none.
-	    if ( $character eq '^' ) {
-		push @tokens, $tokenizer->make_token(
-		    1, 'PPIx::Regexp::Token::Operator' );
-		defined ( $character = $tokenizer->peek() )
-		    or return @tokens;
-	    }
+            # Make our token now, since the easiest place to deal with the
+            # beginning-of-character-class strangeness seems to be right
+            # here.
+            my @tokens = $tokenizer->make_token( 1 );
 
-	    # If we have a close square at this point, it is not the end of
-	    # the class, but just a literal. Make its token.
-	    $character eq ']'
-		and push @tokens, $tokenizer->make_token( 1, TOKEN_LITERAL );
+            # Get the next character, returning tokens if there is none.
+            defined ( $character = $tokenizer->peek() )
+                or return @tokens;
 
-	    # Return all tokens made.
-	    return @tokens;
-	}
-	# per perlop, the metas inside a [] are -]\^$.
-	# per perlop, the metas outside a [] are {}[]()^$.|*+?\
-	# The difference is that {}[().|*+? are not metas in [], but - is.
+            # If we have a caret, it is a negation operator. Make its token
+            # and fetch the next character, returning if none.
+            if ( $character eq '^' ) {
+                push @tokens, $tokenizer->make_token(
+                    1, 'PPIx::Regexp::Token::Operator' );
+                defined ( $character = $tokenizer->peek() )
+                    or return @tokens;
+            }
 
-	# On encountering our close bracket, we need to delete the cookie.
-	if ( $character eq ']' ) {
-	    $tokenizer->cookie( COOKIE_CLASS, undef );
-	    return 1;
-	}
+            # If we have a close square at this point, it is not the end of
+            # the class, but just a literal. Make its token.
+            $character eq ']'
+                and push @tokens, $tokenizer->make_token( 1, TOKEN_LITERAL );
 
-	return 1;
+            # Return all tokens made.
+            return @tokens;
+        }
+        # per perlop, the metas inside a [] are -]\^$.
+        # per perlop, the metas outside a [] are {}[]()^$.|*+?\
+        # The difference is that {}[().|*+? are not metas in [], but - is.
+
+        # Close bracket is complicated by the addition of regex sets.
+        # And more complicated by the fact that you can have an
+        # old-style character class inside a regex set. Fortunately they
+        # have not (yet!) permitted nested regex sets.
+        if ( $character eq ']' ) {
+
+            # If we find '])' and COOKIE_REGEX_SET is present, we have a
+            # regex set. We need to delete the cookie and accept both
+            # characters.
+            if ( ( my $accept = $tokenizer->find_regexp(
+                    # help vim - ( [
+                    qr{ \A []] [)] }smx
+                ) )
+                && $tokenizer->cookie( COOKIE_REGEX_SET )
+
+            ) {
+                $tokenizer->cookie( COOKIE_REGEX_SET, undef );
+                return $accept;
+            }
+
+            # Otherwise we assume we're in a bracketed character class,
+            # delete the cookie, and accept the close bracket.
+            $tokenizer->cookie( COOKIE_CLASS, undef );
+            return 1;
+        }
+
+        return 1;
     }
 
 }
@@ -292,7 +355,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

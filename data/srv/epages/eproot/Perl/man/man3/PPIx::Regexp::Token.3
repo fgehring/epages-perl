@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPIx::Regexp::Token 3"
-.TH PPIx::Regexp::Token 3 "2011-04-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPIx::Regexp::Token 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -153,22 +153,21 @@ PPIx::Regexp::Token::Greediness,
 PPIx::Regexp::Token::GroupType,
 PPIx::Regexp::Token::Literal,
 PPIx::Regexp::Token::Modifier,
+PPIx::Regexp::Token::NoOp,
 PPIx::Regexp::Token::Operator,
 PPIx::Regexp::Token::Quantifier,
 PPIx::Regexp::Token::Reference,
 PPIx::Regexp::Token::Structure,
-PPIx::Regexp::Token::Unknown,
-PPIx::Regexp::Token::Unmatched and
-PPIx::Regexp::Token::Whitespace.
+PPIx::Regexp::Token::Unknown and
+PPIx::Regexp::Token::Unmatched.
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 This class represents the base of the class hierarchy for tokens in the
 PPIx::Regexp package.
 .SH "METHODS"
 .IX Header "METHODS"
-This class provides the following public methods. Methods not documented
-here are private, and unsupported in the sense that the author reserves
-the right to change or remove them without notice.
+This class provides no public methods beyond those provided by its
+superclass.
 .SH "SUPPORT"
 .IX Header "SUPPORT"
 Support is by the author. Please file bug reports at
@@ -178,7 +177,7 @@ Support is by the author. Please file bug reports at
 Thomas R. Wyant, \s-1III\s0 \fIwyant at cpan dot org\fR
 .SH "COPYRIGHT AND LICENSE"
 .IX Header "COPYRIGHT AND LICENSE"
-Copyright (C) 2009\-2011 by Thomas R. Wyant, \s-1III\s0
+Copyright (C) 2009\-2017 by Thomas R. Wyant, \s-1III\s0
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

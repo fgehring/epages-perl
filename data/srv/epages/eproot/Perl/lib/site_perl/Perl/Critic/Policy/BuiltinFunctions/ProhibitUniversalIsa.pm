@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/BuiltinFunctions/ProhibitUniversalIsa.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::BuiltinFunctions::ProhibitUniversalIsa;
 
 use 5.006001;
@@ -15,7 +8,7 @@ use Readonly;
 use Perl::Critic::Utils qw{ :severities :classification };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -26,7 +19,7 @@ Readonly::Scalar my $EXPL => q{Use eval{$obj->isa($pkg)} instead};  ## no critic
 
 sub supported_parameters { return ()                     }
 sub default_severity     { return $SEVERITY_MEDIUM       }
-sub default_themes       { return qw( core maintenance ) }
+sub default_themes       { return qw( core maintenance certrule ) }
 sub applies_to           { return 'PPI::Token::Word'     }
 
 #-----------------------------------------------------------------------------

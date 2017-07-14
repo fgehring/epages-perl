@@ -1,15 +1,11 @@
 # Generated from XSLoader.pm.PL (resolved %Config::Config value)
+# This file is unique for every OS
 
 package XSLoader;
 
-$VERSION = "0.10";
+$VERSION = "0.24";
 
 #use strict;
-
-# enable debug/trace messages from DynaLoader perl code
-# $dl_debug = $ENV{PERL_DL_DEBUG} || 0 unless defined $dl_debug;
-
-  my $dl_dlext = 'so';
 
 package DynaLoader;
 
@@ -22,24 +18,53 @@ package XSLoader;
 sub load {
     package DynaLoader;
 
-    die q{XSLoader::load('Your::Module', $Your::Module::VERSION)} unless @_;
+    my ($caller, $modlibname) = caller();
+    my $module = $caller;
 
-    my($module) = $_[0];
+    if (@_) {
+        $module = $_[0];
+    } else {
+        $_[0] = $module;
+    }
 
     # work with static linking too
     my $boots = "$module\::bootstrap";
     goto &$boots if defined &$boots;
 
-    goto retry unless $module and defined &dl_load_file;
+    goto \&XSLoader::bootstrap_inherit unless $module and defined &dl_load_file;
 
     my @modparts = split(/::/,$module);
     my $modfname = $modparts[-1];
 
     my $modpname = join('/',@modparts);
-    my $modlibname = (caller())[1];
-    my $c = @modparts;
-    $modlibname =~ s,[\\/][^\\/]+$,, while $c--;	# Q&D basename
-    my $file = "$modlibname/auto/$modpname/$modfname.$dl_dlext";
+    my $c = () = split(/::/,$caller,-1);
+    $modlibname =~ s,[\\/][^\\/]+$,, while $c--;    # Q&D basename
+    # Does this look like a relative path?
+    if ($modlibname !~ m{^/}) {
+        # Someone may have a #line directive that changes the file name, or
+        # may be calling XSLoader::load from inside a string eval.  We cer-
+        # tainly do not want to go loading some code that is not in @INC,
+        # as it could be untrusted.
+        #
+        # We could just fall back to DynaLoader here, but then the rest of
+        # this function would go untested in the perl core, since all @INC
+        # paths are relative during testing.  That would be a time bomb
+        # waiting to happen, since bugs could be introduced into the code.
+        #
+        # So look through @INC to see if $modlibname is in it.  A rela-
+        # tive $modlibname is not a common occurrence, so this block is
+        # not hot code.
+        FOUND: {
+            for (@INC) {
+                if ($_ eq $modlibname) {
+                    last FOUND;
+                }
+            }
+            # Not found.  Fall back to DynaLoader.
+            goto \&XSLoader::bootstrap_inherit;
+        }
+    }
+    my $file = "$modlibname/auto/$modpname/$modfname.so";
 
 #   print STDERR "XSLoader::load for $module ($file)\n" if $dl_debug;
 
@@ -50,9 +75,10 @@ sub load {
 #       print STDERR "BS: $bs ($^O, $dlsrc)\n" if $dl_debug;
         eval { do $bs; };
         warn "$bs: $@\n" if $@;
+        goto \&XSLoader::bootstrap_inherit;
     }
 
-    goto retry if not -f $file or -s $bs;
+    goto \&XSLoader::bootstrap_inherit if not -f $file;
 
     my $bootname = "boot_$module";
     $bootname =~ s/\W/_/g;
@@ -67,17 +93,11 @@ sub load {
     # in this perl code simply because this was the last perl code
     # it executed.
 
-    my $libref = dl_load_file($file, 0) or do { 
+    my $libref = dl_load_file($file, 0) or do {
         require Carp;
         Carp::croak("Can't load '$file' for module $module: " . dl_error());
     };
     push(@DynaLoader::dl_librefs,$libref);  # record loaded object
-
-    my @unresolved = dl_undef_symbols();
-    if (@unresolved) {
-        require Carp;
-        Carp::carp("Undefined symbols present after loading $file: @unresolved\n");
-    }
 
     $boot_symbol_ref = dl_find_symbol($libref, $bootname) or do {
         require Carp;
@@ -92,23 +112,11 @@ sub load {
     # See comment block above
     push(@DynaLoader::dl_shared_objects, $file); # record files loaded
     return &$xs(@_);
-
-  retry:
-    my $bootstrap_inherit = DynaLoader->can('bootstrap_inherit') || 
-                            XSLoader->can('bootstrap_inherit');
-    goto &$bootstrap_inherit;
 }
 
-# Versions of DynaLoader prior to 5.6.0 don't have this function.
 sub bootstrap_inherit {
-    package DynaLoader;
-
-    my $module = $_[0];
-    local *DynaLoader::isa = *{"$module\::ISA"};
-    local @DynaLoader::isa = (@DynaLoader::isa, 'DynaLoader');
-    # Cannot goto due to delocalization.  Will report errors on a wrong line?
     require DynaLoader;
-    DynaLoader::bootstrap(@_);
+    goto \&DynaLoader::bootstrap_inherit;
 }
 
 1;
@@ -122,14 +130,14 @@ XSLoader - Dynamically load C libraries into Perl code
 
 =head1 VERSION
 
-Version 0.10
+Version 0.24
 
 =head1 SYNOPSIS
 
     package YourPackage;
-    use XSLoader;
+    require XSLoader;
 
-    XSLoader::load 'YourPackage', $YourPackage::VERSION;
+    XSLoader::load();
 
 =head1 DESCRIPTION
 
@@ -178,6 +186,13 @@ If no C<$VERSION> was specified on the C<bootstrap> line, the last line becomes
 
     XSLoader::load 'YourPackage';
 
+If the call to C<load> is from C<YourPackage>, then that can be further
+simplified to
+
+    XSLoader::load();
+
+as C<load> will use C<caller> to determine the package.
+
 =head2 Backward compatible boilerplate
 
 If you want to have your cake and eat it too, you need a more complicated
@@ -203,7 +218,7 @@ C<use XSLoader> by C<require>, so the compiler does not know that a function
 C<XSLoader::load()> is present.
 
 This boilerplate uses the low-overhead C<XSLoader> if present; if used with
-an antic Perl which has no C<XSLoader>, it falls back to using C<DynaLoader>.
+an antique Perl which has no C<XSLoader>, it falls back to using C<DynaLoader>.
 
 =head1 Order of initialization: early load()
 
@@ -218,18 +233,22 @@ in F<YourPackage.pm>) and XS code (defined in F<YourPackage.xs>).  If this
 Perl code makes calls into this XS code, and/or this XS code makes calls to
 the Perl code, one should be careful with the order of initialization.
 
-The call to C<XSLoader::load()> (or C<bootstrap()>) has three side effects:
+The call to C<XSLoader::load()> (or C<bootstrap()>) calls the module's
+bootstrap code. For modules build by F<xsubpp> (nearly all modules) this
+has three side effects:
 
 =over
 
 =item *
 
-if C<$VERSION> was specified, a sanity check is done to ensure that the
-versions of the F<.pm> and the (compiled) F<.xs> parts are compatible;
+A sanity check is done to ensure that the versions of the F<.pm> and the
+(compiled) F<.xs> parts are compatible. If C<$VERSION> was specified, this
+is used for the check. If not specified, it defaults to
+C<$XS_VERSION // $VERSION> (in the module's namespace)
 
 =item *
 
-the XSUBs are made accessible from Perl;
+the XSUBs are made accessible from Perl
 
 =item *
 
@@ -307,13 +326,7 @@ B<(W)> As the message says, some symbols stay undefined although the
 extension module was correctly loaded and initialised. The list of undefined
 symbols follows.
 
-=item C<XSLoader::load('Your::Module', $Your::Module::VERSION)>
-
-B<(F)> You tried to invoke C<load()> without any argument. You must supply
-a module name, and optionally its version.
-
 =back
-
 
 =head1 LIMITATIONS
 
@@ -326,6 +339,12 @@ In particular, this is applicable to the structure of C<@INC> used for testing
 not-yet-installed extensions.  This means that running uninstalled extensions
 may have much more overhead than running the same extensions after
 C<make install>.
+
+
+=head1 KNOWN BUGS
+
+The new simpler way to call C<XSLoader::load()> with no arguments at all
+does not work on Perl 5.8.4 and 5.8.5.
 
 
 =head1 BUGS
@@ -350,7 +369,7 @@ Previous maintainer was Michael G Schwern <schwern@pobox.com>.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright (C) 1990-2007 by Larry Wall and others.
+Copyright (C) 1990-2011 by Larry Wall and others.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

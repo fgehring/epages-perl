@@ -37,7 +37,24 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Token };
 
-our $VERSION = '0.020';
+use Carp qw{ confess };
+
+our $VERSION = '0.051';
+
+sub __new {
+    my ( $class, $content, %arg ) = @_;
+
+    defined $arg{error}
+        or confess 'Programming error - error argument required';
+
+    my $self = $class->SUPER::__new( $content, %arg )
+        or return;
+
+    $self->{error} = $arg{error};
+
+    return $self;
+}
+
 
 # Return true if the token can be quantified, and false otherwise
 sub can_be_quantified { return };
@@ -54,6 +71,17 @@ token.
 sub ordinal {
     my ( $self ) = @_;
     return ord $self->content();
+}
+
+sub __PPIX_ELEM__rebless {
+    my ( $class, $self, %arg ) = @_;
+    my $rslt = $class->SUPER::__PPIX_ELEM__rebless( $self, %arg );
+    unless ( defined( $self->{error} = $arg{error} ) ) {
+        Carp::cluck( 'Making unknown token with no error message' );
+        $self->{error} = 'Unspecified error';
+        $rslt++;
+    }
+    return $rslt;
 }
 
 # Since the lexer does not count these on the way in (because it needs
@@ -78,7 +106,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

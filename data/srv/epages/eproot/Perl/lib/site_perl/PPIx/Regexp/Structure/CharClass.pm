@@ -34,20 +34,30 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Structure };
 
+use PPIx::Regexp::Constant qw{
+    LITERAL_LEFT_CURLY_REMOVED_PHASE_2
+};
 use PPIx::Regexp::Util qw{ __instance };
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
-sub _new {
+sub __new {
     my ( $class, @args ) = @_;
     ref $class and $class = ref $class;
     my %brkt;
     $brkt{finish} = pop @args;
     $brkt{start} = shift @args;
     __instance( $args[0], 'PPIx::Regexp::Token::Operator' )
-	and $args[0]->content() eq '^'
-	and $brkt{type} = shift @args;
-    return $class->SUPER::_new( \%brkt, @args );
+        and $args[0]->content() eq '^'
+        and $brkt{type} = shift @args;
+    return $class->SUPER::__new( \%brkt, @args );
+}
+
+sub explain {
+    my ( $self ) = @_;
+    $self->negated()
+        and return 'Inverted character class';
+    return 'Character class';
 }
 
 =head2 negated
@@ -64,9 +74,13 @@ sub negated {
     return $self->type() ? 1 : 0;
 }
 
+sub __following_literal_left_curly_disallowed_in {
+    return LITERAL_LEFT_CURLY_REMOVED_PHASE_2;
+}
+
 # Called by the lexer to record the capture number.
 sub __PPIX_LEXER__record_capture_number {
-    my ( $self, $number ) = @_;
+    my ( undef, $number ) = @_;         # Invocant unused
     return $number;
 }
 
@@ -85,7 +99,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

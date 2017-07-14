@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Pod::Simple::PullParserToken 3"
-.TH Pod::Simple::PullParserToken 3 "2011-01-09" "perl v5.12.3" "Perl Programmers Reference Guide"
+.TH Pod::Simple::PullParserToken 3 "2016-11-30" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -138,16 +138,16 @@ Given a \f(CW$parser\fR that's an object of class Pod::Simple::PullParser
 .PP
 .Vb 4
 \&  while(my $token = $parser\->get_token) {
-\&    $DEBUG and print "Token: ", $token\->dump, "\en";
+\&    $DEBUG and print STDERR "Token: ", $token\->dump, "\en";
 \&    if($token\->is_start) {
 \&      ...access $token\->tagname, $token\->attr, etc...
 \&
 \&    } elsif($token\->is_text) {
 \&      ...access $token\->text, $token\->text_r, etc...
-\&    
+\&
 \&    } elsif($token\->is_end) {
 \&      ...access $token\->tagname...
-\&    
+\&
 \&    }
 \&  }
 .Ve
@@ -191,7 +191,7 @@ is useful for debugging, as in:
 .Sp
 .Vb 4
 \&  while(my $token = $parser\->get_token) {
-\&    $DEBUG and print "Token: ", $token\->dump, "\en";
+\&    $DEBUG and print STDERR "Token: ", $token\->dump, "\en";
 \&    ...
 \&  }
 .Ve
@@ -210,8 +210,8 @@ pod\-people@perl.org mail list. Send an empty email to
 pod\-people\-subscribe@perl.org to subscribe.
 .PP
 This module is managed in an open GitHub repository,
-http://github.com/theory/pod\-simple/ <http://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone git://github.com/theory/pod\-simple.git <git://github.com/theory/pod-simple.git> and send patches!
+https://github.com/perl\-pod/pod\-simple/ <https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone git://github.com/perl\-pod/pod\-simple.git <git://github.com/perl-pod/pod-simple.git> and send patches!
 .PP
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug\-pod\-simple@rt.cpan.org>.

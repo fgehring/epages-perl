@@ -27,8 +27,8 @@ useful.
 
 =head1 METHODS
 
-This class provides no public methods beyond those provided by its
-superclass.
+This class provides the following public methods beyond those provided
+by its superclass.
 
 =cut
 
@@ -39,10 +39,24 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Token };
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
 # Return true if the token can be quantified, and false otherwise
 # sub can_be_quantified { return };
+
+##=head2 is_case_sensitive
+##
+##This method returns true if the character class is case-sensitive (that
+##is, if it may match or not based on the case of the string being
+##matched), false (but defined) if it is not, and simply returns (giving
+##C<undef> in scalar context and an empty list in list context) if the
+##case-sensitivity can not be determined.
+##
+##=cut
+##
+##sub is_case_sensitive {
+##    return;
+##}
 
 1;
 
@@ -59,7 +73,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

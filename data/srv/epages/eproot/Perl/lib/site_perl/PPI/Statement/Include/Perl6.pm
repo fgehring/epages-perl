@@ -9,7 +9,7 @@ PPI::Statement::Include::Perl6 - Inline Perl 6 file section
 =head1 SYNOPSIS
 
   use v6-alpha;
-  
+
   grammar My::Grammar {
       ...
   }
@@ -43,8 +43,8 @@ use PPI::Statement::Include ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Statement::Include';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Statement::Include';
 }
 
 =pod
@@ -57,7 +57,7 @@ the "use v6...;" command.
 =cut
 
 sub perl6 {
-	$_[0]->{perl6};
+        $_[0]->{perl6};
 }
 
 1;

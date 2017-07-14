@@ -1,4 +1,4 @@
-# Copyright 2004-2011, Paul Johnson (pjcj@cpan.org)
+# Copyright 2004-2017, Paul Johnson (paul@pjcj.net)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,44 +10,38 @@ package Devel::Cover::Report::Sort;
 use strict;
 use warnings;
 
-our $VERSION = "0.79";
+our $VERSION = '1.25'; # VERSION
 
-use Devel::Cover::DB 0.79;
+use Devel::Cover::DB;
 
-sub print_sort
-{
+sub print_sort {
     my ($db, $options) = @_;
     my %runs;
     my @collected = grep $_ ne "time", @{$options->{coverage}};
-    # use Data::Dumper; print Dumper [$db->runs];
-    for my $r (sort {$a->{start} <=> $b->{start}} $db->runs)
-    {
+    # use Devel::Cover::Dumper; print Dumper [$db->runs];
+    for my $r (sort {$a->{start} <=> $b->{start}} $db->runs) {
         print "Run:          ", $r->run,  "\n";
         print "Perl version: ", $r->perl, "\n";
         print "OS:           ", $r->OS,   "\n";
         print "Start:        ", scalar gmtime $r->start  / 1e6, "\n";
         print "Finish:       ", scalar gmtime $r->finish / 1e6, "\n";
-        # use Data::Dumper; print Dumper $r;
+        # use Devel::Cover::Dumper; print Dumper $r;
 
         @{$runs{$r->run}}{"vec", "size"} = ("", 0);
         my $run = $runs{$r->run};
-        # use Data::Dumper; print Dumper $run;
+        # use Devel::Cover::Dumper; print Dumper $run;
         my $vec = $r->vec;
-        for my $file (@{$options->{file}})
-        {
+        for my $file (@{$options->{file}}) {
             # print "$file\n";
-            for my $criterion (@collected)
-            {
+            for my $criterion (@collected) {
                 my ($v, $sz) = @{$vec->{$file}{$criterion}}{"vec", "size"};
                 $sz |= 0;
                 printf "$file:%10s %5d: ", $criterion, $sz;
-                unless($sz)
-                {
+                unless($sz) {
                     print "\n";
                     next;
                 }
-                for (0 .. $sz - 1)
-                {
+                for (0 .. $sz - 1) {
                     print vec $v, $_, 1;
                     vec($run->{vec}, $run->{size}++, 1) = vec $v, $_, 1;
                 }
@@ -62,8 +56,7 @@ sub print_sort
     }
 }
 
-sub report
-{
+sub report {
     my ($pkg, $db, $options) = @_;
     print_sort($db, $options);
 }
@@ -74,7 +67,11 @@ __END__
 
 =head1 NAME
 
-Devel::Cover::Report::Sort - Report on runs in an optimal order
+Devel::Cover::Report::Sort - backend for Devel::Cover
+
+=head1 VERSION
+
+version 1.25
 
 =head1 SYNOPSIS
 
@@ -93,13 +90,9 @@ It is designed to be called from the C<cover> program.
 
 Huh?
 
-=head1 VERSION
-
-Version 0.79 - 5th August 2011
-
 =head1 LICENCE
 
-Copyright 2004-2011, Paul Johnson (pjcj@cpan.org)
+Copyright 2004-2017, Paul Johnson (paul@pjcj.net)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

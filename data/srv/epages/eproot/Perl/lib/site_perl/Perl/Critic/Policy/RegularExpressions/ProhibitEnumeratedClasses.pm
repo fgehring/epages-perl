@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/RegularExpressions/ProhibitEnumeratedClasses.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::RegularExpressions::ProhibitEnumeratedClasses;
 
 use 5.006001;
@@ -20,7 +13,7 @@ use Perl::Critic::Utils qw{ :booleans :severities hashify };
 
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -29,7 +22,7 @@ Readonly::Scalar my $EXPL => [248];
 
 Readonly::Array my @PATTERNS => (  # order matters: most to least specific
    [q{ },'\\t','\\r','\\n']      => ['\\s', '\\S'],
-   ['A-Z','a-z','_']             => ['\\w', '\\W'],
+   ['A-Z','a-z','0-9','_']       => ['\\w', '\\W'], # RT 69322
    ['A-Z','a-z']                 => ['[[:alpha:]]','[[:^alpha:]]'],
    ['A-Z']                       => ['[[:upper:]]','[[:^upper:]]'],
    ['a-z']                       => ['[[:lower:]]','[[:^lower:]]'],
@@ -154,7 +147,7 @@ B<C<[\t\r\n\f\ ]>> vs. B<C<\s>>
 
 B<C<[\t\r\n\ ]>> vs. B<C<\s>>   (because many people forget C<\f>)
 
-B<C<[A-Za-z_]>> vs. B<C<\w>>
+B<C<[A-Za-z0-9_]>> vs. B<C<\w>>
 
 B<C<[A-Za-z]>> vs. B<C<\p{IsAlphabetic}>>
 

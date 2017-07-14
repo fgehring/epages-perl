@@ -23,13 +23,13 @@ L<PPIx::Regexp::Token::Greediness|PPIx::Regexp::Token::Greediness>,
 L<PPIx::Regexp::Token::GroupType|PPIx::Regexp::Token::GroupType>,
 L<PPIx::Regexp::Token::Literal|PPIx::Regexp::Token::Literal>,
 L<PPIx::Regexp::Token::Modifier|PPIx::Regexp::Token::Modifier>,
+L<PPIx::Regexp::Token::NoOp|PPIx::Regexp::Token::NoOp>,
 L<PPIx::Regexp::Token::Operator|PPIx::Regexp::Token::Operator>,
 L<PPIx::Regexp::Token::Quantifier|PPIx::Regexp::Token::Quantifier>,
 L<PPIx::Regexp::Token::Reference|PPIx::Regexp::Token::Reference>,
 L<PPIx::Regexp::Token::Structure|PPIx::Regexp::Token::Structure>,
-L<PPIx::Regexp::Token::Unknown|PPIx::Regexp::Token::Unknown>,
-L<PPIx::Regexp::Token::Unmatched|PPIx::Regexp::Token::Unmatched> and
-L<PPIx::Regexp::Token::Whitespace|PPIx::Regexp::Token::Whitespace>.
+L<PPIx::Regexp::Token::Unknown|PPIx::Regexp::Token::Unknown> and
+L<PPIx::Regexp::Token::Unmatched|PPIx::Regexp::Token::Unmatched>.
 
 =head1 DESCRIPTION
 
@@ -38,9 +38,8 @@ L<PPIx::Regexp|PPIx::Regexp> package.
 
 =head1 METHODS
 
-This class provides the following public methods. Methods not documented
-here are private, and unsupported in the sense that the author reserves
-the right to change or remove them without notice.
+This class provides no public methods beyond those provided by its
+superclass.
 
 =cut
 
@@ -51,17 +50,30 @@ use warnings;
 
 use base qw{PPIx::Regexp::Element};
 
-our $VERSION = '0.020';
+use Carp qw{ confess };
+use PPIx::Regexp::Constant qw{ MINIMUM_PERL };
 
-sub _new {
-    my ( $class, $content ) = @_;
-    ref $class and $class = ref $class;
+our $VERSION = '0.051';
+
+use constant TOKENIZER_ARGUMENT_REQUIRED => 0;
+
+sub __new {
+    my ( $class, $content, %arg ) = @_;
+
+    not $class->TOKENIZER_ARGUMENT_REQUIRED()
+        or $arg{tokenizer}
+        or confess 'Programming error - tokenizer not provided';
 
     my $self = {
-	content => $content,
+        content => $content,
     };
 
-    bless $self, $class;
+    foreach my $key ( qw{ perl_version_introduced } ) {
+        defined $arg{$key}
+            and $self->{$key} = $arg{$key};
+    }
+
+    bless $self, ref $class || $class;
     return $self;
 }
 
@@ -70,14 +82,23 @@ sub content {
     return $self->{content};
 }
 
+sub perl_version_introduced {
+    my ( $self ) = @_;
+    return defined $self->{perl_version_introduced} ?
+    $self->{perl_version_introduced} :
+    MINIMUM_PERL;
+}
 
-# Called after the token is manufactured. The calling sequence is
-# $token->__PPIX_TOKEN__post_make( $tokenizer );
-sub __PPIX_TOKEN__post_make { return };
+sub unescaped_content {
+    my ( $self ) = @_;
+    my $content = $self->content();
+    $content =~ s/ \\ (?= . ) //smxg;
+    return $content;
+}
 
 # Called by the lexer once it has done its worst to all the tokens.
-# Called as a method with no arguments. The return is the number of
-# parse failures discovered when finalizing.
+# Called as a method with the lexer as argument. The return is the
+# number of parse failures discovered when finalizing.
 sub __PPIX_LEXER__finalize {
     return 0;
 }
@@ -97,7 +118,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

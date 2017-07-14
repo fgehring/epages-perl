@@ -34,7 +34,7 @@ each class is. See their pages for more details.
 To save some confusion, it's worth pointing out here that C<qr//> is
 B<not> a regular expression (which PPI takes to mean something that
 will actually examine or modify a string), but rather a quote-like
-operator that acts as a constructor for compiled L<Regexp> objects. 
+operator that acts as a constructor for compiled L<Regexp> objects.
 
 =head1 METHODS
 
@@ -47,8 +47,8 @@ use PPI::Token ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Token';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Token';
 }
 
 
@@ -68,7 +68,7 @@ performs the match.
 =cut
 
 sub get_match_string {
-	return $_[0]->_section_content( 0 );
+        return $_[0]->_section_content( 0 );
 }
 
 =pod
@@ -82,7 +82,7 @@ substitute, C<undef> is returned.
 =cut
 
 sub get_substitute_string {
-	return $_[0]->_section_content( 1 );
+        return $_[0]->_section_content( 1 );
 }
 
 =pod
@@ -94,7 +94,7 @@ The C<get_modifiers> method returns the modifiers of the regexp.
 =cut
 
 sub get_modifiers {
-	return $_[0]->_modifiers();
+        return $_[0]->_modifiers();
 }
 
 =pod
@@ -109,7 +109,7 @@ the second element (if any) is the delimiters of the substitute string
 =cut
 
 sub get_delimiters {
-	return $_[0]->_delimiters();
+        return $_[0]->_delimiters();
 }
 
 

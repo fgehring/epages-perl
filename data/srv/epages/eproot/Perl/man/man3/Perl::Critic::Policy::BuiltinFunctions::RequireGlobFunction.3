@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Policy::BuiltinFunctions::RequireGlobFunction 3"
-.TH Perl::Critic::Policy::BuiltinFunctions::RequireGlobFunction 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Policy::BuiltinFunctions::RequireGlobFunction 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -137,7 +137,7 @@ This Policy is part of the core Perl::Critic
 distribution.
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-Conway discourages the use of the \f(CW\*(C` <..\*(C'\fR > construct for globbing, as
+Conway discourages the use of the \f(CW\*(C`<..>\*(C'\fR construct for globbing, as
 it is easily confused with the angle bracket file input operator.
 Instead, he recommends the use of the \f(CW\*(C`glob()\*(C'\fR function as it makes
 it much more obvious what you're attempting to do.

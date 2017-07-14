@@ -2,17 +2,19 @@ package Devel::Cover::Report::Html_minimal;
 BEGIN {require 5.006}
 use strict;
 use warnings;
-use CGI;
+use HTML::Entities;
 use Getopt::Long;
-use Devel::Cover::DB 0.79;
-use Devel::Cover::Truth_Table 0.79;
+use Devel::Cover::DB;
+use Devel::Cover::Html_Common "launch";
+use Devel::Cover::Truth_Table;
 
-our $VERSION = "0.79";
+our $VERSION = '1.25'; # VERSION
+our $LVERSION = do { eval '$VERSION' || "0.001" };  # for development purposes
 
 #-------------------------------------------------------------------------------
 # Subroutine : get_coverage_for_line
 # Purpose    : Retreive all available data for requested metrics on a line.
-# Notes      : 
+# Notes      :
 #-------------------------------------------------------------------------------
 sub get_coverage_for_line {
     my ($options, $data, $line) = @_;
@@ -27,8 +29,8 @@ sub get_coverage_for_line {
 
 #-------------------------------------------------------------------------------
 # Subroutine : get_summary_for_file
-# Purpose    : 
-# Notes      : 
+# Purpose    :
+# Notes      :
 #-------------------------------------------------------------------------------
 sub get_summary_for_file {
     my $db   = shift;
@@ -40,13 +42,16 @@ sub get_summary_for_file {
     for my $c (@$show) {
         if (exists $data->{$c}) {
             $summary{$c} = {
-                percent => sprintf("%4.1f", $data->{$c}{percentage}),
-                ratio   => sprintf("%d / %d",
-                    $data->{$c}{covered} || 0, $data->{$c}{total} || 0),
+                percent => do {
+                    my $x = sprintf "%5.2f", $data->{$c}{percentage};
+                    chop $x;
+                    $x
+                },
+                ratio   => sprintf("%d / %d", $data->{$c}{covered} || 0,
+                                              $data->{$c}{total} || 0),
                 error   => $data->{$c}{error},
             };
-        }
-        else {
+        } else {
             $summary{$c} = {percent => 'n/a', ratio => undef, error => undef};
         }
     }
@@ -56,8 +61,8 @@ sub get_summary_for_file {
 
 #-------------------------------------------------------------------------------
 # Subroutine : get_showing_headers
-# Purpose    : 
-# Notes      : 
+# Purpose    :
+# Notes      :
 #-------------------------------------------------------------------------------
 sub get_showing_headers {
     my $db      = shift;
@@ -76,8 +81,8 @@ sub get_showing_headers {
 
 #-------------------------------------------------------------------------------
 # Subroutine : truth_table
-# Purpose    : 
-# Notes      : 
+# Purpose    :
+# Notes      :
 #-------------------------------------------------------------------------------
 sub truth_table {
     return if @_ > 16;
@@ -114,17 +119,14 @@ sub merge_lineops {
                 $ops[$_]{tt}->left_merge($ops[0]{tt});
                 $ops[0] = $ops[$_];
                 $rm = $_; last;
-            }
-            elsif ($ops[0]{expr} eq $ops[$_]{cvg}{right}) {
+            } elsif ($ops[0]{expr} eq $ops[$_]{cvg}{right}) {
                 $ops[$_]{tt}->right_merge($ops[0]{tt});
                 $ops[0] = $ops[$_];
                 $rm = $_; last;
-            }
-            elsif ($ops[$_]{expr} eq $ops[0]{cvg}{left}) {
+            } elsif ($ops[$_]{expr} eq $ops[0]{cvg}{left}) {
                 $ops[0]{tt}->left_merge($ops[$_]{tt});
                 $rm = $_; last;
-            }
-            elsif ($ops[$_]{expr} eq $ops[0]{cvg}{right}) {
+            } elsif ($ops[$_]{expr} eq $ops[0]{cvg}{right}) {
                 $ops[0]{tt}->right_merge($ops[$_]{tt});
                 $rm = $_; last;
             }
@@ -132,8 +134,7 @@ sub merge_lineops {
         if ($rm) {
             splice(@ops, $rm, 1);
             $rotations = 0;
-        }
-        else {
+        } else {
             # First op didn't merge with anything. Rotate @ops in hopes
             # of finding something that can be merged.
             unshift(@ops, pop @ops);
@@ -150,6 +151,7 @@ sub merge_lineops {
 #===============================================================================
 my %Filenames;
 my @class = qw'c0 c1 c2 c3';
+my $threshold = { c0 => 75, c1 => 90, c2 => 100 };
 
 #-------------------------------------------------------------------------------
 # Subroutine : bclass()
@@ -169,16 +171,16 @@ sub bclass {
 sub pclass {
     my ($p, $e) = @_;
     return $class[3] unless $e;
-    $p <  75 && return $class[0];
-    $p <  90 && return $class[1];
-    $p < 100 && return $class[2];
+    $p < $threshold->{c0} && return $class[0];
+    $p < $threshold->{c1} && return $class[1];
+    $p < $threshold->{c2} && return $class[2];
     $class[3]
 }
 
 #-------------------------------------------------------------------------------
 # Subroutine : get_coverage_report
-# Purpose    : 
-# Notes      : 
+# Purpose    :
+# Notes      :
 #-------------------------------------------------------------------------------
 sub get_coverage_report {
     my $type = shift;
@@ -212,7 +214,7 @@ sub _branch_report {
 #-------------------------------------------------------------------------------
 sub _condition_report {
     my $coverage = shift;
-    # use Data::Dumper; print STDERR Dumper $coverage;
+    # use Devel::Cover::Dumper; print STDERR Dumper $coverage;
 
     my @tables = truth_table(@{$coverage->{condition}});
     return unless @tables;
@@ -261,8 +263,8 @@ sub print_html_header {
      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <!--
-This file was generated by Devel::Cover Version 0.79
-Devel::Cover is copyright 2001-2011, Paul Johnson (pjcj\@cpan.org)
+This file was generated by Devel::Cover Version $LVERSION
+Devel::Cover is copyright 2001-2012, Paul Johnson (paul\@pjcj.net)
 Devel::Cover is free. It is licensed under the same terms as Perl itself.
 The latest version of Devel::Cover should be available from my homepage:
 http://www.pjcj.net
@@ -281,8 +283,8 @@ END_HTML
 
 #-------------------------------------------------------------------------------
 # Subroutine : print_summary
-# Purpose    : 
-# Notes      : 
+# Purpose    :
+# Notes      :
 #-------------------------------------------------------------------------------
 sub print_summary {
     my $fh       = shift;
@@ -310,8 +312,8 @@ END_HTML
 
 #-------------------------------------------------------------------------------
 # Subroutine : print_th
-# Purpose    : 
-# Notes      : 
+# Purpose    :
+# Notes      :
 #-------------------------------------------------------------------------------
 sub print_th {
     my ($fh, $th, $span) = @_;
@@ -325,8 +327,8 @@ sub print_th {
 
 #-------------------------------------------------------------------------------
 # Subroutine : get_link
-# Purpose    : 
-# Notes      : 
+# Purpose    :
+# Notes      :
 #-------------------------------------------------------------------------------
 sub get_link {
     my $file = shift;
@@ -351,20 +353,38 @@ sub print_summary_report {
 
     my $outfile = "$options->{outputdir}/$options->{option}{outputfile}";
 
-    print "Writing HTML output to $outfile ...\n" unless $options->{silent};
-
     open(my $fh, '>', $outfile)
         or warn("Unable to open file '$outfile' [$!]\n"), return;
 
     my ($show, $th) = get_showing_headers($db, $options);
     push @$show, 'total';
 
+    my $le = sub { ($_[0] >   0 ? "&lt;" : "=") . " $_[0]%" };
+    my $ge = sub { ($_[0] < 100 ? "&gt;" : "") . "= $_[0]%" };
+    my @c = ( $le->($options->{report_c0}), $le->($options->{report_c1}),
+              $le->($options->{report_c2}), $ge->($options->{report_c2}) );
+    my $date = do {
+        my ($sec, $min, $hour, $mday, $mon, $year) = localtime;
+        sprintf "%04d-%02d-%02d %02d:%02d:%02d",
+                $year + 1900, $mon + 1, $mday, $hour, $min, $sec
+    };
+    my $perl_v = $] < 5.010 ? $] : $^V;
+    my $os     = $^O;
+
     print_html_header($fh, $options->{option}{summarytitle});
+    # TODO - >= 100% doesn't look nice.  See also Html_basic.
     print $fh <<"END_HTML";
 <body>
 <h1>$options->{option}{summarytitle}</h1>
 <table>
-<tr><td class="h" align="right">Database:</td><td align="left">$db->{db}</td></tr>
+  <tr><td class="h" align="right">Database:</td><td align="left" colspan="4">$db->{db}</td></tr>
+  <tr><td class="h" align="right">Report Date:</td><td align="left" colspan="4">$date</td></tr>
+  <tr><td class="h" align="right">Perl Version:</td><td align="left" colspan="4">$perl_v</td></tr>
+  <tr><td class="h" align="right">OS:</td><td align="left" colspan="4">$os</td></tr>
+  <tr>
+    <td class="h" align="right">Thresholds:</td>
+    <td class="c0">$c[0]</td><td class="c1">$c[1]</td><td class="c2">$c[2]</td><td class="c3">$c[3]</td>
+  </tr>
 </table>
 <div><br/></div>
 <table>
@@ -379,8 +399,7 @@ END_HTML
         my $url = get_link($file);
         if ($url) {
             print $fh qq'<tr><td align="left"><a href="$url">$file</a></td>';
-        }
-        else {
+        } else {
             print $fh qq'<tr><td align="left">$file</td>';
         }
 
@@ -390,11 +409,10 @@ END_HTML
 
             if ($pc eq 'n/a' || $c eq 'time') {
                 $class = $popup = '';
-            }
-            else {
+            } else {
                 $class = sprintf(qq' class="%s"',
                                  pclass($pc, $summary->{$c}{error}));
-                $popup = sprintf(qq' title="%s"', $summary->{$c}{ratio});
+                $popup = sprintf(qq' title="%s"', $c . ': ' . $summary->{$c}{ratio});
                 if ($c =~ /branch|condition|subroutine/) {
                     $link = get_link($file, $c);
                 }
@@ -403,8 +421,7 @@ END_HTML
             if ($link) {
                 printf $fh qq'<td%s%s><a href="%s">%s</a></td>',
                     $class, $popup, $link, $pc;
-            }
-            else {
+            } else {
                 printf $fh qq'<td%s%s>%s</td>', $class, $popup, $pc;
             }
         }
@@ -412,25 +429,36 @@ END_HTML
     }
     print $fh "</table>\n</body>\n</html>\n";
     close($fh) or warn "Unable to close '$outfile' [$!]";
+
+    print "HTML output written to $outfile\n" unless $options->{silent};
+
 }
 
 
 #-------------------------------------------------------------------------------
 # Subroutine : escape_HTML
 # Purpose    : make source code web-safe
-# Notes      : 
+# Notes      :
 #-------------------------------------------------------------------------------
 sub escape_HTML {
     my $text = shift;
     chomp $text;
 
-    $text = CGI::escapeHTML($text);
+    $text = encode_entities($text);
+
+    # Do not allow FF in text
+    $text =~ tr/\x0c//d;
 
     # IE doesn't honor "white-space: pre" CSS
-    $text =~ s/^(\t+)/' ' x (8 * length $1)/se;
-    $text =~ s/^(\s+)/'&nbsp;' x length $1/se;
+    my @text = split m/\n/ => $text;
+    for (@text) {
+        # Expand all tabs to spaces
+        1 while s/\t+/' ' x (length($&) * 8 - length($`) % 8)/e;
+        # make multiple spaces be multiple spaces
+        s/(  +)/'&nbsp;' x length $1/ge;
+    }
 
-    return $text;
+    return join "\n" => @text;
 }
 
 #-------------------------------------------------------------------------------
@@ -455,10 +483,12 @@ sub print_file_report {
                   $db);
     print_th($out, ['line', @$th, 'code']);
 
+    my $autoloader = 0;
     while (my $sloc = <$in>) {
+        $autoloader ||= $sloc =~ /use\s+AutoLoader/;
 
         # Process stuff after __END__ or __DATA__ tokens
-        if ($sloc =~ /^__(END|DATA)__/) {
+        if (!$autoloader && $sloc =~ /^__(END|DATA)__/) {
             if ($opt->{option}{data}) {
                 # print all data in one cell
                 my ($i, $n) = ($., scalar @$th);
@@ -484,8 +514,7 @@ sub print_file_report {
                 print $out qq'<tr><td class="h">$i - $.</td><td colspan="$n"></td><td class="s"><pre>$sloc</pre></td></tr>\n';
                 # &nbsp; is IE empty cell hack
                 #print $out qq'<tr><td class="h">$i - $.</td><td colspan="$n">&nbsp;</td><td class="s"><pre>$sloc</pre></td></tr>\n';
-            }
-            else {
+            } else {
                 1 while (<$in> !~ /^=cut/);
             }
             next;
@@ -515,13 +544,12 @@ sub print_file_report {
                 if ($opt->{option}{unified} &&
                     ($c eq 'branch' || $c eq 'condition')) {
                     print $out '<div>', $m->{string}, '</div>';
-                }
-                else {
+                } else {
                     my $link;
                     if ($c =~ /branch|condition|subroutine/) {
                         $link = get_link($fin, $c, $.);
                     }
-    
+
                     no warnings "uninitialized";  # TODO - hack, get rid of this
                     my $text = '<div';
                     $text .= $m->{class} ? qq' class="$m->{class}"' : '';
@@ -631,8 +659,8 @@ sub print_condition_report {
 
 #-------------------------------------------------------------------------------
 # Subroutine : print_sub_report
-# Purpose    : 
-# Notes      : 
+# Purpose    :
+# Notes      :
 #-------------------------------------------------------------------------------
 sub print_sub_report {
     my ($db, $file, $opt) = @_;
@@ -668,12 +696,13 @@ sub print_sub_report {
 }
 
 
-sub get_options
-{
+sub get_options {
     my ($self, $opt) = @_;
     $opt->{option}{pod}          = 1;
     $opt->{option}{outputfile}   = "coverage.html";
     $opt->{option}{summarytitle} = "Coverage Summary";
+    $threshold->{$_} = $opt->{"report_$_"} for
+        grep { defined $opt->{"report_$_"} } qw( c0 c1 c2 );
     die "Invalid command line options" unless
         GetOptions($opt->{option},
                    qw(
@@ -682,6 +711,9 @@ sub get_options
                        pod!
                        summarytitle=s
                        unified!
+                       report_c0=s
+                       report_c1=s
+                       report_c2=s
                      ));
 }
 
@@ -715,14 +747,15 @@ sub report {
 
 =head1 NAME
 
-Devel::Cover::Report::Html_minimal - Backend for HTML reporting of coverage
-statistics
+Devel::Cover::Report::Html_minimal - HTML backend for Devel::Cover
+
+=head1 VERSION
+
+version 1.25
 
 =head1 SYNOPSIS
 
- use Devel::Cover::Report::Html_minimal;
-
- Devel::Cover::Report::Html_minimal->report($db, $options);
+ cover -report html_minimal
 
 =head1 DESCRIPTION
 
@@ -747,26 +780,26 @@ directory.
 
 =item pod
 
-Includes POD (and blank lines) in the file report. This is on by default.  It
+Includes POD (and blank lines) in the file report.  This is on by default.  It
 may be turned off with -nopod.
 
 =item data
 
-Includes text after the C<__DATA__> or C<__END__> tokens in the file report. By
+Includes text after the C<__DATA__> or C<__END__> tokens in the file report.  By
 default, this text is trimmed.
 
 Note: If your POD is after an C<__END__>, you have to specify 'data' to include
-it, not 'pod'. The 'pod' option only applies to POD before the C<__END__>.
+it, not 'pod'.  The 'pod' option only applies to POD before the C<__END__>.
 
 =item unified
 
-Generates a "unified" report for each file. The detailed data that normally
-appears in the auxilliary reports (branch, condition, etc.) is placed in the
-file report, and the auxilliarry reports are not generated.
+Generates a "unified" report for each file.  The detailed data that normally
+appears in the auxiliary reports (branch, condition, etc.) are placed in the
+file report, and the auxiliary reports are not generated.
 
 =item summarytitle
 
-Specify the tile of the summary.  The default is "Coverage Summary".
+Specify the title of the summary.  The default is "Coverage Summary".
 
 =back
 
@@ -774,13 +807,9 @@ Specify the tile of the summary.  The default is "Coverage Summary".
 
 Devel::Cover
 
-=head1 VERSION
-
-Version 0.79 - 5th August 2011
-
 =head1 LICENCE
 
-Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
+Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
 
 This software is free. It is licensed under the same terms as Perl itself.
 
@@ -802,46 +831,46 @@ __DATA__
 /* Note: default values use the color-safe web palette. */
 
 body {
-	font-family: sans-serif;
+        font-family: sans-serif;
 }
 
 h1 {
-	background-color: #3399ff;
-	border: solid 1px #999999;
-	padding: 0.2em;
-	-moz-border-radius: 10px;
+        background-color: #3399ff;
+        border: solid 1px #999999;
+        padding: 0.2em;
+        -moz-border-radius: 10px;
 }
 
 a {
-	color: #000000;
+        color: #000000;
 }
 a:visited {
-	color: #333333;
+        color: #333333;
 }
 
 table {
     border-collapse: collapse;
-	border-spacing: 0px;
+        border-spacing: 0px;
 }
 tr {
-	text-align : center;
-	vertical-align: top;
+        text-align : center;
+        vertical-align: top;
 }
 th,.h {
-	background-color: #cccccc;
-	border: solid 1px #333333;
+        background-color: #cccccc;
+        border: solid 1px #333333;
     padding: 0em 0.2em;
 }
 td {
-	border: solid 1px #cccccc;
+        border: solid 1px #cccccc;
 }
 
 /* source code */
 pre,.s {
-	text-align: left;
-	font-family: monospace;
-	white-space: pre;
-	padding: 0em 0.5em 0em 0.5em;
+        text-align: left;
+        font-family: monospace;
+        white-space: pre;
+        padding: 0em 0.5em 0em 0.5em;
 }
 
 /* Classes for color-coding coverage information:
@@ -852,18 +881,18 @@ pre,.s {
  */
 .c0, .c1, .c2, .c3 { text-align: right; }
 .c0 {
-	background-color: #ff9999;
-	border: solid 1px #cc0000;
+        background-color: #ff9999;
+        border: solid 1px #cc0000;
 }
 .c1 {
-	background-color: #ffcc99;
-	border: solid 1px #ff9933;
+        background-color: #ffcc99;
+        border: solid 1px #ff9933;
 }
 .c2 {
-	background-color: #ffff99;
-	border: solid 1px #cccc66;
+        background-color: #ffff99;
+        border: solid 1px #cccc66;
 }
 .c3 {
-	background-color: #99ff99;
-	border: solid 1px #009900;
+        background-color: #99ff99;
+        border: solid 1px #009900;
 }

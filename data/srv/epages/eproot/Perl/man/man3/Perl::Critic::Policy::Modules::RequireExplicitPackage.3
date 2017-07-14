@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Policy::Modules::RequireExplicitPackage 3"
-.TH Perl::Critic::Policy::Modules::RequireExplicitPackage 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Policy::Modules::RequireExplicitPackage 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -161,6 +161,21 @@ all files, including programs, then add the following to your
 \&    [Modules::RequireExplicitPackage]
 \&    exempt_scripts = 0
 .Ve
+.PP
+Some users may find it desirable to exempt the load of specific modules
+from this policy. For example, Perl does not support Unicode module
+names because of portability problems. Users who are not concerned about
+this and intend to use \f(CW\*(C`UTF\-8\*(C'\fR module names will need to specify
+\&\f(CW\*(C`use utf8;\*(C'\fR before the package declaration. To do this, add the
+following to your \fI.perlcriticrc\fR file
+.PP
+.Vb 2
+\&    [Modules::RequireExplicitPackage]
+\&    allow_import_of = utf8
+.Ve
+.PP
+The \f(CW\*(C`allow_import_of\*(C'\fR configuration option takes multiple module names,
+separated by spaces.
 .SH "IMPORTANT CHANGES"
 .IX Header "IMPORTANT CHANGES"
 This policy was formerly called \f(CW\*(C`ProhibitUnpackagedCode\*(C'\fR which

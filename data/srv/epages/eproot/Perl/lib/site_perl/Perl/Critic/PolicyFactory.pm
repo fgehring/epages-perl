@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/PolicyFactory.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::PolicyFactory;
 
 use 5.006001;
@@ -36,7 +29,7 @@ use Perl::Critic::Utils::Constants qw{ :profile_strictness };
 
 use Exception::Class;   # this must come after "use P::C::Exception::*"
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -78,7 +71,12 @@ sub import {
         }
     }
 
-    # In test mode, only load native policies, not third-party ones
+    # In test mode, only load native policies, not third-party ones.  So this
+    # filters out any policy that was loaded from within a directory called
+    # "blib".  During the usual "./Build test" process this works fine,
+    # but it doesn't work if you are using prove to test against the code
+    # directly in the lib/ directory.
+
     if ( $test_mode && any {m/\b blib \b/xms} @INC ) {
         @site_policy_names = _modules_from_blib( @site_policy_names );
 

@@ -33,10 +33,71 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Token };
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
 # Return true if the token can be quantified, and false otherwise
 sub can_be_quantified { return };
+
+{
+
+    my %explanation = (
+        ACCEPT  => 'Causes match to succeed at the point of the (*ACCEPT)',
+        COMMIT  => 'Causes match failure when backtracked into on failure',
+        FAIL    => 'Always fails, forcing backtrack',
+        MARK    => 'Name branches of alternation, target for (*SKIP)',
+        PRUNE   => 'Prevent backtracking past here on failure',
+        SKIP    => 'Like (*PRUNE) but also discards match to this point',
+        THEN    => 'Force next alternation on failure',
+    );
+
+    sub explain {
+        my ( $self ) = @_;
+        my $verb = $self->verb();
+        defined( my $expl = $explanation{$verb} )
+            or return $self->__no_explanation();
+        return $expl;
+    }
+
+    my %synonym = (
+        ''      => 'MARK',
+        F       => 'FAIL',
+    );
+
+=head2 arg
+
+This method returns the backtrack control argument specified by the
+element. This is the text after the first colon (C<':'>), or the empty
+string (C<''>) if none was specified.
+
+=cut
+
+    sub arg {
+        my ( $self ) = @_;
+        my $content = $self->content();
+        $content =~ s/ [^:]* //smx;     # (
+        $content =~ s/ \) //smx;
+        return $content;
+    }
+
+=head2 verb
+
+This method returns the backtrack control verb represented by the
+element. This is the text up to but not including the first colon
+(C<':'>) if any. If the element specifies C<''> or C<'F">, this method
+will return C<'MARK'> or C<'FAIL'>, respectively.
+
+=cut
+
+    sub verb {
+        my ( $self ) = @_;
+        my $content = $self->content();
+        $content =~ s/ \( \* //smx;
+        $content =~ s/ [:)] .* //smx;
+        defined( my $syn = $synonym{$content} )
+            or return $content;
+        return $syn;
+    }
+}
 
 sub perl_version_introduced {
     return '5.009005';
@@ -82,7 +143,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

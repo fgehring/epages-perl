@@ -27,8 +27,6 @@ represents a cast. In this case, an array dereference.
 There are no additional methods beyond those provided by the parent
 L<PPI::Token> and L<PPI::Element> classes.
 
-Got any ideas for methods? Submit a report to rt.cpan.org!
-
 =cut
 
 use strict;
@@ -36,8 +34,8 @@ use PPI::Token ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Token';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Token';
 }
 
 
@@ -48,7 +46,7 @@ BEGIN {
 
 # A cast is either % @ $ or $#
 sub __TOKENIZER__on_char {
-	$_[1]->_finalize_token->__TOKENIZER__on_char( $_[1] );
+        $_[1]->_finalize_token->__TOKENIZER__on_char( $_[1] );
 }
 
 1;

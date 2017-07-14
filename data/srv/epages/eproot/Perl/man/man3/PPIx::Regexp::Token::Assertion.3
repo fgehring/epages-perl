@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPIx::Regexp::Token::Assertion 3"
-.TH PPIx::Regexp::Token::Assertion 3 "2011-04-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPIx::Regexp::Token::Assertion 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -148,8 +148,14 @@ PPIx::Regexp::Token.
 .IX Header "DESCRIPTION"
 This class represents one of the simple assertions; that is, those that
 are not defined via parentheses. This includes the zero-width assertions
-\&\f(CW\*(C`^\*(C'\fR, \f(CW\*(C`$\*(C'\fR, \f(CW\*(C`\eb\*(C'\fR, \f(CW\*(C`\eB\*(C'\fR, \f(CW\*(C`\eA\*(C'\fR, \f(CW\*(C`\eZ\*(C'\fR, \f(CW\*(C`\ez\*(C'\fR and \f(CW\*(C`\eG\*(C'\fR, as well as the
-positive look-behind assertion \f(CW\*(C`\eK\*(C'\fR added in Perl 5.009005.
+\&\f(CW\*(C`^\*(C'\fR, \f(CW\*(C`$\*(C'\fR, \f(CW\*(C`\eb\*(C'\fR, \f(CW\*(C`\eB\*(C'\fR, \f(CW\*(C`\eA\*(C'\fR, \f(CW\*(C`\eZ\*(C'\fR, \f(CW\*(C`\ez\*(C'\fR and \f(CW\*(C`\eG\*(C'\fR, as well as:
+.IP "\(bu" 4
+The \f(CW\*(C`\ez\*(C'\fR assertion added in Perl 5.005,
+.IP "\(bu" 4
+The \f(CW\*(C`\eK\*(C'\fR assertion added in Perl 5.009005,
+.IP "\(bu" 4
+The \f(CW\*(C`\eb{gcb}\*(C'\fR assertion (and friends) added in Perl 5.021009.
+Similar braced constructions (like \f(CW\*(C`\eb{foo}\*(C'\fR) are unknown tokens.
 .SH "METHODS"
 .IX Header "METHODS"
 This class provides no public methods beyond those provided by its
@@ -163,7 +169,7 @@ Support is by the author. Please file bug reports at
 Thomas R. Wyant, \s-1III\s0 \fIwyant at cpan dot org\fR
 .SH "COPYRIGHT AND LICENSE"
 .IX Header "COPYRIGHT AND LICENSE"
-Copyright (C) 2009\-2011 by Thomas R. Wyant, \s-1III\s0
+Copyright (C) 2009\-2017 by Thomas R. Wyant, \s-1III\s0
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

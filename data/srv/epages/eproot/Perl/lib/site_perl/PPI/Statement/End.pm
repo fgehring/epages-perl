@@ -9,17 +9,17 @@ PPI::Statement::End - Content after the __END__ of a module
 =head1 SYNOPSIS
 
   # This is normal content
-  
+
   __END__
-  
-  This is part of an PPI::Statement::End statement
-  
+
+  This is part of a PPI::Statement::End statement
+
   =pod
-  
+
   This is not part of the ::End statement, it's POD
-  
+
   =cut
-  
+
   This is another PPI::Statement::End statement
 
 =head1 INHERITANCE
@@ -49,8 +49,8 @@ use PPI::Statement ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Statement';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Statement';
 }
 
 # Once we have an __END__ we're done

@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/Subroutines/ProtectPrivateSubs.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::Subroutines::ProtectPrivateSubs;
 
 use 5.006001;
@@ -20,7 +13,7 @@ use Perl::Critic::Utils qw<
 >;
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -36,7 +29,7 @@ sub supported_parameters {
             description     => 'Pattern that determines what a private subroutine is.',
             default_string  => '\b_\w+\b',  ## no critic (RequireInterpolationOfMetachars)
             behavior        => 'string',
-            parser          => \& _parse_private_name_regex,
+            parser          => \&_parse_private_name_regex,
         },
         {
             name            => 'allow',
@@ -91,7 +84,7 @@ sub supported_parameters {
 }
 
 sub default_severity     { return $SEVERITY_MEDIUM       }
-sub default_themes       { return qw( core maintenance ) }
+sub default_themes       { return qw( core maintenance certrule ) }
 sub applies_to           { return 'PPI::Token::Word'     }
 
 #-----------------------------------------------------------------------------
@@ -141,7 +134,7 @@ sub violates {
 sub _is_other_pkg_private_function {
     my ( $self, $elem ) = @_;
 
-    return if ! is_function_call($elem) && ! is_method_call($elem);
+    return if ! is_method_call($elem) && ! is_function_call($elem);
 
     my $private_name_regex = $self->{_private_name_regex};
     my $content = $elem->content();
@@ -168,7 +161,8 @@ sub _is_other_pkg_private_method {
     # sometimes the previous sib is a keyword, as in:
     # shift->_private_method();  This is typically used as
     # shorthand for "my $self=shift; $self->_private_method()"
-    return if $package eq 'shift' or $package eq '__PACKAGE__';
+    return if $package->content() eq 'shift'
+        or $package->content() eq '__PACKAGE__';
 
     # Maybe the user wanted to exempt this explicitly.
     return if $self->{_allow}{"${package}::$content"};

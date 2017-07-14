@@ -9,7 +9,7 @@ PPI::Statement::Data - The __DATA__ section of a file
 =head1 SYNOPSIS
 
   # Normal content
-  
+
   __DATA__
   This: data
   is: part
@@ -45,8 +45,8 @@ use PPI::Statement ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Statement';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Statement';
 }
 
 # Data is never complete

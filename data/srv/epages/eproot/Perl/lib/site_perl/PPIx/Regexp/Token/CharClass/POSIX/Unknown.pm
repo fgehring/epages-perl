@@ -9,7 +9,7 @@ use base qw{ PPIx::Regexp::Token::CharClass::POSIX };
 
 use PPIx::Regexp::Constant qw{ MINIMUM_PERL };
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
 sub perl_version_introduced {
 #   my ( $self ) = @_;
@@ -45,6 +45,8 @@ PPIx::Regexp::Token::CharClass::POSIX::Unknown - Represent an unknown or unsuppo
 C<PPIx::Regexp::Token::CharClass::POSIX::Unknown> is a
 L<PPIx::Regexp::Token::CharClass::POSIX|PPIx::Regexp::Token::CharClass::POSIX>.
 
+C<PPIx::Regexp::Token::CharClass::POSIX::Unknown> has no descendants.
+
 =head1 DESCRIPTION
 
 This class represents POSIX character classes which are recognized but
@@ -72,7 +74,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2010-2011 by Thomas R. Wyant, III
+Copyright (C) 2010-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

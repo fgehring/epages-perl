@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Policy::Subroutines::ProhibitUnusedPrivateSubroutines 3"
-.TH Perl::Critic::Policy::Subroutines::ProhibitUnusedPrivateSubroutines 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Policy::Subroutines::ProhibitUnusedPrivateSubroutines 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -176,6 +176,15 @@ in a space-delimited list to the \f(CW\*(C`allow\*(C'\fR option:
 These are added to the default list of exemptions from this policy. So the
 above allows \f(CW\*(C`sub _bar {}\*(C'\fR and \f(CW\*(C`sub _baz {}\*(C'\fR, even if they are not
 referred to in the module that defines them.
+.PP
+You can configure this policy not to check private subroutines declared in a
+file that uses one or more particular named modules.  This allows you to, for
+example, exclude unused private subroutine checking in classes that are roles.
+.PP
+.Vb 2
+\&    [Subroutines::ProhibitUnusedPrivateSubroutines]
+\&    skip_when_using = Moose::Role Moo::Role Role::Tiny
+.Ve
 .SH "HISTORY"
 .IX Header "HISTORY"
 This policy is derived from
@@ -185,6 +194,21 @@ which looks at the other side of the problem.
 .IX Header "BUGS"
 Does not forbid \f(CW\*(C`sub Foo::_foo{}\*(C'\fR because it does not know (and can not
 assume) what is in the \f(CW\*(C`Foo\*(C'\fR package.
+.PP
+Does not respect the scope caused by multiple packages in the same file.  For
+example a file:
+.PP
+.Vb 2
+\&    package Foo;
+\&    sub _is_private { print "A private sub!"; }
+\&
+\&    package Bar;
+\&    _is_private();
+.Ve
+.PP
+Will not trigger a violation even though \f(CW\*(C`Foo::_is_private\*(C'\fR is not called.
+Similarly, \f(CW\*(C`skip_when_using\*(C'\fR currently works on a \fIfile\fR level, not on a
+\&\fIpackage scope\fR level.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 Perl::Critic::Policy::Subroutines::ProtectPrivateSubs.

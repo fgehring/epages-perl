@@ -36,25 +36,28 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Element };
 
+use Carp;
 use List::Util qw{ max };
-use PPIx::Regexp::Constant qw{ MINIMUM_PERL };
+use PPIx::Regexp::Constant qw{ MINIMUM_PERL NODE_UNKNOWN };
 use PPIx::Regexp::Util qw{ __instance };
 use Scalar::Util qw{ refaddr };
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
-sub _new {
+use constant ELEMENT_UNKNOWN    => NODE_UNKNOWN;
+
+sub __new {
     my ( $class, @children ) = @_;
     ref $class and $class = ref $class;
     foreach my $elem ( @children ) {
-	__instance( $elem, 'PPIx::Regexp::Element' ) or return;
+        __instance( $elem, 'PPIx::Regexp::Element' ) or return;
     }
     my $self = {
-	children => \@children,
+        children => \@children,
     };
     bless $self, $class;
     foreach my $elem ( @children ) {
-	$elem->_parent( $self );
+        $elem->_parent( $self );
     }
     return $self;
 }
@@ -103,7 +106,7 @@ sub contains {
     my $addr = refaddr( $self );
 
     while ( $elem = $elem->parent() ) {
-	$addr == refaddr( $elem ) and return 1;
+        $addr == refaddr( $elem ) and return 1;
     }
 
     return;
@@ -132,7 +135,7 @@ C<PPIx::Regexp::Node> proper, it is the same as C<children()>.
  my $rslt = $node->find( 'Token::Literal' );
  my $rslt = $node->find( sub {
      return $_[1]->isa( 'PPIx::Regexp::Token::Literal' )
-	 && $_[1]->ordinal < ord(' ');
+         && $_[1]->ordinal < ord(' ');
      } );
 
 This method finds things.
@@ -158,9 +161,9 @@ sub _find_routine {
     ref $want eq 'CODE' and return $want;
     ref $want and return;
     $want =~ m/ \A PPIx::Regexp:: /smx
-	or $want = 'PPIx::Regexp::' . $want;
+        or $want = 'PPIx::Regexp::' . $want;
     return sub {
-	return __instance( $_[1], $want ) ? 1 : 0;
+        return __instance( $_[1], $want ) ? 1 : 0;
     };
 }
 
@@ -174,14 +177,14 @@ sub find {
     # We use a recursion to find what we want. PPI::Node uses an
     # iteration.
     foreach my $elem ( $self->elements() ) {
-	my $rslt = eval { $want->( $self, $elem ) }
-	    and push @found, $elem;
-	$@ and return;
+        my $rslt = eval { $want->( $self, $elem ) }
+            and push @found, $elem;
+        $@ and return;
 
-	__instance( $elem, 'PPIx::Regexp::Node' ) or next;
-	defined $rslt or next;
-	$rslt = $elem->find( $want )
-	    and push @found, @{ $rslt };
+        __instance( $elem, 'PPIx::Regexp::Node' ) or next;
+        defined $rslt or next;
+        $rslt = $elem->find( $want )
+            and push @found, @{ $rslt };
     }
 
     return @found ? \@found : 0;
@@ -214,9 +217,9 @@ sub find_parents {
     my %parents;
     my @rslt;
     foreach my $elem ( @{ $found } ) {
-	my $dad = $elem->parent() or next;
-	$parents{ refaddr( $dad ) }++
-	    or push @rslt, $dad;
+        my $dad = $elem->parent() or next;
+        $parents{ refaddr( $dad ) }++
+            or push @rslt, $dad;
     }
 
     return \@rslt;
@@ -238,16 +241,16 @@ sub find_first {
     # We use a recursion to find what we want. PPI::Node uses an
     # iteration.
     foreach my $elem ( $self->elements() ) {
-	my $rslt = eval { $want->( $self, $elem ) }
-	    and return $elem;
-	$@ and return;
+        my $rslt = eval { $want->( $self, $elem ) }
+            and return $elem;
+        $@ and return;
 
-	__instance( $elem, 'PPIx::Regexp::Node' ) or next;
-	defined $rslt or next;
+        __instance( $elem, 'PPIx::Regexp::Node' ) or next;
+        defined $rslt or next;
 
-	defined( $rslt = $elem->find_first( $want ) )
-	    or return;
-	$rslt and return $rslt;
+        defined( $rslt = $elem->find_first( $want ) )
+            or return;
+        $rslt and return $rslt;
     }
 
     return 0;
@@ -281,15 +284,16 @@ sub last_element {
 This method returns the maximum value of C<perl_version_introduced>
 returned by any of its elements. In other words, it returns the minimum
 version of Perl under which this node is valid. If there are no
-elements, 5.006 is returned, since that is the minimum value of Perl
+elements, 5.000 is returned, since that is the minimum value of Perl
 supported by this package.
 
 =cut
 
 sub perl_version_introduced {
     my ( $self ) = @_;
-    return max( MINIMUM_PERL,
-	map { $_->perl_version_introduced() } $self->elements() );
+    return max( grep { defined $_ } MINIMUM_PERL,
+        $self->{perl_version_introduced},
+        map { $_->perl_version_introduced() } $self->elements() );
 }
 
 =head2 perl_version_removed
@@ -306,13 +310,13 @@ sub perl_version_removed {
     my ( $self ) = @_;
     my $max;
     foreach my $elem ( $self->elements() ) {
-	if ( defined ( my $ver = $elem->perl_version_removed() ) ) {
-	    if ( defined $max ) {
-		$ver < $max and $max = $ver;
-	    } else {
-		$max = $ver;
-	    }
-	}
+        if ( defined ( my $ver = $elem->perl_version_removed() ) ) {
+            if ( defined $max ) {
+                $ver < $max and $max = $ver;
+            } else {
+                $max = $ver;
+            }
+        }
     }
     return $max;
 }
@@ -334,27 +338,27 @@ sub schild {
 
     if ( $inx >= 0 ) {
 
-	my $loc = 0;
+        my $loc = 0;
 
-	while ( exists $kids->[$loc] ) {
-	    $kids->[$loc]->significant() or next;
-	    --$inx >= 0 and next;
-	    return $kids->[$loc];
-	} continue {
-	    $loc++;
-	}
+        while ( exists $kids->[$loc] ) {
+            $kids->[$loc]->significant() or next;
+            --$inx >= 0 and next;
+            return $kids->[$loc];
+        } continue {
+            $loc++;
+        }
 
     } else {
 
-	my $loc = -1;
-	
-	while ( exists $kids->[$loc] ) {
-	    $kids->[$loc]->significant() or next;
-	    $inx++ < -1 and next;
-	    return $kids->[$loc];
-	} continue {
-	    --$loc;
-	}
+        my $loc = -1;
+
+        while ( exists $kids->[$loc] ) {
+            $kids->[$loc]->significant() or next;
+            $inx++ < -1 and next;
+            return $kids->[$loc];
+        } continue {
+            --$loc;
+        }
 
     }
 
@@ -370,15 +374,15 @@ This method returns the significant children of the node.
 sub schildren {
     my ( $self ) = @_;
     if ( wantarray ) {
-	return ( grep { $_->significant() } @{ $self->{children} } );
+        return ( grep { $_->significant() } @{ $self->{children} } );
     } elsif ( defined wantarray ) {
-	my $kids = 0;
-	foreach ( @{ $self->{children} } ) {
-	    $_->significant() and $kids++;
-	}
-	return $kids;
+        my $kids = 0;
+        foreach ( @{ $self->{children} } ) {
+            $_->significant() and $kids++;
+        }
+        return $kids;
     } else {
-	return;
+        return;
     }
 }
 
@@ -387,25 +391,43 @@ sub tokens {
     return ( map { $_->tokens() } $self->elements() );
 }
 
+sub unescaped_content {
+    my ( $self ) = @_;
+    return join '', map { $_->unescaped_content() } $self->elements();
+}
+
 # Help for nav();
-sub _nav {
+sub __nav {
     my ( $self, $child ) = @_;
     refaddr( $child->parent() ) == refaddr( $self )
-	or return;
+        or return;
     my ( $method, $inx ) = $child->_my_inx()
-	or return;
+        or return;
 
     return ( $method => [ $inx ] );
 }
 
+sub __error {
+    my ( $self, $msg, %arg ) = @_;
+    defined $msg
+        or $msg = 'Was class ' . ref $self;
+    $self->{error} = $msg;
+    bless $self, $self->ELEMENT_UNKNOWN();
+    foreach my $key ( keys %arg ) {
+        $self->{$key} = $arg{$key};
+    }
+    return 1;
+}
+
+
 # Called by the lexer once it has done its worst to all the tokens.
-# Called as a method with no arguments. The return is the number of
-# parse failures discovered when finalizing.
+# Called as a method with the lexer as argument. The return is the
+# number of parse failures discovered when finalizing.
 sub __PPIX_LEXER__finalize {
-    my ( $self ) = @_;
+    my ( $self, $lexer ) = @_;
     my $rslt = 0;
     foreach my $elem ( $self->elements() ) {
-	$rslt += $elem->__PPIX_LEXER__finalize();
+        $rslt += $elem->__PPIX_LEXER__finalize( $lexer );
     }
     return $rslt;
 }
@@ -414,7 +436,7 @@ sub __PPIX_LEXER__finalize {
 sub __PPIX_LEXER__record_capture_number {
     my ( $self, $number ) = @_;
     foreach my $kid ( $self->children() ) {
-	$number = $kid->__PPIX_LEXER__record_capture_number( $number );
+        $number = $kid->__PPIX_LEXER__record_capture_number( $number );
     }
     return $number;
 }
@@ -434,7 +456,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

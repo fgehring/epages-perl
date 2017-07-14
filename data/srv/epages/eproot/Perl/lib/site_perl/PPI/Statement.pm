@@ -68,7 +68,7 @@ a ';' statement terminator.
 
 A statement that breaks out of a structure.
 
-This includes all of 'redo', 'next', 'last' and 'return' statements.
+This includes all of 'redo', 'goto', 'next', 'last' and 'return' statements.
 
 =head2 L<PPI::Statement::Given>
 
@@ -97,10 +97,10 @@ L<PPI::Statement::Expression> is a little more speculative, and is intended
 to help represent the special rules relating to "expressions" such as in:
 
   # Several examples of expression statements
-  
+
   # Boolean conditions
   if ( expression ) { ... }
-  
+
   # Lists, such as for arguments
   Foo->bar( expression )
 
@@ -154,9 +154,9 @@ use PPI::Exception ();
 
 use vars qw{$VERSION @ISA *_PARENT};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Node';
-	*_PARENT = *PPI::Element::_PARENT;
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Node';
+        *_PARENT = *PPI::Element::_PARENT;
 }
 
 use PPI::Statement::Break          ();
@@ -178,7 +178,7 @@ use PPI::Statement::When           ();
 # "Normal" statements end at a statement terminator ;
 # Some are not, and need the more rigorous _continues to see
 # if we are at an implicit statement boundary.
-sub __LEXER__normal { 1 }
+sub __LEXER__normal() { 1 }
 
 
 
@@ -188,27 +188,27 @@ sub __LEXER__normal { 1 }
 # Constructor
 
 sub new {
-	my $class = shift;
-	if ( ref $class ) {
-		PPI::Exception->throw;
-	}
+        my $class = shift;
+        if ( ref $class ) {
+                PPI::Exception->throw;
+        }
 
-	# Create the object
-	my $self = bless { 
-		children => [],
-	}, $class;
+        # Create the object
+        my $self = bless {
+                children => [],
+        }, $class;
 
-	# If we have been passed what should be an initial token, add it
-	my $token = shift;
-	if ( _INSTANCE($token, 'PPI::Token') ) {
-		# Inlined $self->__add_element(shift);
-		Scalar::Util::weaken(
-			$_PARENT{Scalar::Util::refaddr $token} = $self
-		);
-		push @{$self->{children}}, $token;
-	}
+        # If we have been passed what should be an initial token, add it
+        my $token = shift;
+        if ( _INSTANCE($token, 'PPI::Token') ) {
+                # Inlined $self->__add_element(shift);
+                Scalar::Util::weaken(
+                        $_PARENT{Scalar::Util::refaddr $token} = $self
+                );
+                push @{$self->{children}}, $token;
+        }
 
-	$self;
+        $self;
 }
 
 =pod
@@ -229,10 +229,10 @@ Returns false if the statement does not have a label.
 =cut
 
 sub label {
-	my $first = shift->schild(1) or return '';
-	$first->isa('PPI::Token::Label')
-		? substr($first, 0, length($first) - 1)
-		: '';
+        my $first = shift->schild(1) or return '';
+        $first->isa('PPI::Token::Label')
+                ? substr($first, 0, length($first) - 1)
+                : '';
 }
 
 =pod
@@ -245,54 +245,13 @@ significance.
 Returns true if the statement is a subclass of this one, false
 otherwise.
 
-=begin testing specialized 22
-
-my $Document = PPI::Document->new(\<<'END_PERL');
-package Foo;
-use strict;
-;
-while (1) { last; }
-BEGIN { }
-sub foo { }
-state $x;
-$x = 5;
-END_PERL
-
-isa_ok( $Document, 'PPI::Document' );
-
-my $statements = $Document->find('Statement');
-is( scalar @{$statements}, 10, 'Found the 10 test statements' );
-
-isa_ok( $statements->[0], 'PPI::Statement::Package',    'Statement 1: isa Package'            );
-ok( $statements->[0]->specialized,                      'Statement 1: is specialized'         );
-isa_ok( $statements->[1], 'PPI::Statement::Include',    'Statement 2: isa Include'            );
-ok( $statements->[1]->specialized,                      'Statement 2: is specialized'         );
-isa_ok( $statements->[2], 'PPI::Statement::Null',       'Statement 3: isa Null'               );
-ok( $statements->[2]->specialized,                      'Statement 3: is specialized'         );
-isa_ok( $statements->[3], 'PPI::Statement::Compound',   'Statement 4: isa Compound'           );
-ok( $statements->[3]->specialized,                      'Statement 4: is specialized'         );
-isa_ok( $statements->[4], 'PPI::Statement::Expression', 'Statement 5: isa Expression'         );
-ok( $statements->[4]->specialized,                      'Statement 5: is specialized'         );
-isa_ok( $statements->[5], 'PPI::Statement::Break',      'Statement 6: isa Break'              );
-ok( $statements->[5]->specialized,                      'Statement 6: is specialized'         );
-isa_ok( $statements->[6], 'PPI::Statement::Scheduled',  'Statement 7: isa Scheduled'          );
-ok( $statements->[6]->specialized,                      'Statement 7: is specialized'         );
-isa_ok( $statements->[7], 'PPI::Statement::Sub',        'Statement 8: isa Sub'                );
-ok( $statements->[7]->specialized,                      'Statement 8: is specialized'         );
-isa_ok( $statements->[8], 'PPI::Statement::Variable',   'Statement 9: isa Variable'           );
-ok( $statements->[8]->specialized,                      'Statement 9: is specialized'         );
-is( ref $statements->[9], 'PPI::Statement',             'Statement 10: is a simple Statement' );
-ok( ! $statements->[9]->specialized,                    'Statement 10: is not specialized'    );
-
-=end testing
-
 =cut
 
 # Yes, this is doing precisely what it's intending to prevent
 # client code from doing.  However, since it's here, if the
 # implementation changes, code outside PPI doesn't care.
 sub specialized {
-	__PACKAGE__ ne ref $_[0];
+        __PACKAGE__ ne ref $_[0];
 }
 
 =pod
@@ -310,7 +269,7 @@ error.
 =cut
 
 sub stable {
-	die "The ->stable method has not yet been implemented";	
+        die "The ->stable method has not yet been implemented";
 }
 
 
@@ -323,39 +282,39 @@ sub stable {
 # Is the statement complete.
 # By default for a statement, we need a semi-colon at the end.
 sub _complete {
-	my $self = shift;
-	my $semi = $self->schild(-1);
-	return !! (
-		defined $semi
-		and
-		$semi->isa('PPI::Token::Structure')
-		and
-		$semi->content eq ';'
-	);
+        my $self = shift;
+        my $semi = $self->schild(-1);
+        return !! (
+                defined $semi
+                and
+                $semi->isa('PPI::Token::Structure')
+                and
+                $semi->content eq ';'
+        );
 }
 
 # You can insert either a statement or a non-significant token.
 sub insert_before {
-	my $self    = shift;
-	my $Element = _INSTANCE(shift, 'PPI::Element') or return undef;
-	if ( $Element->isa('PPI::Statement') ) {
-		return $self->__insert_before($Element);
-	} elsif ( $Element->isa('PPI::Token') and ! $Element->significant ) {
-		return $self->__insert_before($Element);
-	}
-	'';
+        my $self    = shift;
+        my $Element = _INSTANCE(shift, 'PPI::Element') or return undef;
+        if ( $Element->isa('PPI::Statement') ) {
+                return $self->__insert_before($Element);
+        } elsif ( $Element->isa('PPI::Token') and ! $Element->significant ) {
+                return $self->__insert_before($Element);
+        }
+        '';
 }
 
 # As above, you can insert a statement, or a non-significant token
 sub insert_after {
-	my $self    = shift;
-	my $Element = _INSTANCE(shift, 'PPI::Element') or return undef;
-	if ( $Element->isa('PPI::Statement') ) {
-		return $self->__insert_after($Element);
-	} elsif ( $Element->isa('PPI::Token') and ! $Element->significant ) {
-		return $self->__insert_after($Element);
-	}
-	'';
+        my $self    = shift;
+        my $Element = _INSTANCE(shift, 'PPI::Element') or return undef;
+        if ( $Element->isa('PPI::Statement') ) {
+                return $self->__insert_after($Element);
+        } elsif ( $Element->isa('PPI::Token') and ! $Element->significant ) {
+                return $self->__insert_after($Element);
+        }
+        '';
 }
 
 1;

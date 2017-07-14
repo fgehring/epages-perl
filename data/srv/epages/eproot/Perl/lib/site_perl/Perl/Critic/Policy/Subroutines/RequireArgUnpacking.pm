@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/Subroutines/RequireArgUnpacking.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::Subroutines::RequireArgUnpacking;
 
 use 5.006001;
@@ -20,11 +13,11 @@ use List::Util qw(first);
 use List::MoreUtils qw(uniq any);
 
 use Perl::Critic::Utils qw<
-    :booleans :characters :severities words_from_string
+    :booleans :characters :classification hashify :severities words_from_string
 >;
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -125,7 +118,7 @@ sub violates {
             next MAGIC
                 if $self->_is_delegation( $magic );
 
-            # If we make it this far, it is a violaton
+            # If we make it this far, it is a violation
             return $self->violation( $DESC, $EXPL, $elem );
         }
         if (not $saw_unpack) {
@@ -151,7 +144,7 @@ sub _is_unpack {
     return $TRUE if
             $prev
         and $prev->isa('PPI::Token::Operator')
-        and q{=} eq $prev->content()
+        and is_assignment_operator($prev->content())
         and (
                 not $next
             or  $next->isa('PPI::Token::Structure')
@@ -169,21 +162,76 @@ sub _is_size_check {
     my $prev = $magic->sprevious_sibling;
     my $next = $magic->snext_sibling;
 
-    return $TRUE
-        if
-                not $next
-            and $prev
-            and $prev->isa('PPI::Token::Operator')
-            and (q<==> eq $prev->content() or q<!=> eq $prev->content());
+    if ( $prev || $next ) {
+
+        return $TRUE
+            if _legal_before_size_check( $prev )
+                and _legal_after_size_check( $next );
+    }
+
+    my $parent = $magic;
+    {
+        $parent = $parent->parent()
+            or return;
+        $prev = $parent->sprevious_sibling();
+        $next = $parent->snext_sibling();
+        $prev
+            or $next
+            or redo;
+    }   # until ( $prev || $next );
 
     return $TRUE
-        if
-                not $prev
-            and $next
-            and $next->isa('PPI::Token::Operator')
-            and (q<==> eq $next->content() or q<!=> eq $next->content());
+        if $parent->isa( 'PPI::Structure::Condition' );
 
     return;
+}
+
+{
+
+    Readonly::Hash my %LEGAL_NEXT_OPER => hashify(
+        qw{ && || == != > >= < <= and or } );
+
+    Readonly::Hash my %LEGAL_NEXT_STRUCT => hashify( qw{ ; } );
+
+    sub _legal_after_size_check {
+        my ( $next ) = @_;
+
+        $next
+            or return $TRUE;
+
+        $next->isa( 'PPI::Token::Operator' )
+            and return $LEGAL_NEXT_OPER{ $next->content() };
+
+        $next->isa( 'PPI::Token::Structure' )
+            and return $LEGAL_NEXT_STRUCT{ $next->content() };
+
+        return;
+    }
+}
+
+{
+
+    Readonly::Hash my %LEGAL_PREV_OPER => hashify(
+        qw{ && || ! == != > >= < <= and or not } );
+
+    Readonly::Hash my %LEGAL_PREV_WORD => hashify(
+        qw{ if unless } );
+
+    sub _legal_before_size_check {
+        my ( $prev ) = @_;
+
+        $prev
+            or return $TRUE;
+
+        $prev->isa( 'PPI::Token::Operator' )
+            and return $LEGAL_PREV_OPER{ $prev->content() };
+
+        $prev->isa( 'PPI::Token::Word' )
+            and return $LEGAL_PREV_WORD{ $prev->content() };
+
+        return;
+    }
+
 }
 
 sub _is_postfix_foreach {

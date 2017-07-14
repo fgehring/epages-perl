@@ -2,7 +2,7 @@ package HTML::LinkExtor;
 
 require HTML::Parser;
 @ISA = qw(HTML::Parser);
-$VERSION = "3.60";
+$VERSION = "3.69";
 
 =head1 NAME
 
@@ -61,12 +61,12 @@ sub new
     my($class, $cb, $base) = @_;
     my $self = $class->SUPER::new(
                     start_h => ["_start_tag", "self,tagname,attr"],
-		    report_tags => [keys %HTML::Tagset::linkElements],
-	       );
+                    report_tags => [keys %HTML::Tagset::linkElements],
+               );
     $self->{extractlink_cb} = $cb;
     if ($base) {
-	require URI;
-	$self->{extractlink_base} = URI->new($base);
+        require URI;
+        $self->{extractlink_base} = URI->new($base);
     }
     $self;
 }
@@ -82,9 +82,9 @@ sub _start_tag
     my @links;
     my $a;
     for $a (@$links) {
-	next unless exists $attr->{$a};
-	push(@links, $a, $base ? URI->new($attr->{$a}, $base)->abs($base)
-                               : $attr->{$a});
+        next unless exists $attr->{$a};
+        (my $link = $attr->{$a}) =~ s/^\s+//; $link =~ s/\s+$//; # HTML5
+        push(@links, $a, $base ? URI->new($link, $base)->abs($base) : $link);
     }
     return unless @links;
     $self->_found_link($tag, @links);
@@ -95,9 +95,9 @@ sub _found_link
     my $self = shift;
     my $cb = $self->{extractlink_cb};
     if ($cb) {
-	&$cb(@_);
+        &$cb(@_);
     } else {
-	push(@{$self->{'links'}}, [@_]);
+        push(@{$self->{'links'}}, [@_]);
     }
 }
 

@@ -44,8 +44,8 @@ use PPI::Statement::Expression ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Statement::Expression';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Statement::Expression';
 }
 
 =pod
@@ -61,18 +61,18 @@ Returns a string of the type, or C<undef> if the type cannot be detected
 =cut
 
 sub type {
-	my $self = shift;
+        my $self = shift;
 
-	# Get the first significant child
-	my @schild = grep { $_->significant } $self->children;
+        # Get the first significant child
+        my @schild = grep { $_->significant } $self->children;
 
-	# Ignore labels
-	shift @schild if _INSTANCE($schild[0], 'PPI::Token::Label');
+        # Ignore labels
+        shift @schild if _INSTANCE($schild[0], 'PPI::Token::Label');
 
-	# Get the type
-	(_INSTANCE($schild[0], 'PPI::Token::Word') and $schild[0]->content =~ /^(my|local|our|state)$/)
-		? $schild[0]->content
-		: undef;
+        # Get the type
+        (_INSTANCE($schild[0], 'PPI::Token::Word') and $schild[0]->content =~ /^(my|local|our|state)$/)
+                ? $schild[0]->content
+                : undef;
 }
 
 =pod
@@ -86,44 +86,10 @@ defined by the statement.
 Returns a list of the canonical string forms of variables, or the null list
 if it is unable to find any variables.
 
-=begin testing variables
-
-# Test the things we assert to work in the synopsis
-my $Document = PPI::Document->new(\<<'END_PERL');
-package Bar;
-my $foo = 1;
-my ( $foo, $bar) = (1, 2);
-our $foo = 1;
-local $foo;
-local $foo = 1;
-LABEL: my $foo = 1;
-
-# As well as those basics, lets also try some harder ones
-local($foo = $bar->$bar(), $bar);
-END_PERL
-isa_ok( $Document, 'PPI::Document' );
-
-# There should be 6 statement objects
-my $ST = $Document->find('Statement::Variable');
-is( ref($ST), 'ARRAY', 'Found statements' );
-is( scalar(@$ST), 7, 'Found 7 ::Variable objects' );
-foreach my $Var ( @$ST ) {
-	isa_ok( $Var, 'PPI::Statement::Variable' );
-}
-is_deeply( [ $ST->[0]->variables ], [ '$foo' ],         '1: Found $foo' );
-is_deeply( [ $ST->[1]->variables ], [ '$foo', '$bar' ], '2: Found $foo and $bar' );
-is_deeply( [ $ST->[2]->variables ], [ '$foo' ],         '3: Found $foo' );
-is_deeply( [ $ST->[3]->variables ], [ '$foo' ],         '4: Found $foo' );
-is_deeply( [ $ST->[4]->variables ], [ '$foo' ],         '5: Found $foo' );
-is_deeply( [ $ST->[5]->variables ], [ '$foo' ],         '6: Found $foo' );
-is_deeply( [ $ST->[6]->variables ], [ '$foo', '$bar' ], '7: Found $foo and $bar' );
-
-=end testing
-
 =cut
 
 sub variables {
-	map { $_->canonical } $_[0]->symbols;
+        map { $_->canonical } $_[0]->symbols;
 }
 
 =pod
@@ -136,70 +102,70 @@ L<PPI::Token::Symbol>s.
 =cut
 
 sub symbols {
-	my $self = shift;
+        my $self = shift;
 
-	# Get the children we care about
-	my @schild = grep { $_->significant } $self->children;
-	shift @schild if _INSTANCE($schild[0], 'PPI::Token::Label');
+        # Get the children we care about
+        my @schild = grep { $_->significant } $self->children;
+        shift @schild if _INSTANCE($schild[0], 'PPI::Token::Label');
 
-	# If the second child is a symbol, return its name
-	if ( _INSTANCE($schild[1], 'PPI::Token::Symbol') ) {
-		return $schild[1];
-	}
+        # If the second child is a symbol, return its name
+        if ( _INSTANCE($schild[1], 'PPI::Token::Symbol') ) {
+                return $schild[1];
+        }
 
-	# If it's a list, return as a list
-	if ( _INSTANCE($schild[1], 'PPI::Structure::List') ) {
-		my $Expression = $schild[1]->schild(0);
-		$Expression and
-		$Expression->isa('PPI::Statement::Expression') or return ();
+        # If it's a list, return as a list
+        if ( _INSTANCE($schild[1], 'PPI::Structure::List') ) {
+                my $Expression = $schild[1]->schild(0);
+                $Expression and
+                $Expression->isa('PPI::Statement::Expression') or return ();
 
-		# my and our are simpler than local
-		if (
-			$self->type eq 'my'
-			or
-			$self->type eq 'our'
-			or
-			$self->type eq 'state'
-		) {
-			return grep {
-				$_->isa('PPI::Token::Symbol')
-			} $Expression->schildren;
-		}
+                # my and our are simpler than local
+                if (
+                        $self->type eq 'my'
+                        or
+                        $self->type eq 'our'
+                        or
+                        $self->type eq 'state'
+                ) {
+                        return grep {
+                                $_->isa('PPI::Token::Symbol')
+                        } $Expression->schildren;
+                }
 
-		# Local is much more icky (potentially).
-		# Not that we are actually going to deal with it now,
-		# but having this seperate is likely going to be needed
-		# for future bug reports about local() things.
+                # Local is much more icky (potentially).
+                # Not that we are actually going to deal with it now,
+                # but having this separate is likely going to be needed
+                # for future bug reports about local() things.
 
-		# This is a slightly better way to check.
-		return grep {
-			$self->_local_variable($_)
-		} grep {
-			$_->isa('PPI::Token::Symbol')
-		} $Expression->schildren;
-	}
+                # This is a slightly better way to check.
+                return grep {
+                        $self->_local_variable($_)
+                } grep {
+                        $_->isa('PPI::Token::Symbol')
+                } $Expression->schildren;
+        }
 
-	# erm... this is unexpected
-	();
+        # erm... this is unexpected
+        ();
 }
 
 sub _local_variable {
-	my ($self, $el) = @_;
+        my ($self, $el) = @_;
 
-	# The last symbol should be a variable
-	my $n = $el->snext_sibling or return 1;
-	my $p = $el->sprevious_sibling;
-	if ( ! $p or $p eq ',' ) {
-		# In the middle of a list
-		return 1 if $n eq ',';
+        # The last symbol should be a variable
+        my $n = $el->snext_sibling or return 1;
+        my $p = $el->sprevious_sibling;
+        if ( ! $p or $p eq ',' ) {
+                # In the middle of a list
+                return 1 if $n eq ',';
 
-		# The first half of an assignment
-		return 1 if $n eq '=';
-	}
+                # The first half of an assignment
+                return 1 if $n eq '=';
+        }
 
-	# Lets say no for know... additional work
-	# should go here.
-	return '';
+        # Lets say no for know... additional work
+        # should go here.
+        return '';
 }
 
 1;

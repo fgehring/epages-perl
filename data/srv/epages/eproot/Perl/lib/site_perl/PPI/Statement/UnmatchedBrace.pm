@@ -11,7 +11,7 @@ PPI::Statement::UnmatchedBrace - Isolated unmatched brace
   sub foo {
       1;
   }
-  
+
   } # <--- This is an unmatched brace
 
 =head1 INHERITANCE
@@ -49,8 +49,8 @@ use PPI::Statement ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Statement';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Statement';
 }
 
 # Once we've hit a naked unmatched brace we can never truly be complete.

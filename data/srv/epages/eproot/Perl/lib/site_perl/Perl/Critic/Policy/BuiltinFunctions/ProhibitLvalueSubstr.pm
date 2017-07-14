@@ -1,21 +1,15 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/BuiltinFunctions/ProhibitLvalueSubstr.pm $
-#     $Date: 2011-05-15 16:43:26 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4079 $
-##############################################################################
-
 package Perl::Critic::Policy::BuiltinFunctions::ProhibitLvalueSubstr;
 
 use 5.006001;
 use strict;
 use warnings;
 use Readonly;
+use version 0.77 ();
 
 use Perl::Critic::Utils qw{ :severities :classification :language };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -47,7 +41,7 @@ sub prepare_to_scan_document {
 sub violates {
     my ($self, $elem, undef) = @_;
 
-    return if $elem ne 'substr';
+    return if $elem->content() ne 'substr';
     return if ! is_function_call($elem);
 
     my $sib = $elem;

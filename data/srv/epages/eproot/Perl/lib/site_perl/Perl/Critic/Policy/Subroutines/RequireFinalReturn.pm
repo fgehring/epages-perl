@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/Subroutines/RequireFinalReturn.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::Subroutines::RequireFinalReturn;
 
 use 5.006001;
@@ -16,7 +9,7 @@ use Perl::Critic::Exception::Fatal::Internal qw{ throw_internal };
 use Perl::Critic::Utils qw{ :characters :severities :data_conversion };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -34,13 +27,13 @@ sub supported_parameters {
             default_string  => $EMPTY,
             behavior        => 'string list',
             list_always_present_values =>
-                [ qw< croak confess die exec exit throw Carp::confess Carp::croak > ],
+                [ qw< croak confess die exec exit throw Carp::confess Carp::croak ...> ],
         },
     );
 }
 
 sub default_severity { return $SEVERITY_HIGH        }
-sub default_themes   { return qw( core bugs pbp )   }
+sub default_themes   { return qw( core bugs pbp certrec )   }
 sub applies_to       { return 'PPI::Statement::Sub' }
 
 #-----------------------------------------------------------------------------
@@ -121,7 +114,7 @@ sub _is_compound_return {
     my $begin = $final->schild(0);
     return if !$begin; #fail
     if (!($begin->isa('PPI::Token::Word') &&
-          ($begin eq 'if' || $begin eq 'unless'))) {
+          ($begin->content() eq 'if' || $begin->content() eq 'unless'))) {
         return; #fail
     }
 
@@ -204,7 +197,8 @@ sub _is_return_or_goto_stmnt {
     my ( $self, $stmnt ) = @_;
     return if not $stmnt->isa('PPI::Statement::Break');
     my $first_token = $stmnt->schild(0) || return;
-    return $first_token eq 'return' || $first_token eq 'goto';
+    return $first_token->content() eq 'return'
+        || $first_token->content() eq 'goto';
 }
 
 #-----------------------------------------------------------------------------

@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Command.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Command;
 
 use 5.006001;
@@ -28,11 +21,11 @@ use Perl::Critic::Violation qw<>;
 
 #-----------------------------------------------------------------------------
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
-use base 'Exporter';
+use Exporter 'import';
 
 Readonly::Array our @EXPORT_OK => qw< run >;
 
@@ -208,7 +201,7 @@ sub _get_input {
 
         # Test to make sure all the specified files or directories
         # actually exist.  If any one of them is bogus, then die.
-        if ( my $nonexistent = first { ! -e $_ } @args ) {
+        if ( my $nonexistent = first { ! -e } @args ) {
             my $msg = qq{No such file or directory: '$nonexistent'};
             pod2usage( -exitstatus => 1, -message => $msg, -verbose => 0);
         }
@@ -217,7 +210,7 @@ sub _get_input {
         # then we process it as-is (even though it may not actually
         # be Perl code).  If argument is a directory, recursively
         # search the directory for files that look like Perl code.
-        return map { -d $_ ? Perl::Critic::Utils::all_perl_files($_) : $_ } @args;
+        return map { (-d) ? Perl::Critic::Utils::all_perl_files($_) : $_ } @args;
     }
 }
 
@@ -476,7 +469,6 @@ sub _get_option_specification {
 
     return qw<
         5 4 3 2 1
-        Safari
         version
         brutal
         count|C
@@ -639,7 +631,7 @@ sub _render_policy_docs {
 
     require Perl::Critic::PolicyFactory;
     my @site_policies  = Perl::Critic::PolicyFactory->site_policy_names();
-    my @matching_policies  = grep { $_ =~ m/$pattern/ixms } @site_policies;
+    my @matching_policies  = grep { /$pattern/ixms } @site_policies;
 
     # "-T" means don't send to pager
     my @perldoc_output = map {`perldoc -T $_`} @matching_policies;  ## no critic (ProhibitBacktick)

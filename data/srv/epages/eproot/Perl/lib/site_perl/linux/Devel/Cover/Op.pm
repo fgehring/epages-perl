@@ -1,4 +1,4 @@
-# Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
+# Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -12,9 +12,9 @@ require 5.8.0;  # My patches to B::Concise didn't get released till 5.8.0.
 use strict;
 use warnings;
 
-our $VERSION = "0.79";
+our $VERSION = '1.25'; # VERSION
 
-use Data::Dumper; $Data::Dumper::Indent = 1; $Data::Dumper::Sortkeys = 1;
+use Devel::Cover::Dumper;
 
 use Devel::Cover qw( -ignore blib -ignore \\wB\\w );
 use B::Concise   qw( set_style add_callback );
@@ -26,7 +26,7 @@ my %style =
     "(*(    )*)goto #class (#addr)\n",
     "#class pp_#name"],
    "concise" =>
-   ["#hyphseq2 #cover12 (*(   (x( ;)x))*)<#classsym> "
+   ["#hyphseq2 #addr10 #cover12 (*(   (x( ;)x))*)<#classsym> "
     . "#exname#arg(?([#targarglife])?)~#flags(?(/#private)?)(x(;~->#next)x)\n",
     "  (*(    )*)     goto #seq\n",
     "(?(<#seq>)?)#exname#arg(?([#targarglife])?)"],
@@ -42,43 +42,34 @@ my %style =
 
 my @Options;
 
-sub import
-{
+sub import {
     my $class = shift;
     set_style(@{$style{concise}});
-    for (@_)
-    {
+    for (@_) {
         /-(.*)/ && exists $style{$1}
             ? set_style(@{$style{$1}})
             : push @Options, $_;
     }
 
     my $final = 1;
-    add_callback
-    (
-        sub
-        {
-            my ($h, $op, $format, $level) = @_;
-            my $key = Devel::Cover::get_key($op);
-            # print Dumper Devel::Cover::coverage unless $d++;
-            if ($h->{seq})
-            {
-                my ($s, $b, $c) =
-                  map Devel::Cover::coverage($final ? $final-- : 0)->{$_}{$key},
-                      qw(statement branch condition);
-                local $" = ",";
-                no warnings "uninitialized";
-                $h->{cover} = $s ? "s[$s]"  :
-                              $b ? "b[@$b]" :
-                              $c ? "c[@$c]" :
-                              "";
-            }
-            else
-            {
-                $h->{cover} = "";
-            }
+    add_callback(sub {
+        my ($h, $op, $format, $level) = @_;
+        my $key = Devel::Cover::get_key($op);
+        # print Dumper Devel::Cover::coverage unless $d++;
+        if ($h->{seq}) {
+            my ($s, $b, $c) =
+              map Devel::Cover::coverage($final ? $final-- : 0)->{$_}{$key},
+                  qw(statement branch condition);
+            local $" = ",";
+            no warnings "uninitialized";
+            $h->{cover} = $s ? "s[$s]"  :
+                          $b ? "b[@$b]" :
+                          $c ? "c[@$c]" :
+                          "";
+        } else {
+            $h->{cover} = "";
         }
-    );
+    });
 }
 
 END { B::Concise::compile(@Options)->() }
@@ -91,6 +82,10 @@ __END__
 
 Devel::Cover::Op - B::Concise with coverage data
 
+=head1 VERSION
+
+version 1.25
+
 =head1 SYNOPSIS
 
  perl -Mblib -MDevel::Cover::Op prog [options]
@@ -98,7 +93,7 @@ Devel::Cover::Op - B::Concise with coverage data
 =head1 DESCRIPTION
 
 This module works as if calling B::Concise but also outputs coverage
-information.  It's primary purpose is to aid in the development of Devel::Cover.
+information.  Its primary purpose is to aid in the development of Devel::Cover.
 
 See comments in Cover.xs (especially set_conditional()) to aid in interpreting
 the output.
@@ -111,13 +106,9 @@ the output.
 
 Huh?
 
-=head1 VERSION
-
-Version 0.79 - 5th August 2011
-
 =head1 LICENCE
 
-Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
+Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

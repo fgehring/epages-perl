@@ -40,7 +40,7 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Structure };
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
 =head2 delimiters
 
@@ -55,15 +55,15 @@ sub delimiters {
     my ( $self ) = @_;
     my @delims;
     foreach my $method ( qw{ start finish } ) {
-	push @delims, undef;
-	defined ( my $obj = $self->$method() )
-	    or next;
-	defined ( my $str = $obj->content() )
-	    or next;
-	$delims[-1] = $str;
+        push @delims, undef;
+        defined ( my $obj = $self->$method() )
+            or next;
+        defined ( my $str = $obj->content() )
+            or next;
+        $delims[-1] = $str;
     }
     defined ( $delims[0] )
-	or $delims[0] = $delims[1];
+        or $delims[0] = $delims[1];
     return $delims[0] . $delims[1];
 }
 
@@ -96,7 +96,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

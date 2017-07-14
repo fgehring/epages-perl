@@ -7,8 +7,12 @@ BEGIN {require 5.006;}
 
 require Exporter;
 use ExtUtils::MakeMaker::Config;
+use ExtUtils::MakeMaker::version; # ensure we always have our fake version.pm
 use Carp;
 use File::Path;
+my $CAN_DECODE = eval { require ExtUtils::MakeMaker::Locale; }; # 2 birds, 1 stone
+eval { ExtUtils::MakeMaker::Locale::reinit('UTF-8') }
+  if $CAN_DECODE and Encode::find_encoding('locale')->name eq 'ascii';
 
 our $Verbose = 0;       # exported
 our @Parent;            # needs to be localized
@@ -17,8 +21,10 @@ our @MM_Sections;
 our @Overridable;
 my @Prepend_parent;
 my %Recognized_Att_Keys;
+our %macro_fsentity; # whether a macro is a filesystem name
+our %macro_dep; # whether a macro is a dependency
 
-our $VERSION = '6.84';
+our $VERSION = '7.30';
 $VERSION = eval $VERSION;  ## no critic [BuiltinFunctions::ProhibitStringyEval]
 
 # Emulate something resembling CVS $Revision$
@@ -28,14 +34,16 @@ $Revision = int $Revision * 10000;
 our $Filename = __FILE__;   # referenced outside MakeMaker
 
 our @ISA = qw(Exporter);
-our @EXPORT    = qw(&WriteMakefile &writeMakefile $Verbose &prompt);
+our @EXPORT    = qw(&WriteMakefile $Verbose &prompt &os_unsupported);
 our @EXPORT_OK = qw($VERSION &neatvalue &mkbootstrap &mksymlists
-                    &WriteEmptyMakefile);
+                    &WriteEmptyMakefile &open_for_writing &write_file_via_tmp
+                    &_sprintf562);
 
 # These will go away once the last of the Win32 & VMS specific code is
 # purged.
 my $Is_VMS     = $^O eq 'VMS';
 my $Is_Win32   = $^O eq 'MSWin32';
+our $UNDER_CORE = $ENV{PERL_CORE}; # needs to be our
 
 full_setup();
 
@@ -46,6 +54,15 @@ require ExtUtils::MY;  # XXX pre-5.8 versions of ExtUtils::Embed expect
                        # loading ExtUtils::MakeMaker will give them MY.
                        # This will go when Embed is its own CPAN module.
 
+
+# 5.6.2 can't do sprintf "%1$s" - this can only do %s
+sub _sprintf562 {
+    my ($format, @args) = @_;
+    for (my $i = 1; $i <= @args; $i++) {
+        $format =~ s#%$i\$s#$args[$i-1]#g;
+    }
+    $format;
+}
 
 sub WriteMakefile {
     croak "WriteMakefile: Need even number of args" if @_ % 2;
@@ -99,6 +116,7 @@ my %Special_Sigs = (
  SKIP               => 'ARRAY',
  TYPEMAPS           => 'ARRAY',
  XS                 => 'HASH',
+ XSBUILD            => 'HASH',
  VERSION            => ['version',''],
  _KEEP_AFTER_FLUSH  => '',
 
@@ -134,7 +152,8 @@ sub _convert_compat_attrs { #result of running several times should be same
 sub _verify_att {
     my($att) = @_;
 
-    while( my($key, $val) = each %$att ) {
+    foreach my $key (sort keys %$att) {
+        my $val = $att->{$key};
         my $sig = $Att_Sigs{$key};
         unless( defined $sig ) {
             warn "WARNING: $key is not a known parameter.\n";
@@ -208,6 +227,10 @@ sub prompt ($;$) {  ## no critic
     return (!defined $ans || $ans eq '') ? $def : $ans;
 }
 
+sub os_unsupported {
+    die "OS unsupported\n";
+}
+
 sub eval_in_subdirs {
     my($self) = @_;
     use Cwd qw(cwd abs_path);
@@ -250,14 +273,12 @@ my $PACKNAME = 'PACK000';
 sub full_setup {
     $Verbose ||= 0;
 
-    my @attrib_help = qw/
+    my @dep_macros = qw/
+    PERL_INCDEP        PERL_ARCHLIBDEP     PERL_ARCHIVEDEP
+    /;
 
-    AUTHOR ABSTRACT ABSTRACT_FROM BINARY_LOCATION
-    C CAPI CCFLAGS CONFIG CONFIGURE DEFINE DIR DISTNAME DISTVNAME
-    DL_FUNCS DL_VARS
-    EXCLUDE_EXT EXE_FILES FIRST_MAKEFILE
-    FULLPERL FULLPERLRUN FULLPERLRUNINST
-    FUNCLIST H IMPORTS
+    my @fs_macros = qw/
+    FULLPERL XSUBPPDIR
 
     INST_ARCHLIB INST_SCRIPT INST_BIN INST_LIB INST_MAN1DIR INST_MAN3DIR
     INSTALLDIRS
@@ -273,22 +294,41 @@ sub full_setup {
     PERL_LIB        PERL_ARCHLIB
     SITELIBEXP      SITEARCHEXP
 
-    INC INCLUDE_EXT LDFROM LIB LIBPERL_A LIBS LICENSE
-    LINKTYPE MAKE MAKEAPERL MAKEFILE MAKEFILE_OLD MAN1PODS MAN3PODS MAP_TARGET
+    MAKE LIBPERL_A LIB PERL_SRC PERL_INC
+    PPM_INSTALL_EXEC PPM_UNINSTALL_EXEC
+    PPM_INSTALL_SCRIPT PPM_UNINSTALL_SCRIPT
+    /;
+
+    my @attrib_help = qw/
+
+    AUTHOR ABSTRACT ABSTRACT_FROM BINARY_LOCATION
+    C CAPI CCFLAGS CONFIG CONFIGURE DEFINE DIR DISTNAME DISTVNAME
+    DL_FUNCS DL_VARS
+    EXCLUDE_EXT EXE_FILES FIRST_MAKEFILE
+    FULLPERLRUN FULLPERLRUNINST
+    FUNCLIST H IMPORTS
+
+    INC INCLUDE_EXT LDFROM LIBS LICENSE
+    LINKTYPE MAKEAPERL MAKEFILE MAKEFILE_OLD MAN1PODS MAN3PODS MAP_TARGET
     META_ADD META_MERGE MIN_PERL_VERSION BUILD_REQUIRES CONFIGURE_REQUIRES
     MYEXTLIB NAME NEEDS_LINKING NOECHO NO_META NO_MYMETA NO_PACKLIST NO_PERLLOCAL
     NORECURS NO_VC OBJECT OPTIMIZE PERL_MALLOC_OK PERL PERLMAINCC PERLRUN
     PERLRUNINST PERL_CORE
-    PERL_SRC PERM_DIR PERM_RW PERM_RWX MAGICXS
-    PL_FILES PM PM_FILTER PMLIBDIRS PMLIBPARENTDIRS POLLUTE PPM_INSTALL_EXEC
-    PPM_INSTALL_SCRIPT PREREQ_FATAL PREREQ_PM PREREQ_PRINT PRINT_PREREQ
-    SIGN SKIP TEST_REQUIRES TYPEMAPS UNINST VERSION VERSION_FROM XS XSOPT XSPROTOARG
-    XS_VERSION clean depend dist dynamic_lib linkext macro realclean
-    tool_autosplit
+    PERM_DIR PERM_RW PERM_RWX MAGICXS
+    PL_FILES PM PM_FILTER PMLIBDIRS PMLIBPARENTDIRS POLLUTE
+    PREREQ_FATAL PREREQ_PM PREREQ_PRINT PRINT_PREREQ
+    SIGN SKIP TEST_REQUIRES TYPEMAPS UNINST VERSION VERSION_FROM XS
+    XSBUILD XSMULTI XSOPT XSPROTOARG XS_VERSION
+    clean depend dist dynamic_lib linkext macro realclean tool_autosplit
+
+    MAN1EXT MAN3EXT
 
     MACPERL_SRC MACPERL_LIB MACLIBS_68K MACLIBS_PPC MACLIBS_SC MACLIBS_MRC
     MACLIBS_ALL_68K MACLIBS_ALL_PPC MACLIBS_SHARED
         /;
+    push @attrib_help, @fs_macros;
+    @macro_fsentity{@fs_macros, @dep_macros} = (1) x (@fs_macros+@dep_macros);
+    @macro_dep{@dep_macros} = (1) x @dep_macros;
 
     # IMPORTS is used under OS/2 and Win32
 
@@ -381,24 +421,12 @@ sub full_setup {
     );
 }
 
-sub writeMakefile {
-    die <<END;
-
-The extension you are trying to build apparently is rather old and
-most probably outdated. We detect that from the fact, that a
-subroutine "writeMakefile" is called, and this subroutine is not
-supported anymore since about October 1994.
-
-Please contact the author or look into CPAN (details about CPAN can be
-found in the FAQ and at http:/www.perl.com) for a more recent version
-of the extension. If you're really desperate, you can try to change
-the subroutine name from writeMakefile to WriteMakefile and rerun
-'perl Makefile.PL', but you're most probably left alone, when you do
-so.
-
-The MakeMaker team
-
-END
+sub _has_cpan_meta_requirements {
+    return eval {
+      require CPAN::Meta::Requirements;
+      CPAN::Meta::Requirements->VERSION(2.130);
+      require B; # CMR requires this, for core we have to too.
+    };
 }
 
 sub new {
@@ -419,11 +447,52 @@ sub new {
     bless $self, "MM";
 
     # Cleanup all the module requirement bits
+    my %key2cmr;
     for my $key (qw(PREREQ_PM BUILD_REQUIRES CONFIGURE_REQUIRES TEST_REQUIRES)) {
         $self->{$key}      ||= {};
-        $self->clean_versions( $key );
+        if (_has_cpan_meta_requirements) {
+            my $cmr = CPAN::Meta::Requirements->from_string_hash(
+                $self->{$key},
+                {
+                  bad_version_hook => sub {
+                    #no warnings 'numeric'; # module doesn't use warnings
+                    my $fallback;
+                    if ( $_[0] =~ m!^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$! ) {
+                      $fallback = sprintf "%f", $_[0];
+                    } else {
+                      ($fallback) = $_[0] ? ($_[0] =~ /^([0-9.]+)/) : 0;
+                      $fallback += 0;
+                      carp "Unparsable version '$_[0]' for prerequisite $_[1] treated as $fallback";
+                    }
+                    version->new($fallback);
+                  },
+                },
+            );
+            $self->{$key} = $cmr->as_string_hash;
+            $key2cmr{$key} = $cmr;
+        } else {
+            for my $module (sort keys %{ $self->{$key} }) {
+                my $version = $self->{$key}->{$module};
+                my $fallback = 0;
+                if (!defined($version) or !length($version)) {
+                    carp "Undefined requirement for $module treated as '0' (CPAN::Meta::Requirements not available)";
+                }
+                elsif ($version =~ /^\d+(?:\.\d+(?:_\d+)*)?$/) {
+                    next;
+                }
+                else {
+                    if ( $version =~ m!^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$! ) {
+                      $fallback = sprintf "%f", $version;
+                    } else {
+                      ($fallback) = $version ? ($version =~ /^([0-9.]+)/) : 0;
+                      $fallback += 0;
+                      carp "Unparsable version '$version' for prerequisite $module treated as $fallback (CPAN::Meta::Requirements not available)";
+                    }
+                }
+                $self->{$key}->{$module} = $fallback;
+            }
+        }
     }
-
 
     if ("@ARGV" =~ /\bPREREQ_PRINT\b/) {
         $self->_PREREQ_PRINT;
@@ -435,15 +504,28 @@ sub new {
    }
 
     print "MakeMaker (v$VERSION)\n" if $Verbose;
-    if (-f "MANIFEST" && ! -f "Makefile" && ! $ENV{PERL_CORE}){
+    if (-f "MANIFEST" && ! -f "Makefile" && ! $UNDER_CORE){
         check_manifest();
     }
 
     check_hints($self);
 
+    if ( defined $self->{MIN_PERL_VERSION}
+          && $self->{MIN_PERL_VERSION} !~ /^v?[\d_\.]+$/ ) {
+      require version;
+      my $normal = eval {
+        local $SIG{__WARN__} = sub {
+            # simulate "use warnings FATAL => 'all'" for vintage perls
+            die @_;
+        };
+        version->new( $self->{MIN_PERL_VERSION} )
+      };
+      $self->{MIN_PERL_VERSION} = $normal if defined $normal && !$@;
+    }
+
     # Translate X.Y.Z to X.00Y00Z
     if( defined $self->{MIN_PERL_VERSION} ) {
-        $self->{MIN_PERL_VERSION} =~ s{ ^ (\d+) \. (\d+) \. (\d+) $ }
+        $self->{MIN_PERL_VERSION} =~ s{ ^v? (\d+) \. (\d+) \. (\d+) $ }
                                       {sprintf "%d.%03d%03d", $1, $2, $3}ex;
     }
 
@@ -478,9 +560,24 @@ END
     my(%initial_att) = %$self; # record initial attributes
 
     my(%unsatisfied) = ();
-    my $prereqs = $self->_all_prereqs;
-    foreach my $prereq (sort keys %$prereqs) {
-        my $required_version = $prereqs->{$prereq};
+    my %prereq2version;
+    my $cmr;
+    if (_has_cpan_meta_requirements) {
+        $cmr = CPAN::Meta::Requirements->new;
+        for my $key (qw(PREREQ_PM BUILD_REQUIRES CONFIGURE_REQUIRES TEST_REQUIRES)) {
+            $cmr->add_requirements($key2cmr{$key}) if $key2cmr{$key};
+        }
+        foreach my $prereq ($cmr->required_modules) {
+            $prereq2version{$prereq} = $cmr->requirements_for_module($prereq);
+        }
+    } else {
+        for my $key (qw(PREREQ_PM BUILD_REQUIRES CONFIGURE_REQUIRES TEST_REQUIRES)) {
+            next unless my $module2version = $self->{$key};
+            $prereq2version{$_} = $module2version->{$_} for keys %$module2version;
+        }
+    }
+    foreach my $prereq (sort keys %prereq2version) {
+        my $required_version = $prereq2version{$prereq};
 
         my $pr_version = 0;
         my $installed_file;
@@ -489,7 +586,7 @@ END
           if ( defined $required_version && $required_version =~ /^v?[\d_\.]+$/
                || $required_version !~ /^v?[\d_\.]+$/ ) {
             require version;
-            my $normal = eval { version->parse( $required_version ) };
+            my $normal = eval { version->new( $required_version ) };
             $required_version = $normal if defined $normal;
           }
           $installed_file = $prereq;
@@ -499,6 +596,18 @@ END
           $installed_file = MM->_installed_file_for_module($prereq);
           $pr_version = MM->parse_version($installed_file) if $installed_file;
           $pr_version = 0 if $pr_version eq 'undef';
+          if ( !eval { version->new( $pr_version ); 1 } ) {
+            #no warnings 'numeric'; # module doesn't use warnings
+            my $fallback;
+            if ( $pr_version =~ m!^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$! ) {
+              $fallback = sprintf '%f', $pr_version;
+            } else {
+              ($fallback) = $pr_version ? ($pr_version =~ /^([0-9.]+)/) : 0;
+              $fallback += 0;
+              carp "Unparsable version '$pr_version' for installed prerequisite $prereq treated as $fallback";
+            }
+            $pr_version = $fallback;
+          }
         }
 
         # convert X.Y_Z alpha version #s to X.YZ for easier comparisons
@@ -508,17 +617,21 @@ END
             warn sprintf "Warning: prerequisite %s %s not found.\n",
               $prereq, $required_version
                    unless $self->{PREREQ_FATAL}
-                       or $ENV{PERL_CORE};
+                       or $UNDER_CORE;
 
             $unsatisfied{$prereq} = 'not installed';
         }
-        elsif ($pr_version < $required_version ){
+        elsif (
+            $cmr
+                ? !$cmr->accepts_module($prereq, $pr_version)
+                : $required_version > $pr_version
+        ) {
             warn sprintf "Warning: prerequisite %s %s not found. We have %s.\n",
               $prereq, $required_version, ($pr_version || 'unknown version')
                   unless $self->{PREREQ_FATAL}
-                       or $ENV{PERL_CORE};
+                       or $UNDER_CORE;
 
-            $unsatisfied{$prereq} = $required_version ? $required_version : 'unknown version' ;
+            $unsatisfied{$prereq} = $required_version || 'unknown version' ;
         }
     }
 
@@ -541,11 +654,6 @@ END
         } else {
             croak "Attribute 'CONFIGURE' to WriteMakefile() not a code reference\n";
         }
-    }
-
-    # This is for old Makefiles written pre 5.00, will go away
-    if ( Carp::longmess("") =~ /runsubdirpl/s ){
-        carp("WARNING: Please rerun 'perl Makefile.PL' to regenerate your Makefiles\n");
     }
 
     my $newclass = ++$PACKNAME;
@@ -572,10 +680,7 @@ END
 
             $self->{$key} = $self->{PARENT}{$key};
 
-            unless ($Is_VMS && $key =~ /PERL$/) {
-                $self->{$key} = $self->catdir("..",$self->{$key})
-                  unless $self->file_name_is_absolute($self->{$key});
-            } else {
+            if ($Is_VMS && $key =~ /PERL$/) {
                 # PERL or FULLPERL will be a command verb or even a
                 # command with an argument instead of a full file
                 # specification under VMS.  So, don't turn the command
@@ -585,6 +690,14 @@ END
                 $cmd[1] = $self->catfile('[-]',$cmd[1])
                   unless (@cmd < 2) || $self->file_name_is_absolute($cmd[1]);
                 $self->{$key} = join(' ', @cmd);
+            } else {
+                my $value = $self->{$key};
+                # not going to test in FS so only stripping start
+                $value =~ s/^"// if $key =~ /PERL$/;
+                $value = $self->catdir("..", $value)
+                  unless $self->file_name_is_absolute($value);
+                $value = qq{"$value} if $key =~ /PERL$/;
+                $self->{$key} = $value;
             }
         }
         if ($self->{PARENT}) {
@@ -605,6 +718,17 @@ END
         parse_args($self, _shellwords($ENV{PERL_MM_OPT} || ''),@ARGV);
     }
 
+    # RT#91540 PREREQ_FATAL not recognized on command line
+    if (%unsatisfied && $self->{PREREQ_FATAL}){
+        my $failedprereqs = join "\n", map {"    $_ $unsatisfied{$_}"}
+                            sort { $a cmp $b } keys %unsatisfied;
+        die <<"END";
+MakeMaker FATAL: prerequisites not found.
+$failedprereqs
+
+Please install these modules first and rerun 'perl Makefile.PL'.
+END
+    }
 
     $self->{NAME} ||= $self->guess_name;
 
@@ -638,7 +762,9 @@ END
     $self->init_others();
     $self->init_platform();
     $self->init_PERM();
-    my($argv) = neatvalue(\@ARGV);
+    my @args = @ARGV;
+    @args = map { Encode::decode(locale => $_) } @args if $CAN_DECODE;
+    my($argv) = neatvalue(\@args);
     $argv =~ s/^\[/(/;
     $argv =~ s/\]$/)/;
 
@@ -724,6 +850,7 @@ sub WriteEmptyMakefile {
     croak "WriteEmptyMakefile: Need an even number of args" if @_ % 2;
 
     my %att = @_;
+    $att{DIR} = [] unless $att{DIR}; # don't recurse by default
     my $self = MM->new(\%att);
 
     my $new = $self->{MAKEFILE};
@@ -738,6 +865,14 @@ sub WriteEmptyMakefile {
     print $mfh <<'EOP';
 all :
 
+manifypods :
+
+subdirs :
+
+dynamic :
+
+static :
+
 clean :
 
 install :
@@ -745,6 +880,10 @@ install :
 makemakerdflt :
 
 test :
+
+test_dynamic :
+
+test_static :
 
 EOP
     close $mfh or die "close $new for write: $!";
@@ -797,7 +936,7 @@ END
 
     foreach my $key (sort keys %$att){
         next if $key eq 'ARGS';
-        my ($v) = neatvalue($att->{$key});
+        my $v;
         if ($key eq 'PREREQ_PM') {
             # CPAN.pm takes prereqs from this field in 'Makefile'
             # and does not know about BUILD_REQUIRES
@@ -914,6 +1053,7 @@ sub check_manifest {
 
 sub parse_args{
     my($self, @args) = @_;
+    @args = map { Encode::decode(locale => $_) } @args if $CAN_DECODE;
     foreach (@args) {
         unless (m/(.*?)=(.*)/) {
             ++$Verbose if m/^verb/;
@@ -1017,7 +1157,7 @@ sub _run_hintfile {
     my($hint_file) = shift;
 
     local($@, $!);
-    warn "Processing hints file $hint_file\n";
+    print "Processing hints file $hint_file\n" if $Verbose;
 
     # Just in case the ./ isn't on the hint file, which File::Spec can
     # often strip off, we bung the curdir into @INC
@@ -1031,69 +1171,34 @@ sub _run_hintfile {
 
 sub mv_all_methods {
     my($from,$to) = @_;
-
-    # Here you see the *current* list of methods that are overridable
-    # from Makefile.PL via MY:: subroutines. As of VERSION 5.07 I'm
-    # still trying to reduce the list to some reasonable minimum --
-    # because I want to make it easier for the user. A.K.
-
     local $SIG{__WARN__} = sub {
         # can't use 'no warnings redefined', 5.6 only
         warn @_ unless $_[0] =~ /^Subroutine .* redefined/
     };
     foreach my $method (@Overridable) {
-
-        # We cannot say "next" here. Nick might call MY->makeaperl
-        # which isn't defined right now
-
-        # Above statement was written at 4.23 time when Tk-b8 was
-        # around. As Tk-b9 only builds with 5.002something and MM 5 is
-        # standard, we try to enable the next line again. It was
-        # commented out until MM 5.23
-
         next unless defined &{"${from}::$method"};
+        no strict 'refs';   ## no critic
+        *{"${to}::$method"} = \&{"${from}::$method"};
+
+        # If we delete a method, then it will be undefined and cannot
+        # be called.  But as long as we have Makefile.PLs that rely on
+        # %MY:: being intact, we have to fill the hole with an
+        # inheriting method:
 
         {
-            no strict 'refs';   ## no critic
-            *{"${to}::$method"} = \&{"${from}::$method"};
-
-            # If we delete a method, then it will be undefined and cannot
-            # be called.  But as long as we have Makefile.PLs that rely on
-            # %MY:: being intact, we have to fill the hole with an
-            # inheriting method:
-
-            {
-                package MY;
-                my $super = "SUPER::".$method;
-                *{$method} = sub {
-                    shift->$super(@_);
-                };
-            }
+            package MY;
+            my $super = "SUPER::".$method;
+            *{$method} = sub {
+                shift->$super(@_);
+            };
         }
     }
-
-    # We have to clean out %INC also, because the current directory is
-    # changed frequently and Graham Barr prefers to get his version
-    # out of a History.pl file which is "required" so wouldn't get
-    # loaded again in another extension requiring a History.pl
-
-    # With perl5.002_01 the deletion of entries in %INC caused Tk-b11
-    # to core dump in the middle of a require statement. The required
-    # file was Tk/MMutil.pm.  The consequence is, we have to be
-    # extremely careful when we try to give perl a reason to reload a
-    # library with same name.  The workaround prefers to drop nothing
-    # from %INC and teach the writers not to use such libraries.
-
-#    my $inc;
-#    foreach $inc (keys %INC) {
-#       #warn "***$inc*** deleted";
-#       delete $INC{$inc};
-#    }
 }
 
 sub skipcheck {
     my($self) = shift;
     my($section) = @_;
+    return 'skipped' if $section eq 'metafile' && $UNDER_CORE;
     if ($section eq 'dynamic') {
         print "Warning (non-fatal): Target 'dynamic' depends on targets ",
         "in skipped section 'dynamic_bs'\n"
@@ -1116,62 +1221,63 @@ sub skipcheck {
     return '';
 }
 
+# returns filehandle, dies on fail. :raw so no :crlf
+sub open_for_writing {
+    my ($file) = @_;
+    open my $fh ,">", $file or die "Unable to open $file: $!";
+    my @layers = ':raw';
+    push @layers, join ' ', ':encoding(locale)' if $CAN_DECODE;
+    binmode $fh, join ' ', @layers;
+    $fh;
+}
+
 sub flush {
     my $self = shift;
 
-    # This needs a bit more work for more wacky OSen
-    my $type = 'Unix-style';
-    if ( $self->os_flavor_is('Win32') ) {
-      my $make = $self->make;
-      $make = +( File::Spec->splitpath( $make ) )[-1];
-      $make =~ s!\.exe$!!i;
-      $type = $make . '-style';
-    }
-    elsif ( $Is_VMS ) {
-        $type = $Config{make} . '-style';
-    }
-
     my $finalname = $self->{MAKEFILE};
-    print "Generating a $type $finalname\n";
-    print "Writing $finalname for $self->{NAME}\n";
+    printf "Generating a %s %s\n", $self->make_type, $finalname if $Verbose || !$self->{PARENT};
+    print "Writing $finalname for $self->{NAME}\n" if $Verbose || !$self->{PARENT};
 
     unlink($finalname, "MakeMaker.tmp", $Is_VMS ? 'Descrip.MMS' : ());
-    open(my $fh,">", "MakeMaker.tmp")
-        or die "Unable to open MakeMaker.tmp: $!";
 
-    for my $chunk (@{$self->{RESULT}}) {
-        print $fh "$chunk\n"
-            or die "Can't write to MakeMaker.tmp: $!";
+    write_file_via_tmp($finalname, $self->{RESULT});
+
+    # Write MYMETA.yml to communicate metadata up to the CPAN clients
+    print "Writing MYMETA.yml and MYMETA.json\n"
+      if !$self->{NO_MYMETA} and $self->write_mymeta( $self->mymeta );
+
+    # save memory
+    if ($self->{PARENT} && !$self->{_KEEP_AFTER_FLUSH}) {
+        my %keep = map { ($_ => 1) } qw(NEEDS_LINKING HAS_LINK_CODE);
+        delete $self->{$_} for grep !$keep{$_}, keys %$self;
     }
 
-    close $fh
-        or die "Can't write to MakeMaker.tmp: $!";
+    system("$Config::Config{eunicefix} $finalname")
+      if $Config::Config{eunicefix} ne ":";
+
+    return;
+}
+
+sub write_file_via_tmp {
+    my ($finalname, $contents) = @_;
+    my $fh = open_for_writing("MakeMaker.tmp");
+    die "write_file_via_tmp: 2nd arg must be ref" unless ref $contents;
+    for my $chunk (@$contents) {
+        my $to_write = $chunk;
+        utf8::encode $to_write if !$CAN_DECODE && $] > 5.008;
+        print $fh "$to_write\n" or die "Can't write to MakeMaker.tmp: $!";
+    }
+    close $fh or die "Can't write to MakeMaker.tmp: $!";
     _rename("MakeMaker.tmp", $finalname) or
       warn "rename MakeMaker.tmp => $finalname: $!";
-    chmod 0644, $finalname unless $Is_VMS;
-
-    unless ($self->{NO_MYMETA}) {
-        # Write MYMETA.yml to communicate metadata up to the CPAN clients
-        if ( $self->write_mymeta( $self->mymeta ) ) {
-            print "Writing MYMETA.yml and MYMETA.json\n";
-        }
-
-    }
-    my %keep = map { ($_ => 1) } qw(NEEDS_LINKING HAS_LINK_CODE);
-    if ($self->{PARENT} && !$self->{_KEEP_AFTER_FLUSH}) {
-        foreach (keys %$self) { # safe memory
-            delete $self->{$_} unless $keep{$_};
-        }
-    }
-
-    system("$Config::Config{eunicefix} $finalname") unless $Config::Config{eunicefix} eq ":";
+    chmod 0644, $finalname if !$Is_VMS;
+    return;
 }
 
 # This is a rename for OS's where the target must be unlinked first.
 sub _rename {
     my($src, $dest) = @_;
-    chmod 0666, $dest;
-    unlink $dest;
+    _unlink($dest);
     return rename $src, $dest;
 }
 
@@ -1218,29 +1324,33 @@ sub neatvalue {
         push @m, "]";
         return join "", @m;
     }
-    return "$v" unless $t eq 'HASH';
+    return $v unless $t eq 'HASH';
     my(@m, $key, $val);
-    while (($key,$val) = each %$v){
+    for my $key (sort keys %$v) {
         last unless defined $key; # cautious programming in case (undef,undef) is true
-        push(@m,"$key=>".neatvalue($val)) ;
+        push @m,"$key=>".neatvalue($v->{$key});
     }
     return "{ ".join(', ',@m)." }";
 }
 
-# Look for weird version numbers, warn about them and set them to 0
-# before CPAN::Meta chokes.
-sub clean_versions {
-    my($self, $key) = @_;
-
-    my $reqs = $self->{$key};
-    for my $module (keys %$reqs) {
-        my $version = $reqs->{$module};
-
-        if( !defined $version or $version !~ /^v?[\d_\.]+$/ ) {
-            carp "Unparsable version '$version' for prerequisite $module";
-            $reqs->{$module} = 0;
+sub _find_magic_vstring {
+    my $value = shift;
+    return $value if $UNDER_CORE;
+    my $tvalue = '';
+    require B;
+    my $sv = B::svref_2object(\$value);
+    my $magic = ref($sv) eq 'B::PVMG' ? $sv->MAGIC : undef;
+    while ( $magic ) {
+        if ( $magic->TYPE eq 'V' ) {
+            $tvalue = $magic->PTR;
+            $tvalue =~ s/^v?(.+)$/v$1/;
+            last;
+        }
+        else {
+            $magic = $magic->MOREMAGIC;
         }
     }
+    return $tvalue;
 }
 
 sub selfdocument {
@@ -1256,6 +1366,16 @@ sub selfdocument {
             push @m, "# $key => $v";
         }
     }
+    # added here as selfdocument is not overridable
+    push @m, <<'EOF';
+
+# here so even if top_targets is overridden, these will still be defined
+# gmake will silently still work if any are .PHONY-ed but nmake won't
+EOF
+    push @m, join "\n", map "$_ ::\n\t\$(NOECHO) \$(NOOP)\n",
+        # config is so manifypods won't puke if no subdirs
+        grep !$self->{SKIPHASH}{$_},
+        qw(static dynamic config);
     join "\n", @m;
 }
 
@@ -1294,14 +1414,18 @@ won't have to face the possibly bewildering errors resulting from
 using the wrong one.
 
 On POSIX systems, that program will likely be GNU Make; on Microsoft
-Windows, it will be either Microsoft NMake or DMake. Note that this
-module does not support generating Makefiles for GNU Make on Windows.
+Windows, it will be either Microsoft NMake, DMake or GNU Make.
 See the section on the L</"MAKE"> parameter for details.
 
-MakeMaker is object oriented. Each directory below the current
+ExtUtils::MakeMaker (EUMM) is object oriented. Each directory below the current
 directory that contains a Makefile.PL is treated as a separate
 object. This makes it possible to write an unlimited number of
 Makefiles with a single invocation of WriteMakefile().
+
+All inputs to WriteMakefile are Unicode characters, not just octets. EUMM
+seeks to handle all of these correctly. It is currently still not possible
+to portably use Unicode characters in module names, because this requires
+Perl to handle Unicode filenames, which is not yet the case on Windows.
 
 =head2 How To Write A Makefile.PL
 
@@ -1341,6 +1465,23 @@ MakeMaker also checks for any files matching glob("t/*.t"). It will
 execute all matching files in alphabetical order via the
 L<Test::Harness> module with the C<-I> switches set correctly.
 
+You can also organize your tests within subdirectories in the F<t/> directory.
+To do so, use the F<test> directive in your I<Makefile.PL>. For example, if you
+had tests in:
+
+    t/foo
+    t/foo/bar
+
+You could tell make to run tests in both of those directories with the
+following directives:
+
+    test => {TESTS => 't/*/*.t t/*/*/*.t'}
+    test => {TESTS => 't/foo/*.t t/foo/bar/*.t'}
+
+The first will run all test files in all first-level subdirectories and all
+subdirectories they contain. The second will run tests in only the F<t/foo>
+and F<t/foo/bar>.
+
 If you'd like to see the raw output of your tests, set the
 C<TEST_VERBOSE> variable to true.
 
@@ -1350,6 +1491,11 @@ If you want to run particular test files, set the C<TEST_FILES> variable.
 It is possible to use globbing with this mechanism.
 
   make test TEST_FILES='t/foobar.t t/dagobah*.t'
+
+Windows users who are using C<nmake> should note that due to a bug in C<nmake>,
+when specifying C<TEST_FILES> you must use back-slashes instead of forward-slashes.
+
+  nmake test TEST_FILES='t\foobar.t t\dagobah*.t'
 
 =head2 make testdb
 
@@ -1675,8 +1821,9 @@ Available in version 6.5503 and above.
 
 A hash of modules that are needed to build your module but not run it.
 
-This will go into the C<build_requires> field of your CPAN Meta file.
-(F<META.yml> or F<META.json>).
+This will go into the C<build_requires> field of your F<META.yml> and the C<build> of the C<prereqs> field of your F<META.json>.
+
+Defaults to C<<< { "ExtUtils::MakeMaker" => 0 } >>> if this attribute is not specified.
 
 The format is the same as PREREQ_PM.
 
@@ -1725,10 +1872,9 @@ Available in version 6.52 and above.
 A hash of modules that are required to run Makefile.PL itself, but not
 to run your distribution.
 
-This will go into the C<configure_requires> field of your CPAN Meta file
-(F<META.yml> or F<META.json>)
+This will go into the C<configure_requires> field of your F<META.yml> and the C<configure> of the C<prereqs> field of your F<META.json>.
 
-Defaults to C<<< { "ExtUtils::MakeMaker" => 0 } >>>
+Defaults to C<<< { "ExtUtils::MakeMaker" => 0 } >>> if this attribute is not specified.
 
 The format is the same as PREREQ_PM.
 
@@ -2072,10 +2218,10 @@ MakeMaker will turn it into an array with one element.
 
 Available in version 6.31 and above.
 
-The licensing terms of your distribution.  Generally it's "perl" for the
+The licensing terms of your distribution.  Generally it's "perl_5" for the
 same license as Perl itself.
 
-See L<Module::Build::API> for the list of options.
+See L<CPAN::Meta::Spec> for the list of options.
 
 Defaults to "unknown".
 
@@ -2087,7 +2233,8 @@ linkext below).
 
 =item MAGICXS
 
-When this is set to C<1>, C<OBJECT> will be automagically derived from C<XS>.
+When this is set to C<1>, C<OBJECT> will be automagically derived from
+C<O_FILES>.
 
 =item MAKE
 
@@ -2171,6 +2318,20 @@ own.  META_MERGE will merge its value with the default.
 Unless you want to override the defaults, prefer META_MERGE so as to
 get the advantage of any future defaults.
 
+Where prereqs are concerned, if META_MERGE is used, prerequisites are merged
+with their counterpart C<WriteMakefile()> argument
+(PREREQ_PM is merged into {prereqs}{runtime}{requires},
+BUILD_REQUIRES into C<{prereqs}{build}{requires}>,
+CONFIGURE_REQUIRES into C<{prereqs}{configure}{requires}>,
+and TEST_REQUIRES into C<{prereqs}{test}{requires})>.
+When prereqs are specified with META_ADD, the only prerequisites added to the
+file come from the metadata, not C<WriteMakefile()> arguments.
+
+Note that these configuration options are only used for generating F<META.yml>
+and F<META.json> -- they are NOT used for F<MYMETA.yml> and F<MYMETA.json>.
+Therefore data in these fields should NOT be used for dynamic (user-side)
+configuration.
+
 By default CPAN Meta specification C<1.4> is used. In order to use
 CPAN Meta specification C<2.0>, indicate with C<meta-spec> the version
 you want to use.
@@ -2208,9 +2369,9 @@ name of the library (see SDBM_File)
 
 The package representing the distribution. For example, C<Test::More>
 or C<ExtUtils::MakeMaker>. It will be used to derive information about
-the distribution such as the L<DISTNAME>, installation locations
+the distribution such as the L</DISTNAME>, installation locations
 within the Perl library and where XS files will be looked for by
-default (see L<XS>).
+default (see L</XS>).
 
 C<NAME> I<must> be a valid Perl package name and it I<must> have an
 associated C<.pm> file. For example, C<Foo::Bar> is a valid C<NAME>
@@ -2287,7 +2448,14 @@ passed to subdirectory makes.
 
 =item PERL
 
-Perl binary for tasks that can be done by miniperl.
+Perl binary for tasks that can be done by miniperl. If it contains
+spaces or other shell metacharacters, it needs to be quoted in a way
+that protects them, since this value is intended to be inserted in a
+shell command line in the Makefile. E.g.:
+
+  # Perl executable lives in "C:/Program Files/Perl/bin"
+  # Normally you don't need to set this yourself!
+  $ perl Makefile.PL PERL='"C:/Program Files/Perl/bin/perl.exe" -w'
 
 =item PERL_CORE
 
@@ -2386,7 +2554,9 @@ Desired permission for executable files. Defaults to C<755>.
 MakeMaker can run programs to generate files for you at build time.
 By default any file named *.PL (except Makefile.PL and Build.PL) in
 the top level directory will be assumed to be a Perl program and run
-passing its own basename in as an argument.  For example...
+passing its own basename in as an argument.  This basename is actually a build
+target, and there is an intention, but not a requirement, that the *.PL file
+make the file passed to to as an argument. For example...
 
     perl foo.PL foo
 
@@ -2395,6 +2565,8 @@ search.  PL_FILES accepts a hash ref, the key being the file to run
 and the value is passed in as the first argument when the PL file is run.
 
     PL_FILES => {'bin/foobar.PL' => 'bin/foobar'}
+
+    PL_FILES => {'foo.PL' => 'foo.c'}
 
 Would run bin/foobar.PL like this:
 
@@ -2414,8 +2586,14 @@ INST_ARCH in their C<@INC>, so the just built modules can be
 accessed... unless the PL file is making a module (or anything else in
 PM) in which case it is run B<before> pm_to_blib and does not include
 INST_LIB and INST_ARCH in its C<@INC>.  This apparently odd behavior
-is there for backwards compatibility (and it's somewhat DWIM).
-
+is there for backwards compatibility (and it's somewhat DWIM).  The argument
+passed to the .PL is set up as a target to build in the Makefile.  In other
+sections such as C<postamble> you can specify a dependency on the
+filename/argument that the .PL is supposed (or will have, now that that is
+is a dependency) to generate.  Note the file to be generated will still be
+generated and the .PL will still run even without an explicit dependency created
+by you, since the C<all> target still depends on running all eligible to run.PL
+files.
 
 =item PM
 
@@ -2442,23 +2620,22 @@ Defining PM in the Makefile.PL will override PMLIBDIRS.
 A filter program, in the traditional Unix sense (input from stdin, output
 to stdout) that is passed on each .pm file during the build (in the
 pm_to_blib() phase).  It is empty by default, meaning no filtering is done.
+You could use:
 
-Great care is necessary when defining the command if quoting needs to be
-done.  For instance, you would need to say:
+  PM_FILTER => 'perl -ne "print unless /^\\#/"',
 
-  {'PM_FILTER' => 'grep -v \\"^\\#\\"'}
+to remove all the leading comments on the fly during the build.  In order
+to be as portable as possible, please consider using a Perl one-liner
+rather than Unix (or other) utilities, as above.  The # is escaped for
+the Makefile, since what is going to be generated will then be:
 
-to remove all the leading comments on the fly during the build.  The
-extra \\ are necessary, unfortunately, because this variable is interpolated
-within the context of a Perl program built on the command line, and double
-quotes are what is used with the -e switch to build that command line.  The
-# is escaped for the Makefile, since what is going to be generated will then
-be:
+  PM_FILTER = perl -ne "print unless /^\#/"
 
-  PM_FILTER = grep -v \"^\#\"
-
-Without the \\ before the #, we'd have the start of a Makefile comment,
+Without the \ before the #, we'd have the start of a Makefile comment,
 and the macro would be incorrectly defined.
+
+You will almost certainly be better off using the C<PL_FILES> system,
+instead. See above, or the L<ExtUtils::MakeMaker::FAQ> entry.
 
 =item POLLUTE
 
@@ -2480,6 +2657,15 @@ Name of the executable used to run C<PPM_INSTALL_SCRIPT> below. (e.g. perl)
 
 Name of the script that gets executed by the Perl Package Manager after
 the installation of a package.
+
+=item PPM_UNINSTALL_EXEC
+
+Name of the executable used to run C<PPM_UNINSTALL_SCRIPT> below. (e.g. perl)
+
+=item PPM_UNINSTALL_SCRIPT
+
+Name of the script that gets executed by the Perl Package Manager before
+the removal of a package.
 
 =item PREFIX
 
@@ -2520,9 +2706,11 @@ doesn't.  See L<Test::More/BAIL_OUT> for more details.
 A hash of modules that are needed to run your module.  The keys are
 the module names ie. Test::More, and the minimum version is the
 value. If the required version number is 0 any version will do.
+The versions given may be a Perl v-string (see L<version>) or a range
+(see L<CPAN::Meta::Requirements>).
 
-This will go into the C<requires> field of your CPAN Meta file
-(F<META.yml> or F<META.json>).
+This will go into the C<requires> field of your F<META.yml> and the
+C<runtime> of the C<prereqs> field of your F<META.json>.
 
     PREREQ_PM => {
         # Require Test::More at least 0.47
@@ -2591,11 +2779,12 @@ if you really need it.
 
 =item TEST_REQUIRES
 
+Available in version 6.64 and above.
+
 A hash of modules that are needed to test your module but not run or
 build it.
 
-This will go into the C<test_requires> field of your CPAN Meta file.
-(F<META.yml> or F<META.json>).
+This will go into the C<build_requires> field of your F<META.yml> and the C<test> of the C<prereqs> field of your F<META.json>.
 
 The format is the same as PREREQ_PM.
 
@@ -2690,6 +2879,49 @@ Hashref of .xs files. MakeMaker will default this.  e.g.
 The .c files will automatically be included in the list of files
 deleted by a make clean.
 
+=item XSBUILD
+
+Hashref with options controlling the operation of C<XSMULTI>:
+
+  {
+    xs => {
+        all => {
+            # options applying to all .xs files for this distribution
+        },
+        'lib/Class/Name/File' => { # specifically for this file
+            DEFINE => '-Dfunktastic', # defines for only this file
+            INC => "-I$funkyliblocation", # include flags for only this file
+            # OBJECT => 'lib/Class/Name/File$(OBJ_EXT)', # default
+            LDFROM => "lib/Class/Name/File\$(OBJ_EXT) $otherfile\$(OBJ_EXT)", # what's linked
+        },
+    },
+  }
+
+Note C<xs> is the file-extension. More possibilities may arise in the
+future. Note that object names are specified without their XS extension.
+
+C<LDFROM> defaults to the same as C<OBJECT>. C<OBJECT> defaults to,
+for C<XSMULTI>, just the XS filename with the extension replaced with
+the compiler-specific object-file extension.
+
+The distinction between C<OBJECT> and C<LDFROM>: C<OBJECT> is the make
+target, so make will try to build it. However, C<LDFROM> is what will
+actually be linked together to make the shared object or static library
+(SO/SL), so if you override it, make sure it includes what you want to
+make the final SO/SL, almost certainly including the XS basename with
+C<$(OBJ_EXT)> appended.
+
+=item XSMULTI
+
+When this is set to C<1>, multiple XS files may be placed under F<lib/>
+next to their corresponding C<*.pm> files (this is essential for compiling
+with the correct C<VERSION> values). This feature should be considered
+experimental, and details of it may change.
+
+This feature was inspired by, and small portions of code copied from,
+L<ExtUtils::MakeMaker::BigHelper>. Hopefully this feature will render
+that module mainly obsolete.
+
 =item XSOPT
 
 String of options to pass to xsubpp.  This might include C<-C++> or
@@ -2780,6 +3012,8 @@ recursively under C<t> that contain C<.t> files. It will be ignored if
 you provide your own C<TESTS> attribute, defaults to false.
 
   {RECURSIVE_TEST_FILES=>1}
+
+This is supported since 6.76
 
 =item tool_autosplit
 
@@ -3009,13 +3243,13 @@ part of the 'distdir' target (and thus the 'dist' target).  This is intended to
 seamlessly and rapidly populate CPAN with module meta-data.  If you wish to
 shut this feature off, set the C<NO_META> C<WriteMakefile()> flag to true.
 
-At the 2008 QA Hackathon in Oslo, Perl module toolchain maintainers agrees
+At the 2008 QA Hackathon in Oslo, Perl module toolchain maintainers agreed
 to use the CPAN Meta format to communicate post-configuration requirements
 between toolchain components.  These files, F<MYMETA.json> and F<MYMETA.yml>,
 are generated when F<Makefile.PL> generates a F<Makefile> (if L<CPAN::Meta>
-is installed).  Clients like L<CPAN> or L<CPANPLUS> will read this
+is installed).  Clients like L<CPAN> or L<CPANPLUS> will read these
 files to see what prerequisites must be fulfilled before building or testing
-the distribution.  If you with to shut this feature off, set the C<NO_MYMETA>
+the distribution.  If you wish to shut this feature off, set the C<NO_MYMETA>
 C<WriteMakeFile()> flag to true.
 
 =head2 Disabling an extension
@@ -3057,8 +3291,25 @@ prevents automated processes from blocking on user input.
 
 If no $default is provided an empty string will be used instead.
 
+=item os_unsupported
+
+  os_unsupported();
+  os_unsupported if $^O eq 'MSWin32';
+
+The C<os_unsupported()> function provides a way to correctly exit your
+C<Makefile.PL> before calling C<WriteMakefile>. It is essentially a
+C<die> with the message "OS unsupported".
+
+This is supported since 7.26
+
 =back
 
+=head2 Supported versions of Perl
+
+Please note that while this module works on Perl 5.6, it is no longer
+being routinely tested on 5.6 - the earliest Perl version being routinely
+tested, and expressly supported, is 5.8.1. However, patches to repair
+any breakage on 5.6 are still being accepted.
 
 =head1 ENVIRONMENT
 
@@ -3096,6 +3347,13 @@ L<ExtUtils::ModuleMaker> and L<Module::Starter> are both modules to
 help you setup your distribution.
 
 L<CPAN::Meta> and L<CPAN::Meta::Spec> explain CPAN Meta files in detail.
+
+L<File::ShareDir::Install> makes it easy to install static, sometimes
+also referred to as 'shared' files. L<File::ShareDir> helps accessing
+the shared files after installation.
+
+L<Dist::Zilla> makes it easy for the module author to create MakeMaker-based
+distributions with lots of bells and whistles.
 
 =head1 AUTHORS
 

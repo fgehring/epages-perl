@@ -1,4 +1,4 @@
-# Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
+# Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,7 +10,7 @@ package Devel::Cover::Condition_xor_4;
 use strict;
 use warnings;
 
-our $VERSION = "0.79";
+our $VERSION = '1.25'; # VERSION
 
 use base "Devel::Cover::Condition";
 
@@ -24,6 +24,10 @@ __END__
 =head1 NAME
 
 Devel::Cover::Condition_xor_4 - Code coverage metrics for Perl
+
+=head1 VERSION
+
+version 1.25
 
 =head1 SYNOPSIS
 
@@ -43,13 +47,9 @@ Module for storing condition coverage information for xor conditions.
 
 Huh?
 
-=head1 VERSION
-
-Version 0.79 - 5th August 2011
-
 =head1 LICENCE
 
-Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
+Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 
