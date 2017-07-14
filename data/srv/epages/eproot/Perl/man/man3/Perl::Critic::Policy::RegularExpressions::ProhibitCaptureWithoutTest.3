@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Policy::RegularExpressions::ProhibitCaptureWithoutTest 3"
-.TH Perl::Critic::Policy::RegularExpressions::ProhibitCaptureWithoutTest 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Policy::RegularExpressions::ProhibitCaptureWithoutTest 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -138,8 +138,28 @@ distribution.
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 If a regexp match fails, then any capture variables (\f(CW$1\fR, \f(CW$2\fR,
-\&...) will be undefined.  Therefore it's important to check the return
-value of a match before using those variables.
+\&...) will be unaffected.  They will retain whatever old values they may
+have had.  Therefore it's important to check the return value of a match
+before using those variables.
+.PP
+.Vb 4
+\&    \*(Aq12312123\*(Aq =~ /(2)/;
+\&    print $1;    # Prints 2
+\&    \*(Aq123123123\*(Aq =~ /(X)/;
+\&    print $1;    # Prints 2, because $1 has not changed.
+.Ve
+.PP
+Note that because the values of \f(CW$1\fR etc will be unaffected, you cannot
+determine if a match succeeded by checking to see if the capture variables
+have values.
+.PP
+.Vb 5
+\&    # WRONG
+\&    $str =~ /foo(.+)/;
+\&    if ( $1 ) {
+\&        print "I found $1 after \*(Aqfoo\*(Aq";
+\&    }
+.Ve
 .PP
 This policy checks that the previous regexp for which the capture
 variable is in-scope is either in a conditional or causes an exception
@@ -168,7 +188,7 @@ regexp results, for pretty much the same reason.  Simple things like
 will be handled, but something like
 .PP
 .Vb 4
-\& m/(foo) or do {
+\& m/(foo)/ or do {
 \&   ... lots of complicated calculations here ...
 \&   die "No foo!";
 \& };
@@ -194,7 +214,7 @@ This policy does not recognize named capture variables. Yet.
 Chris Dolan <cdolan@cpan.org>
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 2006\-2011 Chris Dolan.
+Copyright (c) 2006\-2017 Chris Dolan.
 .PP
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

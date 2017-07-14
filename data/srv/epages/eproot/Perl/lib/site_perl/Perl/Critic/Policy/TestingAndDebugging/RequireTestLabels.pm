@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/TestingAndDebugging/RequireTestLabels.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::TestingAndDebugging::RequireTestLabels;
 
 use 5.006001;
@@ -18,7 +11,7 @@ use Perl::Critic::Utils qw{
 };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 Readonly::Hash my %LABEL_ARG_POS => (
    ok        => 1,
@@ -80,7 +73,7 @@ sub _has_test_more {
     # TODO: This method gets called every time violates() is invoked,
     # but it only needs to happen once per document.  Perhaps this
     # policy should just apply to PPI::Document, and then do its own
-    # search for for method calls.  Since Perl::Critic::Document is
+    # search for method calls.  Since Perl::Critic::Document is
     # optimized, this should be pretty fast.
 
     my $includes = $doc->find('PPI::Statement::Include');

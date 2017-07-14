@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPIx::Regexp::Dumper 3"
-.TH PPIx::Regexp::Dumper 3 "2011-04-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPIx::Regexp::Dumper 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -171,12 +171,21 @@ first argument.  Optional further arguments may be passed as name/value
 pairs.
 .PP
 The following options are recognized:
+.IP "default_modifiers array_reference" 4
+.IX Item "default_modifiers array_reference"
+This argument is a reference to a list of default modifiers to be
+applied to the statement being parsed. See PPIx::Regexp
+\&\fInew()\fR for the details.
 .IP "encoding name" 4
 .IX Item "encoding name"
 This argument is the name of the encoding of the regular expression. If
 specified, it is passed through to
 PPIx::Regexp\->\fInew()\fR. It also causes an
 \&\f(CW\*(C`Encode::encode\*(C'\fR to be done on any parse content dumped.
+.IP "explain boolean" 4
+.IX Item "explain boolean"
+If true, this option causes the \f(CW\*(C`explain()\*(C'\fR output of each object to be
+dumped.
 .IP "indent number" 4
 .IX Item "indent number"
 This argument is the number of additional spaces to indent each level of
@@ -200,6 +209,21 @@ be dumped.
 If true, this option causes the \f(CW\*(C`perl_version_introduced\*(C'\fR and
 \&\f(CW\*(C`perl_version_removed\*(C'\fR values associated with each object dumped to be
 displayed.
+.IP "postderef boolean" 4
+.IX Item "postderef boolean"
+If true, postfix dereferences are recognized in code and interpolations.
+See the tokenizer's \fInew()\fR for details.
+.IP "strict boolean" 4
+.IX Item "strict boolean"
+This option is passed on to the parser, where it specifies whether the
+parse should assume \f(CW\*(C`use re \*(Aqstrict\*(Aq\*(C'\fR is in effect.
+.Sp
+The \f(CW\*(Aqstrict\*(Aq\fR pragma was introduced in Perl 5.22, and its
+documentation says that it is experimental, and that there is no
+commitment to backward compatibility. The same applies to the
+parse produced when this option is asserted.
+.Sp
+The default is false.
 .IP "significant boolean" 4
 .IX Item "significant boolean"
 If true, this option causes only significant elements to be dumped.
@@ -271,7 +295,7 @@ Support is by the author. Please file bug reports at
 Thomas R. Wyant, \s-1III\s0 \fIwyant at cpan dot org\fR
 .SH "COPYRIGHT AND LICENSE"
 .IX Header "COPYRIGHT AND LICENSE"
-Copyright (C) 2009\-2011 by Thomas R. Wyant, \s-1III\s0
+Copyright (C) 2009\-2017 by Thomas R. Wyant, \s-1III\s0
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

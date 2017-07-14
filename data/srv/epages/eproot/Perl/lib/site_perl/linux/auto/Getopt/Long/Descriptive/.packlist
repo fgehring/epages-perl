@@ -1,3 +1,9 @@
+/srv/epages/eproot/Perl/lib/site_perl/Getopt/Long/Descriptive.pm
+/srv/epages/eproot/Perl/lib/site_perl/Getopt/Long/Descriptive/Opts.pm
+/srv/epages/eproot/Perl/lib/site_perl/Getopt/Long/Descriptive/Usage.pm
+/srv/epages/eproot/Perl/man/man3/Getopt::Long::Descriptive.3
+/srv/epages/eproot/Perl/man/man3/Getopt::Long::Descriptive::Opts.3
+/srv/epages/eproot/Perl/man/man3/Getopt::Long::Descriptive::Usage.3
 lib/site_perl/Getopt/Long/Descriptive.pm
 lib/site_perl/Getopt/Long/Descriptive/Opts.pm
 lib/site_perl/Getopt/Long/Descriptive/Usage.pm

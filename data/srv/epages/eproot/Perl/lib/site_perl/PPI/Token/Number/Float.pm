@@ -33,8 +33,8 @@ use PPI::Token::Number ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Token::Number';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Token::Number';
 }
 
 =pod
@@ -45,7 +45,7 @@ Returns the base for the number: 10.
 
 =cut
 
-sub base () { 10 }
+sub base() { 10 }
 
 =pod
 
@@ -56,12 +56,12 @@ Return the numeric value of this token.
 =cut
 
 sub literal {
-	my $self = shift;
-	my $str = $self->_literal;
-	my $neg = $str =~ s/^\-//;
-	$str =~ s/^\./0./;
-	my $val = 0+$str;
-	return $neg ? -$val : $val;
+        my $self = shift;
+        my $str = $self->_literal;
+        my $neg = $str =~ s/^\-//;
+        $str =~ s/^\./0./;
+        my $val = 0+$str;
+        return $neg ? -$val : $val;
 }
 
 
@@ -72,40 +72,44 @@ sub literal {
 # Tokenizer Methods
 
 sub __TOKENIZER__on_char {
-	my $class = shift;
-	my $t     = shift;
-	my $char  = substr( $t->{line}, $t->{line_cursor}, 1 );
+        my $class = shift;
+        my $t     = shift;
+        my $char  = substr( $t->{line}, $t->{line_cursor}, 1 );
 
-	# Allow underscores straight through
-	return 1 if $char eq '_';
+        # Allow underscores straight through
+        return 1 if $char eq '_';
 
-	# Allow digits
-	return 1 if $char =~ /\d/o;
+        # Allow digits
+        return 1 if $char =~ /\d/o;
 
-	# Is there a second decimal point?  Then version string or '..' operator
-	if ( $char eq '.' ) {
-		if ( $t->{token}->{content} =~ /\.$/ ) {
-			# We have a .., which is an operator.
-			# Take the . off the end of the token..
-			# and finish it, then make the .. operator.
-			chop $t->{token}->{content};
+        # Is there a second decimal point?  Then version string or '..' operator
+        if ( $char eq '.' ) {
+                if ( $t->{token}->{content} =~ /\.$/ ) {
+                        # We have a .., which is an operator.
+                        # Take the . off the end of the token..
+                        # and finish it, then make the .. operator.
+                        chop $t->{token}->{content};
                         $t->{class} = $t->{token}->set_class( 'Number' );
-			$t->_new_token('Operator', '..');
-			return 0;
-		} elsif ( $t->{token}->{content} !~ /_/ ) {
-			# Underscore means not a Version, fall through to end token
-			$t->{class} = $t->{token}->set_class( 'Number::Version' );
-			return 1;
-		}
-	}
-	if ($char eq 'e' || $char eq 'E') {
-		$t->{class} = $t->{token}->set_class( 'Number::Exp' );
-		return 1;
-	}
+                        $t->_new_token('Operator', '..');
+                        return 0;
+                } elsif ( $t->{token}->{content} !~ /_/ ) {
+                        # Underscore means not a Version, fall through to end token
+                        $t->{class} = $t->{token}->set_class( 'Number::Version' );
+                        return 1;
+                }
+        }
 
-	# Doesn't fit a special case, or is after the end of the token
-	# End of token.
-	$t->_finalize_token->__TOKENIZER__on_char( $t );
+        # perl seems to regard pretty much anything that's not strictly an exp num
+        # as float + stuff
+        my $char2 = substr $t->{line}, $t->{line_cursor}+1, 1;
+        if ("$char$char2" =~ /[eE][0-9+-]/) {
+                $t->{class} = $t->{token}->set_class( 'Number::Exp' );
+                return 1;
+        }
+
+        # Doesn't fit a special case, or is after the end of the token
+        # End of token.
+        $t->_finalize_token->__TOKENIZER__on_char( $t );
 }
 
 1;

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Document 3"
-.TH Perl::Critic::Document 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Document 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -155,7 +155,7 @@ This facade does not implement the overloaded operators from
 PPI::Document (that is, the \f(CW\*(C`use overload ...\*(C'\fR
 work). Therefore, users of this facade must not rely on that syntactic
 sugar.  So, for example, instead of \f(CW\*(C`my $source = "$doc";\*(C'\fR you should
-write \f(CW\*(C`my $source = $doc\-\*(C'\fR\fIcontent()\fR;>
+write \f(CW\*(C`my $source = $doc\->content();\*(C'\fR
 .PP
 Perhaps there is a \s-1CPAN\s0 module out there which implements a facade
 better than we do here?
@@ -242,6 +242,19 @@ Caching wrapper around \f(CW\*(C`PPIx::Regexp\->new($element)\*(C'\fR.  If
 just returns the results of \f(CW\*(C`PPIx::Regexp\->new()\*(C'\fR.  In either case,
 it returns \f(CW\*(C`undef\*(C'\fR unless the argument is something that
 PPIx::Regexp actually understands.
+.ie n .IP """element_is_in_lexical_scope_after_statement_containing( $inner, $outer )""" 4
+.el .IP "\f(CWelement_is_in_lexical_scope_after_statement_containing( $inner, $outer )\fR" 4
+.IX Item "element_is_in_lexical_scope_after_statement_containing( $inner, $outer )"
+Is the \f(CW$inner\fR element in lexical scope after the statement containing
+the \f(CW$outer\fR element?
+.Sp
+In the case where \f(CW$outer\fR is itself a scope-defining element, returns true
+if \f(CW$outer\fR contains \f(CW$inner\fR. In any other case, \f(CW$inner\fR must be
+after the last element of the statement containing \f(CW$outer\fR, and the
+innermost scope for \f(CW$outer\fR also contains \f(CW$inner\fR.
+.Sp
+This is not the same as asking whether \f(CW$inner\fR is visible from
+\&\f(CW$outer\fR.
 .ie n .IP """filename()""" 4
 .el .IP "\f(CWfilename()\fR" 4
 .IX Item "filename()"

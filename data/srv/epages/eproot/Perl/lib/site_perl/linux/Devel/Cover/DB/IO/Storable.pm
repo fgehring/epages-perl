@@ -1,4 +1,4 @@
-# Copyright 2011, Paul Johnson (pjcj@cpan.org)
+# Copyright 2011-2017, Paul Johnson (paul@pjcj.net)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -12,28 +12,23 @@ use warnings;
 
 use Storable;
 
-our $VERSION = "0.79";
+our $VERSION = '1.25'; # VERSION
 
-sub new
-{
+sub new {
     my $class = shift;
     my $self  = { @_ };
     bless $self, $class
 }
 
-sub read
-{
+sub read {
     my $self   = shift;
     my ($file) = @_;
-
     Storable::lock_retrieve($file)
 }
 
-sub write
-{
+sub write {
     my $self = shift;
     my ($data, $file) = @_;
-
     Storable::lock_nstore($data, $file);
     $self
 }
@@ -45,6 +40,10 @@ __END__
 =head1 NAME
 
 Devel::Cover::DB::IO::Storable - Storable based IO routines for Devel::Cover::DB
+
+=head1 VERSION
+
+version 1.25
 
 =head1 SYNOPSIS
 
@@ -68,13 +67,13 @@ This module provides Storable based IO routines for Devel::Cover::DB.
 
  my $io = Devel::Cover::DB::IO::Storable->new;
 
-Contructs the IO object.
+Constructs the IO object.
 
 =head2 read
 
  my $data = $io->read($file);
 
-Returns a perl data structure representingthe data read from $file.
+Returns a perl data structure representing the data read from $file.
 
 =head2 write
 
@@ -86,13 +85,9 @@ Writes $data to $file in the format specified when creating $io.
 
 Huh?
 
-=head1 VERSION
-
-Version 0.79 - 5th August 2011
-
 =head1 LICENCE
 
-Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
+Copyright 2011-2017, Paul Johnson (paul@pjcj.net)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

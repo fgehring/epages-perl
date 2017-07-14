@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPI::Element 3"
-.TH PPI::Element 3 "2011-02-26" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPI::Element 3 "2017-05-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -209,7 +209,7 @@ Answers whether a \f(CW\*(C`PPI::Element\*(C'\fR is contains another one.
 .SS "statement"
 .IX Subsection "statement"
 For a \f(CW\*(C`PPI::Element\*(C'\fR that is contained (at some depth) within a
-PPI::Statment, the \f(CW\*(C`statement\*(C'\fR method will return the first parent
+PPI::Statement, the \f(CW\*(C`statement\*(C'\fR method will return the first parent
 Statement object lexically 'above' the Element.
 .PP
 Returns a PPI::Statement object, which may be the same Element if the
@@ -271,7 +271,7 @@ the same object.
 .PP
 Returns a PPI::Token object, or dies on error (which should be extremely
 rare and only occur if an illegal empty PPI::Statement exists below the
-current Element somewhere.
+current Element somewhere.)
 .SS "last_token"
 .IX Subsection "last_token"
 As a support method for higher-order algorithms that deal specifically with
@@ -284,7 +284,7 @@ the itself.
 .PP
 Returns a PPI::Token object, or dies on error (which should be extremely
 rare and only occur if an illegal empty PPI::Statement exists below the
-current Element somewhere.
+current Element somewhere.)
 .SS "next_token"
 .IX Subsection "next_token"
 As a support method for higher-order algorithms that deal specifically with
@@ -336,7 +336,7 @@ In future, this method may be enhanced to allow the insertion of multiple
 Elements, inline-parsed code strings or PPI::Document::Fragment objects.
 .PP
 Returns true if the Element was inserted, false if it can not be inserted,
-or \f(CW\*(C`undef\*(C'\fR if you do not provide a PPI::Element object as a parameter.
+or \f(CW\*(C`undef\*(C'\fR if you do not provide a \f(CW\*(C`PPI::Element\*(C'\fR object as a parameter.
 .ie n .SS "insert_after @Elements"
 .el .SS "insert_after \f(CW@Elements\fP"
 .IX Subsection "insert_after @Elements"
@@ -352,7 +352,7 @@ In future, this method may be enhanced to allow the insertion of multiple
 Elements, inline-parsed code strings or PPI::Document::Fragment objects.
 .PP
 Returns true if the Element was inserted, false if it can not be inserted,
-or \f(CW\*(C`undef\*(C'\fR if you do not provide a PPI::Element object as a parameter.
+or \f(CW\*(C`undef\*(C'\fR if you do not provide a \f(CW\*(C`PPI::Element\*(C'\fR object as a parameter.
 .SS "remove"
 .IX Subsection "remove"
 For a given \f(CW\*(C`PPI::Element\*(C'\fR, the \f(CW\*(C`remove\*(C'\fR method will remove it from its

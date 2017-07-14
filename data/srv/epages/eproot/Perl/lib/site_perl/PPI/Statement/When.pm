@@ -4,7 +4,7 @@ package PPI::Statement::When;
 
 =head1 NAME
 
-PPI::Statement::When - Describes all compound statements
+PPI::Statement::When - A when statement
 
 =head1 SYNOPSIS
 
@@ -37,8 +37,6 @@ statements, as described in L<perlsyn>.
 C<PPI::Structure::When> has no methods beyond those provided by the
 standard L<PPI::Structure>, L<PPI::Node> and L<PPI::Element> methods.
 
-Got any ideas for methods? Submit a report to rt.cpan.org!
-
 =cut
 
 use strict;
@@ -46,22 +44,22 @@ use PPI::Statement ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Statement';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Statement';
 }
 
 # Lexer clues
-sub __LEXER__normal { '' }
+sub __LEXER__normal() { '' }
 
 sub _complete {
-	my $child = $_[0]->schild(-1);
-	return !! (
-		defined $child
-		and
-		$child->isa('PPI::Structure::Block')
-		and
-		$child->complete
-	);
+        my $child = $_[0]->schild(-1);
+        return !! (
+                defined $child
+                and
+                $child->isa('PPI::Structure::Block')
+                and
+                $child->complete
+        );
 }
 
 
@@ -71,8 +69,8 @@ sub _complete {
 #####################################################################
 # PPI::Node Methods
 
-sub scope {
-	1;
+sub scope() {
+        1;
 }
 
 1;

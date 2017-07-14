@@ -39,37 +39,32 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Structure };
 
-use Carp qw{ cluck };
-use PPIx::Regexp::Constant qw{ STRUCTURE_UNKNOWN TOKEN_UNKNOWN };
-
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
 # The only child of this structure should be a single
 # PPIx::Regexp::Token::Code. Anything else gets turned into the
 # appropriate ::Unknown object.
 sub __PPIX_LEXER__finalize {
-    my ( $self ) = @_;
+    my ( $self ) = @_;          # $lexer unused
 
     my $count;
     my $errors = 0;
 
     foreach my $kid ( $self->children() ) {
 
-	$kid->isa( 'PPIx::Regexp::Token::Code' )
-	    and not $count++
-	    and next;
+        if ( $kid->isa( 'PPIx::Regexp::Token::Code' ) ) {
+            $count++
+                or next;
+            $errors++;
+            $kid->__error(
+                'Code structure can contain only one code token' );
+        } else {
 
-	$errors++;
+            $errors++;
 
-	if ( $kid->isa( 'PPIx::Regexp::Token' ) ) {
-	    bless $kid, TOKEN_UNKNOWN;
-	} elsif ( $kid->isa( 'PPIx::Regexp::Structure' ) ) {
-	    bless $kid, STRUCTURE_UNKNOWN;
-	} else {
-	    cluck( 'Programming error - unexpected element of class ',
-		ref $kid, ' found in a PPIx::Regexp::Structure::Code. ',
-		'Please contact the author' );
-	}
+            $kid->__error(
+                'Code structure may not contain a ' . ref $kid );
+        }
 
     }
     return $errors;
@@ -90,7 +85,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

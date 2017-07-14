@@ -22,28 +22,28 @@ time during the loading process.
 There are five types of scheduled block:
 
   BEGIN {
-  	# Executes as soon as this block is fully defined
-  	...
+        # Executes as soon as this block is fully defined
+        ...
   }
 
   CHECK {
-  	# Executes after overall compile-phase in reverse order
-  	...
+        # Executes after overall compile-phase in reverse order
+        ...
   }
 
   UNITCHECK {
-  	# Executes after compile-phase of individual module in reverse order
-  	...
+        # Executes after compile-phase of individual module in reverse order
+        ...
   }
 
   INIT {
-  	# Executes just before run-time
-  	...
+        # Executes just before run-time
+        ...
   }
 
   END {
-  	# Executes as late as possible in reverse order
-  	...
+        # Executes as late as possible in reverse order
+        ...
   }
 
 Technically these scheduled blocks are actually subroutines, and in fact
@@ -58,21 +58,21 @@ use PPI::Statement::Sub ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Statement::Sub';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Statement::Sub';
 }
 
-sub __LEXER__normal { '' }
+sub __LEXER__normal() { '' }
 
 sub _complete {
-	my $child = $_[0]->schild(-1);
-	return !! (
-		defined $child
-		and
-		$child->isa('PPI::Structure::Block')
-		and
-		$child->complete
-	);
+        my $child = $_[0]->schild(-1);
+        return !! (
+                defined $child
+                and
+                $child->isa('PPI::Structure::Block')
+                and
+                $child->complete
+        );
 }
 
 =pod
@@ -85,16 +85,16 @@ one of C<'BEGIN'>, C<'CHECK'>, C<'UNITCHECK'>, C<'INIT'> or C<'END'>.
 =cut
 
 sub type {
-	my $self     = shift;
-	my @children = $self->schildren or return undef;
-	$children[0]->content eq 'sub'
-		? $children[1]->content
-		: $children[0]->content;
+        my $self     = shift;
+        my @children = $self->schildren or return undef;
+        $children[0]->content eq 'sub'
+                ? $children[1]->content
+                : $children[0]->content;
 }
 
 # This is actually the same as Sub->name
 sub name {
-	shift->type(@_);
+        shift->type(@_);
 }
 
 1;

@@ -43,21 +43,36 @@ use base qw{ PPIx::Regexp::Token::GroupType };
 
 use PPIx::Regexp::Constant qw{ MINIMUM_PERL };
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
 # Return true if the token can be quantified, and false otherwise
 # sub can_be_quantified { return };
 
 {
+
+    my %explanation = (
+        '??'    => 'Evaluate code, use as regexp at this point',
+        '?p'    => 'Evaluate code, use as regexp at this point (removed in 5.9.5)',
+        '?'             => 'Evaluate code. Always matches.',
+    );
+
+    sub __explanation {
+        return \%explanation;
+    }
+
+}
+
+{
     my %perl_version_introduced = (
-	'?'	=> '5.005',
-	'?p'	=> '5.005',	# Presumed. I can find no documentation.
-	'??'	=> '5.006',
+        '?'     => '5.005',
+        '?p'    => '5.005',     # Presumed. I can find no documentation.
+        '??'    => '5.006',
     );
 
     sub perl_version_introduced {
-	my ( $self ) = @_;
-	return $perl_version_introduced{ $self->content() } || '5.005';
+        my ( $self ) = @_;
+        return $perl_version_introduced{ $self->unescaped_content() } ||
+            '5.005';
     }
 
 }
@@ -65,14 +80,16 @@ our $VERSION = '0.020';
 {
 
     my %perl_version_removed = (
-	'?p'	=> '5.009005',
+        '?p'    => '5.009005',
     );
 
     sub perl_version_removed {
-	my ( $self ) = @_;
-	return $perl_version_removed{ $self->content() };
+        my ( $self ) = @_;
+        return $perl_version_removed{ $self->content() };
     }
 }
+
+=begin comment
 
 sub __PPIX_TOKENIZER__regexp {
     my ( $class, $tokenizer, $character ) = @_;
@@ -82,16 +99,35 @@ sub __PPIX_TOKENIZER__regexp {
     # non-open-bracket characters may appear as delimiters to the
     # expression.
     if ( my $accept = $tokenizer->find_regexp(
-	    qr{ \A \\? \? \\? [?p]? \{ }smx ) ) {
+            qr{ \A \\? \? \\? [?p]? \{ }smx ) ) {
 
-	--$accept;	# Don't want the curly bracket.
+        --$accept;      # Don't want the curly bracket.
 
-	# Code token comes after.
-	$tokenizer->expect( 'PPIx::Regexp::Token::Code' );
+        # Code token comes after.
+        $tokenizer->expect( 'PPIx::Regexp::Token::Code' );
 
-	return $accept;
+        return $accept;
     }
 
+    return;
+}
+
+=end comment
+
+=cut
+
+sub __defining_string {
+    return (
+        { suffix        => '{' },
+        '?',
+        '??',
+        '?p',
+    );
+}
+
+sub __match_setup {
+    my ( undef, $tokenizer ) = @_;      # Invocant unused
+    $tokenizer->expect( qw{ PPIx::Regexp::Token::Code } );
     return;
 }
 
@@ -110,7 +146,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPI::Dumper 3"
-.TH PPI::Dumper 3 "2011-02-26" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPI::Dumper 3 "2017-05-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -191,7 +191,7 @@ made much clearer. True/false value, on by default.
 .IX Item "comments"
 Should the dumper show comment tokens. In situations where you have
 a lot of comments, the code can often be made clearer by ignoring
-comment tokens. True/value value, on by default.
+comment tokens. True/false value, on by default.
 .IP "locations" 4
 .IX Item "locations"
 Should the dumper show the location of each token. The values shown are
@@ -213,7 +213,7 @@ Returns a string or undef if there is an error while generating the dump.
 The \f(CW\*(C`list\*(C'\fR method generates the dump and provides it as a raw
 list, without trailing newlines.
 .PP
-Returns a list or the null list if there is an error while generation
+Returns a list or the null list if there is an error while generating
 the dump.
 .SH "SUPPORT"
 .IX Header "SUPPORT"

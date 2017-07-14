@@ -29,7 +29,7 @@ and presumably providing some small speed up.
 
 That's fine. PPI likes POD. Any POD after the __END__ tag is parsed
 into valid L<PPI::Token::Pod> tags as normal. B<This> class, on the
-other hand, is for "what's after __END__ when it isn't POD". 
+other hand, is for "what's after __END__ when it isn't POD".
 
 Basically, the completely worthless bits of the file :)
 
@@ -45,8 +45,8 @@ use PPI::Token ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Token';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Token';
 }
 
 
@@ -57,35 +57,35 @@ BEGIN {
 # Tokenizer Methods
 
 ### XS -> PPI/XS.xs:_PPI_Token_End__significant 0.900+
-sub significant { '' }
+sub significant() { '' }
 
-sub __TOKENIZER__on_char { 1 }
+sub __TOKENIZER__on_char() { 1 }
 
 sub __TOKENIZER__on_line_start {
-	my $t = $_[1];
+        my $t = $_[1];
 
-	# Can we classify the entire line in one go
-	if ( $t->{line} =~ /^=(\w+)/ ) {
-		# A Pod tag... change to pod mode
-		$t->_new_token( 'Pod', $t->{line} );
-		unless ( $1 eq 'cut' ) {
-			# Normal start to pod
-			$t->{class} = 'PPI::Token::Pod';
-		}
+        # Can we classify the entire line in one go
+        if ( $t->{line} =~ /^=(\w+)/ ) {
+                # A Pod tag... change to pod mode
+                $t->_new_token( 'Pod', $t->{line} );
+                unless ( $1 eq 'cut' ) {
+                        # Normal start to pod
+                        $t->{class} = 'PPI::Token::Pod';
+                }
 
-		# This is an error, but one we'll ignore
-		# Don't go into Pod mode, since =cut normally
-		# signals the end of Pod mode
-	} else {
-		if ( defined $t->{token} ) {
-			# Add to existing token
-			$t->{token}->{content} .= $t->{line};
-		} else {
-			$t->_new_token( 'End', $t->{line} );
-		}
-	}
+                # This is an error, but one we'll ignore
+                # Don't go into Pod mode, since =cut normally
+                # signals the end of Pod mode
+        } else {
+                if ( defined $t->{token} ) {
+                        # Add to existing token
+                        $t->{token}->{content} .= $t->{line};
+                } else {
+                        $t->_new_token( 'End', $t->{line} );
+                }
+        }
 
-	0;
+        0;
 }
 
 1;

@@ -10,7 +10,7 @@ PPI::Structure::List - Explicit list or precedence ordering braces
 
   # A list used for params
   function( 'param', 'param' );
-  
+
   # Explicit list
   return ( 'foo', 'bar' );
 
@@ -31,8 +31,6 @@ represent lists, and related.
 C<PPI::Structure::List> has no methods beyond those provided by the
 standard L<PPI::Structure>, L<PPI::Node> and L<PPI::Element> methods.
 
-Got any ideas for methods? Submit a report to rt.cpan.org!
-
 =cut
 
 use strict;
@@ -41,29 +39,29 @@ use PPI::Structure ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Structure';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Structure';
 }
 
 # Highly special custom isa method that will continue to respond
 # positively to ->isa('PPI::Structure::ForLoop') but warns.
 my $has_warned = 0;
 sub isa {
-	if ( $_[1] and $_[1] eq 'PPI::Structure::ForLoop' ) {
-		if (
-			$_[0]->parent->isa('PPI::Statement::Compound')
-			and
-			$_[0]->parent->type =~ /^for/
-		) {
-			unless ( $has_warned ) {
-				local $Carp::CarpLevel = $Carp::CarpLevel + 1;
-				Carp::carp("PPI::Structure::ForLoop has been deprecated");
-				$has_warned = 1;
-			}
-			return 1;
-		}
-	}
-	return shift->SUPER::isa(@_);
+        if ( $_[1] and $_[1] eq 'PPI::Structure::ForLoop' ) {
+                if (
+                        $_[0]->parent->isa('PPI::Statement::Compound')
+                        and
+                        $_[0]->parent->type =~ /^for/
+                ) {
+                        unless ( $has_warned ) {
+                                local $Carp::CarpLevel = $Carp::CarpLevel + 1;
+                                Carp::carp("PPI::Structure::ForLoop has been deprecated");
+                                $has_warned = 1;
+                        }
+                        return 1;
+                }
+        }
+        return shift->SUPER::isa(@_);
 }
 
 1;

@@ -123,8 +123,8 @@
 .rm #[ #] #H #V #F C
 .\" ========================================================================
 .\"
-.IX Title "Time::Piece 3"
-.TH Time::Piece 3 "2011-01-09" "perl v5.12.3" "Perl Programmers Reference Guide"
+.IX Title "Piece 3"
+.TH Piece 3 "2015-10-20" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -142,7 +142,7 @@ Time::Piece \- Object Oriented time objects
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-This module replaces the standard localtime and gmtime functions with
+This module replaces the standard \f(CW\*(C`localtime\*(C'\fR and \f(CW\*(C`gmtime\*(C'\fR functions with
 implementations that return objects. It does so in a backwards
 compatible manner, so that using localtime/gmtime in the way documented
 in perlfunc will still return what you expect.
@@ -204,7 +204,7 @@ following methods are available on the object:
 \&
 \&    $t\->week                # week number (ISO 8601)
 \&
-\&    $t\->is_leap_year        # true if it its
+\&    $t\->is_leap_year        # true if it\*(Aqs a leap year
 \&    $t\->month_last_day      # 28\-31
 \&
 \&    $t\->time_separator($s)  # set the default separator (default ":")
@@ -220,6 +220,11 @@ following methods are available on the object:
 \&                            # see strptime man page. Creates a new
 \&                            # Time::Piece object
 .Ve
+.PP
+Note that \f(CW\*(C`localtime\*(C'\fR and \f(CW\*(C`gmtime\*(C'\fR are not listed above.  If called as
+methods on a Time::Piece object, they act as constructors, returning a new
+Time::Piece object for the current time.  In other words: they're not useful as
+methods.
 .SS "Local Locales"
 .IX Subsection "Local Locales"
 Both wdayname (day) and monname (month) allow passing in a list to use
@@ -233,7 +238,7 @@ using locales.
 \&  my $french_day = localtime\->day(@days);
 .Ve
 .PP
-These settings can be overriden globally too:
+These settings can be overridden globally too:
 .PP
 .Vb 1
 \&  Time::Piece::day_list(@days);
@@ -298,11 +303,11 @@ Date comparisons are also possible, using the full suite of \*(L"<\*(R", \*(L">\
 \&\*(L"<=\*(R", \*(L">=\*(R", \*(L"<=>\*(R", \*(L"==\*(R" and \*(L"!=\*(R".
 .SS "Date Parsing"
 .IX Subsection "Date Parsing"
-Time::Piece links to your C library's \fIstrptime()\fR function, allowing
+Time::Piece has a built-in \fIstrptime()\fR function (from FreeBSD), allowing
 you incredibly flexible date parsing routines. For example:
 .PP
 .Vb 2
-\&  my $t = Time::Piece\->strptime("Sun 3rd Nov, 1943",
+\&  my $t = Time::Piece\->strptime("Sunday 3rd Nov, 1943",
 \&                                "%A %drd %b, %Y");
 \&  
 \&  print $t\->strftime("%a, %d %b %Y");
@@ -318,6 +323,8 @@ Outputs:
 .PP
 For more information see \*(L"man strptime\*(R", which should be on all unix
 systems.
+.PP
+Alternatively look here: http://www.unix.com/man\-page/FreeBSD/3/strftime/
 .SS "YYYY\-MM\-DDThh:mm:ss"
 .IX Subsection "YYYY-MM-DDThh:mm:ss"
 The \s-1ISO\s0 8601 standard defines the date format to be YYYY-MM-DD, and
@@ -358,12 +365,24 @@ also call \fI_tzset()\fR in the main thread to register the environment change).
 .PP
 Furthermore, remember that this caveat also applies to \fIfork()\fR, which is
 emulated by threads on Win32.
+.SS "Use of epoch seconds"
+.IX Subsection "Use of epoch seconds"
+This module internally uses the epoch seconds system that is provided via
+the perl \f(CW\*(C`time()\*(C'\fR function and supported by \f(CW\*(C`gmtime()\*(C'\fR and \f(CW\*(C`localtime()\*(C'\fR.
+.PP
+If your perl does not support times larger than \f(CW\*(C`2^31\*(C'\fR seconds then this
+module is likely to fail at processing dates beyond the year 2038. There are
+moves afoot to fix that in perl. Alternatively use 64 bit perl. Or if none
+of those are options, use the DateTime module which has support for years
+well into the future and past.
 .SH "AUTHOR"
 .IX Header "AUTHOR"
 Matt Sergeant, matt@sergeant.org
 Jarkko Hietaniemi, jhi@iki.fi (while creating Time::Piece for core perl)
-.SH "License"
-.IX Header "License"
+.SH "COPYRIGHT AND LICENSE"
+.IX Header "COPYRIGHT AND LICENSE"
+Copyright 2001, Larry Wall.
+.PP
 This module is free software, you may distribute it under the same terms
 as Perl.
 .SH "SEE ALSO"

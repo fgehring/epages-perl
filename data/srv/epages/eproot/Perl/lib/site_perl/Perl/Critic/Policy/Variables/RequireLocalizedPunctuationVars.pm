@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/Variables/RequireLocalizedPunctuationVars.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::Variables::RequireLocalizedPunctuationVars;
 
 use 5.006001;
@@ -15,7 +8,7 @@ use Readonly;
 use Perl::Critic::Utils qw{ :severities :classification $EMPTY hashify};
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -44,7 +37,7 @@ sub supported_parameters {
 }
 
 sub default_severity     { return $SEVERITY_HIGH             }
-sub default_themes       { return qw(core pbp bugs)          }
+sub default_themes       { return qw(core pbp bugs certrec )          }
 sub applies_to           { return 'PPI::Token::Operator'     }
 
 #-----------------------------------------------------------------------------
@@ -52,7 +45,7 @@ sub applies_to           { return 'PPI::Token::Operator'     }
 sub violates {
     my ( $self, $elem, undef ) = @_;
 
-    return if $elem ne q{=};
+    return if $elem->content() ne q{=};
 
     my $destination = $elem->sprevious_sibling;
     return if !$destination;  # huh? assignment in void context??
@@ -76,7 +69,8 @@ sub _is_non_local_magic_dest {
         if
                 $modifier
             &&  $modifier->isa('PPI::Token::Word')
-            &&  ($modifier eq 'local' || $modifier eq 'my');
+            &&  ($modifier->content() eq 'local'
+                || $modifier->content() eq 'my');
 
     # Implementation note: Can't rely on PPI::Token::Magic,
     # unfortunately, because we need English too
@@ -142,7 +136,7 @@ magic variable in a non-trivial program, do it in a local scope.
 
 For example, to slurp a filehandle into a scalar, it's common to set
 the record separator to undef instead of a newline.  If you choose to
-do this (instead of using L<File::Slurp|File::Slurp>!) then be sure to
+do this (instead of using L<Path::Tiny|Path::Tiny>!) then be sure to
 localize the global and change it for as short a time as possible.
 
     # BAD:

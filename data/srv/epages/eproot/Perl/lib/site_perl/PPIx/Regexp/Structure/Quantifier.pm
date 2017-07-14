@@ -34,19 +34,45 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Structure };
 
-our $VERSION = '0.020';
+use PPIx::Regexp::Constant qw{
+    LITERAL_LEFT_CURLY_ALLOWED
+};
+
+our $VERSION = '0.051';
 
 sub can_be_quantified {
     return;
+}
+
+sub explain {
+    my ( $self ) = @_;
+    my $content = $self->content();
+    if ( $content =~ m/ \A [{] ( .*? ) [}] \z /smx ) {
+        my $quant = $1;
+        my ( $lo, $hi ) = split qr{ , }smx, $quant;
+        defined $hi
+            and '' ne $hi
+            and return "match $lo to $hi times";
+        $quant =~ m/ , \z /smx
+            and return "match $lo or more times";
+        $lo =~ m/ [^0-9] /smx
+            and return "match $lo times";
+        return "match exactly $lo times";
+    }
+    return $self->SUPER::explain();
 }
 
 sub is_quantifier {
     return 1;
 }
 
+sub __following_literal_left_curly_disallowed_in {
+    return LITERAL_LEFT_CURLY_ALLOWED;
+}
+
 # Called by the lexer to record the capture number.
 sub __PPIX_LEXER__record_capture_number {
-    my ( $self, $number ) = @_;
+    my ( undef, $number ) = @_;         # Invocant unused
     return $number;
 }
 
@@ -65,7 +91,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

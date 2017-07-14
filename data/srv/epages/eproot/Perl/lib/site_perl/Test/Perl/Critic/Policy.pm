@@ -1,12 +1,3 @@
-#!perl
-
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Test/Perl/Critic/Policy.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Test::Perl::Critic::Policy;
 
 use 5.006001;
@@ -29,11 +20,11 @@ use Perl::Critic::TestUtils qw<
 
 #-----------------------------------------------------------------------------
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
-use base 'Exporter';
+use Exporter 'import';
 
 Readonly::Array our @EXPORT_OK      => qw< all_policies_ok >;
 Readonly::Hash  our %EXPORT_TAGS    => (all => \@EXPORT_OK);
@@ -96,7 +87,7 @@ sub _validate_wanted_policy_names {
     my @wanted_policies = @{ $wanted_policies };
 
 
-    my @invalid = grep {my $p = $_; none {$_ =~ $p} @all_testable_policies}  @wanted_policies;
+    my @invalid = grep {my $p = $_; none { $_ =~ $p } @all_testable_policies}  @wanted_policies;
     croak( q{No tests found for policies matching: } . join q{, }, @invalid ) if @invalid;
     return 1;
 }

@@ -1,8 +1,6 @@
 #!/srv/epages/eproot/Perl/bin/perl -w
 
-eval 'exec perl -w -S $0 ${1+"$@"}'
-    if 0; # not running under some shell
-
+BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
 use IO::File;
 use ExtUtils::Packlist;

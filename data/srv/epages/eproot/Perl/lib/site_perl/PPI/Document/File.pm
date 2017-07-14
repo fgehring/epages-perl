@@ -24,8 +24,8 @@ use PPI::Document ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Document';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Document';
 }
 
 
@@ -50,30 +50,30 @@ Returns a new PPI::Document::File object, or C<undef> on error.
 =cut
 
 sub new {
-	my $class    = shift;
-	my $filename = _STRING(shift);
-	unless ( defined $filename ) {
-		# Perl::Critic got a complaint about not handling a file
-		# named "0".
-		return $class->_error("Did not provide a file name to load");
-	}
+        my $class    = shift;
+        my $filename = _STRING(shift);
+        unless ( defined $filename ) {
+                # Perl::Critic got a complaint about not handling a file
+                # named "0".
+                return $class->_error("Did not provide a file name to load");
+        }
 
-	# Load the Document
-	my $self = $class->SUPER::new( $filename, @_ ) or return undef;
+        # Load the Document
+        my $self = $class->SUPER::new( $filename, @_ ) or return undef;
 
-	# Unlike a normal inheritance situation, due to our need to stay
-	# compatible with caching magic, this actually returns a regular
-	# anonymous document. We need to rebless if
-	if ( _INSTANCE($self, 'PPI::Document') ) {
-		bless $self, 'PPI::Document::File';
-	} else {
-		die "PPI::Document::File SUPER call returned an object of the wrong type";
-	}
+        # Unlike a normal inheritance situation, due to our need to stay
+        # compatible with caching magic, this actually returns a regular
+        # anonymous document. We need to rebless if
+        if ( _INSTANCE($self, 'PPI::Document') ) {
+                bless $self, 'PPI::Document::File';
+        } else {
+                die "PPI::Document::File SUPER call returned an object of the wrong type";
+        }
 
-	# Save the filename
-	$self->{filename} = $filename;
+        # Save the filename
+        $self->{filename} = $filename;
 
-	$self;
+        $self;
 }
 
 =head2 filename
@@ -84,7 +84,7 @@ is stored.
 =cut
 
 sub filename {
-	$_[0]->{filename};
+        $_[0]->{filename};
 }
 
 =pod
@@ -93,7 +93,7 @@ sub filename {
 
   # Save to the file we were loaded from
   $file->save;
-  
+
   # Save a copy to somewhere else
   $file->save( 'Module2.pm' );
 
@@ -110,16 +110,16 @@ the same, and not change to the new filename.
 =cut
 
 sub save {
-	my $self = shift;
+        my $self = shift;
 
-	# Save to where?
-	my $filename = shift;
-	unless ( defined $filename ) {
-		$filename = $self->filename;
-	}
+        # Save to where?
+        my $filename = shift;
+        unless ( defined $filename ) {
+                $filename = $self->filename;
+        }
 
-	# Hand off to main save method
-	$self->SUPER::save( $filename, @_ );
+        # Hand off to main save method
+        $self->SUPER::save( $filename, @_ );
 }
 
 1;

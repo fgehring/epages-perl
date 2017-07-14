@@ -47,7 +47,7 @@ use PPI::Util    ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '1.215';
+        $VERSION = '1.224';
 }
 
 use overload 'bool' => \&PPI::Util::TRUE;
@@ -73,22 +73,22 @@ object itself.
 =cut
 
 sub new {
-	my $class = shift;
-	my %args  = @_;
+        my $class = shift;
+        my %args  = @_;
 
-	# Check the required params
-	my $Document  = _INSTANCE($args{Document}, 'PPI::Document') or return undef;
-	my $version   = $args{version} or return undef;
-	my $functions = _ARRAY($args{functions}) or return undef;
+        # Check the required params
+        my $Document  = _INSTANCE($args{Document}, 'PPI::Document') or return undef;
+        my $version   = $args{version} or return undef;
+        my $functions = _ARRAY($args{functions}) or return undef;
 
-	# Create the object
-	my $self = bless {
-		Document  => $Document,
-		version   => $version,
-		functions => $functions,
-		}, $class;
+        # Create the object
+        my $self = bless {
+                Document  => $Document,
+                version   => $version,
+                functions => $functions,
+                }, $class;
 
-	$self;
+        $self;
 }
 
 sub _Document { $_[0]->{Document}  }
@@ -135,9 +135,9 @@ do something like the following:
 
   my $first  = PPI::Document->load('first.pl');
   my $second = PPI::Document->load('second.pl');
-  
+
   if ( $first->normalized == $second->normalized ) {
-  	print "The two documents are equivalent";
+        print "The two documents are equivalent";
   }
 
 Returns true if the normalized documents are equivalent, false if not,
@@ -146,67 +146,67 @@ or C<undef> if there is an error.
 =cut
 
 sub equal {
-	my $self  = shift;
-	my $other = _INSTANCE(shift, 'PPI::Document::Normalized') or return undef;
+        my $self  = shift;
+        my $other = _INSTANCE(shift, 'PPI::Document::Normalized') or return undef;
 
-	# Prevent multiple concurrent runs
-	return undef if $self->{processing};
+        # Prevent multiple concurrent runs
+        return undef if $self->{processing};
 
-	# Check the version and function list first
-	return '' unless $self->version eq $other->version;
-	$self->_equal_ARRAY( $self->functions, $other->functions ) or return '';
+        # Check the version and function list first
+        return '' unless $self->version eq $other->version;
+        $self->_equal_ARRAY( $self->functions, $other->functions ) or return '';
 
-	# Do the main comparison run
-	$self->{seen} = {};
-	my $rv = $self->_equal_blessed( $self->_Document, $other->_Document );
-	delete $self->{seen};
+        # Do the main comparison run
+        $self->{seen} = {};
+        my $rv = $self->_equal_blessed( $self->_Document, $other->_Document );
+        delete $self->{seen};
 
-	$rv;
+        $rv;
 }
 
 # Check that two objects are matched
 sub _equal_blessed {
-	my ($self, $this, $that) = @_;
-	my ($bthis, $bthat) = (blessed $this, blessed $that);
-	$bthis and $bthat and $bthis eq $bthat or return '';
+        my ($self, $this, $that) = @_;
+        my ($bthis, $bthat) = (blessed $this, blessed $that);
+        $bthis and $bthat and $bthis eq $bthat or return '';
 
-	# Check the object as a reference
-	$self->_equal_reference( $this, $that );
+        # Check the object as a reference
+        $self->_equal_reference( $this, $that );
 }
 
 # Check that two references match their types
 sub _equal_reference {
-	my ($self, $this, $that) = @_;
-	my ($rthis, $rthat) = (refaddr $this, refaddr $that);
-	$rthis and $rthat or return undef;
+        my ($self, $this, $that) = @_;
+        my ($rthis, $rthat) = (refaddr $this, refaddr $that);
+        $rthis and $rthat or return undef;
 
-	# If we have seen this before, are the pointing
-	# is it the same one we saw in both sides
-	my $seen = $self->{seen}->{$rthis};
-	if ( $seen and $seen ne $rthat ) {
-		return '';
-	}
+        # If we have seen this before, are the pointing
+        # is it the same one we saw in both sides
+        my $seen = $self->{seen}->{$rthis};
+        if ( $seen and $seen ne $rthat ) {
+                return '';
+        }
 
-	# Check the reference types
-	my ($tthis, $tthat) = (reftype $this, reftype $that);
-	$tthis and $tthat and $tthis eq $tthat or return undef;
+        # Check the reference types
+        my ($tthis, $tthat) = (reftype $this, reftype $that);
+        $tthis and $tthat and $tthis eq $tthat or return undef;
 
-	# Check the children of the reference type
-	$self->{seen}->{$rthis} = $rthat;
-	my $method = "_equal_$tthat";
-	my $rv = $self->$method( $this, $that );
-	delete $self->{seen}->{$rthis};
-	$rv;
+        # Check the children of the reference type
+        $self->{seen}->{$rthis} = $rthat;
+        my $method = "_equal_$tthat";
+        my $rv = $self->$method( $this, $that );
+        delete $self->{seen}->{$rthis};
+        $rv;
 }
 
 # Compare the children of two SCALAR references
 sub _equal_SCALAR {
-	my ($self, $this, $that) = @_;
-	my ($cthis, $cthat) = ($$this, $$that);
-	return $self->_equal_blessed( $cthis, $cthat )   if blessed $cthis;
-	return $self->_equal_reference( $cthis, $cthat ) if ref $cthis;
-	return (defined $cthat and $cthis eq $cthat)     if defined $cthis;
-	! defined $cthat;
+        my ($self, $this, $that) = @_;
+        my ($cthis, $cthat) = ($$this, $$that);
+        return $self->_equal_blessed( $cthis, $cthat )   if blessed $cthis;
+        return $self->_equal_reference( $cthis, $cthat ) if ref $cthis;
+        return (defined $cthat and $cthis eq $cthat)     if defined $cthis;
+        ! defined $cthat;
 }
 
 # For completeness sake, lets just treat REF as a specialist SCALAR case
@@ -214,80 +214,80 @@ sub _equal_REF { shift->_equal_SCALAR(@_) }
 
 # Compare the children of two ARRAY references
 sub _equal_ARRAY {
-	my ($self, $this, $that) = @_;
+        my ($self, $this, $that) = @_;
 
-	# Compare the number of elements
-	scalar(@$this) == scalar(@$that) or return '';
+        # Compare the number of elements
+        scalar(@$this) == scalar(@$that) or return '';
 
-	# Check each element in the array.
-	# Descend depth-first.
-	foreach my $i ( 0 .. scalar(@$this) ) {
-		my ($cthis, $cthat) = ($this->[$i], $that->[$i]);
-		if ( blessed $cthis ) {
-			return '' unless $self->_equal_blessed( $cthis, $cthat );
-		} elsif ( ref $cthis ) {
-			return '' unless $self->_equal_reference( $cthis, $cthat );
-		} elsif ( defined $cthis ) {
-			return '' unless (defined $cthat and $cthis eq $cthat);
-		} else {
-			return '' if defined $cthat;
-		}
-	}
+        # Check each element in the array.
+        # Descend depth-first.
+        foreach my $i ( 0 .. scalar(@$this) ) {
+                my ($cthis, $cthat) = ($this->[$i], $that->[$i]);
+                if ( blessed $cthis ) {
+                        return '' unless $self->_equal_blessed( $cthis, $cthat );
+                } elsif ( ref $cthis ) {
+                        return '' unless $self->_equal_reference( $cthis, $cthat );
+                } elsif ( defined $cthis ) {
+                        return '' unless (defined $cthat and $cthis eq $cthat);
+                } else {
+                        return '' if defined $cthat;
+                }
+        }
 
-	1;
+        1;
 }
 
 # Compare the children of a HASH reference
 sub _equal_HASH {
-	my ($self, $this, $that) = @_;
+        my ($self, $this, $that) = @_;
 
-	# Compare the number of keys
-	return '' unless scalar(keys %$this) == scalar(keys %$that);
+        # Compare the number of keys
+        return '' unless scalar(keys %$this) == scalar(keys %$that);
 
-	# Compare each key, descending depth-first.
-	foreach my $k ( keys %$this ) {
-		return '' unless exists $that->{$k};
-		my ($cthis, $cthat) = ($this->{$k}, $that->{$k});
-		if ( blessed $cthis ) {
-			return '' unless $self->_equal_blessed( $cthis, $cthat );
-		} elsif ( ref $cthis ) {
-			return '' unless $self->_equal_reference( $cthis, $cthat );
-		} elsif ( defined $cthis ) {
-			return '' unless (defined $cthat and $cthis eq $cthat);
-		} else {
-			return '' if defined $cthat;
-		}
-	}
+        # Compare each key, descending depth-first.
+        foreach my $k ( keys %$this ) {
+                return '' unless exists $that->{$k};
+                my ($cthis, $cthat) = ($this->{$k}, $that->{$k});
+                if ( blessed $cthis ) {
+                        return '' unless $self->_equal_blessed( $cthis, $cthat );
+                } elsif ( ref $cthis ) {
+                        return '' unless $self->_equal_reference( $cthis, $cthat );
+                } elsif ( defined $cthis ) {
+                        return '' unless (defined $cthat and $cthis eq $cthat);
+                } else {
+                        return '' if defined $cthat;
+                }
+        }
 
-	1;
-}		
+        1;
+}
 
 # We do not support GLOB comparisons
 sub _equal_GLOB {
-	my ($self, $this, $that) = @_;
-	warn('GLOB comparisons are not supported');
-	'';
+        my ($self, $this, $that) = @_;
+        warn('GLOB comparisons are not supported');
+        '';
 }
 
 # We do not support CODE comparisons
 sub _equal_CODE {
-	my ($self, $this, $that) = @_;
-	refaddr $this == refaddr $that;
+        my ($self, $this, $that) = @_;
+        refaddr $this == refaddr $that;
 }
 
 # We don't support IO comparisons
 sub _equal_IO {
-	my ($self, $this, $that) = @_;
-	warn('IO comparisons are not supported');
-	'';
+        my ($self, $this, $that) = @_;
+        warn('IO comparisons are not supported');
+        '';
 }
 
 sub DESTROY {
-	# Take the screw up Document with us
-	if ( $_[0]->{Document} ) {
-		$_[0]->{Document}->DESTROY;
-		delete $_[0]->{Document};
-	}
+        # Take the screw up Document with us
+        if ( $_[0]->{Document} ) {
+                $_[0]->{Document}->DESTROY;
+                delete $_[0]->{Document};
+        }
 }
 
 1;
@@ -313,4 +313,4 @@ The full text of the license can be found in the
 LICENSE file included with this module.
 
 =cut
-	
+

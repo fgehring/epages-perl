@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPIx::Regexp 3"
-.TH PPIx::Regexp 3 "2011-04-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPIx::Regexp 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -193,7 +193,9 @@ will go through a deprecation cycle.
 The goal of this package is to parse well-formed regular expressions
 correctly. A secondary goal is not to blow up on ill-formed regular
 expressions. The correct identification and characterization of
-ill-formed regular expressions is \fBnot\fR a goal of this package.
+ill-formed regular expressions is \fBnot\fR a goal of this package, nor is
+the consistent parsing of ill-formed regular expressions from release to
+release.
 .PP
 This policy attempts to track features in development releases as well
 as public releases. However, features added in a development release and
@@ -201,6 +203,55 @@ then removed before the next production release \fBwill not\fR be tracked,
 and any functionality relating to such features \fBwill be removed\fR. The
 issue here is the potential re-use (with different semantics) of syntax
 that did not make it into the production release.
+.PP
+From time to time the Perl regular expression engine changes in ways
+that change the parse of a given regular expression. When these changes
+occur, \f(CW\*(C`PPIx::Regexp\*(C'\fR will be changed to produce the more modern parse.
+Known examples of this include:
+.ie n .IP "$( no longer interpolates as of Perl 5.005, per ""perl5005delta""." 4
+.el .IP "\f(CW$(\fR no longer interpolates as of Perl 5.005, per \f(CWperl5005delta\fR." 4
+.IX Item "$( no longer interpolates as of Perl 5.005, per perl5005delta."
+Newer Perls seem to parse this as \f(CW\*(C`qr{$}\*(C'\fR (i.e. and end-of-string or
+newline assertion) followed by an open parenthesis, and that is what
+\&\f(CW\*(C`PPIx::Regexp\*(C'\fR does.
+.ie n .IP "$) and $| also seem to parse as the ""$"" assertion" 4
+.el .IP "\f(CW$)\fR and \f(CW$|\fR also seem to parse as the \f(CW$\fR assertion" 4
+.IX Item "$) and $| also seem to parse as the $ assertion"
+followed by the relevant meta-character, though I have no documentation
+reference for this.
+.ie n .IP """@+"" and ""@\-"" no longer interpolate as of Perl 5.9.4" 4
+.el .IP "\f(CW@+\fR and \f(CW@\-\fR no longer interpolate as of Perl 5.9.4" 4
+.IX Item "@+ and @- no longer interpolate as of Perl 5.9.4"
+per \f(CW\*(C`perl594delta\*(C'\fR. Subsequent Perls treat \f(CW\*(C`@+\*(C'\fR as a quantified
+literal and \f(CW\*(C`@\-\*(C'\fR as two literals, and that is what \f(CW\*(C`PPIx::Regexp\*(C'\fR
+does. Note that subscripted references to these arrays \fBdo\fR
+interpolate, and are so parsed by \f(CW\*(C`PPIx::Regexp\*(C'\fR.
+.IP "Only space and horizontal tab are whitespace as of Perl 5.23.4" 4
+.IX Item "Only space and horizontal tab are whitespace as of Perl 5.23.4"
+when inside a bracketed character class inside an extended bracketed
+character class, per \f(CW\*(C`perl5234delta\*(C'\fR. Formerly any white space
+character parsed as whitespace. This change in \f(CW\*(C`PPIx::Regexp\*(C'\fR will be
+reverted if the change in Perl does not make it into Perl 5.24.0.
+.IP "Unescaped literal left curly brackets" 4
+.IX Item "Unescaped literal left curly brackets"
+These are being removed in positions where quantifiers are legal, so
+that they can be used for new functionality. Some of them are gone in
+5.25.1, others will be removed in a future version of Perl. In
+situations where they have been removed,
+\&\fIperl_version_removed()\fR will return the version
+in which they were removed. When the new functionality appears, the
+parse produced by this software will reflect the new functionality.
+.PP
+There are very probably other examples of this. When they come to light
+they will be documented as producing the modern parse, and the code
+modified to produce this parse if necessary.
+.PP
+The functionality that parses string literals (the \f(CW\*(C`parse\*(C'\fR argument to
+\&\f(CW\*(C`new()\*(C'\fR) was introduced in version 0.045, but its use is discouraged.
+The preferred package for string literals is
+PPIx::QuoteLike, and once I consider that package to
+be stable the string literal functionality in this package will be put
+through a deprecation cycle and removed.
 .SH "METHODS"
 .IX Header "METHODS"
 This class provides the following public methods. Methods not documented
@@ -216,11 +267,42 @@ This method instantiates a \f(CW\*(C`PPIx::Regexp\*(C'\fR object from a string, 
 PPI::Token::QuoteLike::Regexp, a
 PPI::Token::Regexp::Match, or a
 PPI::Token::Regexp::Substitute.
-Honestly, any PPI::Element will do, but only the three
+Honestly, any PPI::Element will work, but only the three
 Regexp classes mentioned previously are likely to do anything useful.
+.PP
+Whatever form the argument takes, it is assumed to consist entirely of a
+valid match, substitution, or \f(CW\*(C`qr<>\*(C'\fR string.
 .PP
 Optionally you can pass one or more name/value pairs after the regular
 expression. The possible options are:
+.IP "default_modifiers array_reference" 4
+.IX Item "default_modifiers array_reference"
+This option specifies a reference to an array of default modifiers to
+apply to the regular expression being parsed. Each modifier is specified
+as a string. Any actual modifiers found supersede the defaults.
+.Sp
+When applying the defaults, \f(CW\*(Aq?\*(Aq\fR and \f(CW\*(Aq/\*(Aq\fR are completely ignored,
+and \f(CW\*(Aq^\*(Aq\fR is ignored unless it occurs at the beginning of the modifier.
+The first dash (\f(CW\*(Aq\-\*(Aq\fR) causes subsequent modifiers to be negated.
+.Sp
+So, for example, if you wish to produce a \f(CW\*(C`PPIx::Regexp\*(C'\fR object
+representing the regular expression in
+.Sp
+.Vb 5
+\& use re \*(Aq/smx\*(Aq;
+\& {
+\&    no re \*(Aq/x\*(Aq;
+\&    m/ foo /;
+\& }
+.Ve
+.Sp
+you would (after some help from \s-1PPI\s0 in finding the relevant
+statements), do something like
+.Sp
+.Vb 2
+\& my $re = PPIx::Regexp\->new( \*(Aqm/ foo /\*(Aq,
+\&     default_modifiers => [ \*(Aq/smx\*(Aq, \*(Aq\-/x\*(Aq ] );
+.Ve
 .IP "encoding name" 4
 .IX Item "encoding name"
 This option specifies the encoding of the regular expression. This is
@@ -232,6 +314,80 @@ string before it tokenizes it. For example:
 \&     encoding => \*(Aqiso\-8859\-1\*(Aq,
 \& );
 .Ve
+.IP "parse parse_type" 4
+.IX Item "parse parse_type"
+This option specifies what kind of parse is to be done. Possible values
+are \f(CW\*(Aqregex\*(Aq\fR, \f(CW\*(Aqstring\*(Aq\fR, or \f(CW\*(Aqguess\*(Aq\fR. Any value but \f(CW\*(Aqregex\*(Aq\fR is
+experimental.
+.Sp
+If \f(CW\*(Aqregex\*(Aq\fR is specified, the first argument is expected to be a valid
+regex, and parsed as though it were.
+.Sp
+If \f(CW\*(Aqstring\*(Aq\fR is specified, the first argument is expected to be a
+valid string literal and parsed as such. The return is still a
+\&\f(CW\*(C`PPIx::Regexp\*(C'\fR object, but the
+\&\fIregular_expression()\fR and \fImodifier()\fR
+methods return nothing, and the \fIreplacement()\fR method
+returns the content of the string.
+.Sp
+If \f(CW\*(Aqguess\*(Aq\fR is specified, this method will try to guess what the first
+argument is. If the first argument is a PPI::Element,
+the guess will reflect the \s-1PPI\s0 parse. But the guess can be wrong if the
+first argument is a string representing an unusually-delimited regex.
+For example, \f(CW\*(Aqguess\*(Aq\fR will parse \f(CW"foo"\fR as a string, but Perl will
+parse it as a regex if preceded by a regex binding operator (e.g. \f(CW\*(C`$x
+=~ "foo"\*(C'\fR), as shown by
+.Sp
+.Vb 1
+\& perl \-MO=Deparse \-e \*(Aq$x =~ "foo"\*(Aq
+.Ve
+.Sp
+which prints
+.Sp
+.Vb 1
+\& $x =~ /foo/u
+.Ve
+.Sp
+under Perl 5.22.0.
+.Sp
+The default is \f(CW\*(Aqregex\*(Aq\fR.
+.IP "postderef boolean" 4
+.IX Item "postderef boolean"
+This option is passed on to the tokenizer, where it specifies whether
+postfix dereferences are recognized in interpolations and code. This
+experimental feature was introduced in Perl 5.19.5.
+.Sp
+The default is the value of
+\&\f(CW$PPIx::Regexp::Tokenizer::DEFAULT_POSTDEREF\fR, which is true. When
+originally introduced this was false, but was documented as becoming
+true when and if postfix dereferencing became mainstream. The  intent to
+mainstream was announced with Perl 5.23.1, and became official (so to
+speak) with Perl 5.24.0, so the default became true with PPIx::Regexp
+0.049_01.
+.Sp
+Note that if \s-1PPI\s0 starts unconditionally recognizing postfix
+dereferences, this argument will immediately become ignored, and will be
+put through a deprecation cycle and removed.
+.IP "strict boolean" 4
+.IX Item "strict boolean"
+This option is passed on to the tokenizer and lexer, where it specifies
+whether the parse should assume \f(CW\*(C`use re \*(Aqstrict\*(Aq\*(C'\fR is in effect.
+.Sp
+The \f(CW\*(Aqstrict\*(Aq\fR pragma was introduced in Perl 5.22, and its
+documentation says that it is experimental, and that there is no
+commitment to backward compatibility. The same applies to the
+parse produced when this option is asserted. Also, the usual caveat
+applies: if \f(CW\*(C`use re \*(Aqstrict\*(Aq\*(C'\fR ends up being retracted, this option and
+all related functionality will be also.
+.Sp
+Given the nature of \f(CW\*(C`use re \*(Aqstrict\*(Aq\*(C'\fR, you should expect that if you
+assert this option, regular expressions that previously parsed without
+error might no longer do so. If an element ends up being declared an
+error because this option is set, its \f(CW\*(C`perl_version_introduced()\*(C'\fR will
+be the Perl version at which \f(CW\*(C`use re \*(Aqstrict\*(Aq\*(C'\fR started rejecting these
+elements.
+.Sp
+The default is false.
 .IP "trace number" 4
 .IX Item "trace number"
 If greater than zero, this option causes trace output from the parse.
@@ -310,8 +466,8 @@ delimiters, and index 1 represents the replacement string's delimiters,
 which may be undef. For example,
 .PP
 .Vb 2
-\& print PPIx::Regexp\->new(\*(Aqs{foo}<bar>\*(Aq)\-delimiters(1);
-\& # prints \*(Aq[]\*(Aq
+\& print PPIx::Regexp\->new(\*(Aqs{foo}<bar>\*(Aq)\->delimiters(1);
+\& # prints \*(Aq<>\*(Aq
 .Ve
 .PP
 If the object was not initialized with a valid regexp of some sort, the
@@ -361,8 +517,33 @@ This method retrieves the modifier of the object. This comes from the
 end of the initializing string or object and will be a
 PPIx::Regexp::Token::Modifier.
 .PP
+\&\fBNote\fR that this object represents the actual modifiers present on the
+regexp, and does not take into account any that may have been applied by
+default (i.e. via the \f(CW\*(C`default_modifiers\*(C'\fR argument to \f(CW\*(C`new()\*(C'\fR). For
+something that takes account of default modifiers, see
+\&\fImodifier_asserted()\fR, below.
+.PP
 In the event of a parse failure, there may not be a modifier present, in
 which case nothing is returned.
+.SS "modifier_asserted"
+.IX Subsection "modifier_asserted"
+.Vb 4
+\& my $re = PPIx::Regexp\->new( \*(Aq/ . /\*(Aq,
+\&     default_modifiers => [ \*(Aqsmx\*(Aq ] );
+\& print $re\->modifier_asserted( \*(Aqx\*(Aq ) ? "yes\en" : "no\en";
+\& # prints \*(Aqyes\*(Aq.
+.Ve
+.PP
+This method returns true if the given modifier is asserted for the
+regexp, whether explicitly or by the modifiers passed in the
+\&\f(CW\*(C`default_modifiers\*(C'\fR argument.
+.PP
+Starting with version 0.036_01, if the argument is a
+single-character modifier followed by an asterisk (intended as a wild
+card character), the return is the number of times that modifier
+appears. In this case an exception will be thrown if you specify a
+multi-character modifier (e.g.  \f(CW\*(Aqee*\*(Aq\fR), or if you specify one of the
+match semantics modifiers (e.g.  \f(CW\*(Aqa*\*(Aq\fR).
 .SS "regular_expression"
 .IX Subsection "regular_expression"
 .Vb 3
@@ -530,7 +711,7 @@ Support is by the author. Please file bug reports at
 Thomas R. Wyant, \s-1III\s0 \fIwyant at cpan dot org\fR
 .SH "COPYRIGHT AND LICENSE"
 .IX Header "COPYRIGHT AND LICENSE"
-Copyright (C) 2009\-2011 by Thomas R. Wyant, \s-1III\s0
+Copyright (C) 2009\-2017 by Thomas R. Wyant, \s-1III\s0
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

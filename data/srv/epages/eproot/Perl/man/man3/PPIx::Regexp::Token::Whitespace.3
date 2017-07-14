@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPIx::Regexp::Token::Whitespace 3"
-.TH PPIx::Regexp::Token::Whitespace 3 "2011-04-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPIx::Regexp::Token::Whitespace 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -141,16 +141,19 @@ PPIx::Regexp::Token::Whitespace \- Represent whitespace
 .SH "INHERITANCE"
 .IX Header "INHERITANCE"
 \&\f(CW\*(C`PPIx::Regexp::Token::Whitespace\*(C'\fR is a
-PPIx::Regexp::Token.
+PPIx::Regexp::NoOp.
 .PP
 \&\f(CW\*(C`PPIx::Regexp::Token::Whitespace\*(C'\fR has no descendants.
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 This class represents whitespace. It will appear inside the regular
-expression only if the /x modifier is present, but it may also appear
-between the type and the opening delimiter (e.g. \f(CW\*(C`qr {foo}\*(C'\fR or after
+expression only if the \f(CW\*(C`/x\*(C'\fR modifier is present, but it may also appear
+between the type and the opening delimiter (e.g. \f(CW\*(C`qr {foo}\*(C'\fR) or after
 the regular expression in a bracketed substitution (e.g. \f(CW\*(C`s{foo}
 {bar}\*(C'\fR).
+.PP
+If the \f(CW\*(C`/xx\*(C'\fR modifier is present, it can also appear inside bracketed
+character classes. This was introduced in Perl 5.25.9.
 .SH "METHODS"
 .IX Header "METHODS"
 This class provides no public methods beyond those provided by its
@@ -164,7 +167,7 @@ Support is by the author. Please file bug reports at
 Thomas R. Wyant, \s-1III\s0 \fIwyant at cpan dot org\fR
 .SH "COPYRIGHT AND LICENSE"
 .IX Header "COPYRIGHT AND LICENSE"
-Copyright (C) 2009\-2011 by Thomas R. Wyant, \s-1III\s0
+Copyright (C) 2009\-2017 by Thomas R. Wyant, \s-1III\s0
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

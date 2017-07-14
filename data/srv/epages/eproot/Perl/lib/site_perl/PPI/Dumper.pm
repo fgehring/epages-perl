@@ -10,10 +10,10 @@ PPI::Dumper - Dumping of PDOM trees
 
   # Load a document
   my $Module = PPI::Document->new( 'MyModule.pm' );
-  
+
   # Create the dumper
   my $Dumper = PPI::Dumper->new( $Module );
-  
+
   # Dump the document
   $Dumper->print;
 
@@ -37,7 +37,7 @@ use Params::Util qw{_INSTANCE};
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '1.215';
+        $VERSION = '1.224';
 }
 
 
@@ -92,7 +92,7 @@ made much clearer. True/false value, on by default.
 
 Should the dumper show comment tokens. In situations where you have
 a lot of comments, the code can often be made clearer by ignoring
-comment tokens. True/value value, on by default.
+comment tokens. True/false value, on by default.
 
 =item locations
 
@@ -105,38 +105,38 @@ what these values really are. True/false value, off by default.
 =cut
 
 sub new {
-	my $class   = shift;
-	my $Element = _INSTANCE(shift, 'PPI::Element') or return undef;
+        my $class   = shift;
+        my $Element = _INSTANCE(shift, 'PPI::Element') or return undef;
 
-	# Create the object
-	my $self = bless {
-		root    => $Element,
-		display => {
-			memaddr    => '', # Show the refaddr of the item
-			indent     => 2,  # Indent the structures
-			class      => 1,  # Show the object class
-			content    => 1,  # Show the object contents
-			whitespace => 1,  # Show whitespace tokens
-			comments   => 1,  # Show comment tokens
-			locations  => 0,  # Show token locations
-			},
-		}, $class;
+        # Create the object
+        my $self = bless {
+                root    => $Element,
+                display => {
+                        memaddr    => '', # Show the refaddr of the item
+                        indent     => 2,  # Indent the structures
+                        class      => 1,  # Show the object class
+                        content    => 1,  # Show the object contents
+                        whitespace => 1,  # Show whitespace tokens
+                        comments   => 1,  # Show comment tokens
+                        locations  => 0,  # Show token locations
+                        },
+                }, $class;
 
-	# Handle the options
-	my %options = map { lc $_ } @_;
-	foreach ( keys %{$self->{display}} ) {
-		if ( exists $options{$_} ) {
-			if ( $_ eq 'indent' ) {
-				$self->{display}->{indent} = $options{$_};
-			} else {
-				$self->{display}->{$_} = !! $options{$_};
-			}
-		}
-	}
+        # Handle the options
+        my %options = map { lc $_ } @_;
+        foreach ( keys %{$self->{display}} ) {
+                if ( exists $options{$_} ) {
+                        if ( $_ eq 'indent' ) {
+                                $self->{display}->{indent} = $options{$_};
+                        } else {
+                                $self->{display}->{$_} = !! $options{$_};
+                        }
+                }
+        }
 
-	$self->{indent_string} = join '', (' ' x $self->{display}->{indent});
+        $self->{indent_string} = join '', (' ' x $self->{display}->{indent});
 
-	$self;
+        $self;
 }
 
 
@@ -157,7 +157,7 @@ Returns as for the internal print function.
 =cut
 
 sub print {
-	CORE::print(shift->string);
+        CORE::print(shift->string);
 }
 
 =pod
@@ -167,13 +167,13 @@ sub print {
 The C<string> method generates the dump and provides it as a
 single string.
 
-Returns a string or undef if there is an error while generating the dump. 
+Returns a string or undef if there is an error while generating the dump.
 
 =cut
 
 sub string {
-	my $array_ref = shift->_dump or return undef;
-	join '', map { "$_\n" } @$array_ref;
+        my $array_ref = shift->_dump or return undef;
+        join '', map { "$_\n" } @$array_ref;
 }
 
 =pod
@@ -183,14 +183,14 @@ sub string {
 The C<list> method generates the dump and provides it as a raw
 list, without trailing newlines.
 
-Returns a list or the null list if there is an error while generation
+Returns a list or the null list if there is an error while generating
 the dump.
 
 =cut
 
 sub list {
-	my $array_ref = shift->_dump or return ();
-	@$array_ref;
+        my $array_ref = shift->_dump or return ();
+        @$array_ref;
 }
 
 
@@ -201,88 +201,89 @@ sub list {
 # Generation Support Methods
 
 sub _dump {
-	my $self    = ref $_[0] ? shift : shift->new(shift);
-	my $Element = _INSTANCE($_[0], 'PPI::Element') ? shift : $self->{root};
-	my $indent  = shift || '';
-	my $output  = shift || [];
+        my $self    = ref $_[0] ? shift : shift->new(shift);
+        my $Element = _INSTANCE($_[0], 'PPI::Element') ? shift : $self->{root};
+        my $indent  = shift || '';
+        my $output  = shift || [];
 
-	# Print the element if needed
-	my $show = 1;
-	if ( $Element->isa('PPI::Token::Whitespace') ) {
-		$show = 0 unless $self->{display}->{whitespace};
-	} elsif ( $Element->isa('PPI::Token::Comment') ) {
-		$show = 0 unless $self->{display}->{comments};
-	}
-	push @$output, $self->_element_string( $Element, $indent ) if $show;
+        # Print the element if needed
+        my $show = 1;
+        if ( $Element->isa('PPI::Token::Whitespace') ) {
+                $show = 0 unless $self->{display}->{whitespace};
+        } elsif ( $Element->isa('PPI::Token::Comment') ) {
+                $show = 0 unless $self->{display}->{comments};
+        }
+        push @$output, $self->_element_string( $Element, $indent ) if $show;
 
-	# Recurse into our children
-	if ( $Element->isa('PPI::Node') ) {
-		my $child_indent = $indent . $self->{indent_string};
-		foreach my $child ( @{$Element->{children}} ) {
-			$self->_dump( $child, $child_indent, $output );
-		}
-	}
+        # Recurse into our children
+        if ( $Element->isa('PPI::Node') ) {
+                my $child_indent = $indent . $self->{indent_string};
+                foreach my $child ( @{$Element->{children}} ) {
+                        $self->_dump( $child, $child_indent, $output );
+                }
+        }
 
-	$output;
+        $output;
 }
 
 sub _element_string {
-	my $self    = ref $_[0] ? shift : shift->new(shift);
-	my $Element = _INSTANCE($_[0], 'PPI::Element') ? shift : $self->{root};
-	my $indent  = shift || '';
-	my $string  = '';
+        my $self    = ref $_[0] ? shift : shift->new(shift);
+        my $Element = _INSTANCE($_[0], 'PPI::Element') ? shift : $self->{root};
+        my $indent  = shift || '';
+        my $string  = '';
 
-	# Add the memory location
-	if ( $self->{display}->{memaddr} ) {
-		$string .= $Element->refaddr . '  ';
-	}
-        
+        # Add the memory location
+        if ( $self->{display}->{memaddr} ) {
+                $string .= $Element->refaddr . '  ';
+        }
+
         # Add the location if such exists
-	if ( $self->{display}->{locations} ) {
-		my $loc_string;
-		if ( $Element->isa('PPI::Token') ) {
-			my $location = $Element->location;
-			if ($location) {
-				$loc_string = sprintf("[ % 4d, % 3d, % 3d ] ", @$location);
-			}
-		}
-		# Output location or pad with 20 spaces
-		$string .= $loc_string || " " x 20;
-	}
-        
-	# Add the indent
-	if ( $self->{display}->{indent} ) {
-		$string .= $indent;
-	}
+        if ( $self->{display}->{locations} ) {
+                my $loc_string;
+                if ( $Element->isa('PPI::Token') ) {
+                        my $location = $Element->location;
+                        if ($location) {
+                                $loc_string = sprintf("[ % 4d, % 3d, % 3d ] ", @$location);
+                        }
+                }
+                # Output location or pad with 20 spaces
+                $string .= $loc_string || " " x 20;
+        }
 
-	# Add the class name
-	if ( $self->{display}->{class} ) {
-		$string .= ref $Element;
-	}
+        # Add the indent
+        if ( $self->{display}->{indent} ) {
+                $string .= $indent;
+        }
 
-	if ( $Element->isa('PPI::Token') ) {
-		# Add the content
-		if ( $self->{display}->{content} ) {
-			my $content = $Element->content;
-			$content =~ s/\n/\\n/g;
-			$content =~ s/\t/\\t/g;
-			$string .= "  \t'$content'";
-		}
+        # Add the class name
+        if ( $self->{display}->{class} ) {
+                $string .= ref $Element;
+        }
 
-	} elsif ( $Element->isa('PPI::Structure') ) {
-		# Add the content
-		if ( $self->{display}->{content} ) {
-			my $start = $Element->start
-				? $Element->start->content
-				: '???';
-			my $finish = $Element->finish
-				? $Element->finish->content
-				: '???';
-			$string .= "  \t$start ... $finish";
-		}
-	}
-	
-	$string;
+        if ( $Element->isa('PPI::Token') ) {
+                # Add the content
+                if ( $self->{display}->{content} ) {
+                        my $content = $Element->content;
+                        $content =~ s/\n/\\n/g;
+                        $content =~ s/\t/\\t/g;
+                        $content =~ s/\f/\\f/g;
+                        $string .= "  \t'$content'";
+                }
+
+        } elsif ( $Element->isa('PPI::Structure') ) {
+                # Add the content
+                if ( $self->{display}->{content} ) {
+                        my $start = $Element->start
+                                ? $Element->start->content
+                                : '???';
+                        my $finish = $Element->finish
+                                ? $Element->finish->content
+                                : '???';
+                        $string .= "  \t$start ... $finish";
+                }
+        }
+
+        $string;
 }
 
 1;

@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Utils/DataConversion.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Utils::DataConversion;
 
 use 5.006001;
@@ -14,9 +7,9 @@ use Readonly;
 
 use Perl::Critic::Utils qw{ :characters :booleans };
 
-use base 'Exporter';
+use Exporter 'import';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -36,7 +29,7 @@ sub boolean_to_number {  ## no critic (RequireArgUnpacking)
 
 sub dor {  ## no critic (RequireArgUnpacking)
     foreach (@_) {
-        defined $_ and return $_;
+        return $_ if defined;
     }
     return;
 }

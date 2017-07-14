@@ -1,72 +1,69 @@
 package CPAN::Meta::Check;
-{
-  $CPAN::Meta::Check::VERSION = '0.008';
-}
+$CPAN::Meta::Check::VERSION = '0.014';
 use strict;
 use warnings;
 
-use Exporter 5.57 'import';
+use base 'Exporter';
 our @EXPORT = qw//;
 our @EXPORT_OK = qw/check_requirements requirements_for verify_dependencies/;
 our %EXPORT_TAGS = (all => [ @EXPORT, @EXPORT_OK ] );
 
-use CPAN::Meta::Requirements 2.120920;
-use Module::Metadata;
+use CPAN::Meta::Prereqs '2.132830';
+use CPAN::Meta::Requirements 2.121;
+use Module::Metadata 1.000023;
 
 sub _check_dep {
-	my ($reqs, $module, $dirs) = @_;
+        my ($reqs, $module, $dirs) = @_;
 
-	my $version = $module eq 'perl' ? $] : do { 
-		my $metadata = Module::Metadata->new_from_module($module, inc => $dirs);
-		return "Module '$module' is not installed" if not defined $metadata;
-		eval { $metadata->version };
-	};
-	return "Missing version info for module '$module'" if $reqs->requirements_for_module($module) and not $version;
-	return sprintf 'Installed version (%s) of %s is not in range \'%s\'', $version, $module, $reqs->requirements_for_module($module) if not $reqs->accepts_module($module, $version || 0);
-	return;
+        $module eq 'perl' and return ($reqs->accepts_module($module, $]) ? () : sprintf "Your Perl (%s) is not in the range '%s'", $], $reqs->requirements_for_module($module));
+
+        my $metadata = Module::Metadata->new_from_module($module, inc => $dirs);
+        return "Module '$module' is not installed" if not defined $metadata;
+
+        my $version = eval { $metadata->version };
+        return sprintf 'Installed version (%s) of %s is not in range \'%s\'',
+                        (defined $version ? $version : 'undef'), $module, $reqs->requirements_for_module($module)
+                if not $reqs->accepts_module($module, $version || 0);
+        return;
 }
 
 sub _check_conflict {
-	my ($reqs, $module, $dirs) = @_;
-	my $metadata = Module::Metadata->new_from_module($module, inc => $dirs);
-	return if not defined $metadata;
-	my $version = eval { $metadata->version };
-	return "Missing version info for module '$module'" if not $version;
-	return sprintf 'Installed version (%s) of %s is in range \'%s\'', $version, $module, $reqs->requirements_for_module($module) if $reqs->accepts_module($module, $version);
-	return;
+        my ($reqs, $module, $dirs) = @_;
+        my $metadata = Module::Metadata->new_from_module($module, inc => $dirs);
+        return if not defined $metadata;
+
+        my $version = eval { $metadata->version };
+        return sprintf 'Installed version (%s) of %s is in range \'%s\'',
+                        (defined $version ? $version : 'undef'), $module, $reqs->requirements_for_module($module)
+                if $reqs->accepts_module($module, $version);
+        return;
 }
 
 sub requirements_for {
-	my ($meta, $phases, $type) = @_;
-	my $prereqs = ref($meta) eq 'CPAN::Meta' ? $meta->effective_prereqs : $meta;
-	return $prereqs->merged_requirements(ref($phases) ? $phases : [ $phases ], [ $type ]);
+        my ($meta, $phases, $type) = @_;
+        my $prereqs = ref($meta) eq 'CPAN::Meta' ? $meta->effective_prereqs : $meta;
+        return $prereqs->merged_requirements(ref($phases) ? $phases : [ $phases ], [ $type ]);
 }
 
 sub check_requirements {
-	my ($reqs, $type, $dirs) = @_;
+        my ($reqs, $type, $dirs) = @_;
 
-	my %ret;
-	if ($type ne 'conflicts') {
-		for my $module ($reqs->required_modules) {
-			$ret{$module} = _check_dep($reqs, $module, $dirs);
-		}
-	}
-	else {
-		for my $module ($reqs->required_modules) {
-			$ret{$module} = _check_conflict($reqs, $module, $dirs);
-		}
-	}
-	return \%ret;
+        return +{
+                map {
+                        $_ => $type ne 'conflicts'
+                                ? scalar _check_dep($reqs, $_, $dirs)
+                                : scalar _check_conflict($reqs, $_, $dirs)
+                } $reqs->required_modules
+        };
 }
 
 sub verify_dependencies {
-	my ($meta, $phases, $type, $dirs) = @_;
-	my $reqs = requirements_for($meta, $phases, $type);
-	my $issues = check_requirements($reqs, $type, $dirs);
-	return grep { defined } values %{ $issues };
+        my ($meta, $phases, $type, $dirs) = @_;
+        my $reqs = requirements_for($meta, $phases, $type);
+        my $issues = check_requirements($reqs, $type, $dirs);
+        return grep { defined } values %{ $issues };
 }
 
-# vi:noet:sts=2:sw=2:ts=2
 1;
 
 #ABSTRACT: Verify requirements in a CPAN::Meta object
@@ -75,17 +72,19 @@ __END__
 
 =pod
 
+=encoding UTF-8
+
 =head1 NAME
 
 CPAN::Meta::Check - Verify requirements in a CPAN::Meta object
 
 =head1 VERSION
 
-version 0.008
+version 0.014
 
 =head1 SYNOPSIS
 
- warn "$_\n" for verify_requirements($meta, [qw/runtime build test/], 'requires');
+ warn "$_\n" for verify_dependencies($meta, [qw/runtime build test/], 'requires');
 
 =head1 DESCRIPTION
 
@@ -99,7 +98,7 @@ This function checks if all dependencies in C<$reqs> (a L<CPAN::Meta::Requiremen
 
 =head2 verify_dependencies($meta, $phases, $types, $incdirs)
 
-Check all requirements in C<$meta> for phases C<$phases> and types C<$types>. Modules are searched for in C<@$incdirs>, defaulting to C<@INC>. C<$meta> should be a L<CPAN::Meta::Prereqs> or L<CPAN::Meta> object.
+Check all requirements in C<$meta> for phases C<$phases> and type C<$type>. Modules are searched for in C<@$incdirs>, defaulting to C<@INC>. C<$meta> should be a L<CPAN::Meta::Prereqs> or L<CPAN::Meta> object.
 
 =head2 requirements_for($meta, $phases, $types)
 
@@ -114,6 +113,8 @@ This function returns a unified L<CPAN::Meta::Requirements|CPAN::Meta::Requireme
 =item * L<Test::CheckDeps|Test::CheckDeps>
 
 =item * L<CPAN::Meta|CPAN::Meta>
+
+=for comment # vi:noet:sts=2:sw=2:ts=2
 
 =back
 

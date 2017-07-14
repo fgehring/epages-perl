@@ -35,7 +35,23 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Structure };
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
+
+# This is a kluge for both determining whether the object asserts
+# modifiers (hence the 'ductype') and determining whether the given
+# modifier is actually asserted. The signature is the invocant and the
+# modifier name, which must not be undef. The return is a boolean.
+sub __ducktype_modifier_asserted {
+    my ( $self, $modifier ) = @_;
+    foreach my $type ( reverse $self->type() ) {
+        $type->can( '__ducktype_modifier_asserted' )
+            or next;
+        defined( my $val = $type->__ducktype_modifier_asserted( $modifier ) )
+            or next;
+        return $val;
+    }
+    return;
+}
 
 1;
 
@@ -52,7 +68,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

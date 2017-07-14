@@ -36,23 +36,23 @@ use base qw{ PPIx::Regexp::Structure };
 
 use Carp qw{ confess };
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
 # Called by the lexer to record the capture number.
 sub __PPIX_LEXER__record_capture_number {
     my ( $self, $number ) = @_;
     defined $number
-	or confess 'Programming error - initial $number is undef';
+        or confess 'Programming error - initial $number is undef';
     my $original = $number;
     my $hiwater = $number;
     foreach my $kid ( $self->children() ) {
-	if ( $kid->isa( 'PPIx::Regexp::Token::Operator' )
-	    && $kid->content() eq '|' ) {
-	    $number > $hiwater and $hiwater = $number;
-	    $number = $original;
-	} else {
-	    $number = $kid->__PPIX_LEXER__record_capture_number( $number );
-	}
+        if ( $kid->isa( 'PPIx::Regexp::Token::Operator' )
+            && $kid->content() eq '|' ) {
+            $number > $hiwater and $hiwater = $number;
+            $number = $original;
+        } else {
+            $number = $kid->__PPIX_LEXER__record_capture_number( $number );
+        }
     }
     return $number > $hiwater ? $number : $hiwater;
 }
@@ -72,7 +72,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

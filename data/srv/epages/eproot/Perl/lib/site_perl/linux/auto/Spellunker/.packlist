@@ -1,0 +1,14 @@
+/srv/epages/eproot/Perl/bin/spellunker
+/srv/epages/eproot/Perl/bin/spellunker-pod
+/srv/epages/eproot/Perl/lib/site_perl/Spellunker.pm
+/srv/epages/eproot/Perl/lib/site_perl/Spellunker/CLI.pm
+/srv/epages/eproot/Perl/lib/site_perl/Spellunker/CLI/Pod.pm
+/srv/epages/eproot/Perl/lib/site_perl/Spellunker/Pod.pm
+/srv/epages/eproot/Perl/lib/site_perl/Spellunker/Pod/Parser.pm
+/srv/epages/eproot/Perl/lib/site_perl/Test/Spellunker.pm
+/srv/epages/eproot/Perl/lib/site_perl/auto/share/dist/Spellunker/enable1.txt
+/srv/epages/eproot/Perl/lib/site_perl/auto/share/dist/Spellunker/spellunker-dict.txt
+/srv/epages/eproot/Perl/man/man1/spellunker-pod.1
+/srv/epages/eproot/Perl/man/man1/spellunker.1
+/srv/epages/eproot/Perl/man/man3/Spellunker.3
+/srv/epages/eproot/Perl/man/man3/Test::Spellunker.3

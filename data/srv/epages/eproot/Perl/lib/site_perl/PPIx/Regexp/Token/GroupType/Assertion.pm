@@ -36,36 +36,42 @@ use base qw{ PPIx::Regexp::Token::GroupType };
 
 use PPIx::Regexp::Constant qw{ MINIMUM_PERL };
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
 {
+
+    my %explanation = (
+        '?!'    => 'Negative look-ahead assertion',
+        '?<!'   => 'Negative look-behind assertion',
+        '?<='   => 'Positive look-behind assertion',
+        '?='    => 'Positive look-ahead assertion',
+    );
+
+    sub __explanation {
+        return \%explanation;
+    }
+
+}
+
+{
+
     my %perl_version_introduced = (
-	'?<='	=> '5.005',
-	'?<!'	=> '5.005',
+        '?<='   => '5.005',
+        '?<!'   => '5.005',
     );
 
     sub perl_version_introduced {
-	my ( $self ) = @_;
-	return $perl_version_introduced{ $self->content() } || MINIMUM_PERL;
+        my ( $self ) = @_;
+        return $perl_version_introduced{ $self->unescaped_content() } ||
+            MINIMUM_PERL;
     }
 }
 
 # Return true if the token can be quantified, and false otherwise
 # sub can_be_quantified { return };
 
-sub __PPIX_TOKENIZER__regexp {
-    my ( $class, $tokenizer, $character ) = @_;
-
-    # The actual expression being matched is \A \? <? [=!]. All the
-    # optional escapes are because any of the non-open-bracket
-    # punctuation characters may itself be escaped if it is also used to
-    # quote the entire expression.
-    if ( my $assert = $tokenizer->find_regexp(
-	    qr{ \A \\? \? <? \\? [=!] }smx ) ) {
-	return $assert;
-    }
-
-    return;
+sub __defining_string {
+    return ( '?=', '?<=', '?!', '?<!' );
 }
 
 1;
@@ -83,7 +89,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

@@ -1,15 +1,15 @@
 package Module::Build::Compat;
 
 use strict;
-use vars qw($VERSION);
-$VERSION = '0.4203';
+use warnings;
+our $VERSION = '0.4224';
 
 use File::Basename ();
 use File::Spec;
 use Config;
 use Module::Build;
-use Module::Build::ModuleInfo;
-use Module::Build::Version;
+use Module::Metadata;
+use version;
 use Data::Dumper;
 
 my %convert_installdirs = (
@@ -33,7 +33,7 @@ my %makefile_to_build =
            installarchlib  => "$lib/$Config{archname}",
            installsitearch => "$lib/$Config{archname}"
        );
-       return map { (config => "$_=$config{$_}") } keys %config;
+       return map { (config => "$_=$config{$_}") } sort keys %config;
    },
 
    # Convert INSTALLVENDORLIB and friends.
@@ -71,10 +71,10 @@ sub _merge_prereq {
 
   # validate formats
   for my $p ( $req, $breq ) {
-    for my $k (keys %$p) {
+    for my $k (sort keys %$p) {
       next if $k eq 'perl';
 
-      my $v_obj = eval { Module::Build::Version->new($p->{$k}) };
+      my $v_obj = eval { version->new($p->{$k}) };
       if ( ! defined $v_obj ) {
           die "A prereq of the form '$p->{$k}' for '$k' is not supported by Module::Build::Compat ( use a simpler version like '0.05' or 'v1.4.25' )\n";
       }
@@ -131,7 +131,7 @@ HERE
   # Makefile.PL
   my $requires = $build->requires;
   if ( my $minimum_perl = $requires->{perl} ) {
-    my $min_ver = Module::Build::Version->new($minimum_perl)->numify;
+    my $min_ver = version->new($minimum_perl)->numify;
     print {$fh} "require $min_ver;\n";
   }
 
@@ -145,8 +145,8 @@ HERE
       my $base_dir = $build->base_dir;
 
       if ($build->dir_contains($base_dir, $subclass_dir)) {
-	$subclass_dir = File::Spec->abs2rel($subclass_dir, $base_dir);
-	$subclass_dir = $package->unixify_dir($subclass_dir);
+        $subclass_dir = File::Spec->abs2rel($subclass_dir, $base_dir);
+        $subclass_dir = $package->unixify_dir($subclass_dir);
         $subclass_load = "use lib '$subclass_dir';";
       }
       # Otherwise, leave it the empty string
@@ -174,10 +174,10 @@ EOF
 
       require ExtUtils::MakeMaker;
       my $yn = ExtUtils::MakeMaker::prompt
-	('  Install Module::Build now from CPAN?', 'y');
+        ('  Install Module::Build now from CPAN?', 'y');
 
       unless ($yn =~ /^y/i) {
-	die " *** Cannot install without Module::Build.  Exiting ...\n";
+        die " *** Cannot install without Module::Build.  Exiting ...\n";
       }
 
       require Cwd;
@@ -189,7 +189,7 @@ EOF
 
       CPAN::Shell->install('Module::Build::Compat');
       CPAN::Shell->expand("Module", "Module::Build::Compat")->uptodate
-	or die "Couldn't install Module::Build, giving up.\n";
+        or die "Couldn't install Module::Build, giving up.\n";
 
       chdir $cwd or die "Cannot chdir() back to $cwd: $!";
     }
@@ -212,13 +212,13 @@ EOF
     }
 
     my %name = ($build->module_name
-		? (NAME => $build->module_name)
-		: (DISTNAME => $build->dist_name));
+                ? (NAME => $build->module_name)
+                : (DISTNAME => $build->dist_name));
 
     my %version = ($build->dist_version_from
-		   ? (VERSION_FROM => $build->dist_version_from)
-		   : (VERSION      => $build->dist_version)
-		  );
+                   ? (VERSION_FROM => $build->dist_version_from)
+                   : (VERSION      => $build->dist_version)
+                  );
     %MM_Args = (%name, %version);
 
     %prereq = _merge_prereq( $build->requires, $build->build_requires );
@@ -259,8 +259,8 @@ sub _test_globs {
 sub subclass_dir {
   my ($self, $build) = @_;
 
-  return (Module::Build::ModuleInfo->find_module_dir_by_name(ref $build)
-	  || File::Spec->catdir($build->config_dir, 'lib'));
+  return (Module::Metadata->find_module_dir_by_name(ref $build)
+          || File::Spec->catdir($build->config_dir, 'lib'));
 }
 
 sub unixify_dir {
@@ -275,7 +275,7 @@ sub makefile_to_build_args {
     next if $arg eq '';
 
     my ($key, $val) = ($arg =~ /^(\w+)=(.+)/ ? ($1, $2) :
-		       die "Malformed argument '$arg'");
+                       die "Malformed argument '$arg'");
 
     # Do tilde-expansion if it looks like a tilde prefixed path
     ( $val ) = Module::Build->_detildefy( $val ) if $val =~ /^~/;
@@ -306,7 +306,8 @@ sub _argvify {
 sub makefile_to_build_macros {
   my @out;
   my %config; # must accumulate and return as a hashref
-  while (my ($macro, $trans) = each %macro_to_build) {
+  foreach my $macro (sort keys %macro_to_build) {
+    my $trans = $macro_to_build{$macro};
     # On some platforms (e.g. Cygwin with 'make'), the mere presence
     # of "EXPORT: FOO" in the Makefile will make $ENV{FOO} defined.
     # Therefore we check length() too.
@@ -354,8 +355,8 @@ sub fake_makefile {
   $perl = 'MCR ' . $perl if $self->_is_vms_mms;
 
   my $noop = ($class->is_windowsish ? 'rem>nul'  :
-	      $self->_is_vms_mms    ? 'Continue' :
-	      'true');
+              $self->_is_vms_mms    ? 'Continue' :
+              'true');
 
   my $filetype = $class->is_vmsish ? '.COM' : '';
 
@@ -363,41 +364,45 @@ sub fake_makefile {
   my $unlink = $class->oneliner('1 while unlink $ARGV[0]', [], [$args{makefile}]);
   $unlink =~ s/\$/\$\$/g unless $class->is_vmsish;
 
-  my $maketext = ($^O eq 'os2' ? "SHELL = sh\n\n" : '');
+  my $maketext = join '', map { "$_=\n" } sort keys %macro_to_build;
+
+  $maketext .= ($^O eq 'os2' ? "SHELL = sh\n\n"
+                    : $^O eq 'MSWin32' && $Config{make} =~ /gmake/
+                    ? "SHELL = $ENV{COMSPEC}\n\n" : "\n\n");
 
   $maketext .= <<"EOF";
 all : force_do_it
-	$perl $Build
+        $perl $Build
 realclean : force_do_it
-	$perl $Build realclean
-	$unlink
+        $perl $Build realclean
+        $unlink
 distclean : force_do_it
-	$perl $Build distclean
-	$unlink
+        $perl $Build distclean
+        $unlink
 
 
 force_do_it :
-	@ $noop
+        @ $noop
 EOF
 
   foreach my $action ($class->known_actions) {
     next if $action =~ /^(all|distclean|realclean|force_do_it)$/;  # Don't double-define
     $maketext .= <<"EOF";
 $action : force_do_it
-	$perl $Build $action
+        $perl $Build $action
 EOF
   }
 
   if ($self->_is_vms_mms) {
     # Roll our own .EXPORT as MMS/MMK don't honor that directive.
     $maketext .= "\n.FIRST\n\t\@ $noop\n";
-    for my $macro (keys %macro_to_build) {
+    for my $macro (sort keys %macro_to_build) {
       $maketext .= ".IFDEF $macro\n\tDEFINE $macro \"\$($macro)\"\n.ENDIF\n";
     }
     $maketext .= "\n";
   }
   else {
-    $maketext .= "\n.EXPORT : " . join(' ', keys %macro_to_build) . "\n\n";
+    $maketext .= "\n.EXPORT : " . join(' ', sort keys %macro_to_build) . "\n\n";
   }
 
   return $maketext;

@@ -27,8 +27,8 @@ use PPI::Exception ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-	$VERSION = '1.215';
-	@ISA     = 'PPI::Element';
+        $VERSION = '1.224';
+        @ISA     = 'PPI::Element';
 }
 
 # We don't load the abstracts, they are loaded
@@ -83,33 +83,33 @@ use PPI::Token::Unknown               ();
 # Constructor and Related
 
 sub new {
-	bless { content => (defined $_[1] ? "$_[1]" : '') }, $_[0];
+        bless { content => (defined $_[1] ? "$_[1]" : '') }, $_[0];
 }
 
 sub set_class {
-	my $self  = shift;
-	# @_ or throw Exception("No arguments to set_class");
-	my $class = substr( $_[0], 0, 12 ) eq 'PPI::Token::' ? shift : 'PPI::Token::' . shift;
+        my $self  = shift;
+        # @_ or throw Exception("No arguments to set_class");
+        my $class = substr( $_[0], 0, 12 ) eq 'PPI::Token::' ? shift : 'PPI::Token::' . shift;
 
-	# Find out if the current and new classes are complex
-	my $old_quote = (ref($self) =~ /\b(?:Quote|Regex)\b/o) ? 1 : 0;
-	my $new_quote = ($class =~ /\b(?:Quote|Regex)\b/o)     ? 1 : 0;
+        # Find out if the current and new classes are complex
+        my $old_quote = (ref($self) =~ /\b(?:Quote|Regex)\b/o) ? 1 : 0;
+        my $new_quote = ($class =~ /\b(?:Quote|Regex)\b/o)     ? 1 : 0;
 
-	# No matter what happens, we will have to rebless
-	bless $self, $class;
+        # No matter what happens, we will have to rebless
+        bless $self, $class;
 
-	# If we are changing to or from a Quote style token, we
-	# can't just rebless and need to do some extra thing
-	# Otherwise, we have done enough
-	return $class if ($old_quote - $new_quote) == 0;
+        # If we are changing to or from a Quote style token, we
+        # can't just rebless and need to do some extra thing
+        # Otherwise, we have done enough
+        return $class if ($old_quote - $new_quote) == 0;
 
-	# Make a new token from the old content, and overwrite the current
-	# token's attributes with the new token's attributes.
-	my $token = $class->new( $self->{content} );
-	%$self = %$token;
+        # Make a new token from the old content, and overwrite the current
+        # token's attributes with the new token's attributes.
+        my $token = $class->new( $self->{content} );
+        %$self = %$token;
 
-	# Return the class as a convenience
-	return $class;
+        # Return the class as a convenience
+        return $class;
 }
 
 
@@ -123,7 +123,7 @@ sub set_class {
 
 =head2 set_content $string
 
-The C<set_content> method allows to set/change the string that the
+The C<set_content> method allows you to set/change the string that the
 C<PPI::Token> object represents.
 
 Returns the string you set the Token to
@@ -131,7 +131,7 @@ Returns the string you set the Token to
 =cut
 
 sub set_content {
-	$_[0]->{content} = $_[1];
+        $_[0]->{content} = $_[1];
 }
 
 =pod
@@ -165,31 +165,31 @@ sub length { CORE::length($_[0]->{content}) }
 # Overloaded PPI::Element methods
 
 sub content {
-	$_[0]->{content};
+        $_[0]->{content};
 }
 
 # You can insert either a statement, or a non-significant token.
 sub insert_before {
-	my $self    = shift;
-	my $Element = _INSTANCE(shift, 'PPI::Element')  or return undef;
-	if ( $Element->isa('PPI::Structure') ) {
-		return $self->__insert_before($Element);
-	} elsif ( $Element->isa('PPI::Token') ) {
-		return $self->__insert_before($Element);
-	}
-	'';
+        my $self    = shift;
+        my $Element = _INSTANCE(shift, 'PPI::Element')  or return undef;
+        if ( $Element->isa('PPI::Structure') ) {
+                return $self->__insert_before($Element);
+        } elsif ( $Element->isa('PPI::Token') ) {
+                return $self->__insert_before($Element);
+        }
+        '';
 }
 
 # As above, you can insert a statement, or a non-significant token
 sub insert_after {
-	my $self    = shift;
-	my $Element = _INSTANCE(shift, 'PPI::Element') or return undef;
-	if ( $Element->isa('PPI::Structure') ) {
-		return $self->__insert_after($Element);
-	} elsif ( $Element->isa('PPI::Token') ) {
-		return $self->__insert_after($Element);
-	}
-	'';
+        my $self    = shift;
+        my $Element = _INSTANCE(shift, 'PPI::Element') or return undef;
+        if ( $Element->isa('PPI::Structure') ) {
+                return $self->__insert_after($Element);
+        } elsif ( $Element->isa('PPI::Token') ) {
+                return $self->__insert_after($Element);
+        }
+        '';
 }
 
 
@@ -199,9 +199,9 @@ sub insert_after {
 #####################################################################
 # Tokenizer Methods
 
-sub __TOKENIZER__on_line_start { 1 }
-sub __TOKENIZER__on_line_end   { 1 }
-sub __TOKENIZER__on_char       { 'Unknown' }
+sub __TOKENIZER__on_line_start() { 1 }
+sub __TOKENIZER__on_line_end()   { 1 }
+sub __TOKENIZER__on_char()       { 'Unknown' }
 
 
 
@@ -211,15 +211,15 @@ sub __TOKENIZER__on_char       { 'Unknown' }
 # Lexer Methods
 
 sub __LEXER__opens {
-	ref($_[0]) eq 'PPI::Token::Structure'
-	and
-	$_[0]->{content} =~ /(?:\(|\[|\{)/
+        ref($_[0]) eq 'PPI::Token::Structure'
+        and
+        $_[0]->{content} =~ /(?:\(|\[|\{)/
 }
 
 sub __LEXER__closes {
-	ref($_[0]) eq 'PPI::Token::Structure'
-	and
-	$_[0]->{content} =~ /(?:\)|\]|\})/
+        ref($_[0]) eq 'PPI::Token::Structure'
+        and
+        $_[0]->{content} =~ /(?:\)|\]|\})/
 }
 
 1;

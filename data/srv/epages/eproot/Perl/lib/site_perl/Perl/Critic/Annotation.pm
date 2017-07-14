@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Annotation.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Annotation;
 
 use 5.006001;
@@ -20,7 +13,7 @@ use Readonly;
 
 #-----------------------------------------------------------------------------
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 Readonly::Scalar my $LAST_ELEMENT => -1;
 
@@ -230,7 +223,7 @@ sub _parse_annotation {
     # verified as a no-critic annotation.  So if this regex does not match,
     # then it implies that all Policies are to be disabled.
     #
-    my $no_critic = qr{\#\# \s* no \s+ critic \s* (?:qw)? [("'] ([\s\w:,]+) }xms;
+    my $no_critic = qr{\#\# \s* no \s+ critic \s* (?:qw)? [(["'] ([\s\w:,]+) }xms;
     #                  -------------------------- ------- ----- -----------
     #                                 |              |      |        |
     #   "## no critic" with optional spaces          |      |        |

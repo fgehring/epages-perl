@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Utils 3"
-.TH Perl::Critic::Utils 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Utils 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -159,6 +159,12 @@ built-in function, method call, bareword, or reserved keyword.  It
 will not match variables, subroutine names, literal strings, numbers,
 or symbols.  If the document doesn't contain any matches, returns
 undef.
+.ie n .IP """is_assignment_operator( $element )""" 4
+.el .IP "\f(CWis_assignment_operator( $element )\fR" 4
+.IX Item "is_assignment_operator( $element )"
+Given a PPI::Token::Operator or a string,
+returns true if that token represents one of the assignment operators
+(e.g. \f(CW\*(C`= &&= ||= //= += \-=\*(C'\fR etc.).
 .ie n .IP """is_perl_global( $element )""" 4
 .el .IP "\f(CWis_perl_global( $element )\fR" 4
 .IX Item "is_perl_global( $element )"
@@ -610,13 +616,18 @@ Includes:
 .el .IP "\f(CW:classification\fR" 4
 .IX Item ":classification"
 Includes:
+\&\f(CW\*(C`is_assignment_operator\*(C'\fR,
+\&\f(CW\*(C`is_class_name\*(C'\fR,
 \&\f(CW\*(C`is_function_call\*(C'\fR,
 \&\f(CW\*(C`is_hash_key\*(C'\fR,
 \&\f(CW\*(C`is_included_module_name\*(C'\fR,
 \&\f(CW\*(C`is_integer\*(C'\fR,
+\&\f(CW\*(C`is_label_pointer\*(C'\fR,
 \&\f(CW\*(C`is_method_call\*(C'\fR,
 \&\f(CW\*(C`is_package_declaration\*(C'\fR,
+\&\f(CW\*(C`is_perl_bareword\*(C'\fR,
 \&\f(CW\*(C`is_perl_builtin\*(C'\fR,
+\&\f(CW\*(C`is_perl_filehandle\*(C'\fR,
 \&\f(CW\*(C`is_perl_global\*(C'\fR,
 \&\f(CW\*(C`is_perl_builtin_with_list_context\*(C'\fR
 \&\f(CW\*(C`is_perl_builtin_with_multiple_arguments\*(C'\fR
@@ -624,6 +635,7 @@ Includes:
 \&\f(CW\*(C`is_perl_builtin_with_one_argument\*(C'\fR
 \&\f(CW\*(C`is_perl_builtin_with_optional_argument\*(C'\fR
 \&\f(CW\*(C`is_perl_builtin_with_zero_and_or_one_arguments\*(C'\fR
+\&\f(CW\*(C`is_qualified_name\*(C'\fR,
 \&\f(CW\*(C`is_script\*(C'\fR,
 \&\f(CW\*(C`is_subroutine_name\*(C'\fR,
 \&\f(CW\*(C`is_unchecked_call\*(C'\fR

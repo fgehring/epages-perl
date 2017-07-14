@@ -63,7 +63,9 @@ will go through a deprecation cycle.
 The goal of this package is to parse well-formed regular expressions
 correctly. A secondary goal is not to blow up on ill-formed regular
 expressions. The correct identification and characterization of
-ill-formed regular expressions is B<not> a goal of this package.
+ill-formed regular expressions is B<not> a goal of this package, nor is
+the consistent parsing of ill-formed regular expressions from release to
+release.
 
 This policy attempts to track features in development releases as well
 as public releases. However, features added in a development release and
@@ -71,6 +73,61 @@ then removed before the next production release B<will not> be tracked,
 and any functionality relating to such features B<will be removed>. The
 issue here is the potential re-use (with different semantics) of syntax
 that did not make it into the production release.
+
+From time to time the Perl regular expression engine changes in ways
+that change the parse of a given regular expression. When these changes
+occur, C<PPIx::Regexp> will be changed to produce the more modern parse.
+Known examples of this include:
+
+=over
+
+=item C<$(> no longer interpolates as of Perl 5.005, per C<perl5005delta>.
+
+Newer Perls seem to parse this as C<qr{$}> (i.e. and end-of-string or
+newline assertion) followed by an open parenthesis, and that is what
+C<PPIx::Regexp> does.
+
+=item C<$)> and C<$|> also seem to parse as the C<$> assertion
+
+followed by the relevant meta-character, though I have no documentation
+reference for this.
+
+=item C<@+> and C<@-> no longer interpolate as of Perl 5.9.4
+
+per C<perl594delta>. Subsequent Perls treat C<@+> as a quantified
+literal and C<@-> as two literals, and that is what C<PPIx::Regexp>
+does. Note that subscripted references to these arrays B<do>
+interpolate, and are so parsed by C<PPIx::Regexp>.
+
+=item Only space and horizontal tab are whitespace as of Perl 5.23.4
+
+when inside a bracketed character class inside an extended bracketed
+character class, per C<perl5234delta>. Formerly any white space
+character parsed as whitespace. This change in C<PPIx::Regexp> will be
+reverted if the change in Perl does not make it into Perl 5.24.0.
+
+=item Unescaped literal left curly brackets
+
+These are being removed in positions where quantifiers are legal, so
+that they can be used for new functionality. Some of them are gone in
+5.25.1, others will be removed in a future version of Perl. In
+situations where they have been removed,
+L<perl_version_removed()|/perl_version_removed> will return the version
+in which they were removed. When the new functionality appears, the
+parse produced by this software will reflect the new functionality.
+
+=back
+
+There are very probably other examples of this. When they come to light
+they will be documented as producing the modern parse, and the code
+modified to produce this parse if necessary.
+
+The functionality that parses string literals (the C<parse> argument to
+C<new()>) was introduced in version 0.045, but its use is discouraged.
+The preferred package for string literals is
+L<PPIx::QuoteLike|PPIx::QuoteLike>, and once I consider that package to
+be stable the string literal functionality in this package will be put
+through a deprecation cycle and removed.
 
 =head1 METHODS
 
@@ -88,10 +145,13 @@ use warnings;
 use base qw{ PPIx::Regexp::Node };
 
 use PPIx::Regexp::Lexer ();
-use PPIx::Regexp::Util qw{ __instance };
+use PPIx::Regexp::StringTokenizer;
+use PPIx::Regexp::Token::Modifier ();   # For its modifier manipulations.
+use PPIx::Regexp::Tokenizer;
+use PPIx::Regexp::Util qw{ __choose_tokenizer_class __instance };
 use Scalar::Util qw{ refaddr };
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
 =head2 new
 
@@ -101,13 +161,41 @@ This method instantiates a C<PPIx::Regexp> object from a string, a
 L<PPI::Token::QuoteLike::Regexp|PPI::Token::QuoteLike::Regexp>, a
 L<PPI::Token::Regexp::Match|PPI::Token::Regexp::Match>, or a
 L<PPI::Token::Regexp::Substitute|PPI::Token::Regexp::Substitute>.
-Honestly, any L<PPI::Element|PPI::Element> will do, but only the three
+Honestly, any L<PPI::Element|PPI::Element> will work, but only the three
 Regexp classes mentioned previously are likely to do anything useful.
+
+Whatever form the argument takes, it is assumed to consist entirely of a
+valid match, substitution, or C<< qr<> >> string.
 
 Optionally you can pass one or more name/value pairs after the regular
 expression. The possible options are:
 
 =over
+
+=item default_modifiers array_reference
+
+This option specifies a reference to an array of default modifiers to
+apply to the regular expression being parsed. Each modifier is specified
+as a string. Any actual modifiers found supersede the defaults.
+
+When applying the defaults, C<'?'> and C<'/'> are completely ignored,
+and C<'^'> is ignored unless it occurs at the beginning of the modifier.
+The first dash (C<'-'>) causes subsequent modifiers to be negated.
+
+So, for example, if you wish to produce a C<PPIx::Regexp> object
+representing the regular expression in
+
+ use re '/smx';
+ {
+    no re '/x';
+    m/ foo /;
+ }
+
+you would (after some help from L<PPI|PPI> in finding the relevant
+statements), do something like
+
+ my $re = PPIx::Regexp->new( 'm/ foo /',
+     default_modifiers => [ '/smx', '-/x' ] );
 
 =item encoding name
 
@@ -118,6 +206,79 @@ string before it tokenizes it. For example:
  my $re = PPIx::Regexp->new( '/foo/',
      encoding => 'iso-8859-1',
  );
+
+=item parse parse_type
+
+This option specifies what kind of parse is to be done. Possible values
+are C<'regex'>, C<'string'>, or C<'guess'>. Any value but C<'regex'> is
+experimental.
+
+If C<'regex'> is specified, the first argument is expected to be a valid
+regex, and parsed as though it were.
+
+If C<'string'> is specified, the first argument is expected to be a
+valid string literal and parsed as such. The return is still a
+C<PPIx::Regexp> object, but the
+L<regular_expression()|/regular_expression> and L<modifier()|/modifier>
+methods return nothing, and the L<replacement()|/replacement> method
+returns the content of the string.
+
+If C<'guess'> is specified, this method will try to guess what the first
+argument is. If the first argument is a L<PPI::Element|PPI::Element>,
+the guess will reflect the PPI parse. But the guess can be wrong if the
+first argument is a string representing an unusually-delimited regex.
+For example, C<'guess'> will parse C<"foo"> as a string, but Perl will
+parse it as a regex if preceded by a regex binding operator (e.g. C<$x
+=~ "foo">), as shown by
+
+ perl -MO=Deparse -e '$x =~ "foo"'
+
+which prints
+
+ $x =~ /foo/u
+
+under Perl 5.22.0.
+
+The default is C<'regex'>.
+
+=item postderef boolean
+
+This option is passed on to the tokenizer, where it specifies whether
+postfix dereferences are recognized in interpolations and code. This
+experimental feature was introduced in Perl 5.19.5.
+
+The default is the value of
+C<$PPIx::Regexp::Tokenizer::DEFAULT_POSTDEREF>, which is true. When
+originally introduced this was false, but was documented as becoming
+true when and if postfix dereferencing became mainstream. The  intent to
+mainstream was announced with Perl 5.23.1, and became official (so to
+speak) with Perl 5.24.0, so the default became true with L<PPIx::Regexp>
+0.049_01.
+
+Note that if L<PPI|PPI> starts unconditionally recognizing postfix
+dereferences, this argument will immediately become ignored, and will be
+put through a deprecation cycle and removed.
+
+=item strict boolean
+
+This option is passed on to the tokenizer and lexer, where it specifies
+whether the parse should assume C<use re 'strict'> is in effect.
+
+The C<'strict'> pragma was introduced in Perl 5.22, and its
+documentation says that it is experimental, and that there is no
+commitment to backward compatibility. The same applies to the
+parse produced when this option is asserted. Also, the usual caveat
+applies: if C<use re 'strict'> ends up being retracted, this option and
+all related functionality will be also.
+
+Given the nature of C<use re 'strict'>, you should expect that if you
+assert this option, regular expressions that previously parsed without
+error might no longer do so. If an element ends up being declared an
+error because this option is set, its C<perl_version_introduced()> will
+be the Perl version at which C<use re 'strict'> started rejecting these
+elements.
+
+The default is false.
 
 =item trace number
 
@@ -137,27 +298,37 @@ is it supported.
     my $errstr;
 
     sub new {
-	my ( $class, $content, %args ) = @_;
-	ref $class and $class = ref $class;
+        my ( $class, $content, %args ) = @_;
+        ref $class and $class = ref $class;
 
-	$errstr = undef;
+        $errstr = undef;
 
-	my $tokenizer = PPIx::Regexp::Tokenizer->new(
-	    $content, %args ) or do {
-	    $errstr = PPIx::Regexp::Tokenizer->errstr();
-	    return;
-	};
+        my $tokenizer_class = __choose_tokenizer_class( $content, \%args )
+            or do {
+            $errstr = ref $content ?
+                sprintf '%s not supported', ref $content :
+                "Unknown parse type '$args{parse}'";
+            return;
+        };
 
-	my $lexer = PPIx::Regexp::Lexer->new( $tokenizer, %args );
-	my @nodes = $lexer->lex();
-	my $self = $class->SUPER::_new( @nodes );
-	$self->{source} = $content;
-	$self->{failures} = $lexer->failures();
-	return $self;
+        my $tokenizer = $tokenizer_class->new(
+            $content, %args ) or do {
+            $errstr = PPIx::Regexp::Tokenizer->errstr();
+            return;
+        };
+
+        my $lexer = PPIx::Regexp::Lexer->new( $tokenizer, %args );
+        my @nodes = $lexer->lex();
+        my $self = $class->SUPER::__new( @nodes );
+        $self->{source} = $content;
+        $self->{failures} = $lexer->failures();
+        $self->{effective_modifiers} =
+            $tokenizer->__effective_modifiers();
+        return $self;
     }
 
     sub errstr {
-	return $errstr;
+        return $errstr;
     }
 
 }
@@ -195,50 +366,50 @@ any objects specified are removed from the cache.
 
     my %cache;
 
-    our $DISABLE_CACHE;		# Leave this undocumented, at least for
-				# now.
+    our $DISABLE_CACHE;         # Leave this undocumented, at least for
+                                # now.
 
-    sub _cache_size {
-	return scalar keys %cache;
+    sub __cache_size {
+        return scalar keys %cache;
     }
 
     sub new_from_cache {
-	my ( $class, $content, %args ) = @_;
+        my ( $class, $content, %args ) = @_;
 
-	__instance( $content, 'PPI::Element' )
-	    or return $class->new( $content, %args );
+        __instance( $content, 'PPI::Element' )
+            or return $class->new( $content, %args );
 
-	$DISABLE_CACHE and return $class->new( $content, %args );
+        $DISABLE_CACHE and return $class->new( $content, %args );
 
-	my $addr = refaddr( $content );
-	exists $cache{$addr} and return $cache{$addr};
+        my $addr = refaddr( $content );
+        exists $cache{$addr} and return $cache{$addr};
 
-	my $self = $class->new( $content, %args )
-	    or return;
+        my $self = $class->new( $content, %args )
+            or return;
 
-	$cache{$addr} = $self;
+        $cache{$addr} = $self;
 
-	return $self;
+        return $self;
 
     }
 
     sub flush_cache {
-	my @args = @_;
+        my @args = @_;
 
-	ref $args[0] or shift @args;
+        ref $args[0] or shift @args;
 
-	if ( @args ) {
-	    foreach my $obj ( @args ) {
-		if ( __instance( $obj, __PACKAGE__ ) &&
-		    __instance( ( my $parent = $obj->source() ),
-			'PPI::Element' ) ) {
-		    delete $cache{ refaddr( $parent ) };
-		}
-	    }
-	} else {
-	    %cache = ();
-	}
-	return;
+        if ( @args ) {
+            foreach my $obj ( @args ) {
+                if ( __instance( $obj, __PACKAGE__ ) &&
+                    __instance( ( my $parent = $obj->source() ),
+                        'PPI::Element' ) ) {
+                    delete $cache{ refaddr( $parent ) };
+                }
+            }
+        } else {
+            %cache = ();
+        }
+        return;
     }
 
 }
@@ -291,8 +462,8 @@ will be returned; index 0 represents the regular expression's
 delimiters, and index 1 represents the replacement string's delimiters,
 which may be undef. For example,
 
- print PPIx::Regexp->new('s{foo}<bar>')-delimiters(1);
- # prints '[]'
+ print PPIx::Regexp->new('s{foo}<bar>')->delimiters(1);
+ # prints '<>'
 
 If the object was not initialized with a valid regexp of some sort, the
 results of this method are undefined.
@@ -304,8 +475,8 @@ sub delimiters {
 
     my @rslt;
     foreach my $method ( qw{ regular_expression replacement } ) {
-	defined ( my $obj = $self->$method() ) or next;
-	push @rslt, $obj->delimiters();
+        defined ( my $obj = $self->$method() ) or next;
+        push @rslt, $obj->delimiters();
     }
 
     defined $inx and return $rslt[$inx];
@@ -323,6 +494,10 @@ attempt succeeded.
 =cut
 
 # defined above, just after sub new.
+
+sub explain {
+    return;
+}
 
 =head2 failures
 
@@ -373,6 +548,12 @@ This method retrieves the modifier of the object. This comes from the
 end of the initializing string or object and will be a
 L<PPIx::Regexp::Token::Modifier|PPIx::Regexp::Token::Modifier>.
 
+B<Note> that this object represents the actual modifiers present on the
+regexp, and does not take into account any that may have been applied by
+default (i.e. via the C<default_modifiers> argument to C<new()>). For
+something that takes account of default modifiers, see
+L<modifier_asserted()|/modifier_asserted>, below.
+
 In the event of a parse failure, there may not be a modifier present, in
 which case nothing is returned.
 
@@ -381,6 +562,57 @@ which case nothing is returned.
 sub modifier {
     my ( $self ) = @_;
     return $self->_component( 'PPIx::Regexp::Token::Modifier' );
+}
+
+=head2 modifier_asserted
+
+ my $re = PPIx::Regexp->new( '/ . /',
+     default_modifiers => [ 'smx' ] );
+ print $re->modifier_asserted( 'x' ) ? "yes\n" : "no\n";
+ # prints 'yes'.
+
+This method returns true if the given modifier is asserted for the
+regexp, whether explicitly or by the modifiers passed in the
+C<default_modifiers> argument.
+
+Starting with version 0.036_01, if the argument is a
+single-character modifier followed by an asterisk (intended as a wild
+card character), the return is the number of times that modifier
+appears. In this case an exception will be thrown if you specify a
+multi-character modifier (e.g.  C<'ee*'>), or if you specify one of the
+match semantics modifiers (e.g.  C<'a*'>).
+
+=cut
+
+sub modifier_asserted {
+    my ( $self, $modifier ) = @_;
+    return PPIx::Regexp::Token::Modifier::__asserts(
+        $self->{effective_modifiers},
+        $modifier,
+    );
+}
+
+# This is a kluge for both determining whether the object asserts
+# modifiers (hence the 'ductype') and determining whether the given
+# modifier is actually asserted. The signature is the invocant and the
+# modifier name, which must not be undef. The return is a boolean.
+*__ducktype_modifier_asserted = \&modifier_asserted;
+
+# As of Perl 5.21.1 you can not leave off the type of a '?'-delimited
+# regexp. Because this is not associated with any single child we
+# compute it here.
+sub perl_version_removed {
+    my ( $self ) = @_;
+    my $v = $self->SUPER::perl_version_removed();
+    defined $v
+        and $v <= 5.021001
+        and return $v;
+    defined( my $delim = $self->delimiters() )
+        or return $v;
+    '??' eq $delim
+        and '' eq $self->type()->content()
+        and return '5.021001';
+    return $v;
 }
 
 =head2 regular_expression
@@ -454,7 +686,7 @@ sub type {
 sub _component {
     my ( $self, $class ) = @_;
     foreach my $elem ( $self->children() ) {
-	$elem->isa( $class ) and return $elem;
+        $elem->isa( $class ) and return $elem;
     }
     return;
 }
@@ -584,7 +816,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

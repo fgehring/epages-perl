@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPI::Token::Magic 3"
-.TH PPI::Token::Magic 3 "2011-02-26" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPI::Token::Magic 3 "2017-05-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -145,12 +145,12 @@ PPI::Token::Magic \- Tokens representing magic variables
 \&  # When we say magic variables, we mean these...
 \&  $1   $2   $3   $4   $5   $6   $7   $8   $9
 \&  $_   $&   $\`   $\*(Aq   $+   @+   %+   $*   $.    $/    $|
-\&  $\e\e  $"   $;   $%   $=   $\-   @\-   %\-   $)    $#
+\&  $\e   $"   $;   $%   $=   $\-   @\-   %\-   $)    $#
 \&  $~   $^   $:   $?   $!   %!   $@   $$   $<    $>
 \&  $(   $0   $[   $]   @_   @*   $}   $,   $#+   $#\-
 \&  $^L  $^A  $^E  $^C  $^D  $^F  $^H
 \&  $^I  $^M  $^N  $^O  $^P  $^R  $^S
-\&  $^T  $^V  $^W  $^X
+\&  $^T  $^V  $^W  $^X  %^H
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
@@ -162,7 +162,7 @@ Some are extremely common, like \f(CW$_\fR, and others you will quite
 probably never encounter in your Perl career.
 .SH "METHODS"
 .IX Header "METHODS"
-The class provides no additional methods, beyond those provided by it's
+The class provides no additional methods, beyond those provided by
 PPI::Token::Symbol, PPI::Token and PPI::Element.
 .SH "SUPPORT"
 .IX Header "SUPPORT"

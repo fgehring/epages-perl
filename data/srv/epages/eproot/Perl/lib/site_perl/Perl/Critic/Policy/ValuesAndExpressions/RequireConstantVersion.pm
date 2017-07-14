@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/ValuesAndExpressions/RequireConstantVersion.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::ValuesAndExpressions::RequireConstantVersion;
 
 use 5.006001;
@@ -26,14 +19,14 @@ use Readonly;
 
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
 Readonly::Scalar my $BIND_REGEX => q<=~>;
 Readonly::Scalar my $DOLLAR => q<$>;
 # All uses of the $DOLLAR variable below are to prevent false failures in
-# xt/author/93_version.t.
+# xt/93_version.t.
 Readonly::Scalar my $QV => q<qv>;
 Readonly::Scalar my $VERSION_MODULE => q<version>;
 Readonly::Scalar my $VERSION_VARIABLE => $DOLLAR . q<VERSION>;
@@ -124,24 +117,13 @@ sub violates {
 
 #-----------------------------------------------------------------------------
 
-# Check for an assignment operator. This is made more complicated by the fact
-# that PPI parses things like '||=' as two PPI::Token::Operators: '||' and
-# '='. So we take the first presumptive operator as an argument. If it is not
-# a PPI::Token::Operator, we return. If it's '=', we return it. If it is any
-# other operator, we see if the next significant token is '=', and if so
-# return that.
+# Check if the element is an assignment operator.
 
 sub _check_for_assignment_operator {
     my ( $operator ) = @_;
 
-    return           if not $operator->isa( 'PPI::Token::Operator' );
-    return $operator if $EQUAL eq $operator->content();
-
-    my $next;
-    return       if not $next = $operator->snext_sibling();
-    return       if not $next->isa( 'PPI::Token::Operator' );
-    return $next if $EQUAL eq $next->content();
-
+    return if not $operator->isa( 'PPI::Token::Operator' );
+    return $operator if is_assignment_operator($operator->content());
     return;
 }
 

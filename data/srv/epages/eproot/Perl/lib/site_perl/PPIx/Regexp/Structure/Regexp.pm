@@ -36,7 +36,7 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Structure::Main };
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
 sub can_be_quantified { return; }
 
@@ -54,12 +54,16 @@ sub capture_names {
     my ( $self ) = @_;
     my %name;
     my $captures = $self->find(
-	'PPIx::Regexp::Structure::NamedCapture')
-	or return;
+        'PPIx::Regexp::Structure::NamedCapture')
+        or return;
     foreach my $grab ( @{ $captures } ) {
-	$name{$grab->name()}++;
+        $name{$grab->name()}++;
     }
     return ( sort keys %name );
+}
+
+sub explain {
+    return 'Regular expression';
 }
 
 =head2 max_capture_number
@@ -78,19 +82,19 @@ sub max_capture_number {
 }
 
 # Called by the lexer once it has done its worst to all the tokens.
-# Called as a method with no arguments. The return is the number of
-# parse failures discovered when finalizing.
+# Called as a method with the lexer as argument. The return is the
+# number of parse failures discovered when finalizing.
 sub __PPIX_LEXER__finalize {
-    my ( $self ) = @_;
+    my ( $self, $lexer ) = @_;
     my $rslt = 0;
     foreach my $elem ( $self->elements() ) {
-	$rslt += $elem->__PPIX_LEXER__finalize();
+        $rslt += $elem->__PPIX_LEXER__finalize( $lexer );
     }
 
     # Calculate the maximum capture group, and number all the other
     # capture groups along the way.
     $self->{max_capture_number} =
-	$self->__PPIX_LEXER__record_capture_number( 1 ) - 1;
+        $self->__PPIX_LEXER__record_capture_number( 1 ) - 1;
 
     return $rslt;
 }
@@ -110,7 +114,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

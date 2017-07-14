@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/Variables/ProhibitPerl4PackageNames.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::Variables::ProhibitPerl4PackageNames;
 
 use 5.006001;
@@ -15,7 +8,7 @@ use Readonly;
 use Perl::Critic::Utils qw{ :characters :severities :classification };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -26,7 +19,7 @@ Readonly::Scalar my $EXPL =>
 
 sub supported_parameters { return ()                                        }
 sub default_severity     { return $SEVERITY_LOW                             }
-sub default_themes       { return qw(core maintenance)                      }
+sub default_themes       { return qw(core maintenance certrec )                      }
 sub applies_to           { return qw( PPI::Token::Word PPI::Token::Symbol ) }
 
 #-----------------------------------------------------------------------------
@@ -50,7 +43,7 @@ sub violates {
 
     return
         $self->violation(
-            qq{"$content" uses the obsolete single quote package separator."},
+            qq{"$content" uses the obsolete single quote package separator.},
             $EXPL,
             $elem
         );
@@ -109,7 +102,7 @@ Elliot Shank C<< <perl@galumph.com> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2007-2011 Elliot Shank.
+Copyright (c) 2007-2014 Elliot Shank.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.  The full text of this license

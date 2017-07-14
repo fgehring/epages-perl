@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Archive::Tar 3"
-.TH Archive::Tar 3 "2011-01-09" "perl v5.12.3" "Perl Programmers Reference Guide"
+.TH Archive::Tar 3 "2017-05-12" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -144,6 +144,9 @@ Archive::Tar \- module for manipulations of tar archives
 \&    $tar\->add_data(\*(Aqfile/baz.txt\*(Aq, \*(AqThis is the contents now\*(Aq);
 \&
 \&    $tar\->rename(\*(Aqoldname\*(Aq, \*(Aqnew/file/name\*(Aq);
+\&    $tar\->chown(\*(Aq/\*(Aq, \*(Aqroot\*(Aq);
+\&    $tar\->chown(\*(Aq/\*(Aq, \*(Aqroot:root\*(Aq);
+\&    $tar\->chmod(\*(Aq/tmp\*(Aq, \*(Aq1777\*(Aq);
 \&
 \&    $tar\->write(\*(Aqfiles.tar\*(Aq);                   # plain tar
 \&    $tar\->write(\*(Aqfiles.tgz\*(Aq, COMPRESS_GZIP);    # gzip compressed
@@ -204,6 +207,13 @@ very big archives, and are only interested in the first few files.
 .IX Item "filter"
 Can be set to a regular expression.  Only files with names that match
 the expression will be read.
+.IP "md5" 4
+.IX Item "md5"
+Set to 1 and the md5sum of files will be returned (instead of file data)
+    my \f(CW$iter\fR = Archive::Tar\->iter( \f(CW$file\fR,  1, {md5 => 1} );
+    while( my \f(CW$f\fR = \f(CW$iter\fR\->() ) {
+        print \f(CW$f\fR\->data . \*(L"\et\*(R" . \f(CW$f\fR\->full_path . $/;
+    }
 .IP "extract" 4
 .IX Item "extract"
 If set to true, immediately extract entries when reading them. This
@@ -300,6 +310,18 @@ Note that you must specify a Unix path for \f(CW$new_name\fR, since per tar
 standard, all files in the archive must be Unix paths.
 .PP
 Returns true on success and false on failure.
+.ie n .SS "$tar\->chmod( $file, $mode )"
+.el .SS "\f(CW$tar\fP\->chmod( \f(CW$file\fP, \f(CW$mode\fP )"
+.IX Subsection "$tar->chmod( $file, $mode )"
+Change mode of \f(CW$file\fR to \f(CW$mode\fR.
+.PP
+Returns true on success and false on failure.
+.ie n .SS "$tar\->chown( $file, $uname [, $gname] )"
+.el .SS "\f(CW$tar\fP\->chown( \f(CW$file\fP, \f(CW$uname\fP [, \f(CW$gname\fP] )"
+.IX Subsection "$tar->chown( $file, $uname [, $gname] )"
+Change owner \f(CW$file\fR to \f(CW$uname\fR and \f(CW$gname\fR.
+.PP
+Returns true on success and false on failure.
 .ie n .SS "$tar\->remove (@filenamelist)"
 .el .SS "\f(CW$tar\fP\->remove (@filenamelist)"
 .IX Subsection "$tar->remove (@filenamelist)"
@@ -322,7 +344,7 @@ be the name of a file or a reference to an already open filehandle (a
 The second argument is used to indicate compression. You can either
 compress using \f(CW\*(C`gzip\*(C'\fR or \f(CW\*(C`bzip2\*(C'\fR. If you pass a digit, it's assumed
 to be the \f(CW\*(C`gzip\*(C'\fR compression level (between 1 and 9), but the use of
-constants is prefered:
+constants is preferred:
 .PP
 .Vb 2
 \&  # write a gzip compressed file
@@ -378,8 +400,8 @@ The following list of properties is supported: name, size, mtime
 devmajor, devminor, prefix, type.  (On MacOS, the file's path and
 modification times are converted to Unix equivalents.)
 .PP
-Valid values for the file type are the following constants defined in
-Archive::Tar::Constants:
+Valid values for the file type are the following constants defined by
+Archive::Tar::Constant:
 .IP "\s-1FILE\s0" 4
 .IX Item "FILE"
 Regular file.
@@ -413,7 +435,7 @@ Returns the \f(CW\*(C`Archive::Tar::File\*(C'\fR object that was just added, or
 .ie n .SS "$tar\->error( [$BOOL] )"
 .el .SS "\f(CW$tar\fP\->error( [$BOOL] )"
 .IX Subsection "$tar->error( [$BOOL] )"
-Returns the current errorstring (usually, the last error reported).
+Returns the current error string (usually, the last error reported).
 If a true value was specified, it will give the \f(CW\*(C`Carp::longmess\*(C'\fR
 equivalent of the error, in effect giving you a stacktrace.
 .PP
@@ -453,7 +475,7 @@ To switch back to the default behaviour, use
 .PP
 and \f(CW\*(C`Archive::Tar\*(C'\fR will call \f(CW\*(C`Cwd::cwd()\*(C'\fR internally again.
 .PP
-If you're using \f(CW\*(C`Archive::Tar\*(C'\fR's \f(CW\*(C`exract()\*(C'\fR method, \f(CW\*(C`setcwd()\*(C'\fR will
+If you're using \f(CW\*(C`Archive::Tar\*(C'\fR's \f(CW\*(C`extract()\*(C'\fR method, \f(CW\*(C`setcwd()\*(C'\fR will
 be called for you.
 .SH "Class Methods"
 .IX Header "Class Methods"
@@ -467,7 +489,7 @@ reference to an open file handle (e.g. a \s-1GLOB\s0 reference).
 The second argument is used to indicate compression. You can either
 compress using \f(CW\*(C`gzip\*(C'\fR or \f(CW\*(C`bzip2\*(C'\fR. If you pass a digit, it's assumed
 to be the \f(CW\*(C`gzip\*(C'\fR compression level (between 1 and 9), but the use of
-constants is prefered:
+constants is preferred:
 .PP
 .Vb 2
 \&  # write a gzip compressed file
@@ -529,7 +551,7 @@ If \f(CW\*(C`list_archive()\*(C'\fR is passed an array reference as its third
 argument it returns a list of hash references containing the requested
 properties of each file.  The following list of properties is
 supported: full_path, name, size, mtime (last modified date), mode,
-uid, gid, linkname, uname, gname, devmajor, devminor, prefix.
+uid, gid, linkname, uname, gname, devmajor, devminor, prefix, type.
 .PP
 See \f(CW\*(C`Archive::Tar::File\*(C'\fR for details about supported properties.
 .PP
@@ -722,6 +744,36 @@ your perl to be able to  write stringified archives.
 .PP
 Don't change this variable unless you \fBreally\fR know what you're
 doing.
+.ie n .SS "$Archive::Tar::ZERO_PAD_NUMBERS"
+.el .SS "\f(CW$Archive::Tar::ZERO_PAD_NUMBERS\fP"
+.IX Subsection "$Archive::Tar::ZERO_PAD_NUMBERS"
+This variable holds a boolean indicating if we will create
+zero padded numbers for \f(CW\*(C`size\*(C'\fR, \f(CW\*(C`mtime\*(C'\fR and \f(CW\*(C`checksum\*(C'\fR.
+The default is \f(CW0\fR, indicating that we will create space padded
+numbers. Added for compatibility with \f(CW\*(C`busybox\*(C'\fR implementations.
+.SS "Tuning the way \s-1RESOLVE_SYMLINK\s0 will works"
+.IX Subsection "Tuning the way RESOLVE_SYMLINK will works"
+.Vb 2
+\&        You can tune the behaviour by setting the $Archive::Tar::RESOLVE_SYMLINK variable,
+\&        or $ENV{PERL5_AT_RESOLVE_SYMLINK} before loading the module Archive::Tar.
+\&
+\&  Values can be one of the following:
+\&
+\&                none
+\&           Disable this mechanism and failed as it was in previous version (<1.88)
+\&
+\&                speed (default)
+\&           If you prefer speed
+\&           this will read again the whole archive using read() so all entries
+\&           will be available
+\&
+\&    memory
+\&           If you prefer memory
+\&
+\&        Limitation
+\&
+\&                It won\*(Aqt work for terminal, pipe or sockets or every non seekable source.
+.Ve
 .SH "FAQ"
 .IX Header "FAQ"
 .IP "What's the minimum perl version required to run Archive::Tar?" 4
@@ -772,7 +824,7 @@ the extraction of this particular item didn't work.
 .IX Item "I'm using WinZip, or some other non-POSIX client, and files are not being extracted properly!"
 By default, \f(CW\*(C`Archive::Tar\*(C'\fR is in a completely POSIX-compatible
 mode, which uses the POSIX-specification of \f(CW\*(C`tar\*(C'\fR to store files.
-For paths greather than 100 characters, this is done using the
+For paths greater than 100 characters, this is done using the
 \&\f(CW\*(C`POSIX header prefix\*(C'\fR. Non-POSIX-compatible clients may not support
 this part of the specification, and may only support the \f(CW\*(C`GNU Extended
 Header\*(C'\fR functionality. To facilitate those clients, you can set the
@@ -904,7 +956,7 @@ because a tarball can contain many files, and each of which could be
 encoded in a different way.
 .SH "CAVEATS"
 .IX Header "CAVEATS"
-The \s-1AIX\s0 tar does not fill all unused space in the tar archive with 0x00. 
+The \s-1AIX\s0 tar does not fill all unused space in the tar archive with 0x00.
 This sometimes leads to warning messages from \f(CW\*(C`Archive::Tar\*(C'\fR.
 .PP
 .Vb 1
@@ -919,15 +971,15 @@ of \s-1AIX\s0, all of which should be coming out in the 4th quarter of 2009:
 \& AIX 5.3 TL8 SP8
 \& AIX 5.3 TL9 SP5
 \& AIX 5.3 TL10 SP2
-\& 
+\&
 \& AIX 6.1 TL0 SP11
 \& AIX 6.1 TL1 SP7
 \& AIX 6.1 TL2 SP6
 \& AIX 6.1 TL3 SP3
 .Ve
 .PP
-The \s-1IBM\s0 \s-1APAR\s0 number for this problem is \s-1IZ50240\s0 (Reported component \s-1ID:\s0 
-5765G0300 / \s-1AIX\s0 5.3). It is possible to get an ifix for that problem. 
+The \s-1IBM\s0 \s-1APAR\s0 number for this problem is \s-1IZ50240\s0 (Reported component \s-1ID:\s0
+5765G0300 / \s-1AIX\s0 5.3). It is possible to get an ifix for that problem.
 If you need an ifix please contact your local \s-1IBM\s0 \s-1AIX\s0 support.
 .SH "TODO"
 .IX Header "TODO"
@@ -950,9 +1002,9 @@ to an uploaded file, which might be a compressed archive.
 .IP "The \s-1GNU\s0 tar specification" 4
 .IX Item "The GNU tar specification"
 \&\f(CW\*(C`http://www.gnu.org/software/tar/manual/tar.html\*(C'\fR
-.IP "The \s-1PAX\s0 format specication" 4
-.IX Item "The PAX format specication"
-The specifcation which tar derives from; \f(CW\*(C` http://www.opengroup.org/onlinepubs/007904975/utilities/pax.html\*(C'\fR
+.IP "The \s-1PAX\s0 format specification" 4
+.IX Item "The PAX format specification"
+The specification which tar derives from; \f(CW\*(C` http://www.opengroup.org/onlinepubs/007904975/utilities/pax.html\*(C'\fR
 .ie n .IP "A comparison of \s-1GNU\s0 and \s-1POSIX\s0 tar standards; ""http://www.delorie.com/gnu/docs/tar/tar_114.html""" 4
 .el .IP "A comparison of \s-1GNU\s0 and \s-1POSIX\s0 tar standards; \f(CWhttp://www.delorie.com/gnu/docs/tar/tar_114.html\fR" 4
 .IX Item "A comparison of GNU and POSIX tar standards; http://www.delorie.com/gnu/docs/tar/tar_114.html"

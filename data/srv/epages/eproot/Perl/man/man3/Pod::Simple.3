@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Pod::Simple 3"
-.TH Pod::Simple 3 "2011-01-03" "perl v5.12.3" "Perl Programmers Reference Guide"
+.TH Pod::Simple 3 "2016-11-30" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -141,7 +141,9 @@ Pod::Simple \- framework for parsing Pod
 Pod::Simple is a Perl library for parsing text in the Pod (\*(L"plain old
 documentation\*(R") markup language that is typically used for writing
 documentation for Perl and for Perl modules. The Pod format is explained
-perlpod; the most common formatter is called \f(CW\*(C`perldoc\*(C'\fR.
+in perlpod; the most common formatter is called \f(CW\*(C`perldoc\*(C'\fR.
+.PP
+Be sure to read \*(L"\s-1ENCODING\s0\*(R" if your Pod contains non-ASCII characters.
 .PP
 Pod formatters can use Pod::Simple to parse Pod documents and render them into
 plain text, \s-1HTML\s0, or any number of other formats. Typically, such formatters
@@ -167,8 +169,8 @@ of Pod::Simple.
 .el .IP "\f(CW$parser\->output_fh( *OUT );\fR" 4
 .IX Item "$parser->output_fh( *OUT );"
 This sets the filehandle that \f(CW$parser\fR's output will be written to.
-You can pass \f(CW*STDOUT\fR, otherwise you should probably do something
-like this:
+You can pass \f(CW*STDOUT\fR or \f(CW*STDERR\fR, otherwise you should probably do
+something like this:
 .Sp
 .Vb 3
 \&    my $outfile = "output.txt";
@@ -215,8 +217,9 @@ the last call) ends with an \f(CW\*(C`undef\*(C'\fR value.
 .ie n .IP """$parser\->content_seen""" 4
 .el .IP "\f(CW$parser\->content_seen\fR" 4
 .IX Item "$parser->content_seen"
-This returns true only if there has been any real content seen
-for this document.
+This returns true only if there has been any real content seen for this
+document. Returns false in cases where the document contains content,
+but does not make use of any Pod markup.
 .ie n .IP """\f(CISomeClass\f(CW\->filter( \f(CI$filename\f(CW );""" 4
 .el .IP "\f(CW\f(CISomeClass\f(CW\->filter( \f(CI$filename\f(CW );\fR" 4
 .IX Item "SomeClass->filter( $filename );"
@@ -247,6 +250,14 @@ and set the attribute's value with
 \&\f(CW\*(C`$parser\->\f(CIattribute\f(CW(\f(CInewvalue\f(CW)\*(C'\fR.  For each accessor, I typically
 only mention one syntax or another, based on which I think you are actually
 most likely to use.
+.ie n .IP """$parser\->parse_characters( \f(CISOMEVALUE\f(CW )""" 4
+.el .IP "\f(CW$parser\->parse_characters( \f(CISOMEVALUE\f(CW )\fR" 4
+.IX Item "$parser->parse_characters( SOMEVALUE )"
+The Pod parser normally expects to read octets and to convert those octets
+to characters based on the \f(CW\*(C`=encoding\*(C'\fR declaration in the Pod source.  Set
+this option to a true value to indicate that the Pod source is already a Perl
+character stream.  This tells the parser to ignore any \f(CW\*(C`=encoding\*(C'\fR command
+and to skip all the code paths involving decoding octets.
 .ie n .IP """$parser\->no_whining( \f(CISOMEVALUE\f(CW )""" 4
 .el .IP "\f(CW$parser\->no_whining( \f(CISOMEVALUE\f(CW )\fR" 4
 .IX Item "$parser->no_whining( SOMEVALUE )"
@@ -295,7 +306,7 @@ verbatim blocks will be preserved in the output. This can be annoying for
 outputs such as \s-1HTML\s0, where that whitespace will remain in front of every
 line. It's an unfortunate case where syntax is turned into semantics.
 .Sp
-If the \s-1POD\s0 your parsing adheres to a consistent indentation policy, you can
+If the \s-1POD\s0 you're parsing adheres to a consistent indentation policy, you can
 have such indentation stripped from the beginning of every line of your
 verbatim blocks. This method tells Pod::Simple what to strip. For two-space
 indents, you'd use:
@@ -338,11 +349,176 @@ that you don't want \fIany\fR lines indented. You can do something like this:
 \&      return undef;
 \&  });
 .Ve
-.SH "CAVEATS"
-.IX Header "CAVEATS"
-This is just a beta release \*(-- there are a good number of things still
-left to do.  Notably, support for \s-1EBCDIC\s0 platforms is still half-done,
-an untested.
+.SH "TERTIARY METHODS"
+.IX Header "TERTIARY METHODS"
+.ie n .IP """$parser\->abandon_output_fh()""" 4
+.el .IP "\f(CW$parser\->abandon_output_fh()\fR" 4
+.IX Xref "abandon_output_fh"
+.IX Item "$parser->abandon_output_fh()"
+Cancel output to the file handle. Any \s-1POD\s0 read by the \f(CW$parser\fR is not
+effected.
+.ie n .IP """$parser\->abandon_output_string()""" 4
+.el .IP "\f(CW$parser\->abandon_output_string()\fR" 4
+.IX Xref "abandon_output_string"
+.IX Item "$parser->abandon_output_string()"
+Cancel output to the output string. Any \s-1POD\s0 read by the \f(CW$parser\fR is not
+effected.
+.ie n .IP """$parser\->accept_code( @codes )""" 4
+.el .IP "\f(CW$parser\->accept_code( @codes )\fR" 4
+.IX Xref "accept_code"
+.IX Item "$parser->accept_code( @codes )"
+Alias for accept_codes.
+.ie n .IP """$parser\->accept_codes( @codes )""" 4
+.el .IP "\f(CW$parser\->accept_codes( @codes )\fR" 4
+.IX Xref "accept_codes"
+.IX Item "$parser->accept_codes( @codes )"
+Allows \f(CW$parser\fR to accept a list of \*(L"Formatting Codes\*(R" in perlpod. This can be
+used to implement user-defined codes.
+.ie n .IP """$parser\->accept_directive_as_data( @directives )""" 4
+.el .IP "\f(CW$parser\->accept_directive_as_data( @directives )\fR" 4
+.IX Xref "accept_directive_as_data"
+.IX Item "$parser->accept_directive_as_data( @directives )"
+Allows \f(CW$parser\fR to accept a list of directives for data paragraphs. A
+directive is the label of a \*(L"Command Paragraph\*(R" in perlpod. A data paragraph is
+one delimited by \f(CW\*(C`=begin/=for/=end\*(C'\fR directives. This can be used to
+implement user-defined directives.
+.ie n .IP """$parser\->accept_directive_as_processed( @directives )""" 4
+.el .IP "\f(CW$parser\->accept_directive_as_processed( @directives )\fR" 4
+.IX Xref "accept_directive_as_processed"
+.IX Item "$parser->accept_directive_as_processed( @directives )"
+Allows \f(CW$parser\fR to accept a list of directives for processed paragraphs. A
+directive is the label of a \*(L"Command Paragraph\*(R" in perlpod. A processed
+paragraph is also known as \*(L"Ordinary Paragraph\*(R" in perlpod. This can be used to
+implement user-defined directives.
+.ie n .IP """$parser\->accept_directive_as_verbatim( @directives )""" 4
+.el .IP "\f(CW$parser\->accept_directive_as_verbatim( @directives )\fR" 4
+.IX Xref "accept_directive_as_verbatim"
+.IX Item "$parser->accept_directive_as_verbatim( @directives )"
+Allows \f(CW$parser\fR to accept a list of directives for \*(L"Verbatim
+Paragraph\*(R" in perlpod. A directive is the label of a \*(L"Command Paragraph\*(R" in perlpod. This
+can be used to implement user-defined directives.
+.ie n .IP """$parser\->accept_target( @targets )""" 4
+.el .IP "\f(CW$parser\->accept_target( @targets )\fR" 4
+.IX Xref "accept_target"
+.IX Item "$parser->accept_target( @targets )"
+Alias for accept_targets.
+.ie n .IP """$parser\->accept_target_as_text( @targets )""" 4
+.el .IP "\f(CW$parser\->accept_target_as_text( @targets )\fR" 4
+.IX Xref "accept_target_as_text"
+.IX Item "$parser->accept_target_as_text( @targets )"
+Alias for accept_targets_as_text.
+.ie n .IP """$parser\->accept_targets( @targets )""" 4
+.el .IP "\f(CW$parser\->accept_targets( @targets )\fR" 4
+.IX Xref "accept_targets"
+.IX Item "$parser->accept_targets( @targets )"
+Accepts targets for \f(CW\*(C`=begin/=for/=end\*(C'\fR sections of the \s-1POD\s0.
+.ie n .IP """$parser\->accept_targets_as_text( @targets )""" 4
+.el .IP "\f(CW$parser\->accept_targets_as_text( @targets )\fR" 4
+.IX Xref "accept_targets_as_text"
+.IX Item "$parser->accept_targets_as_text( @targets )"
+Accepts targets for \f(CW\*(C`=begin/=for/=end\*(C'\fR sections that should be parsed as
+\&\s-1POD\s0. For details, see \*(L"About Data Paragraphs\*(R" in perlpodspec.
+.ie n .IP """$parser\->any_errata_seen()""" 4
+.el .IP "\f(CW$parser\->any_errata_seen()\fR" 4
+.IX Xref "any_errata_seen"
+.IX Item "$parser->any_errata_seen()"
+Used to check if any errata was seen.
+.Sp
+\&\fIExample:\fR
+.Sp
+.Vb 1
+\&  die "too many errors\en" if $parser\->any_errata_seen();
+.Ve
+.ie n .IP """$parser\->errata_seen()""" 4
+.el .IP "\f(CW$parser\->errata_seen()\fR" 4
+.IX Xref "errata_seen"
+.IX Item "$parser->errata_seen()"
+Returns a hash reference of all errata seen, both whines and screams. The hash reference's keys are the line number and the value is an array reference of the errors for that line.
+.Sp
+\&\fIExample:\fR
+.Sp
+.Vb 3
+\&  if ( $parser\->any_errata_seen() ) {
+\&     $logger\->log( $parser\->errata_seen() );
+\&  }
+.Ve
+.ie n .IP """$parser\->detected_encoding()""" 4
+.el .IP "\f(CW$parser\->detected_encoding()\fR" 4
+.IX Xref "detected_encoding"
+.IX Item "$parser->detected_encoding()"
+Return the encoding corresponding to \f(CW\*(C`=encoding\*(C'\fR, but only if the
+encoding was recognized and handled.
+.ie n .IP """$parser\->encoding()""" 4
+.el .IP "\f(CW$parser\->encoding()\fR" 4
+.IX Xref "encoding"
+.IX Item "$parser->encoding()"
+Return encoding of the document, even if the encoding is not correctly
+handled.
+.ie n .IP """$parser\->parse_from_file( $source, $to )""" 4
+.el .IP "\f(CW$parser\->parse_from_file( $source, $to )\fR" 4
+.IX Xref "parse_from_file"
+.IX Item "$parser->parse_from_file( $source, $to )"
+Parses from \f(CW$source\fR file to \f(CW$to\fR file. Similar to \*(L"parse_from_file\*(R" in Pod::Parser.
+.ie n .IP """$parser\->scream( @error_messages )""" 4
+.el .IP "\f(CW$parser\->scream( @error_messages )\fR" 4
+.IX Xref "scream"
+.IX Item "$parser->scream( @error_messages )"
+Log an error that can't be ignored.
+.ie n .IP """$parser\->unaccept_code( @codes )""" 4
+.el .IP "\f(CW$parser\->unaccept_code( @codes )\fR" 4
+.IX Xref "unaccept_code"
+.IX Item "$parser->unaccept_code( @codes )"
+Alias for unaccept_codes.
+.ie n .IP """$parser\->unaccept_codes( @codes )""" 4
+.el .IP "\f(CW$parser\->unaccept_codes( @codes )\fR" 4
+.IX Xref "unaccept_codes"
+.IX Item "$parser->unaccept_codes( @codes )"
+Removes \f(CW@codes\fR as valid codes for the parse.
+.ie n .IP """$parser\->unaccept_directive( @directives )""" 4
+.el .IP "\f(CW$parser\->unaccept_directive( @directives )\fR" 4
+.IX Xref "unaccept_directive"
+.IX Item "$parser->unaccept_directive( @directives )"
+Alias for unaccept_directives.
+.ie n .IP """$parser\->unaccept_directives( @directives )""" 4
+.el .IP "\f(CW$parser\->unaccept_directives( @directives )\fR" 4
+.IX Xref "unaccept_directives"
+.IX Item "$parser->unaccept_directives( @directives )"
+Removes \f(CW@directives\fR as valid directives for the parse.
+.ie n .IP """$parser\->unaccept_target( @targets )""" 4
+.el .IP "\f(CW$parser\->unaccept_target( @targets )\fR" 4
+.IX Xref "unaccept_target"
+.IX Item "$parser->unaccept_target( @targets )"
+Alias for unaccept_targets.
+.ie n .IP """$parser\->unaccept_targets( @targets )""" 4
+.el .IP "\f(CW$parser\->unaccept_targets( @targets )\fR" 4
+.IX Xref "unaccept_targets"
+.IX Item "$parser->unaccept_targets( @targets )"
+Removes \f(CW@targets\fR as valid targets for the parse.
+.ie n .IP """$parser\->version_report()""" 4
+.el .IP "\f(CW$parser\->version_report()\fR" 4
+.IX Xref "version_report"
+.IX Item "$parser->version_report()"
+Returns a string describing the version.
+.ie n .IP """$parser\->whine( @error_messages )""" 4
+.el .IP "\f(CW$parser\->whine( @error_messages )\fR" 4
+.IX Xref "whine"
+.IX Item "$parser->whine( @error_messages )"
+Log an error unless \f(CW\*(C`$parser\->no_whining( TRUE );\*(C'\fR.
+.SH "ENCODING"
+.IX Header "ENCODING"
+The Pod::Simple parser expects to read \fBoctets\fR.  The parser will decode the
+octets into Perl's internal character string representation using the value of
+the \f(CW\*(C`=encoding\*(C'\fR declaration in the \s-1POD\s0 source.
+.PP
+If the \s-1POD\s0 source does not include an \f(CW\*(C`=encoding\*(C'\fR declaration, the parser will
+attempt to guess the encoding (selecting one of \s-1UTF\-8\s0 or \s-1CP\s0 1252) by examining
+the first non-ASCII bytes and applying the heuristic described in
+perlpodspec.  (If the \s-1POD\s0 source contains only \s-1ASCII\s0 bytes, the
+encoding is assumed to be \s-1ASCII\s0.)
+.PP
+If you set the \f(CW\*(C`parse_characters\*(C'\fR option to a true value the parser will
+expect characters rather than octets; will ignore any \f(CW\*(C`=encoding\*(C'\fR; and will
+make no attempt to decode the input.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 Pod::Simple::Subclassing
@@ -361,8 +537,8 @@ pod\-people@perl.org mail list. Send an empty email to
 pod\-people\-subscribe@perl.org to subscribe.
 .PP
 This module is managed in an open GitHub repository,
-http://github.com/theory/pod\-simple/ <http://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone git://github.com/theory/pod\-simple.git <git://github.com/theory/pod-simple.git> and send patches!
+https://github.com/perl\-pod/pod\-simple/ <https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone git://github.com/perl\-pod/pod\-simple.git <git://github.com/perl-pod/pod-simple.git> and send patches!
 .PP
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug\-pod\-simple@rt.cpan.org>.
@@ -388,3 +564,9 @@ Allison Randal \f(CW\*(C`allison@perl.org\*(C'\fR
 Hans Dieter Pearcey \f(CW\*(C`hdp@cpan.org\*(C'\fR
 .IP "\(bu" 4
 David E. Wheeler \f(CW\*(C`dwheeler@cpan.org\*(C'\fR
+.PP
+Documentation has been contributed by:
+.IP "\(bu" 4
+Gabor Szabo \f(CW\*(C`szabgab@gmail.com\*(C'\fR
+.IP "\(bu" 4
+Shawn H Corey  \f(CW\*(C`SHCOREY at cpan.org\*(C'\fR

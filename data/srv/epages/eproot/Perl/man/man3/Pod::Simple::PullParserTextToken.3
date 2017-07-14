@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Pod::Simple::PullParserTextToken 3"
-.TH Pod::Simple::PullParserTextToken 3 "2011-01-09" "perl v5.12.3" "Perl Programmers Reference Guide"
+.TH Pod::Simple::PullParserTextToken 3 "2016-11-30" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -164,15 +164,21 @@ Or, if you want to alter the value, you can even do things like this:
 .Sp
 .Vb 1
 \&  for ( ${  $token\->text_r  } ) {  # Aliases it with $_ !!
-\&  
+\&
 \&    s/ The / the /g; # just for example
-\&    
+\&
 \&    if( \*(AqA\*(Aq eq chr(65) ) {  # (if in an ASCII world)
 \&      tr/\exA0/ /;
 \&      tr/\exAD//d;
 \&    }
-\&    
+\&
 \&    ...or however you want to alter the value...
+\&    (Note that starting with Perl v5.8, you can use, e.g.,
+\&
+\&        my $nbsp = chr utf8::unicode_to_native(0xA0);
+\&        s/$nbsp/ /g;
+\&
+\&    to handle the above regardless if it\*(Aqs an ASCII world or not)
 \&  }
 .Ve
 .PP
@@ -189,8 +195,8 @@ pod\-people@perl.org mail list. Send an empty email to
 pod\-people\-subscribe@perl.org to subscribe.
 .PP
 This module is managed in an open GitHub repository,
-http://github.com/theory/pod\-simple/ <http://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone git://github.com/theory/pod\-simple.git <git://github.com/theory/pod-simple.git> and send patches!
+https://github.com/perl\-pod/pod\-simple/ <https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone git://github.com/perl\-pod/pod\-simple.git <git://github.com/perl-pod/pod-simple.git> and send patches!
 .PP
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug\-pod\-simple@rt.cpan.org>.

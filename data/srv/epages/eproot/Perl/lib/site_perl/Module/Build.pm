@@ -1,14 +1,14 @@
 package Module::Build;
 
-use if $] >= 5.019, 'deprecate';
-
 # This module doesn't do much of anything itself, it inherits from the
 # modules that do the real work.  The only real thing it has to do is
 # figure out which OS-specific module to pull in.  Many of the
 # OS-specific modules don't do anything either - most of the work is
 # done in Module::Build::Base.
 
+use 5.006;
 use strict;
+use warnings;
 use File::Spec ();
 use File::Path ();
 use File::Basename ();
@@ -16,9 +16,8 @@ use Perl::OSType ();
 
 use Module::Build::Base;
 
-use vars qw($VERSION @ISA);
-@ISA = qw(Module::Build::Base);
-$VERSION = '0.4203';
+our @ISA = qw(Module::Build::Base);
+our $VERSION = '0.4224';
 $VERSION = eval $VERSION;
 
 # Inserts the given module into the @ISA hierarchy between

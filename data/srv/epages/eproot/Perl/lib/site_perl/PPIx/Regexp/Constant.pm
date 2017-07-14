@@ -3,7 +3,7 @@ package PPIx::Regexp::Constant;
 use strict;
 use warnings;
 
-our $VERSION = '0.020';
+our $VERSION = '0.051';
 
 use base qw{ Exporter };
 
@@ -11,21 +11,37 @@ our @EXPORT_OK = qw{
     COOKIE_CLASS
     COOKIE_QUANT
     COOKIE_QUOTE
+    COOKIE_REGEX_SET
+    LITERAL_LEFT_CURLY_ALLOWED
+    LITERAL_LEFT_CURLY_REMOVED_PHASE_1
+    LITERAL_LEFT_CURLY_REMOVED_PHASE_2
     MINIMUM_PERL
     MODIFIER_GROUP_MATCH_SEMANTICS
+    MSG_PROHIBITED_BY_STRICT
+    NODE_UNKNOWN
     RE_CAPTURE_NAME
     STRUCTURE_UNKNOWN
     TOKEN_LITERAL
     TOKEN_UNKNOWN
 };
 
-use constant COOKIE_CLASS	=> ']';
-use constant COOKIE_QUANT	=> '}';
-use constant COOKIE_QUOTE	=> '\\E';
+use constant COOKIE_CLASS       => ']';
+use constant COOKIE_QUANT       => '}';
+use constant COOKIE_QUOTE       => '\\E';
+use constant COOKIE_REGEX_SET   => '])';
 
-use constant MINIMUM_PERL	=> '5.000';
+use constant LITERAL_LEFT_CURLY_ALLOWED         => undef;
+use constant LITERAL_LEFT_CURLY_REMOVED_PHASE_1 => '5.025001';
+use constant LITERAL_LEFT_CURLY_REMOVED_PHASE_2 => undef;
+
+use constant MINIMUM_PERL       => '5.000';
 
 use constant MODIFIER_GROUP_MATCH_SEMANTICS => 'match_semantics';
+
+use constant MSG_PROHIBITED_BY_STRICT   =>
+    q<prohibited by "use re 'strict'">;
+
+use constant NODE_UNKNOWN       => 'PPIx::Regexp::Node::Unknown';
 
 # The perlre for Perl 5.010 says:
 #
@@ -36,10 +52,10 @@ use constant MODIFIER_GROUP_MATCH_SEMANTICS => 'match_semantics';
 
 use constant RE_CAPTURE_NAME => ' [_[:alpha:]] \w* ';
 
-use constant STRUCTURE_UNKNOWN	=> 'PPIx::Regexp::Structure::Unknown';
+use constant STRUCTURE_UNKNOWN  => 'PPIx::Regexp::Structure::Unknown';
 
-use constant TOKEN_LITERAL	=> 'PPIx::Regexp::Token::Literal';
-use constant TOKEN_UNKNOWN	=> 'PPIx::Regexp::Token::Unknown';
+use constant TOKEN_LITERAL      => 'PPIx::Regexp::Token::Literal';
+use constant TOKEN_UNKNOWN      => 'PPIx::Regexp::Token::Unknown';
 
 1;
 
@@ -101,10 +117,33 @@ This cookie is set in
 L<PPIx::Regexp::Token::Control|PPIx::Regexp::Token::Control> when a
 C<\Q> is encountered, and it persists until the next C<\E>.
 
+=head2 COOKIE_REGEX_SET
+
+The name of the cookie used to control regular expression sets.
+
+=head2 LITERAL_LEFT_CURLY_ALLOWED
+
+The Perl version at which allowed unescaped literal left curly brackets
+were removed. This may make more sense if I mention that its value is
+C<undef>.
+
+=head2 LITERAL_LEFT_CURLY_REMOVED_PHASE_1
+
+The Perl version at which the first phase of unescaped literal left
+curly bracket removal took place. The value of this constant is
+C<'5.025001'>.
+
+=head2 LITERAL_LEFT_CURLY_REMOVED_PHASE_2
+
+The Perl version at which the second phase of unescaped literal left
+curly bracket removal took place. The value of this constant is
+C<undef>, but it will be assigned a value when the timing of the second
+phase is known.
+
 =head2 MINIMUM_PERL
 
 The minimum version of Perl understood by this parser, as a float. It is
-currently set to 5.006, since that is the minimum version of Perl
+currently set to 5.000, since that is the minimum version of Perl
 accessible to the author.
 
 =head2 MODIFIER_GROUP_MATCH_SEMANTICS
@@ -113,6 +152,17 @@ The name of the
 L<PPIx::Regexp::Token::Modifier|PPIx::Regexp::Token::Modifier> group
 used to control match semantics.
 
+=head2 MSG_PROHIBITED_BY_STRICT
+
+An appropriate error message for an unknown entity created because
+C<'strict'> was in effect. This is rank ad-hocery, and more than usually
+subject to being changed, without any notice whatsoever. Caveat user.
+
+=head2 NODE_UNKNOWN
+
+The name of the class that represents an unknown node. That is,
+L<PPIx::Regexp::Node::Unknown|PPIx::Regexp::Node::Unknown>.
+
 =head2 RE_CAPTURE_NAME
 
 A string representation of a regular expression that matches the name of
@@ -120,7 +170,7 @@ a named capture buffer.
 
 =head2 STRUCTURE_UNKNOWN
 
-The name of the class that represents the unknown structure. That is,
+The name of the class that represents an unknown structure. That is,
 L<PPIx::Regexp::Structure::Unknown|PPIx::Regexp::Structure::Unknown>.
 
 =head2 TOKEN_LITERAL
@@ -144,7 +194,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2011 by Thomas R. Wyant, III
+Copyright (C) 2009-2017 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

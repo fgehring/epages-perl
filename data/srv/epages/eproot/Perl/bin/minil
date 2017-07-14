@@ -1,0 +1,7 @@
+#!/srv/epages/eproot/Perl/bin/perl
+use strict;
+use warnings;
+use Minilla::CLI;
+
+Minilla::CLI->new()->run(@ARGV);
+

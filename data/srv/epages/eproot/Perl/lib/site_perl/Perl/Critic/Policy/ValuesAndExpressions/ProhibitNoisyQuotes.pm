@@ -1,10 +1,3 @@
-##############################################################################
-#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/ValuesAndExpressions/ProhibitNoisyQuotes.pm $
-#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
-#   $Author: clonezone $
-# $Revision: 4078 $
-##############################################################################
-
 package Perl::Critic::Policy::ValuesAndExpressions::ProhibitNoisyQuotes;
 
 use 5.006001;
@@ -15,7 +8,7 @@ use Readonly;
 use Perl::Critic::Utils qw{ :severities };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.116';
+our $VERSION = '1.128';
 
 #-----------------------------------------------------------------------------
 
@@ -68,7 +61,7 @@ distribution.
 Don't use quotes for one or two-character strings of non-alphanumeric
 characters (i.e. noise).  These tend to be hard to read.  For
 legibility, use C<q{}> or a named value.  However, braces,
-parentheses, and brackets tend do to look better in quotes, so those
+parentheses and brackets tend to look better in quotes, so those
 are allowed.
 
     $str = join ',', @list;     #not ok

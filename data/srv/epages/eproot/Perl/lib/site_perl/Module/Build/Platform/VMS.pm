@@ -1,14 +1,13 @@
 package Module::Build::Platform::VMS;
 
 use strict;
-use vars qw($VERSION);
-$VERSION = '0.4203';
+use warnings;
+our $VERSION = '0.4224';
 $VERSION = eval $VERSION;
 use Module::Build::Base;
 use Config;
 
-use vars qw(@ISA);
-@ISA = qw(Module::Build::Base);
+our @ISA = qw(Module::Build::Base);
 
 
 
@@ -120,7 +119,7 @@ sub _prefixify {
     }
     else {
         my($path_vol, $path_dirs) = File::Spec->splitpath( $path );
-	my $vms_prefix = $self->config('vms_prefix');
+        my $vms_prefix = $self->config('vms_prefix');
         if( $path_vol eq $vms_prefix.':' ) {
             $self->log_verbose("  $vms_prefix: seen\n");
 
@@ -129,7 +128,7 @@ sub _prefixify {
         }
         else {
             $self->log_verbose("    cannot prefixify.\n");
-	    return $self->prefix_relpaths($self->installdirs, $type);
+            return $self->prefix_relpaths($self->installdirs, $type);
         }
     }
 
@@ -152,7 +151,7 @@ sub _quote_args {
   # elements of it and return the reference.
   my ($self, @args) = @_;
   my $got_arrayref = (scalar(@args) == 1
-                      && UNIVERSAL::isa($args[0], 'ARRAY'))
+                      && ref $args[0] eq 'ARRAY')
                    ? 1
                    : 0;
 
@@ -277,30 +276,6 @@ sub oneliner {
     $oneliner =~ s/^\"\S+\"//;
 
     return "MCR $^X $oneliner";
-}
-
-=item _infer_xs_spec
-
-Inherit the standard version but tweak the library file name to be
-something Dynaloader can find.
-
-=cut
-
-sub _infer_xs_spec {
-  my $self = shift;
-  my $file = shift;
-
-  my $spec = $self->SUPER::_infer_xs_spec($file);
-
-  # Need to create with the same name as DynaLoader will load with.
-  if (defined &DynaLoader::mod2fname) {
-    my $file = $$spec{module_name} . '.' . $self->{config}->get('dlext');
-    $file =~ tr/:/_/;
-    $file = DynaLoader::mod2fname([$file]);
-    $$spec{lib_file} = File::Spec->catfile($$spec{archdir}, $file);
-  }
-
-  return $spec;
 }
 
 =item rscan_dir
