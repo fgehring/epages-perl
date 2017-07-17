@@ -2,17 +2,18 @@ package Encode::Guess;
 use strict;
 use warnings;
 use Encode qw(:fallbacks find_encoding);
-our $VERSION = do { my @r = ( q$Revision: 2.3 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.7 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 my $Canon = 'Guess';
-sub DEBUG () { 0 }
+use constant DEBUG => !!$ENV{PERL_ENCODE_DEBUG};
 our %DEF_SUSPECTS = map { $_ => find_encoding($_) } qw(ascii utf8);
-$Encode::Encoding{$Canon} = bless {
+my $obj = bless {
     Name     => $Canon,
     Suspects => {%DEF_SUSPECTS},
 } => __PACKAGE__;
+Encode::define_encoding($obj, $Canon);
 
-use base qw(Encode::Encoding);
+use parent qw(Encode::Encoding);
 sub needs_lines { 1 }
 sub perlio_ok   { 0 }
 
@@ -53,7 +54,7 @@ sub decode($$;$) {
         require Carp;
         Carp::croak($guessed);
     }
-    my $utf8 = $guessed->decode( $octet, $chk );
+    my $utf8 = $guessed->decode( $octet, $chk || 0 );
     $_[1] = $octet if $chk;
     return $utf8;
 }
@@ -188,7 +189,7 @@ Encode::Guess -- Guesses encoding from data
 =head1 ABSTRACT
 
 Encode::Guess enables you to guess in what encoding a given data is
-encoded, or at least tries to.  
+encoded, or at least tries to.
 
 =head1 DESCRIPTION
 
@@ -214,7 +215,7 @@ will be limited to the suspects and C<ascii>.
 =item Encode::Guess->set_suspects
 
 You can also change the internal suspects list via C<set_suspects>
-method. 
+method.
 
   use Encode::Guess;
   Encode::Guess->set_suspects(qw/euc-jp shiftjis 7bit-jis/);
@@ -279,7 +280,7 @@ the internal suspects list.
   my $decoder = guess_encoding($data, qw/euc-jp euc-kr euc-cn/);
   die $decoder unless ref($decoder);
   my $utf8 = $decoder->decode($data);
-  # check only ascii and utf8
+  # check only ascii, utf8 and UTF-(16|32) with BOM
   my $decoder = guess_encoding($data);
 
 =back
@@ -324,7 +325,7 @@ On the other hand, mixing various national standard encodings
 automagically works unless $data is too short to allow for guessing.
 
  # This is ok if $data is long enough
- my $decoder =  
+ my $decoder =
   guess_encoding($data, qw/euc-cn
                            euc-jp shiftjis 7bit-jis
                            euc-kr
@@ -334,14 +335,14 @@ automagically works unless $data is too short to allow for guessing.
 
 DO NOT PUT TOO MANY SUSPECTS!  Don't you try something like this!
 
-  my $decoder = guess_encoding($data, 
+  my $decoder = guess_encoding($data,
                                Encode->encodings(":all"));
 
 =back
 
 It is, after all, just a guess.  You should alway be explicit when it
 comes to encodings.  But there are some, especially Japanese,
-environment that guess-coding is a must.  Use this module with care. 
+environment that guess-coding is a must.  Use this module with care.
 
 =head1 TO DO
 

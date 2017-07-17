@@ -1,3 +1,6 @@
+/srv/epages/eproot/Perl/lib/site_perl/Getopt/Long.pm
+/srv/epages/eproot/Perl/lib/site_perl/newgetopt.pl
+/srv/epages/eproot/Perl/man/man3/Getopt::Long.3
 lib/site_perl/Getopt/Long.pm
 lib/site_perl/newgetopt.pl
 man/man3/Getopt::Long.3
