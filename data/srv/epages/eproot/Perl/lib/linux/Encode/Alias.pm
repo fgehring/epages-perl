@@ -1,11 +1,12 @@
 package Encode::Alias;
 use strict;
 use warnings;
-no warnings 'redefine';
-our $VERSION = do { my @r = ( q$Revision: 2.12 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
-sub DEBUG () { 0 }
+our $VERSION = do { my @r = ( q$Revision: 2.22 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+use constant DEBUG => !!$ENV{PERL_ENCODE_DEBUG};
 
-use base qw(Exporter);
+use Encode ();
+
+use Exporter 'import';
 
 # Public, encouraged API is exported by default
 
@@ -19,7 +20,6 @@ our @Alias;    # ordered matching list
 our %Alias;    # cached known aliases
 
 sub find_alias {
-    require Encode;
     my $class = shift;
     my $find  = shift;
     unless ( exists $Alias{$find} ) {
@@ -79,8 +79,10 @@ sub find_alias {
 
 sub define_alias {
     while (@_) {
-        my ( $alias, $name ) = splice( @_, 0, 2 );
-        unshift( @Alias, $alias => $name );    # newer one has precedence
+        my $alias = shift;
+        my $name = shift;
+        unshift( @Alias, $alias => $name )    # newer one has precedence
+            if defined $alias;
         if ( ref($alias) ) {
 
             # clear %Alias cache to allow overrides
@@ -90,15 +92,19 @@ sub define_alias {
                     DEBUG and warn "delete \$Alias\{$k\}";
                     delete $Alias{$k};
                 }
-                elsif ( ref($alias) eq 'CODE' ) {
+                elsif ( ref($alias) eq 'CODE' && $alias->($k) ) {
                     DEBUG and warn "delete \$Alias\{$k\}";
-                    delete $Alias{ $alias->($name) };
+                    delete $Alias{$k};
                 }
             }
         }
-        else {
+        elsif (defined $alias) {
             DEBUG and warn "delete \$Alias\{$alias\}";
             delete $Alias{$alias};
+        }
+        elsif (DEBUG) {
+            require Carp;
+            Carp::croak("undef \$alias");
         }
     }
 }
@@ -128,7 +134,6 @@ sub undef_aliases {
 }
 
 sub init_aliases {
-    require Encode;
     undef_aliases();
 
     # Try all-lower-case version should all else fails
@@ -139,7 +144,7 @@ sub init_aliases {
     define_alias( qr/^UCS-?2-?LE$/i => '"UCS-2LE"' );
     define_alias(
         qr/^UCS-?2-?(BE)?$/i    => '"UCS-2BE"',
-        qr/^UCS-?4-?(BE|LE)?$/i => 'uc("UTF-32$1")',
+        qr/^UCS-?4-?(BE|LE|)?$/i => 'uc("UTF-32$1")',
         qr/^iso-10646-1$/i      => '"UCS-2BE"'
     );
     define_alias(
@@ -206,11 +211,12 @@ sub init_aliases {
     # Mac Mappings
     # predefined in *.ucm; unneeded
     # define_alias( qr/\bmacIcelandic$/i => '"macIceland"');
-    define_alias( qr/^mac_(.*)$/i => '"mac$1"' );
+    define_alias( qr/^(?:x[_-])?mac[_-](.*)$/i => '"mac$1"' );
     # http://rt.cpan.org/Ticket/Display.html?id=36326
     define_alias( qr/^macintosh$/i => '"MacRoman"' );
-
-    # Ououououou. gone.  They are differente!
+    # https://rt.cpan.org/Ticket/Display.html?id=78125
+    define_alias( qr/^macce$/i => '"MacCentralEurRoman"' );
+    # Ououououou. gone.  They are different!
     # define_alias( qr/\bmacRomanian$/i => '"macRumanian"');
 
     # Standardize on the dashed versions.
@@ -255,6 +261,10 @@ sub init_aliases {
         define_alias( qr/\bhk(?:scs)?[-_]?big5$/i => '"big5-hkscs"' );
     }
 
+    # https://github.com/dankogai/p5-encode/issues/37
+    define_alias(qr/cp65000/i => '"UTF-7"');
+    define_alias(qr/cp65001/i => '"utf-8-strict"');
+
     # utf8 is blessed :)
     define_alias( qr/\bUTF-8$/i => '"utf-8-strict"' );
 
@@ -286,15 +296,18 @@ Encode::Alias - alias definitions to encodings
 
   use Encode;
   use Encode::Alias;
-  define_alias( newName => ENCODING);
+  define_alias( "newName" => ENCODING);
+  define_alias( qr/.../ => ENCODING);
+  define_alias( sub { return ENCODING if ...; } );
 
 =head1 DESCRIPTION
 
 Allows newName to be used as an alias for ENCODING. ENCODING may be
-either the name of an encoding or an encoding object (as described 
+either the name of an encoding or an encoding object (as described
 in L<Encode>).
 
-Currently I<newName> can be specified in the following ways:
+Currently the first argument to define_alias() can be specified in the
+following ways:
 
 =over 4
 
@@ -321,7 +334,7 @@ experienced.  Use this feature with caution.
 
 The same effect as the example above in a different way.  The coderef
 takes the alias name as an argument and returns a canonical name on
-success or undef if not.  Note the second argument is not required.
+success or undef if not.  Note the second argument is ignored if provided.
 Use this with even more caution than the regex version.
 
 =back
@@ -332,9 +345,9 @@ As of Encode 1.87, the older form
 
   define_alias( sub { return  /^iso8859-(\d+)$/i ? "iso-8859-$1" : undef } );
 
-no longer works. 
+no longer works.
 
-Encode up to 1.86 internally used "local $_" to implement ths older
+Encode up to 1.86 internally used "local $_" to implement this older
 form.  But consider the code below;
 
   use Encode;
@@ -368,6 +381,10 @@ to do so.  And
   Encode::Alias->init_aliases;
 
 gets the factory settings back.
+
+Note that define_alias() will not be able to override the canonical name
+of encodings. Encodings are first looked up by canonical name before
+potential aliases are tried.
 
 =head1 SEE ALSO
 

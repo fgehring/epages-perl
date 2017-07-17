@@ -1,17 +1,17 @@
 #
-# $Id: Encoder.pm,v 2.1 2006/05/03 18:24:10 dankogai Exp $
+# $Id: Encoder.pm,v 2.3 2013/09/14 07:51:59 dankogai Exp $
 #
 package Encode::Encoder;
 use strict;
 use warnings;
-our $VERSION = do { my @r = ( q$Revision: 2.1 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.3 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw ( encoder );
 
 our $AUTOLOAD;
-sub DEBUG () { 0 }
+use constant DEBUG => !!$ENV{PERL_ENCODE_DEBUG};
 use Encode qw(encode decode find_encoding from_to);
 use Carp;
 
@@ -107,7 +107,7 @@ Encode::Encoder -- Object Oriented Encoder
 =head1 SYNOPSIS
 
   use Encode::Encoder;
-  # Encode::encode("ISO-8859-1", $data); 
+  # Encode::encode("ISO-8859-1", $data);
   Encode::Encoder->new($data)->iso_8859_1; # OOP way
   # shortcut
   use Encode::Encoder qw(encoder);
@@ -158,7 +158,7 @@ the instance I<encoding> is set accordingly.
 
 =item *
 
-You can retrieve the result via -E<gt>data but usually you don't have to 
+You can retrieve the result via -E<gt>data but usually you don't have to
 because the stringify operator ("") is overridden to do exactly that.
 
 =back
@@ -211,15 +211,15 @@ To make the Base64 transcoder example above really work, you could
 write a module like this:
 
   package Encode::Base64;
-  use base 'Encode::Encoding';
+  use parent 'Encode::Encoding';
   __PACKAGE__->Define('base64');
   use MIME::Base64;
-  sub encode{ 
-      my ($obj, $data) = @_; 
+  sub encode{
+      my ($obj, $data) = @_;
       return encode_base64($data);
   }
   sub decode{
-      my ($obj, $data) = @_; 
+      my ($obj, $data) = @_;
       return decode_base64($data);
   }
   1;

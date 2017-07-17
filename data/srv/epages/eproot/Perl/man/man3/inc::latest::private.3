@@ -123,23 +123,33 @@
 .rm #[ #] #H #V #F C
 .\" ========================================================================
 .\"
-.IX Title "JSON::PP::Boolean 3"
-.TH JSON::PP::Boolean 3 "2017-05-29" "perl v5.12.3" "User Contributed Perl Documentation"
+.IX Title "inc::latest::private 3"
+.TH inc::latest::private 3 "2014-12-06" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-JSON::PP::Boolean \- dummy module providing JSON::PP::Boolean
-.SH "SYNOPSIS"
-.IX Header "SYNOPSIS"
-.Vb 1
-\& # do not "use" yourself
-.Ve
+inc::latest::private \- private implementation for inc::latest
+.SH "VERSION"
+.IX Header "VERSION"
+version 0.500
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-This module exists only to provide overload resolution for Storable and similar modules. See
-\&\s-1JSON::PP\s0 for more info about this class.
-.SH "AUTHOR"
-.IX Header "AUTHOR"
-This idea is from JSON::XS::Boolean written by Marc Lehmann <schmorp[at]schmorp.de>
+This module has the private methods used to find and load bundled modules.
+It should not be used directly.
+.SH "AUTHORS"
+.IX Header "AUTHORS"
+.IP "\(bu" 4
+David Golden <dagolden@cpan.org>
+.IP "\(bu" 4
+Eric Wilhelm <ewilhelm@cpan.org>
+.SH "COPYRIGHT AND LICENSE"
+.IX Header "COPYRIGHT AND LICENSE"
+This software is Copyright (c) 2009 by David Golden.
+.PP
+This is free software, licensed under:
+.PP
+.Vb 1
+\&  The Apache License, Version 2.0, January 2004
+.Ve

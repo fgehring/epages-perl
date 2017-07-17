@@ -1,3 +1,9 @@
+/srv/epages/eproot/Perl/bin/json_pp
+/srv/epages/eproot/Perl/lib/site_perl/JSON/PP.pm
+/srv/epages/eproot/Perl/lib/site_perl/JSON/PP/Boolean.pm
+/srv/epages/eproot/Perl/man/man1/json_pp.1
+/srv/epages/eproot/Perl/man/man3/JSON::PP.3
+/srv/epages/eproot/Perl/man/man3/JSON::PP::Boolean.3
 bin/json_pp
 lib/site_perl/JSON/PP.pm
 lib/site_perl/JSON/PP/Boolean.pm
