@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::PolicySummary 3"
-.TH Perl::Critic::PolicySummary 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::PolicySummary 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -172,9 +172,6 @@ Write \f(CW\*(C`eval { $foo\->can($name) }\*(C'\fR instead of \f(CW\*(C`UNIVERSA
 .SS "BuiltinFunctions::ProhibitUniversalIsa"
 .IX Subsection "BuiltinFunctions::ProhibitUniversalIsa"
 Write \f(CW\*(C`eval { $foo\->isa($pkg) }\*(C'\fR instead of \f(CW\*(C`UNIVERSAL::isa($foo, $pkg)\*(C'\fR. [Default severity 3]
-.SS "BuiltinFunctions::ProhibitUselessTopic"
-.IX Subsection "BuiltinFunctions::ProhibitUselessTopic"
-Don't pass \f(CW$_\fR to built-in functions that assume it, or to most filetest operators. [Default severity 2]
 .SS "BuiltinFunctions::ProhibitVoidGrep"
 .IX Subsection "BuiltinFunctions::ProhibitVoidGrep"
 Don't use \f(CW\*(C`grep\*(C'\fR in void contexts. [Default severity 3]
@@ -183,10 +180,10 @@ Don't use \f(CW\*(C`grep\*(C'\fR in void contexts. [Default severity 3]
 Don't use \f(CW\*(C`map\*(C'\fR in void contexts. [Default severity 3]
 .SS "BuiltinFunctions::RequireBlockGrep"
 .IX Subsection "BuiltinFunctions::RequireBlockGrep"
-Write \f(CW\*(C`grep { /$pattern/ } @list\*(C'\fR instead of \f(CW\*(C`grep /$pattern/, @list\*(C'\fR. [Default severity 4]
+Write \f(CW\*(C`grep { $_ =~ /$pattern/ } @list\*(C'\fR instead of \f(CW\*(C`grep /$pattern/, @list\*(C'\fR. [Default severity 4]
 .SS "BuiltinFunctions::RequireBlockMap"
 .IX Subsection "BuiltinFunctions::RequireBlockMap"
-Write \f(CW\*(C`map { /$pattern/ } @list\*(C'\fR instead of \f(CW\*(C`map /$pattern/, @list\*(C'\fR. [Default severity 4]
+Write \f(CW\*(C`map { $_ =~ /$pattern/ } @list\*(C'\fR instead of \f(CW\*(C`map /$pattern/, @list\*(C'\fR. [Default severity 4]
 .SS "BuiltinFunctions::RequireGlobFunction"
 .IX Subsection "BuiltinFunctions::RequireGlobFunction"
 Use \f(CW\*(C`glob q{*}\*(C'\fR instead of <*>. [Default severity 5]
@@ -253,9 +250,6 @@ Don't write code after an unconditional \f(CW\*(C`die, exit, or next\*(C'\fR. [D
 .SS "ControlStructures::ProhibitUntilBlocks"
 .IX Subsection "ControlStructures::ProhibitUntilBlocks"
 Write \f(CW\*(C`while(! $condition)\*(C'\fR instead of \f(CW\*(C`until($condition)\*(C'\fR. [Default severity 2]
-.SS "ControlStructures::ProhibitYadaOperator"
-.IX Subsection "ControlStructures::ProhibitYadaOperator"
-Never use \f(CW\*(C`...\*(C'\fR in production code. [Default severity 4]
 .SS "Documentation::PodSpelling"
 .IX Subsection "Documentation::PodSpelling"
 Check your spelling. [Default severity 1]
@@ -291,7 +285,7 @@ Use \*(L"<>\*(R" or \*(L"<\s-1ARGV\s0>\*(R" or a prompting module instead of \*(
 Use \fIprompt()\fR instead of \-t. [Default severity 5]
 .SS "InputOutput::ProhibitJoinedReadline"
 .IX Subsection "InputOutput::ProhibitJoinedReadline"
-Use \f(CW\*(C`local $/ = undef\*(C'\fR or Path::Tiny instead of joined readline. [Default severity 3]
+Use \f(CW\*(C`local $/ = undef\*(C'\fR or File::Slurp instead of joined readline. [Default severity 3]
 .SS "InputOutput::ProhibitOneArgSelect"
 .IX Subsection "InputOutput::ProhibitOneArgSelect"
 Never write \f(CW\*(C`select($fh)\*(C'\fR. [Default severity 4]
@@ -318,7 +312,7 @@ Write \f(CW\*(C`my $error = open $fh, $mode, $filename;\*(C'\fR instead of \f(CW
 Return value of flagged function ignored. [Default severity 1]
 .SS "InputOutput::RequireEncodingWithUTF8Layer"
 .IX Subsection "InputOutput::RequireEncodingWithUTF8Layer"
-Write \f(CW\*(C`open $fh, q{<:encoding(UTF\-8)}, $filename;\*(C'\fR instead of \f(CW\*(C`open $fh, q{<:utf8}, $filename;\*(C'\fR. [Default severity 5]
+Write \f(CW\*(C`open $fh, q{<:encoding(UTF\-8)}, $filename;\*(C'\fR instead of \f(CW\*(C`open $fh, q{{<:utf8}, $filename;\*(C'\fR. [Default severity 5]
 .SS "Miscellanea::ProhibitFormats"
 .IX Subsection "Miscellanea::ProhibitFormats"
 Do not use \f(CW\*(C`format\*(C'\fR. [Default severity 3]
@@ -331,6 +325,9 @@ Forbid a bare \f(CW\*(C`## no critic\*(C'\fR [Default severity 3]
 .SS "Miscellanea::ProhibitUselessNoCritic"
 .IX Subsection "Miscellanea::ProhibitUselessNoCritic"
 Remove ineffective \*(L"## no critic\*(R" annotations. [Default severity 2]
+.SS "Miscellanea::RequireRcsKeywords"
+.IX Subsection "Miscellanea::RequireRcsKeywords"
+Put source-control keywords in every file. [Default severity 2]
 .SS "Modules::ProhibitAutomaticExportation"
 .IX Subsection "Modules::ProhibitAutomaticExportation"
 Export symbols via \f(CW@EXPORT_OK\fR or \f(CW%EXPORT_TAGS\fR instead of \f(CW@EXPORT\fR. [Default severity 4]
@@ -400,9 +397,6 @@ Only use a capturing group if you plan to use the captured value. [Default sever
 .SS "RegularExpressions::ProhibitUnusualDelimiters"
 .IX Subsection "RegularExpressions::ProhibitUnusualDelimiters"
 Use only \f(CW\*(C`//\*(C'\fR or \f(CW\*(C`{}\*(C'\fR to delimit regexps. [Default severity 1]
-.SS "RegularExpressions::ProhibitUselessTopic"
-.IX Subsection "RegularExpressions::ProhibitUselessTopic"
-Don't use \f(CW$_\fR to match against regexes. [Default severity 2]
 .SS "RegularExpressions::RequireBracesForMultiline"
 .IX Subsection "RegularExpressions::RequireBracesForMultiline"
 Use \f(CW\*(C`{\*(C'\fR and \f(CW\*(C`}\*(C'\fR to delimit multi-line regexps. [Default severity 1]
@@ -532,9 +526,6 @@ Write \f(CW\*(C` print <<\*(AqTHE_END\*(Aq \*(C'\fR or \f(CW\*(C` print <<"THE_E
 .SS "ValuesAndExpressions::RequireUpperCaseHeredocTerminator"
 .IX Subsection "ValuesAndExpressions::RequireUpperCaseHeredocTerminator"
 Write \f(CW\*(C` <<\*(AqTHE_END\*(Aq; \*(C'\fR instead of \f(CW\*(C` <<\*(AqtheEnd\*(Aq; \*(C'\fR. [Default severity 2]
-.SS "Variables::ProhibitAugmentedAssignmentInDeclaration"
-.IX Subsection "Variables::ProhibitAugmentedAssignmentInDeclaration"
-Do not write \f(CW\*(C` my $foo .= \*(Aqbar\*(Aq; \*(C'\fR. [Default severity 4]
 .SS "Variables::ProhibitConditionalDeclarations"
 .IX Subsection "Variables::ProhibitConditionalDeclarations"
 Do not write \f(CW\*(C` my $foo = $bar if $baz; \*(C'\fR. [Default severity 5]
@@ -579,7 +570,7 @@ Magic variables should be assigned as \*(L"local\*(R". [Default severity 4]
 Negative array index should be used. [Default severity 4]
 .SH "VERSION"
 .IX Header "VERSION"
-This is part of Perl::Critic version 1.126.
+This is part of Perl::Critic version 1.116.
 .SH "AUTHOR"
 .IX Header "AUTHOR"
 Jeffrey Ryan Thalhammer <jeff@imaginative\-software.com>

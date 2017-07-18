@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/TestingAndDebugging/RequireUseStrict.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::TestingAndDebugging::RequireUseStrict;
 
 use 5.006001;
@@ -9,10 +16,9 @@ use Readonly;
 use Scalar::Util qw{ blessed };
 
 use Perl::Critic::Utils qw{ :severities $EMPTY };
-use Perl::Critic::Utils::Constants qw{ :equivalent_modules };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -31,13 +37,14 @@ sub supported_parameters {
                 q<The additional modules to treat as equivalent to "strict".>,
             default_string  => $EMPTY,
             behavior        => 'string list',
-            list_always_present_values => ['strict', @STRICT_EQUIVALENT_MODULES],
+            list_always_present_values =>
+                [ qw< strict Moose Moose::Role Moose::Util::TypeConstraints > ],
         },
     );
 }
 
 sub default_severity     { return $SEVERITY_HIGHEST   }
-sub default_themes       { return qw( core pbp bugs certrule certrec ) }
+sub default_themes       { return qw( core pbp bugs ) }
 sub applies_to           { return 'PPI::Document'     }
 
 sub default_maximum_violations_per_document { return 1; }
@@ -169,7 +176,7 @@ to 1.
 
 =head1 CONFIGURATION
 
-If you make use of things like
+If you take make use of things like
 L<Moose::Exporter|Moose::Exporter>, you can create your own modules
 that import the L<strict|strict> pragma into the code that is
 C<use>ing them.  There is an option to add to the default set of

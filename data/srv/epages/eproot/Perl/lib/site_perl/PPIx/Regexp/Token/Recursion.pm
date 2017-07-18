@@ -36,33 +36,10 @@ use base qw{ PPIx::Regexp::Token::Reference };
 use Carp qw{ confess };
 use PPIx::Regexp::Constant qw{ RE_CAPTURE_NAME };
 
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
 # Return true if the token can be quantified, and false otherwise
 # sub can_be_quantified { return };
-
-sub explain {
-    my ( $self ) = @_;
-    $self->is_named()
-        and return sprintf q<Recurse into capture group '%s'>,
-            $self->name();
-    if ( $self->is_relative() ) {
-        my $number = $self->number();
-        $number >= 0
-            and return sprintf
-                q<Recurse into %s following capture group (%d in this regexp)>,
-                PPIx::Regexp::Util::__to_ordinal_en( $self->number() ),
-                $self->absolute();
-        return sprintf
-            q<Back reference to %s previous capture group (%d in this regexp)>,
-            PPIx::Regexp::Util::__to_ordinal_en( - $self->number() ),
-            $self->absolute();
-    } elsif ( my $number = $self->absolute() ) {
-        return sprintf q<Recurse into capture group %d>, $number;
-    } else {
-        return q<Recurse to beginning of regular expression>;
-    }
-}
 
 sub perl_version_introduced {
     return '5.009005';
@@ -99,7 +76,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

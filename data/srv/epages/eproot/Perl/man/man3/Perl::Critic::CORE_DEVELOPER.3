@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::CORE_DEVELOPER 3"
-.TH Perl::Critic::CORE_DEVELOPER 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::CORE_DEVELOPER 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -155,15 +155,73 @@ the source and rummage around in it.
 in \*(L"\s-1EXTENDING\s0 \s-1THE\s0 \s-1CRITIC\s0\*(R" in Perl::Critic. The \fIcommits\fR mailing list
 is another good one.
 .PP
-** If you are working on a GitHub issue, you should update the ticket to
+** You will need to be registered as a developer before you can
+actually change code. <http://perlcritic.tigris.org/> only lets you
+register as an observer. I got promoted on registration, but if that
+doesn't happen, a note to the developers' mailing list might help.
+.PP
+** If you are working on an \s-1RT\s0 ticket, you should update the ticket to
 say that you are, to keep other people from duplicating your effort.
 .PP
-* I personally would update GitHub at the point I was reasonably confident
-I could hack it, just to prevent myself from having to update GitHub
+* I personally would update \s-1RT\s0 at the point I was reasonably confident
+I could hack it, just to prevent myself from having to update \s-1RT\s0
 again in a week or so saying \*(L"oops, bit off more than I could chew.\*(R"
 But that's me talking.
 .PP
-* Development requires using Module::Build rather than
+* Subversion (also known as svn, which is the command name) is a
+version control system. It provides a repository for the code being
+worked on. Developers check out the code into a local directory,
+work on that, and and then commit changes back to the repository.
+Any previous version of the code is available from the repository \-
+a bad change can be backed out, though the longer the bad change
+hangs around the harder it may be to deal with.
+.PP
+* Install Subversion if you don't already have it. You can get it from
+<http://subversion.tigris.org/>. The current version is Subversion
+1.6, but as of mid\-2009, the 1.4.4 client seems to be adequate. The
+O'Reilly book, \*(L"Version Control with Subversion\*(R", is available online
+at http://svnbook.red\-bean.com/ <http://svnbook.red-bean.com/>. The English version of the 1.4
+documentation may be still available at
+http://svnbook.red\-bean.com/en/1.4/index.html <http://svnbook.red-bean.com/en/1.4/index.html>.
+.PP
+* Branching is essentially pulling off your own managed copy of the
+code to develop on. It is creating a \*(L"sandbox\*(R", if you will. You can
+commit changes back to the repository without affecting the main
+line of development (the \*(L"trunk\*(R"). The entire branch can be
+abandoned without affecting the trunk. The down side of branches is
+that it is a bit of a pain to merge them back into the trunk.
+.PP
+Consult the developers' mailing list on whether you should branch or
+work directly against the trunk.
+.PP
+** The Perl Critic subversion repository on Tigris contains a bunch of
+stuff other than Perl::Critic. You probably do not need it all. But if
+you execute the 'svn checkout' command given on Tigris you get it all.
+This is not recommended.
+.PP
+* Here is my \*(L"branch and checkout\*(R" cookbook:
+.PP
+.Vb 2
+\&    Name the branch after the ticket you are working on (e.g. rt25046).
+\&    Issue the following commands (we assume \*(Aq$ \*(Aq is your system prompt):
+\&
+\&    $ svn copy
+\&        http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl\-Critic
+\&        http://perlcritic.tigris.org/svn/perlcritic/branches/rt25046
+\&        \-m "Put your comment here" \-\-username your_username
+\&
+\&    $ svn checkout http://perlcritic.tigris.org/svn/perlcritic/branches/rt25046
+\&        \-\-username your_username
+.Ve
+.PP
+The 'svn copy' command is the one that does the branch. Each 'svn'
+command is one line, though sometimes (e.g. the 'branch') it's a huge
+one. The \f(CW\*(C`svn\*(C'\fR commands above have been wrapped. A checkout from the
+trunk is also done with the \f(CW\*(C`svn checkout\*(C'\fR command, but specifying
+the trunk's \s-1URL\s0. You can also specify, as a second argument to
+\&\f(CW\*(C`svn checkout\*(C'\fR, the directory you want the code to go into.
+.PP
+** Development requires using Module::Build rather than
 ExtUtils::MakeMaker.  In other words,
 .PP
 .Vb 3
@@ -172,7 +230,7 @@ ExtUtils::MakeMaker.  In other words,
 \&    $ ./Build test
 .Ve
 .PP
-* You need to run the suite of author tests by running
+** You need to run the suite of author tests by running
 .PP
 .Vb 1
 \&    $ ./Build authortest
@@ -239,7 +297,7 @@ following discussion.
 .SS "Implementation"
 .IX Subsection "Implementation"
 There are several files that must be modified to get your new
-configuration item and/or command line option.
+configuation item and/or command line option.
 .PP
 \fI\fIlib/Perl/Critic/Utils/Constants.pm\fI\fR
 .IX Subsection "lib/Perl/Critic/Utils/Constants.pm"
@@ -345,7 +403,7 @@ but the accessor for a multi-valued item must return a list:
 \&    }
 .Ve
 .PP
-Last, you must document the item itself.
+Last, you must document the item iteself.
 .PP
 \fI\fIlib/Perl/Critic/ProfilePrototype.pm\fI\fR
 .IX Subsection "lib/Perl/Critic/ProfilePrototype.pm"

@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/RegularExpressions/RequireLineBoundaryMatching.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::RegularExpressions::RequireLineBoundaryMatching;
 
 use 5.006001;
@@ -9,7 +16,7 @@ use Perl::Critic::Utils qw{ :severities };
 
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -28,13 +35,12 @@ sub applies_to           { return qw(PPI::Token::Regexp::Match
 #-----------------------------------------------------------------------------
 
 sub violates {
-    my ( $self, $elem, $doc ) = @_;
+    my ( $self, $elem, undef ) = @_;
 
-    my $re = $doc->ppix_regexp_from_element( $elem )
-        or return;
-    $re->modifier_asserted( 'm' )
-        or return $self->violation( $DESC, $EXPL, $elem );
-
+    my %mods = $elem->get_modifiers();
+    if ( ! $mods{m} ) {
+        return $self->violation( $DESC, $EXPL, $elem );
+    }
     return; #ok!;
 }
 

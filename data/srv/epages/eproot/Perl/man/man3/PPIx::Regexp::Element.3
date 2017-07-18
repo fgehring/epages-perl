@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPIx::Regexp::Element 3"
-.TH PPIx::Regexp::Element 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPIx::Regexp::Element 3 "2011-04-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -180,32 +180,6 @@ This method returns the content of the element.
 This method returns true if the object is a descendant of the argument,
 and false otherwise. By the definition of this method, \f(CW$self\fR is its
 own descendant.
-.SS "explain"
-.IX Subsection "explain"
-This method returns a brief explanation of what the element does. The
-return will be either a string or \f(CW\*(C`undef\*(C'\fR in scalar context, but may be
-multiple values or an empty array in list context.
-.PP
-This method should be considered experimental. What it returns may
-change without notice as my understanding of what all the pieces/parts
-of a Perl regular expression evolves. The worst case is that it will
-prove entirely infeasible to implement satisfactorily, in which case it
-will be put through a deprecation cycle and retracted.
-.SS "error"
-.IX Subsection "error"
-.Vb 1
-\& say $token\->error();
-.Ve
-.PP
-If an element is one of the classes that represents a parse error, this
-method \fBmay\fR return a brief message saying why. Otherwise it will
-return \f(CW\*(C`undef\*(C'\fR.
-.SS "in_regex_set"
-.IX Subsection "in_regex_set"
-This method returns a true value if the invocant is contained in an
-extended bracketed character class (also known as a regex set), and a
-false value otherwise. This method returns true if the invocant is a
-PPIx::Regexp::Structure::RegexSet.
 .SS "is_quantifier"
 .IX Subsection "is_quantifier"
 .Vb 2
@@ -217,33 +191,6 @@ This method returns true if the element is a quantifier. You can not
 tell this from the element's class, because a right curly bracket may
 represent a quantifier for the purposes of figuring out whether a
 greediness token is possible.
-.SS "main_structure"
-.IX Subsection "main_structure"
-This method returns the
-PPIx::Regexp::Structure::Main that
-contains the element. In practice this will be a
-PPIx::Regexp::Structure::Regexp or a
-PPIx::Regexp::Structure::Replacement,
-.PP
-If the element is not contained in any such structure, \f(CW\*(C`undef\*(C'\fR is
-returned. This will happen if the element is a
-PPIx::Regexp or one of its immediate children.
-.SS "modifier_asserted"
-.IX Subsection "modifier_asserted"
-.Vb 2
-\& $token\->modifier_asserted( \*(Aqi\*(Aq )
-\&     and print "Matched without regard to case.\en";
-.Ve
-.PP
-This method returns true if the given modifier is in effect for the
-element, and false otherwise.
-.PP
-What it does is to walk backwards from the element until it finds a
-modifier object that specifies the modifier, whether asserted or
-negated. and returns the specified value. If nobody specifies the
-modifier, it returns \f(CW\*(C`undef\*(C'\fR.
-.PP
-This method will not work reliably if called on tokenizer output.
 .SS "next_sibling"
 .IX Subsection "next_sibling"
 This method returns the element's next sibling, or nothing if there is
@@ -298,9 +245,6 @@ This method returns all tokens contained in the element.
 .SS "top"
 .IX Subsection "top"
 This method returns the top of the hierarchy.
-.SS "unescaped_content"
-.IX Subsection "unescaped_content"
-This method returns the content of the element, unescaped.
 .SS "whitespace"
 .IX Subsection "whitespace"
 This method returns true if the element is whitespace and false
@@ -332,7 +276,7 @@ Support is by the author. Please file bug reports at
 Thomas R. Wyant, \s-1III\s0 \fIwyant at cpan dot org\fR
 .SH "COPYRIGHT AND LICENSE"
 .IX Header "COPYRIGHT AND LICENSE"
-Copyright (C) 2009\-2017 by Thomas R. Wyant, \s-1III\s0
+Copyright (C) 2009\-2011 by Thomas R. Wyant, \s-1III\s0
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

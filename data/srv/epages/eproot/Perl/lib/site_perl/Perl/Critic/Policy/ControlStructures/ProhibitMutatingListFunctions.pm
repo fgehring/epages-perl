@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/ControlStructures/ProhibitMutatingListFunctions.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::ControlStructures::ProhibitMutatingListFunctions;
 
 use 5.006001;
@@ -13,7 +20,7 @@ use Perl::Critic::Utils qw{
 
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -40,7 +47,7 @@ sub _is_topic {
     my $elem = shift;
     return defined $elem
         && $elem->isa('PPI::Token::Magic')
-            && $elem->content() eq q{$_}; ##no critic (InterpolationOfMetachars)
+            && $elem eq q{$_}; ##no critic (InterpolationOfMetachars)
 }
 
 
@@ -69,7 +76,7 @@ sub supported_parameters {
 }
 
 sub default_severity { return $SEVERITY_HIGHEST  }
-sub default_themes   { return qw(core bugs pbp certrule )  }
+sub default_themes   { return qw(core bugs pbp)  }
 sub applies_to       { return 'PPI::Token::Word' }
 
 #-----------------------------------------------------------------------------
@@ -96,7 +103,7 @@ sub violates {
     # Only the block form of list functions can be analyzed.
     return if not my $first_arg = first_arg( $elem );
     return if not $first_arg->isa('PPI::Structure::Block');
-    return if not $self->_has_topic_side_effect( $first_arg, $doc );
+    return if not _has_topic_side_effect( $first_arg );
 
     # Must be a violation
     return $self->violation( $DESC, $EXPL, $elem );
@@ -105,7 +112,7 @@ sub violates {
 #-----------------------------------------------------------------------------
 
 sub _has_topic_side_effect {
-    my ( $self, $node, $doc ) = @_;
+    my $node = shift;
 
     # Search through all significant elements in the block,
     # testing each element to see if it mutates the topic.
@@ -113,7 +120,7 @@ sub _has_topic_side_effect {
     for my $elem ( @{ $tokens } ) {
         next if not $elem->significant();
         return 1 if _is_assignment_to_topic( $elem );
-        return 1 if $self->_is_topic_mutating_regex( $elem, $doc );
+        return 1 if _is_topic_mutating_regex( $elem );
         return 1 if _is_topic_mutating_func( $elem );
         return 1 if _is_topic_mutating_substr( $elem );
     }
@@ -142,7 +149,7 @@ sub _is_assignment_to_topic {
 #-----------------------------------------------------------------------------
 
 sub _is_topic_mutating_regex {
-    my ( $self, $elem, $doc ) = @_;
+    my $elem = shift;
     return if ! ( $elem->isa('PPI::Token::Regexp::Substitute')
                   || $elem->isa('PPI::Token::Regexp::Transliterate') );
 
@@ -150,18 +157,13 @@ sub _is_topic_mutating_regex {
     # string is empty AND neither the /d or /s flags are specified, OR the
     # replacement string equals the match string AND neither the /c or /s
     # flags are specified. RT 44515.
-    #
-    # NOTE that, at least as of 5.14.2, tr/// does _not_ participate in the
-    # 'use re /modifiers' mechanism. And a good thing, too, since the
-    # modifiers that _are_ common (/s and /d) mean something completely
-    # different in tr///.
     if ( $elem->isa( 'PPI::Token::Regexp::Transliterate') ) {
         my $subs = $elem->get_substitute_string();
-        my %mods = $elem->get_modifiers();
-        $mods{r} and return;    # Introduced in Perl 5.13.7
         if ( $EMPTY eq $subs ) {
+            my %mods = $elem->get_modifiers();
             $mods{d} or $mods{s} or return;
         } elsif ( $elem->get_match_string() eq $subs ) {
+            my %mods = $elem->get_modifiers();
             $mods{c} or $mods{s} or return;
         }
     }
@@ -172,10 +174,8 @@ sub _is_topic_mutating_regex {
     # is no version check.
 
     if ( $elem->isa( 'PPI::Token::Regexp::Substitute' ) ) {
-        my $re = $doc->ppix_regexp_from_element( $elem )
-            or return;
-        $re->modifier_asserted( 'r' )
-            and return;
+        my %mods = $elem->get_modifiers();
+        $mods{r} and return;
     }
 
     # If the previous sibling does not exist, then
@@ -199,7 +199,7 @@ sub _is_topic_mutating_func {
     my $elem = shift;
     return if not $elem->isa('PPI::Token::Word');
     my @mutator_funcs = qw(chop chomp undef);
-    return if not any { $elem->content() eq $_ } @mutator_funcs;
+    return if not any { $elem eq $_ } @mutator_funcs;
     return if not is_function_call( $elem );
 
     # If these functions have no argument,
@@ -207,7 +207,7 @@ sub _is_topic_mutating_func {
     my $first_arg = first_arg( $elem );
     if (not defined $first_arg) {
         # undef does not default to $_, unlike the others
-        return if $elem->content() eq 'undef';
+        return if $elem eq 'undef';
         return 1;
     }
     return _is_topic( $first_arg );
@@ -219,7 +219,7 @@ Readonly::Scalar my $MUTATING_SUBSTR_ARG_COUNT => 4;
 
 sub _is_topic_mutating_substr {
     my $elem = shift;
-    return if $elem->content() ne 'substr';
+    return if $elem ne 'substr';
     return if not is_function_call( $elem );
 
     # check and see if the first arg is $_
@@ -232,9 +232,7 @@ sub _is_topic_mutating_substr {
 {
     ##no critic(ArgUnpacking)
 
-    my %assignment_ops = hashify qw(
-        = *= /= += -= %= **= x= .= &= |= ^=  &&= ||= <<= >>= //= ++ --
-    );
+    my %assignment_ops = hashify qw( = *= /= += -= %= **= x= .= &= |= ^=  &&= ||= ++ -- );
     sub _is_assignment_operator { return exists $assignment_ops{$_[0]} }
 
     my %increment_ops = hashify qw( ++ -- );

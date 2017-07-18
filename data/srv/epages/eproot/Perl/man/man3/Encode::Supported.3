@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Encode::Supported 3"
-.TH Encode::Supported 3 "2016-03-11" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Encode::Supported 3 "2011-01-03" "perl v5.12.3" "Perl Programmers Reference Guide"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -212,7 +212,7 @@ To find how (UCS\-2|UTF\-(16|32))(LE|BE)? differ from one another,
 see Encode::Unicode.
 .PP
 \&\s-1UTF\-7\s0 is a special encoding which \*(L"re-encodes\*(R" \s-1UTF\-16BE\s0 into a 7\-bit
-encoding.  It is implemented separately by Encode::Unicode::UTF7.
+encoding.  It is implemented seperately by Encode::Unicode::UTF7.
 .SS "Encode::Byte \*(-- Extended \s-1ASCII\s0"
 .IX Subsection "Encode::Byte  Extended ASCII"
 Encode::Byte implements most single-byte encodings except for
@@ -472,7 +472,7 @@ Unicode character should belong).
 .IX Item "ISO-2022-CN [RFC1922]"
 Not very popular.  Needs \s-1CNS\s0 11643\-1 and \-2 which are not available in
 this module.  \s-1CNS\s0 11643 is supported (via euc-tw) in Encode::HanExtra.
-Audrey Tang may add support for this encoding in her module in future.
+Autrijus Tang may add support for this encoding in his module in future.
 .IP "Various HP-UX encodings" 2
 .IX Item "Various HP-UX encodings"
 The following are unsupported due to the lack of mapping data.
@@ -521,7 +521,7 @@ at <http://www.unicode.org/Public/MAPPINGS/VENDORS/APPLE/> .
 .IP "(Mac) Indic encodings" 2
 .IX Item "(Mac) Indic encodings"
 The maps for the following are available at <http://www.unicode.org/>
-but remain unsupported because those encodings need an algorithmical
+but remain unsupport because those encodings need algorithmical
 approach, currently unsupported by \fIenc2xs\fR:
 .Sp
 .Vb 3
@@ -673,7 +673,7 @@ you're doing and unless you really benefit from using \f(CW\*(C`UTF\-16\*(C'\fR.
 \&  ISO\-IR\-165    [RFC1345]
 \&  VISCII
 \&  GB 12345
-\&  GB 18030 (**)  (see links below)
+\&  GB 18030 (**)  (see links bellow)
 \&  EUC\-TW   (**)
 .Ve
 .PP

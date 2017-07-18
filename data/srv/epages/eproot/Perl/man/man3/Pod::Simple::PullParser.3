@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Pod::Simple::PullParser 3"
-.TH Pod::Simple::PullParser 3 "2016-11-30" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Pod::Simple::PullParser 3 "2011-01-09" "perl v5.12.3" "Perl Programmers Reference Guide"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -170,7 +170,7 @@ And elsewhere:
 \& package SomePodProcessor;
 \& use strict;
 \& use base qw(Pod::Simple::PullParser);
-\&
+\& 
 \& sub run {
 \&   my $self = shift;
 \&  Token:
@@ -263,7 +263,7 @@ For example, suppose you have a document that starts out:
 .Sp
 .Vb 1
 \&  =head1 NAME
-\&
+\&  
 \&  Hoo::Boy::Wowza \-\- Stuff B<wow> yeah!
 .Ve
 .Sp
@@ -272,7 +272,7 @@ Stuff wow yeah!\*(R". If the document starts with:
 .Sp
 .Vb 1
 \&  =head1 Name
-\&
+\&  
 \&  Hoo::Boy::W00t \-\- Stuff B<w00t> yeah!
 .Ve
 .Sp
@@ -294,7 +294,7 @@ For example, suppose you have a document that starts out:
 .Sp
 .Vb 1
 \&  =head1 NAME
-\&
+\&  
 \&  Hoo::Boy::Wowza \-\- Stuff B<wow> yeah!
 .Ve
 .Sp
@@ -305,7 +305,7 @@ But if the document starts out:
 .Sp
 .Vb 1
 \&  =head1 NAME
-\&
+\&  
 \&  Hooboy, stuff B<wow> yeah!
 .Ve
 .Sp
@@ -314,7 +314,7 @@ stuff wow yeah!\*(R". If the document starts with:
 .Sp
 .Vb 1
 \&  =head1 Name
-\&
+\&  
 \&  Hoo::Boy::W00t \-\- Stuff B<w00t> yeah!
 .Ve
 .Sp
@@ -332,7 +332,7 @@ If the title can't be found, then get_short_title returns empty-string
 This works like get_title except that it returns the contents of the
 \&\*(L"=head1 AUTHOR\en\enParagraph...\en\*(R" section, assuming that that section
 isn't terribly long. To recognize a \*(L"=head1 Author\en\enParagraph\en\*(R"
-section, pass the \f(CW\*(C`nocase\*(C'\fR option:
+section, pass the \f(CW\*(C`nocase\*(C'\fR otpion:
 .Sp
 .Vb 1
 \&  $parser\->get_author(nocase => 1);
@@ -345,7 +345,7 @@ section, pass the \f(CW\*(C`nocase\*(C'\fR option:
 This works like get_title except that it returns the contents of the
 \&\*(L"=head1 DESCRIPTION\en\enParagraph...\en\*(R" section, assuming that that section
 isn't terribly long. To recognize a \*(L"=head1 Description\en\enParagraph\en\*(R"
-section, pass the \f(CW\*(C`nocase\*(C'\fR option:
+section, pass the \f(CW\*(C`nocase\*(C'\fR otpion:
 .Sp
 .Vb 1
 \&  $parser\->get_description(nocase => 1);
@@ -356,7 +356,7 @@ section, pass the \f(CW\*(C`nocase\*(C'\fR option:
 This works like get_title except that it returns the contents of
 the \*(L"=head1 VERSION\en\en[\s-1BIG\s0 \s-1BLOCK\s0]\en\*(R" block.  Note that this does \s-1NOT\s0
 return the module's \f(CW$VERSION\fR!! To recognize a
-\&\*(L"=head1 Version\en\en[\s-1BIG\s0 \s-1BLOCK\s0]\en\*(R" section, pass the \f(CW\*(C`nocase\*(C'\fR option:
+\&\*(L"=head1 Version\en\en[\s-1BIG\s0 \s-1BLOCK\s0]\en\*(R" section, pass the \f(CW\*(C`nocase\*(C'\fR otpion:
 .Sp
 .Vb 1
 \&  $parser\->get_version(nocase => 1);
@@ -388,8 +388,8 @@ pod\-people@perl.org mail list. Send an empty email to
 pod\-people\-subscribe@perl.org to subscribe.
 .PP
 This module is managed in an open GitHub repository,
-https://github.com/perl\-pod/pod\-simple/ <https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone git://github.com/perl\-pod/pod\-simple.git <git://github.com/perl-pod/pod-simple.git> and send patches!
+http://github.com/theory/pod\-simple/ <http://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
+to clone git://github.com/theory/pod\-simple.git <git://github.com/theory/pod-simple.git> and send patches!
 .PP
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug\-pod\-simple@rt.cpan.org>.

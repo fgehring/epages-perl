@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPI::Statement::Sub 3"
-.TH PPI::Statement::Sub 3 "2017-05-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPI::Statement::Sub 3 "2011-02-26" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -164,9 +164,7 @@ If it has one, the \f(CW\*(C`prototype\*(C'\fR method returns the subroutine's p
 It is returned in the same format as \*(L"prototype\*(R" in PPI::Token::Prototype,
 cleaned and removed from its brackets.
 .PP
-Returns the subroutine's prototype, or undef if the subroutine does not
-define one. Note that when the sub has an empty prototype (\f(CW\*(C`()\*(C'\fR) the
-return is an empty string.
+Returns false if the subroutine does not define a prototype
 .SS "block"
 .IX Subsection "block"
 With its name and implementation shared with PPI::Statement::Scheduled,
@@ -193,6 +191,9 @@ Note that in the case of \s-1BEGIN\s0, \s-1CHECK\s0, \s-1UNITCHECK\s0, \s-1INIT\
 defined as PPI::Statement::Scheduled objects, not subroutines.
 .PP
 Returns true if it is a special reserved subroutine, or false if not.
+.SH "TO DO"
+.IX Header "TO DO"
+\&\- Write unit tests for this package
 .SH "SUPPORT"
 .IX Header "SUPPORT"
 See the support section in the main module.

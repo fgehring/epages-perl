@@ -1,4 +1,4 @@
-# Copyright 2011-2017, Paul Johnson (paul@pjcj.net)
+# Copyright 2011, Paul Johnson (pjcj@cpan.org)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,24 +10,26 @@ package Devel::Cover::DB::IO;
 use strict;
 use warnings;
 
-our $VERSION = '1.25'; # VERSION
+our $VERSION = "0.79";
 
 my $Format;
 
-BEGIN {
-    $Format = "Sereal"   if eval "use Sereal::Decoder; use Sereal::Encoder; 1";
-    $Format = "JSON"     if !$Format and eval { require JSON::MaybeXS; 1 };
-    $Format = "Storable" if !$Format and eval "use Storable; 1";
-    die "Can't load either JSON or Storable" unless $Format;
+BEGIN
+{
+    $Format = "Storable" if eval "use Storable; 1";
+    # warn "Storable available\n" if $INC{"Storable.pm"};
+    $Format = "JSON"     if eval "use JSON::PP; 1";
+    # warn "JSON::PP available\n" if $INC{"JSON/PP.pm"};
+    die "Can't load either JSON::PP or Storable" unless $Format;
 }
 
-sub new {
+sub new
+{
     my $class = shift;
 
     my $format = $ENV{DEVEL_COVER_DB_FORMAT} || $Format;
-    ($format) = $format =~ /(.*)/;  # die tainting
     die "Devel::Cover: Unrecognised DB format: $format"
-        unless $format =~ /^(?:Storable|JSON|Sereal)$/;
+        unless $format =~ /^(?:Storable|JSON)$/;
 
     $class .= "::$format";
     eval "use $class; 1" or die "Devel::Cover: $@";
@@ -42,10 +44,6 @@ __END__
 =head1 NAME
 
 Devel::Cover::DB::IO - IO routines for Devel::Cover::DB
-
-=head1 VERSION
-
-version 1.25
 
 =head1 SYNOPSIS
 
@@ -69,13 +67,13 @@ This module provides IO routines for Devel::Cover::DB.
 
  my $io = Devel::Cover::DB::IO->new(format => "JSON");
 
-Constructs the IO object.
+Contructs the IO object.
 
 =head2 read
 
  my $data = $io->read($file);
 
-Returns a perl data structure representing the data read from $file.
+Returns a perl data structure representingthe data read from $file.
 
 =head2 write
 
@@ -87,9 +85,13 @@ Writes $data to $file in the format specified when creating $io.
 
 Huh?
 
+=head1 VERSION
+
+Version 0.79 - 5th August 2011
+
 =head1 LICENCE
 
-Copyright 2011-2017, Paul Johnson (paul@pjcj.net)
+Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

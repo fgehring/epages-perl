@@ -35,17 +35,13 @@ use warnings;
 
 use 5.006;
 
-use Carp;
 use List::MoreUtils qw{ firstidx };
 use PPIx::Regexp::Util qw{ __instance };
 use Scalar::Util qw{ refaddr weaken };
 
-use PPIx::Regexp::Constant qw{
-    LITERAL_LEFT_CURLY_REMOVED_PHASE_1
-    MINIMUM_PERL TOKEN_UNKNOWN
-};
+use PPIx::Regexp::Constant qw{ MINIMUM_PERL };
 
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
 =head2 ancestor_of
 
@@ -124,86 +120,6 @@ sub descendant_of {
     return $node->ancestor_of( $self );
 }
 
-=head2 explain
-
-This method returns a brief explanation of what the element does. The
-return will be either a string or C<undef> in scalar context, but may be
-multiple values or an empty array in list context.
-
-This method should be considered experimental. What it returns may
-change without notice as my understanding of what all the pieces/parts
-of a Perl regular expression evolves. The worst case is that it will
-prove entirely infeasible to implement satisfactorily, in which case it
-will be put through a deprecation cycle and retracted.
-
-=cut
-
-sub explain {
-    my ( $self ) = @_;
-    my $explanation = $self->__explanation();
-    my $content = $self->content();
-    if ( my $main = $self->main_structure() ) {
-        my $delim = $main->delimiters();
-        $delim = qr{ \\ (?= [\Q$delim\E] ) }smx;
-        $content =~ s/$delim//smxg;
-    }
-    if ( defined( my $splain = $explanation->{$content} ) ) {
-        return $splain;
-    }
-    return $self->__no_explanation();
-}
-
-# Return explanation hash
-sub __explanation {
-    $PPIx::Regexp::NO_EXPLANATION_FATAL
-        and confess 'Neither explain() nor __explanation() overridden';
-    return {};
-}
-
-# Called if no explanation available
-sub __no_explanation {
-##  my ( $self ) = @_;          # Invocant unused
-    my $msg = sprintf q<No explanation>;
-    $PPIx::Regexp::NO_EXPLANATION_FATAL
-        and confess $msg;
-    return $msg;
-}
-
-=head2 error
-
- say $token->error();
-
-If an element is one of the classes that represents a parse error, this
-method B<may> return a brief message saying why. Otherwise it will
-return C<undef>.
-
-=cut
-
-sub error {
-    my ( $self ) = @_;
-    return $self->{error};
-}
-
-=head2 in_regex_set
-
-This method returns a true value if the invocant is contained in an
-extended bracketed character class (also known as a regex set), and a
-false value otherwise. This method returns true if the invocant is a
-L<PPIx::Regexp::Structure::RegexSet|PPIx::Regexp::Structure::RegexSet>.
-
-=cut
-
-sub in_regex_set {
-    my ( $self ) = @_;
-    my $ele = $self;
-    while ( 1 ) {
-        $ele->isa( 'PPIx::Regexp::Structure::RegexSet' )
-            and return 1;
-        $ele = $ele->parent()
-            or last;
-    }
-    return 0;
-}
 
 =head2 is_quantifier
 
@@ -218,69 +134,6 @@ greediness token is possible.
 =cut
 
 sub is_quantifier { return; }
-
-=head2 main_structure
-
-This method returns the
-L<PPIx::Regexp::Structure::Main|PPIx::Regexp::Structure::Main> that
-contains the element. In practice this will be a
-L<PPIx::Regexp::Structure::Regexp|PPIx::Regexp::Structure::Regexp> or a
-L<PPIx::Regexp::Structure::Replacement|PPIx::Regexp::Structure::Replacement>,
-
-If the element is not contained in any such structure, C<undef> is
-returned. This will happen if the element is a
-L<PPIx::Regexp|PPIx::Regexp> or one of its immediate children.
-
-=cut
-
-sub main_structure {
-    my ( $self ) = @_;
-    while ( $self = $self->parent()
-            and not $self->isa( 'PPIx::Regexp::Structure::Main' ) ) {
-    }
-    return $self;
-}
-
-=head2 modifier_asserted
-
- $token->modifier_asserted( 'i' )
-     and print "Matched without regard to case.\n";
-
-This method returns true if the given modifier is in effect for the
-element, and false otherwise.
-
-What it does is to walk backwards from the element until it finds a
-modifier object that specifies the modifier, whether asserted or
-negated. and returns the specified value. If nobody specifies the
-modifier, it returns C<undef>.
-
-This method will not work reliably if called on tokenizer output.
-
-=cut
-
-sub modifier_asserted {
-    my ( $self, $modifier ) = @_;
-
-    defined $modifier
-        or croak 'Modifier must be defined';
-
-    my $elem = $self;
-
-    while ( $elem ) {
-        if ( $elem->can( '__ducktype_modifier_asserted' ) ) {
-            my $val;
-            defined( $val = $elem->__ducktype_modifier_asserted( $modifier ) )
-                and return $val;
-        }
-        if ( my $prev = $elem->sprevious_sibling() ) {
-            $elem = $prev;
-        } else {
-            $elem = $elem->parent();
-        }
-    }
-
-    return;
-}
 
 =head2 next_sibling
 
@@ -430,16 +283,6 @@ sub top {
     return $kid;
 }
 
-=head2 unescaped_content
-
-This method returns the content of the element, unescaped.
-
-=cut
-
-sub unescaped_content {
-    return;
-}
-
 =head2 whitespace
 
 This method returns true if the element is whitespace and false
@@ -478,7 +321,7 @@ sub nav {
     # this to return the (possibly) PPI object that initiated us.
     my $parent = $self->_parent() or return;
 
-    return ( $parent->nav(), $parent->__nav( $self ) );
+    return ( $parent->nav(), $parent->_nav( $self ) );
 }
 
 # Find our location and index among the parent's children. If not found,
@@ -522,47 +365,16 @@ sub nav {
         return $parent{$addr};
     }
 
-    sub __parent_keys {
+    sub _parent_keys {
         return scalar keys %parent;
     }
 
 }
 
-# Bless into TOKEN_UNKNOWN, record error message, return 1.
-sub __error {
-    my ( $self, $msg ) = @_;
-    defined $msg
-        or $msg = 'Was ' . ref $self;
-    $self->{error} = $msg;
-    bless $self, TOKEN_UNKNOWN;
-    return 1;
-}
-
-# This huge kluge is required by
-# https://rt.perl.org/Ticket/Display.html?id=128213 which means the
-# deprecation will be done in at least two separate phases. It exists
-# for the use of PPIx::Regexp::Token::Literal->perl_version_removed, and
-# MUST NOT be called by any other code.
-sub __following_literal_left_curly_disallowed_in {
-    return LITERAL_LEFT_CURLY_REMOVED_PHASE_1;
-}
-
 # Called by the lexer to record the capture number.
 sub __PPIX_LEXER__record_capture_number {
-    my ( undef, $number ) = @_;         # Invocant unused
+    my ( $self, $number ) = @_;
     return $number;
-}
-
-# Called by the lexer to rebless
-sub __PPIX_ELEM__rebless {
-    my ( $class, $self ) = @_;          # %arg unused
-    $self ||= {};
-    bless $self, $class;
-    delete $self->{error};
-    defined $self->{error}
-        and return 1;
-    delete $self->{error};
-    return 0;
 }
 
 sub DESTROY {
@@ -585,7 +397,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

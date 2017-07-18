@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Encode::GSM0338 3"
-.TH Encode::GSM0338 3 "2017-06-10" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Encode::GSM0338 3 "2011-01-03" "perl v5.12.3" "Perl Programmers Reference Guide"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -150,7 +150,7 @@ unusual specifications, Encode 2.20 has relocated the support to
 this module.
 .SH "NOTES"
 .IX Header "NOTES"
-Unlike most other encodings,  the following always croaks on error
+Unlike most other encodings,  the following aways croaks on error
 for any \f(CW$chk\fR that evaluates to true.
 .PP
 .Vb 2
@@ -161,12 +161,13 @@ for any \f(CW$chk\fR that evaluates to true.
 So if you want to check the validity of the encoding, surround the
 expression with \f(CW\*(C`eval {}\*(C'\fR block as follows;
 .PP
-.Vb 5
+.Vb 6
 \&  eval {
 \&    $utf8    = decode("gsm0338", $gsm0338,  $chk);
-\&  } or do {
-\&    # handle exception here
 \&  };
+\&  if ($@){
+\&    # handle exception here
+\&  }
 .Ve
 .SH "BUGS"
 .IX Header "BUGS"

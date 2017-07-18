@@ -22,8 +22,8 @@ object of this class.
 
 =head1 METHODS
 
-This class provides the following public methods beyond those provided
-by its superclass.
+This class provides no public methods beyond those provided by its
+superclass.
 
 =cut
 
@@ -34,26 +34,10 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Token::Code };
 
-use Carp qw{ confess };
 use PPI::Document;
-use PPIx::Regexp::Constant qw{
-    COOKIE_CLASS COOKIE_REGEX_SET TOKEN_LITERAL MINIMUM_PERL
-};
+use PPIx::Regexp::Constant qw{ COOKIE_CLASS TOKEN_LITERAL MINIMUM_PERL };
 
-our $VERSION = '0.051';
-
-use constant VERSION_WHEN_IN_REGEX_SET => '5.017009';
-
-sub __new {
-    my ( $class, $content, %arg ) = @_;
-
-    defined $arg{perl_version_introduced}
-        or $arg{perl_version_introduced} = MINIMUM_PERL;
-
-    my $self = $class->SUPER::__new( $content, %arg );
-
-    return $self;
-}
+our $VERSION = '0.020';
 
 # Return true if the token can be quantified, and false otherwise
 # This can be quantified because it might interpolate a quantifiable
@@ -62,13 +46,12 @@ sub __new {
 
 # We overrode this in PPIx::Regexp::Token::Code, since (?{...}) did not
 # appear until Perl 5.5. But interpolation has been there since the
-# beginning, so we have to override again. This turns out to be OK,
-# though, because while Regex Sets were introduced in 5.17.8,
-# interpolation inside them was not introduced until 5.17.9.
+# beginning, so we have to override again. Sigh.
 sub perl_version_introduced {
-    my ( $self ) = @_;
-    return $self->{perl_version_introduced};
+#   my ( $self ) = @_;
+    return MINIMUM_PERL;
 }
+
 
 =head2 ppi
 
@@ -80,8 +63,8 @@ not be the same as the content of the original
 C<PPIx::Regexp::Token::Interpolation>. This can happen because
 interpolated variable names may be enclosed in curly brackets, but this
 does not happen in normal code. For example, in C</${foo}bar/>, the
-content of the C<PPIx::Regexp::Token::Interpolation> object will be
-C<'${foo}'>, but the content of the C<PPI::Document> will be C<'$foo'>.
+content of the C<PPIx> object will be C<'${foo}'>, but the content of
+the C<PPI::Document> will be C<'$foo'>.
 
 =cut
 
@@ -103,7 +86,7 @@ sub ppi {
 # Match the beginning of an interpolation.
 
 my $interp_re =
-        qr{ \A (?= [\@\$]? \$ [-\w&`'+^./\\";%=~:?!\@\$<>\[\]\{\},#] |
+        qr{ \A (?: [\@\$]? \$ [-\w&`'+^./\\";%=~:?!\@\$<>\[\]\{\},#] |
                    \@ [\w\{] )
         }smx;
 
@@ -126,7 +109,7 @@ my %allow_subscript_based_on_cast_symbol = (
 );
 
 sub _interpolation {
-    my ( $class, $tokenizer, undef, $in_regexp ) = @_;  # $character unused
+    my ( $class, $tokenizer, $character, $in_regexp ) = @_;
 
     # If the regexp does not interpolate, bail now.
     $tokenizer->interpolates() or return;
@@ -136,8 +119,8 @@ sub _interpolation {
         return $len;
     }
 
-    # Make sure we start off plausibly
-    defined $tokenizer->find_regexp( $interp_re )
+    # Make sure we start off plausably
+    $tokenizer->find_regexp( $interp_re )
         or return;
 
     # See if PPI can figure out what we have
@@ -175,6 +158,21 @@ sub _interpolation {
             ) or return;
             push @accum, $next;
         } elsif ( $next->isa( 'PPI::Structure::Block' ) ) {
+
+=begin comment
+
+            local $_ = $next->content();
+            if ( m< \A { / } >smx ) {
+                push @accum, 3; # Number of characters to accept.
+            } else {
+##              $allow_subscript = $accum[-1]->content() ne '$#';
+                push @accum, $next;
+            }
+
+=end comment
+
+=cut
+
             push @accum, $next;
         } else {
             return;
@@ -204,13 +202,6 @@ sub _interpolation {
             $next->content() eq '->' or last;
             push @subscr, $next;
             $next = $next->next_sibling() or last;
-
-            # postderef was introduced in 5.19.5, per perl5195delta.
-            if ( my $deref = $tokenizer->__recognize_postderef(
-                    __PACKAGE__, $next ) ) {
-                push @accum, @subscr, $deref;
-                last;
-            }
         }
 
         # Accept only a subscript
@@ -240,16 +231,6 @@ sub _interpolation {
         $length += ref $_ ? length $_->content() : $_;
     }
     return $length;
-}
-
-{
-    no warnings qw{ qw };       ## no critic (ProhibitNoWarnings)
-
-    my %accept = map { $_ => 1 } qw{ $ $# @ };
-
-    sub __postderef_accept_cast {
-        return \%accept;
-    }
 }
 
 {
@@ -283,9 +264,8 @@ sub _interpolation {
 
 # Return true if we think a curly-bracketed subscript is really a
 # subscript, rather than a quantifier.
-# Called as $class->$handler( ... ) above
-sub _curly {    ## no critic (ProhibitUnusedPrivateSubroutines)
-    my ( undef, @kids ) = @_;           # Invocant unused
+sub _curly {
+    my ( $class, @kids ) = @_;
 
     # If the first child is a word, and either it is an only child or
     # the next child is the fat comma operator, we accept it as a
@@ -297,17 +277,11 @@ sub _curly {    ## no critic (ProhibitUnusedPrivateSubroutines)
             and return 1;
     }
 
-    # If the first child is a symbol,
-    if ( @kids && $kids[0]->isa( 'PPI::Token::Symbol' ) ) {
-        # Accept it if it is the only child
-        @kids == 1
-            and return 1;
-        # Accept it if there are exactly two children and the second is
-        # a subscript.
-        @kids == 2
-            and $kids[1]->isa( 'PPI::Structure::Subscript' )
-            and return 1;
-    }
+    # If we have exactly one child which is a symbol, we accept it as a
+    # subscript.
+    @kids == 1
+        and $kids[0]->isa( 'PPI::Token::Symbol' )
+        and return 1;
 
     # We reject anything else.
     return;
@@ -315,9 +289,8 @@ sub _curly {    ## no critic (ProhibitUnusedPrivateSubroutines)
 
 # Return true if we think a square-bracketed subscript is really a
 # subscript, rather than a character class.
-# Called as $class->$handler( ... ) above
-sub _square {   ## no critic (ProhibitUnusedPrivateSubroutines)
-    my ( undef, @kids ) = @_;           # Invocant unused
+sub _square {
+    my ( $class, @kids ) = @_;
 
     # We expect to have either a number or a symbol as the first
     # element.
@@ -340,7 +313,7 @@ sub __PPIX_TOKENIZER__regexp {
 
     exists $sigil_alternate{$character} or return;
 
-    if ( my $accept = $class->_interpolation( $tokenizer, $character, 1 ) ) {
+    if ( my $accept = _interpolation( $class, $tokenizer, $character, 1 ) ) {
         return $accept;
     }
 
@@ -355,7 +328,7 @@ sub __PPIX_TOKENIZER__repl {
 
     exists $sigil_alternate{$character} or return;
 
-    if ( my $accept = $class->_interpolation( $tokenizer, $character, 0 ) ) {
+    if ( my $accept = _interpolation( $class, $tokenizer, $character, 0 ) ) {
         return $accept;
     }
 
@@ -442,7 +415,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

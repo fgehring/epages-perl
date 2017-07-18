@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Policy::RegularExpressions::ProhibitEnumeratedClasses 3"
-.TH Perl::Critic::Policy::RegularExpressions::ProhibitEnumeratedClasses 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Policy::RegularExpressions::ProhibitEnumeratedClasses 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -152,7 +152,7 @@ Specifically, the patterns are:
 .PP
 \&\fB\f(CB\*(C`[\et\er\en\e ]\*(C'\fB\fR vs. \fB\f(CB\*(C`\es\*(C'\fB\fR   (because many people forget \f(CW\*(C`\ef\*(C'\fR)
 .PP
-\&\fB\f(CB\*(C`[A\-Za\-z0\-9_]\*(C'\fB\fR vs. \fB\f(CB\*(C`\ew\*(C'\fB\fR
+\&\fB\f(CB\*(C`[A\-Za\-z_]\*(C'\fB\fR vs. \fB\f(CB\*(C`\ew\*(C'\fB\fR
 .PP
 \&\fB\f(CB\*(C`[A\-Za\-z]\*(C'\fB\fR vs. \fB\f(CB\*(C`\ep{IsAlphabetic}\*(C'\fB\fR
 .PP

@@ -4,7 +4,7 @@ package PPI::Statement::Given;
 
 =head1 NAME
 
-PPI::Statement::Given - A given-when statement
+PPI::Statement::Given - Describes all compound statements
 
 =head1 SYNOPSIS
 
@@ -29,6 +29,8 @@ described in L<perlsyn>.
 C<PPI::Statement::Given> has no methods beyond those provided by the
 standard L<PPI::Structure>, L<PPI::Node> and L<PPI::Element> methods.
 
+Got any ideas for methods? Submit a report to rt.cpan.org!
+
 =cut
 
 use strict;
@@ -36,12 +38,12 @@ use PPI::Statement ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-        $VERSION = '1.224';
+        $VERSION = '1.215';
         @ISA     = 'PPI::Statement';
 }
 
 # Lexer clues
-sub __LEXER__normal() { '' }
+sub __LEXER__normal { '' }
 
 sub _complete {
         my $child = $_[0]->schild(-1);
@@ -61,7 +63,7 @@ sub _complete {
 #####################################################################
 # PPI::Node Methods
 
-sub scope() { 1 }
+sub scope () { 1 }
 
 1;
 

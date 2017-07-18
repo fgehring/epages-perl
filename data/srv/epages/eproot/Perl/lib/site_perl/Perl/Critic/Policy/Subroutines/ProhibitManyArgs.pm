@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/Subroutines/ProhibitManyArgs.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::Subroutines::ProhibitManyArgs;
 
 use 5.006001;
@@ -14,7 +21,7 @@ use Carp;
 use Perl::Critic::Utils qw{ :booleans :severities split_nodes_on_comma };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -55,7 +62,7 @@ sub violates {
     if ($elem->prototype) {
         my $prototype = $elem->prototype();
         $prototype =~ s/ \\ [[] .*? []] /*/smxg;    # Allow for grouping
-        $num_args = $prototype =~ tr/$@%&*_+/$@%&*_+/;    # RT 56627
+        $num_args = $prototype =~ tr/$@%&*_/$@%&*_/;    # RT 56627
     } else {
        $num_args = _count_args($elem->block->schildren);
     }
@@ -78,7 +85,7 @@ sub _count_args {
     my $statement = shift @statements;
     my @elements = $statement->schildren();
     my $operand = pop @elements;
-    while ($operand && $operand->isa('PPI::Token::Structure') && q{;} eq $operand->content()) {
+    while ($operand && $operand->isa('PPI::Token::Structure') && q{;} eq $operand) {
        $operand = pop @elements;
     }
     return 0 if !$operand;
@@ -87,11 +94,11 @@ sub _count_args {
     my $operator = pop @elements;
     return 0 if !$operator;
     return 0 if !$operator->isa('PPI::Token::Operator');
-    return 0 if q{=} ne $operator->content();
+    return 0 if q{=} ne $operator;
 
-    if ($operand->isa('PPI::Token::Magic') && $AT_ARG eq $operand->content()) {
+    if ($operand->isa('PPI::Token::Magic') && $AT_ARG eq $operand) {
        return _count_list_elements(@elements);
-    } elsif ($operand->isa('PPI::Token::Word') && 'shift' eq $operand->content()) {
+    } elsif ($operand->isa('PPI::Token::Word') && 'shift' eq $operand) {
        return 1 + _count_args(@statements);
     }
 

@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/TestUtils.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::TestUtils;
 
 use 5.006001;
@@ -7,7 +14,7 @@ use warnings;
 use English qw(-no_match_vars);
 use Readonly;
 
-use Exporter 'import';
+use base 'Exporter';
 
 use File::Path ();
 use File::Spec ();
@@ -22,7 +29,7 @@ use Perl::Critic::Exception::Fatal::Internal qw{ &throw_internal };
 use Perl::Critic::Utils qw{ :severities :data_conversion policy_long_name };
 use Perl::Critic::PolicyFactory (-test => 1);
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 Readonly::Array our @EXPORT_OK => qw(
     pcritique pcritique_with_violations
@@ -35,17 +42,6 @@ Readonly::Array our @EXPORT_OK => qw(
     bundled_policy_names
     names_of_policies_willing_to_work
 );
-
-sub assert_version {
-    my $expected_version = shift;
-
-    if ( $expected_version ne $Perl::Critic::VERSION ) {
-        require Carp;
-        Carp::confess( "Expected Perl::Critic $expected_version but it is actually $Perl::Critic::VERSION" );
-    }
-
-    return;
-}
 
 #-----------------------------------------------------------------------------
 # If the user already has an existing perlcriticrc file, it will get
@@ -146,7 +142,7 @@ sub subtests_in_tree {
     find(
         {
             wanted => sub {
-                return if not -f;
+                return if not -f $_;
 
                 my ($fileroot) = m{(.+)[.]run\z}xms;
 
@@ -359,7 +355,7 @@ sub bundled_policy_names {
     require ExtUtils::Manifest;
     my $manifest = ExtUtils::Manifest::maniread();
     my @policy_paths = map {m{\A lib/(Perl/Critic/Policy/.*).pm \z}xms} keys %{$manifest};
-    my @policies = map { join q{::}, split m{/}xms } @policy_paths;
+    my @policies = map { join q{::}, split m{/}xms, $_} @policy_paths;
     my @sorted_policies = sort @policies;
     return @sorted_policies;
 }
@@ -372,7 +368,7 @@ sub names_of_policies_willing_to_work {
             ->new( %configuration )
             ->policies();
 
-    return map { ref } @policies_willing_to_work;
+    return map { ref $_ } @policies_willing_to_work;
 }
 
 1;
@@ -431,11 +427,6 @@ Perl::Critic for more examples of how to use these subroutines.
 =head1 EXPORTS
 
 =over
-
-=item assert_version( $version )
-
-Asserts that the C<$version> passed matches the version of Perl::Critic.
-
 
 =item block_perlcriticrc()
 

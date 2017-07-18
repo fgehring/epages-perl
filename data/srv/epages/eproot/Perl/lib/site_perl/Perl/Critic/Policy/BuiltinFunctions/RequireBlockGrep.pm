@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/BuiltinFunctions/RequireBlockGrep.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::BuiltinFunctions::RequireBlockGrep;
 
 # DEVELOPER NOTE: this module is used as an example in DEVELOPER.pod.
@@ -12,7 +19,7 @@ use Readonly;
 use Perl::Critic::Utils qw{ :severities :classification :ppi };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -31,7 +38,7 @@ sub applies_to           { return 'PPI::Token::Word'  }
 sub violates {
     my ( $self, $elem, undef ) = @_;
 
-    return if $elem->content() ne 'grep';
+    return if $elem ne 'grep';
     return if ! is_function_call($elem);
 
     my $arg = first_arg($elem);
@@ -51,12 +58,13 @@ __END__
 
 =head1 NAME
 
-Perl::Critic::Policy::BuiltinFunctions::RequireBlockGrep - Write C<grep { /$pattern/ } @list> instead of C<grep /$pattern/, @list>.
+Perl::Critic::Policy::BuiltinFunctions::RequireBlockGrep - Write C<grep { $_ =~ /$pattern/ } @list> instead of C<grep /$pattern/, @list>.
 
 =head1 AFFILIATION
 
 This Policy is part of the core L<Perl::Critic|Perl::Critic>
 distribution.
+
 
 =head1 DESCRIPTION
 
@@ -69,9 +77,12 @@ read.  Use the block forms instead.
     @mapped = map  transform($_),    @list;      #not ok
     @mapped = map { transform($_) }  @list;      #ok
 
+
+
 =head1 CONFIGURATION
 
 This Policy is not configurable except for the standard options.
+
 
 =head1 SEE ALSO
 
@@ -85,7 +96,7 @@ Jeffrey Ryan Thalhammer <jeff@imaginative-software.com>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2005-2013 Imaginative Software Systems.  All rights reserved.
+Copyright (c) 2005-2011 Imaginative Software Systems.  All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.  The full text of this license

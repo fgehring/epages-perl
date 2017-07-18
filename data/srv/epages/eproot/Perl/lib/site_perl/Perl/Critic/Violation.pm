@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Violation.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Violation;
 
 use 5.006001;
@@ -22,15 +29,15 @@ use Perl::Critic::Utils::POD qw<
 >;
 use Perl::Critic::Exception::Fatal::Internal qw< throw_internal >;
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 
-Readonly::Scalar my $NO_EXCEPTION_NO_SPLIT_LIMIT        => -1;
 Readonly::Scalar my $LOCATION_LINE_NUMBER               => 0;
 Readonly::Scalar my $LOCATION_COLUMN_NUMBER             => 1;
 Readonly::Scalar my $LOCATION_VISUAL_COLUMN_NUMBER      => 2;
 Readonly::Scalar my $LOCATION_LOGICAL_LINE_NUMBER       => 3;
 Readonly::Scalar my $LOCATION_LOGICAL_FILENAME          => 4;
+
 
 # Class variables...
 my $format = "%m at line %l, column %c. %e.\n"; # Default stringy format
@@ -77,7 +84,7 @@ sub new {
 
     my $top = $elem->top();
     $self->{_filename} = $top->can('filename') ? $top->filename() : undef;
-    $self->{_source}   = _line_containing_violation( $elem );
+    $self->{_source}   = _first_line_of_source( $elem );
     $self->{_location} =
         $elem->location() || [ 0, 0, 0, 0, $self->filename() ];
 
@@ -290,26 +297,15 @@ sub _compare { return "$_[0]" cmp "$_[1]" }
 
 #-----------------------------------------------------------------------------
 
-sub _line_containing_violation {
-    my ( $elem ) = @_;
+sub _first_line_of_source {
+    my $elem = shift;
 
     my $stmnt = $elem->statement() || $elem;
     my $code_string = $stmnt->content() || $EMPTY;
 
-    # Split into individual lines
-    # From `perldoc -f split`:
-    # If LIMIT is negative, it is treated as if it were instead
-    # arbitrarily large; as many fields as possible are produced.
-    #
-    # If it's omitted, it's the same except trailing empty fields, so we need
-    # without a limit for the split and without an exception
-    my @lines = split qr{ \n }xms, $code_string, $NO_EXCEPTION_NO_SPLIT_LIMIT;
-
-    # Take the line containing the element that is in violation
-    my $inx = ( $elem->line_number() || 0 ) -
-        ( $stmnt->line_number() || 0 );
-    $inx > @lines and return $EMPTY;
-    return $lines[$inx];
+    # Chop everything but the first line (without newline);
+    $code_string =~ s{ \n.* }{}smx;
+    return $code_string;
 }
 
 #-----------------------------------------------------------------------------
@@ -489,8 +485,7 @@ that created this Violation.
 
 Returns the string of source code that caused this exception.  If the
 code spans multiple lines (e.g. multi-line statements, subroutines or
-other blocks), then only the line containing the violation will be
-returned.
+other blocks), then only the first line will be returned.
 
 
 =item C<element_class()>

@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Statistics.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Statistics;
 
 use 5.006001;
@@ -10,7 +17,7 @@ use Perl::Critic::Utils::McCabe qw{ calculate_mccabe_of_sub };
 
 #-----------------------------------------------------------------------------
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -353,7 +360,7 @@ reference to a hash keyed by full policy name.
 
 =item C<total_violations()>
 
-The total number of violations found by this Critic.
+The the total number of violations found by this Critic.
 
 
 =item C<statements_other_than_subs()>

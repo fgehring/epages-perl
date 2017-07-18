@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/Subroutines/ProhibitReturnSort.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::Subroutines::ProhibitReturnSort;
 
 use 5.006001;
@@ -8,7 +15,7 @@ use Readonly;
 use Perl::Critic::Utils qw{ :severities :classification };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -19,20 +26,20 @@ Readonly::Scalar my $EXPL => q{Behavior is undefined if called in scalar context
 
 sub supported_parameters { return ()                 }
 sub default_severity     { return $SEVERITY_HIGHEST  }
-sub default_themes       { return qw(core bugs certrule )      }
+sub default_themes       { return qw(core bugs)      }
 sub applies_to           { return 'PPI::Token::Word' }
 
 #-----------------------------------------------------------------------------
 
 sub violates {
     my ( $self, $elem, undef ) = @_;
-    return if $elem->content() ne 'return';
+    return if ($elem ne 'return');
     return if is_hash_key($elem);
 
     my $sib = $elem->snext_sibling();
     return if !$sib;
     return if !$sib->isa('PPI::Token::Word');
-    return if $sib->content() ne 'sort';
+    return if $sib ne 'sort';
 
     # Must be 'return sort'
     return $self->violation( $DESC, $EXPL, $elem );
@@ -57,6 +64,7 @@ Perl::Critic::Policy::Subroutines::ProhibitReturnSort - Behavior of C<sort> is n
 This Policy is part of the core L<Perl::Critic|Perl::Critic>
 distribution.
 
+
 =head1 DESCRIPTION
 
 The behavior of the builtin C<sort> function is not defined if called
@@ -72,8 +80,8 @@ sorted values to a temporary variable first.  For example:
 
        return sort @list;  # not ok!
 
-       my @sorted_list = sort @list;
-       return @sorted_list # OK
+       @sorted_list = sort @list;
+       return @sort        # ok
    }
 
 =head1 KNOWN BUGS
@@ -105,7 +113,7 @@ Jeffrey Ryan Thalhammer <jeff@imaginative-software.com>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2005-2017 Imaginative Software Systems.  All rights reserved.
+Copyright (c) 2005-2011 Imaginative Software Systems.  All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.  The full text of this license

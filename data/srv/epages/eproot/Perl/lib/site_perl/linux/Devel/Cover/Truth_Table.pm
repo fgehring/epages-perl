@@ -124,7 +124,7 @@ sub new {
         my $proto = shift;
         my $class = ref($proto) || $proto;
         my @args = @_;
-        # use Devel::Cover::Dumper; print Dumper \@args;
+        # use Data::Dumper; print Dumper \@args;
         return bless {
                 inputs    => $args[0],
                 result    => $args[1],
@@ -180,7 +180,7 @@ sub error {
 package Devel::Cover::Truth_Table;
 use warnings;
 use strict;
-our $VERSION = '1.25'; # VERSION
+our $VERSION = "0.79";
 
 #-------------------------------------------------------------------------------
 # Subroutine : new()
@@ -384,7 +384,7 @@ sub html {
 #    0  1  1  |        1
 #    1  X  1  |        1
 #
-# Note that we don't have to calculate the result, it's taken directly
+# Note that we don't have to calulate the result, it's taken directly
 # from table B. We can do this because we've replaced b1 with an
 # something that evaluates to the same thing.
 #
@@ -463,11 +463,8 @@ sub left_merge {
 
 =head1 NAME
 
-Devel::Cover::Truth_Table - Truth tables for coverage objects.
-
-=head1 VERSION
-
-version 1.25
+Devel::Cover::Truth_Table - Create and manipulate truth tables for
+coverage objects.
 
 =head1 SYNOPSIS
 
@@ -567,6 +564,10 @@ Devel::Cover
 =head1 BUGS
 
 None that I'm aware of...
+
+=head1 VERSION
+
+Version 0.79 - 5th August 2011
 
 =head1 LICENSE
 

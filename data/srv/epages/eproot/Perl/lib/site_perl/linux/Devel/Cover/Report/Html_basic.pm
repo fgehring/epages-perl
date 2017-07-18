@@ -1,4 +1,4 @@
-# Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+# Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,20 +10,18 @@ package Devel::Cover::Report::Html_basic;
 use strict;
 use warnings;
 
-our $VERSION = '1.25'; # VERSION
-our $LVERSION = do { eval '$VERSION' || "0.001" };  # for development purposes
+our $VERSION = "0.79";
 
-use Devel::Cover::DB;
-use Devel::Cover::Html_Common "launch";
-use Devel::Cover::Web "write_file";
+use Devel::Cover::DB 0.79;
+use Devel::Cover::Web 0.79 "write_file";
 
-use HTML::Entities;
 use Getopt::Long;
 use Template 2.00;
 
 my ($Have_highlighter, $Have_PPI, $Have_perltidy);
 
-BEGIN {
+BEGIN
+{
     eval "use PPI; use PPI::HTML;";
     $Have_PPI = !$@;
     eval "use Perl::Tidy";
@@ -34,25 +32,26 @@ BEGIN {
 my $Template;
 my %R;
 
-sub oclass {
+sub oclass
+{
     my ($o, $criterion) = @_;
     $o ? class($o->percentage, $o->error, $criterion) : ""
 }
 
-my $threshold = { c0 => 75, c1 => 90, c2 => 100 };
-
-sub class {
+sub class
+{
     my ($pc, $err, $criterion) = @_;
     return "" if $criterion eq "time";
     no warnings "uninitialized";
     !$err ? "c3"
-          : $pc < $threshold->{c0} ? "c0"
-          : $pc < $threshold->{c1} ? "c1"
-          : $pc < $threshold->{c2} ? "c2"
+          : $pc <  75 ? "c0"
+          : $pc <  90 ? "c1"
+          : $pc < 100 ? "c2"
           : "c3"
 }
 
-sub get_summary {
+sub get_summary
+{
     my ($file, $criterion) = @_;
 
     my %vals;
@@ -64,7 +63,7 @@ sub get_summary {
     $vals{class} = class($c->{percentage}, $c->{error}, $criterion);
 
     return \%vals unless defined $c->{percentage};
-    $vals{pc} = do { my $x = sprintf "%5.2f", $c->{percentage}; chop $x; $x };
+    $vals{pc}       = sprintf "%4.1f", $c->{percentage};
     $vals{covered}  = $c->{covered} || 0;
     $vals{total}    = $c->{total};
     $vals{details}  = "$vals{covered} / $vals{total}";
@@ -77,8 +76,10 @@ sub get_summary {
     \%vals
 };
 
-sub print_summary {
-    my $vars = {
+sub print_summary
+{
+    my $vars =
+    {
         R     => \%R,
         files => [ "Total", grep $R{db}->summary($_), @{$R{options}{file}} ],
     };
@@ -150,7 +151,8 @@ sub _highlight_perltidy {
             : $Have_perltidy ? \&_highlight_perltidy
             : sub {};
 
-sub print_file {
+sub print_file
+{
     my @lines;
     my $f = $R{db}->cover->file($R{file});
 
@@ -160,14 +162,17 @@ sub print_file {
     @all_lines = _highlight(@all_lines) if $Have_highlighter;
 
     my $linen = 1;
-    LINE: while (defined(my $l = shift @all_lines)) {
+    LINE: while (defined(my $l = shift @all_lines))
+    {
         my $n  = $linen++;
         chomp $l;
 
         my %criteria;
-        for my $c (@{$R{showing}}) {
+        for my $c (@{$R{showing}})
+        {
             my $criterion = $f->$c();
-            if ($criterion) {
+            if ($criterion)
+            {
                 my $l = $criterion->location($n);
                 $criteria{$c} = $l ? [@$l] : undef;
             }
@@ -175,7 +180,8 @@ sub print_file {
 
         my $count = 0;
         my $more  = 1;
-        while ($more) {
+        while ($more)
+        {
             my %line;
 
             $count++;
@@ -184,18 +190,22 @@ sub print_file {
 
             my $error = 0;
             $more = 0;
-            for my $ann (@{$R{options}{annotations}}) {
-                for my $a (0 .. $ann->count - 1) {
+            for my $ann (@{$R{options}{annotations}})
+            {
+                for my $a (0 .. $ann->count - 1)
+                {
                     my $text = $ann->text ($R{file}, $n, $a);
                     $text = "&nbsp;" unless $text && length $text;
-                    push @{$line{criteria}}, {
+                    push @{$line{criteria}},
+                    {
                         text  => $text,
                         class => $ann->class($R{file}, $n, $a),
                     };
                     $error ||= $ann->error($R{file}, $n, $a);
                 }
             }
-            for my $c (@{$R{showing}}) {
+            for my $c (@{$R{showing}})
+            {
                 my $o = shift @{$criteria{$c}};
                 $more ||= @{$criteria{$c}};
                 my $link = $c !~ /statement|time/;
@@ -217,54 +227,48 @@ sub print_file {
     }
     close F or die "Unable to close $R{file}: $!";
 
-    # Add forward references to uncovered lines ...
-    # first line has a ref to the first uncovered line unless
-    # the first line already is uncovered in which case it links
-    # to the *next* uncovered line
-    {  my @unc = grep { $_->{criteria}[0]{class} eq "c0" &&
-                         $_->{criteria}[0]{text}  eq  "0" } @lines;
-       while (@unc) {
-           my $u = pop @unc;
-           my $link = "#" . $u->{number};
-           (@unc ? $unc[-1] : $lines[0])->{criteria}[0]{link} ||= $link;
-       }
-    }
-
-    my $vars = {
+    my $vars =
+    {
         R     => \%R,
         lines => \@lines,
     };
 
-    $Template->process("file", $vars, $R{file_html}) or die $Template->error();
+    my $html = "$R{options}{outputdir}/$R{filenames}{$R{file}}.html";
+    $Template->process("file", $vars, $html) or die $Template->error();
 }
 
-sub print_branches {
+sub print_branches
+{
     my $branches = $R{db}->cover->file($R{file})->branch;
     return unless $branches;
 
     my @branches;
-    for my $location (sort { $a <=> $b } $branches->items) {
+    for my $location (sort { $a <=> $b } $branches->items)
+    {
         my $count = 0;
-        for my $b (@{$branches->location($location)}) {
+        for my $b (@{$branches->location($location)})
+        {
             $count++;
             my $text = $b->text;
             ($text) = _highlight($text) if $Have_highlighter;
 
             push @branches,
                 {
-                    number => $count == 1 ? $location : "",
-                    parts  => [
+                    number     => $count == 1 ? $location : "",
+                    parts      =>
+                    [
                         map { text  => $b->value($_),
                               class => class($b->value($_), $b->error($_),
                                              "branch") },
                             0 .. $b->total - 1
                     ],
-                    text   => $text,
+                    text       => $text,
                 };
         }
     }
 
-    my $vars = {
+    my $vars =
+    {
         R        => \%R,
         branches => \@branches,
     };
@@ -273,14 +277,17 @@ sub print_branches {
     $Template->process("branches", $vars, $html) or die $Template->error();
 }
 
-sub print_conditions {
+sub print_conditions
+{
     my $conditions = $R{db}->cover->file($R{file})->condition;
     return unless $conditions;
 
     my %r;
-    for my $location (sort { $a <=> $b } $conditions->items) {
+    for my $location (sort { $a <=> $b } $conditions->items)
+    {
         my %count;
-        for my $c (@{$conditions->location($location)}) {
+        for my $c (@{$conditions->location($location)})
+        {
             $count{$c->type}++;
             # print "-- [$count{$c->type}][@{[$c->text]}]}]\n";
             my $text = $c->text;
@@ -288,39 +295,41 @@ sub print_conditions {
 
             push @{$r{$c->type}},
                 {
-                    number    => $count{$c->type} == 1 ? $location : "",
-                    condition => $c,
-                    parts     => [
+                    number     => $count{$c->type} == 1 ? $location : "",
+                    condition  => $c,
+                    parts      =>
+                    [
                         map { text  => $c->value($_),
                               class => class($c->value($_), $c->error($_),
                                              "condition") },
                             0 .. $c->total - 1
                     ],
-                    text      => $text,
+                    text       => $text,
                 };
         }
     }
 
     my @types = map
-                {
-                    name       => do { my $n = $_; $n =~ s/_/ /g; $n },
-                    headers    => [ map { encode_entities($_) }
-                                    @{$r{$_}[0]{condition}->headers || []} ],
-                    conditions => $r{$_},
-                }, sort keys %r;
+               {
+                   name       => do { my $n = $_; $n =~ s/_/ /g; $n },
+                   headers    => $r{$_}[0]{condition}->headers,
+                   conditions => $r{$_},
+               }, sort keys %r;
 
-    my $vars = {
+    my $vars =
+    {
         R     => \%R,
         types => \@types,
     };
 
-    # use Devel::Cover::Dumper; print Dumper \@types;
+    # use Data::Dumper; print Dumper \@types;
 
     my $html = "$R{options}{outputdir}/$R{filenames}{$R{file}}--condition.html";
     $Template->process("conditions", $vars, $html) or die $Template->error();
 }
 
-sub print_subroutines {
+sub print_subroutines
+{
     my $subroutines = $R{db}->cover->file($R{file})->subroutine;
     return unless $subroutines;
     my $s = $R{options}{show}{subroutine};
@@ -329,15 +338,19 @@ sub print_subroutines {
     $pods = $R{db}->cover->file($R{file})->pod if $R{options}{show}{pod};
 
     my $subs;
-    for my $line (sort { $a <=> $b } $subroutines->items) {
+    for my $line (sort { $a <=> $b } $subroutines->items)
+    {
         my @p;
-        if ($pods) {
+        if ($pods)
+        {
             my $l = $pods->location($line);
             @p = @$l if $l;
         }
-        for my $o (@{$subroutines->location($line)}) {
+        for my $o (@{$subroutines->location($line)})
+        {
             my $p = shift @p;
-            push @$subs, {
+            push @$subs,
+            {
                 line   => $line,
                 name   => $o->name,
                 count  => $s ? $o->covered : "",
@@ -348,7 +361,8 @@ sub print_subroutines {
         }
     }
 
-    my $vars = {
+    my $vars =
+    {
         R    => \%R,
         subs => $subs,
     };
@@ -358,76 +372,66 @@ sub print_subroutines {
     $Template->process("subroutines", $vars, $html) or die $Template->error();
 }
 
-sub get_options {
+sub get_options
+{
     my ($self, $opt) = @_;
     $opt->{option}{outputfile} = "coverage.html";
-    $opt->{option}{restrict}   = 1;
-    $threshold->{$_} = $opt->{"report_$_"} for
-        grep { defined $opt->{"report_$_"} } qw( c0 c1 c2 );
     die "Invalid command line options" unless
         GetOptions($opt->{option},
                    qw(
                        outputfile=s
-                       restrict!
                      ));
 }
 
-sub report {
+sub report
+{
     my ($pkg, $db, $options) = @_;
 
-    $Template = Template->new({
-        LOAD_TEMPLATES => [
+    $Template = Template->new
+    ({
+        LOAD_TEMPLATES =>
+        [
             Devel::Cover::Report::Html_basic::Template::Provider->new({}),
         ],
     });
 
-    my $le = sub { ($_[0] >   0 ? "<" : "=") . " $_[0]" };
-    my $ge = sub { ($_[0] < 100 ? ">" : "") . "= $_[0]" };
-
-    my $fname = (sort keys %{$db->{runs}})[0] or return;
-    my $run   = $db->{runs}{$fname};
-
-    %R = (
-        module  => { name => $run->name, version => $run->version },
+    %R =
+    (
         db      => $db,
-        date    => do {
+        date    => do
+        {
             my ($sec, $min, $hour, $mday, $mon, $year) = localtime;
             sprintf "%04d-%02d-%02d %02d:%02d:%02d",
                     $year + 1900, $mon + 1, $mday, $hour, $min, $sec
         },
-        perl_v  => $] < 5.010 ? $] : $^V,
-        os      => $^O,
         options => $options,
-        version => $LVERSION,
         showing => [ grep $options->{show}{$_}, $db->criteria ],
-        headers => [
+        headers =>
+        [
             map { ($db->criteria_short)[$_] }
                 grep { $options->{show}{($db->criteria)[$_]} }
                      (0 .. $db->criteria - 1)
         ],
-        annotations => [
+        annotations =>
+        [
             map { my $a = $_; map $a->header($_), 0 .. $a->count - 1 }
                 @{$options->{annotations}}
         ],
-        filenames => {
+        filenames =>
+        {
             map { $_ => do { (my $f = $_) =~ s/\W/-/g; $f } }
                 @{$options->{file}}
         },
         exists      => { map { $_ => -e } @{$options->{file}} },
         get_summary => \&get_summary,
-        c0          => $le->($options->{report_c0}),
-        c1          => $le->($options->{report_c1}),
-        c2          => $le->($options->{report_c2}),
-        c3          => $ge->($options->{report_c2}),
     );
 
     write_file $R{options}{outputdir}, "all";
     my $html = print_summary;
 
-    for (@{$options->{file}}) {
+    for (@{$options->{file}})
+    {
         $R{file} = $_;
-        $R{file_link} = "$R{filenames}{$_}.html";
-        $R{file_html} = "$options->{outputdir}/$R{file_link}";
         my $show = $options->{show};
         print_file;
         print_branches    if $show->{branch};
@@ -435,7 +439,7 @@ sub report {
         print_subroutines if $show->{subroutine} || $show->{pod};
     }
 
-    print "HTML output written to $html\n" unless $options->{silent};
+    print "HTML output sent to $html\n";
 }
 
 1;
@@ -445,13 +449,14 @@ package Devel::Cover::Report::Html_basic::Template::Provider;
 use strict;
 use warnings;
 
-our $VERSION = '1.25'; # VERSION
+our $VERSION = "0.79";
 
 use base "Template::Provider";
 
 my %Templates;
 
-sub fetch {
+sub fetch
+{
     my $self = shift;
     my ($name) = @_;
     # print "Looking for <$name>\n";
@@ -464,8 +469,8 @@ $Templates{html} = <<'EOT';
      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <!--
-This file was generated by Devel::Cover Version [% R.version %]
-Devel::Cover is copyright 2001-2012, Paul Johnson (paul@pjcj.net)
+This file was generated by Devel::Cover Version 0.79
+Devel::Cover is copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 Devel::Cover is free. It is licensed under the same terms as Perl itself.
 The latest version of Devel::Cover should be available from my homepage:
 http://www.pjcj.net
@@ -522,69 +527,15 @@ $Templates{summary} = <<'EOT';
 <h1> Coverage Summary </h1>
 <table>
     <tr>
-        <td class="sh" align="right">Module</td>
-        <td class="sv" align="left" colspan="4">[% R.module.name %]</td>
-    </tr>
-    <tr>
-        <td class="sh" align="right">Version</td>
-        <td class="sv" align="left" colspan="4">[% R.module.version %]</td>
-    </tr>
-    <tr>
         <td class="sh" align="right">Database:</td>
-        <td class="sv" align="left" colspan="4">[% R.db.db %]</td>
+        <td class="sv" align="left">[% R.db.db %]</td>
     </tr>
     <tr>
         <td class="sh" align="right">Report date:</td>
-        <td class="sv" align="left" colspan="4">[% R.date %]</td>
-    </tr>
-    <tr>
-        <td class="sh" align="right">Perl version:</td>
-        <td class="sv" align="left" colspan="4">[% R.perl_v %]</td>
-    </tr>
-    <tr>
-        <td class="sh" align="right">OS:</td>
-        <td class="sv" align="left" colspan="4">[% R.os %]</td>
-    </tr>
-    <tr>
-        <td class="sh" align="right">Thresholds:</td>
-        <td class="sv c0">[% R.c0 | html %]%</td>
-        <td class="sv c1">[% R.c1 | html %]%</td>
-        <td class="sv c2">[% R.c2 | html %]%</td>
-        <td class="sv c3">[% R.c3 | html %]%</td>
+        <td class="sv" align="left">[% R.date %]</td>
     </tr>
 </table>
-<div><br /></div>
-
-[% IF R.options.option.restrict %]
-<script type="text/javascript">
-<!-- hide
-function filter_files(filter_by) {
-    var allelements = document.getElementsByTagName("tr");
-    var re_now      = new RegExp(filter_by, "i");
-    for (var i = 0; i < allelements.length; i++) {
-        if (allelements[i].className) {
-            if (filter_by == "" || allelements[i].className == "Total" ||
-                (filter_by.length && re_now.test(allelements[i].className))) {
-                allelements[i].style.display = "table-row";
-            } else if (filter_by.length &&
-                       !re_now.test(allelements[i].className)) {
-                allelements[i].style.display = "none";
-            }
-        }
-    }
-}
-// -->
-</script>
-
-<form name="filterform"
-      action='javascript:filter_files(document.forms["filterform"]["filterfield"].value)'>
-    Restrict to regex:
-    <input type="text" name="filterfield" /><input type="submit" />
-</form>
-
-<br />
-[% END %]
-
+<div><br></br></div>
 <table class="sortable" id="coverage_table">
     <thead>
         <tr>
@@ -598,7 +549,7 @@ function filter_files(filter_by) {
 
     <tfoot>
     [% FOREACH file = files %]
-        <tr align="center" valign="top" class="[% file %]">
+        <tr align="center" valign="top">
             <td align="left">
                 [% IF R.exists.$file %]
                    <a href="[% R.filenames.$file %].html"> [% file %] </a>
@@ -700,9 +651,7 @@ $Templates{branches} = <<'EOT';
     [% FOREACH branch = branches %]
         <a name="[% branch.ref %]"> </a>
         <tr>
-            <td class="h">
-                <a href="[% R.file_link %]#[% branch.number %]">[% branch.number %]</a>
-            </td>
+            <td class="h"> [% branch.number %] </td>
             [% FOREACH part = branch.parts %]
                 <td class="[% part.class %]"> [% part.text %] </td>
             [% END %]
@@ -736,9 +685,7 @@ $Templates{conditions} = <<'EOT';
         [% FOREACH condition = type.conditions %]
             <a name="[% condition.ref %]"> </a>
             <tr>
-                <td class="h">
-                    <a href="[% R.file_link %]#[% condition.number %]">[% condition.number %]</a>
-                </td>
+                <td class="h"> [% condition.number %] </td>
                 [% FOREACH part = condition.parts %]
                     <td class="[% part.class %]"> [% part.text %] </td>
                 [% END %]
@@ -776,9 +723,7 @@ $Templates{subroutines} = <<'EOT';
     </tr>
     [% FOREACH sub = subs %]
         <tr>
-            <td class="h">
-                <a href="[% R.file_link %]#[% sub.line %]">[% sub.line %]</a>
-            </td>
+            <td class="h"> [% sub.line %] </td>
             [% IF R.options.show.subroutine %]
                 <td class="[% sub.class %]"> [% sub.count %] </td>
             [% END %]
@@ -800,28 +745,20 @@ s/^\s+//gm for values %Templates;
 
 =head1 NAME
 
-Devel::Cover::Report::Html_basic - HTML backend for Devel::Cover
-
-=head1 VERSION
-
-version 1.25
+Devel::Cover::Report::Html_basic - Backend for HTML reporting of coverage
+statistics
 
 =head1 SYNOPSIS
 
- cover -report html_basic
+ use Devel::Cover::Report::Html_basic;
+
+ Devel::Cover::Report::Html_basic->report($db, $options);
 
 =head1 DESCRIPTION
 
 This module provides a HTML reporting mechanism for coverage data.  It
 is designed to be called from the C<cover> program. It will add syntax
 highlighting if C<PPI::HTML> or C<Perl::Tidy> is installed.
-
-=head1 OPTIONS
-
-The following command line options are supported:
-
- -outputfile           - name of output file             (default coverage.html)
- -restrict             - add restrict to regex form      (default on)
 
 =head1 SEE ALSO
 
@@ -831,9 +768,13 @@ The following command line options are supported:
 
 Huh?
 
+=head1 VERSION
+
+Version 0.79 - 5th August 2011
+
 =head1 LICENCE
 
-Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

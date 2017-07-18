@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPIx::Regexp::Token::Modifier 3"
-.TH PPIx::Regexp::Token::Modifier 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPIx::Regexp::Token::Modifier 3 "2011-04-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -156,19 +156,19 @@ PPIx::Regexp::Token::GroupType::Modifier.
 This class represents modifier characters at the end of the regular
 expression.  For example, in \f(CW\*(C`qr{foo}smx\*(C'\fR this class would represent
 the terminal \f(CW\*(C`smx\*(C'\fR.
-.ie n .SS "The ""a"", ""aa"", ""d"", ""l"", and ""u"" modifiers"
-.el .SS "The \f(CWa\fP, \f(CWaa\fP, \f(CWd\fP, \f(CWl\fP, and \f(CWu\fP modifiers"
-.IX Subsection "The a, aa, d, l, and u modifiers"
-The \f(CW\*(C`a\*(C'\fR, \f(CW\*(C`aa\*(C'\fR, \f(CW\*(C`d\*(C'\fR, \f(CW\*(C`l\*(C'\fR, and \f(CW\*(C`u\*(C'\fR modifiers, introduced starting in
-Perl 5.13.6, are used to force either Unicode pattern semantics (\f(CW\*(C`u\*(C'\fR),
-locale semantics (\f(CW\*(C`l\*(C'\fR) default semantics (\f(CW\*(C`d\*(C'\fR the traditional Perl
-semantics, which can also mean 'dual' since it means Unicode if the
-string's \s-1UTF\-8\s0 bit is on, and locale if the \s-1UTF\-8\s0 bit is off), or
-restricted default semantics (\f(CW\*(C`a\*(C'\fR). These are mutually exclusive, and
-only one can be asserted at a time. Asserting any of these overrides
-the inherited value of any of the others. The \f(CW\*(C`asserted()\*(C'\fR method
-reports as asserted the last one it sees, or none of them if it has seen
-none.
+.ie n .SS "The ""a"", ""d"", ""l"", and ""u"" modifiers"
+.el .SS "The \f(CWa\fP, \f(CWd\fP, \f(CWl\fP, and \f(CWu\fP modifiers"
+.IX Subsection "The a, d, l, and u modifiers"
+The \f(CW\*(C`a\*(C'\fR, \f(CW\*(C`d\*(C'\fR, \f(CW\*(C`l\*(C'\fR, and \f(CW\*(C`u\*(C'\fR modifiers, introduced into the \f(CW\*(C`(?...)\*(C'\fR
+construction in Perl 5.13.6 (or 5.13.9 in the case of /a) are used to
+force either Unicode pattern semantics (\f(CW\*(C`u\*(C'\fR), locale semantics (\f(CW\*(C`l\*(C'\fR)
+default semantics (\f(CW\*(C`d\*(C'\fR the traditional Perl semantics, which can also
+mean 'dual' since it means Unicode if the string's \s-1UTF\-8\s0 bit is on, and
+locale if the \s-1UTF\-8\s0 bit is off), or restricted default semantics (\f(CW\*(C`a\*(C'\fR).
+These are mutually exclusive, and only one can be asserted at a time.
+Asserting any of these overrides the inherited value of any of the
+others. The \f(CW\*(C`asserted()\*(C'\fR method reports as asserted the last one it
+sees, or none of them if it has seen none.
 .PP
 For example, given \f(CW\*(C`PPIx::Regexp::Token::Modifier\*(C'\fR \f(CW$elem\fR
 representing the invalid regular expression fragment \f(CW\*(C`(?dul)\*(C'\fR,
@@ -180,6 +180,10 @@ explicitly negated.
 If \f(CW$elem\fR represented regular expression fragment \f(CW\*(C`(?i)\*(C'\fR,
 \&\f(CW\*(C`$elem\->asserted( \*(Aqd\*(Aq )\*(C'\fR would return false, since even though \f(CW\*(C`d\*(C'\fR
 represents the default behavior it is not explicitly asserted.
+.PP
+\&\fBNote\fR that if this functionality is retracted before Perl 5.14 is
+released, support for it will disappear. See \*(L"\s-1NOTICE\s0\*(R" in PPIx::Regexp for
+some explanation.
 .ie n .SS "The caret (""^"") modifier"
 .el .SS "The caret (\f(CW^\fP) modifier"
 .IX Subsection "The caret (^) modifier"
@@ -193,6 +197,9 @@ representing regular expression fragment \f(CW\*(C`(?^i)\*(C'\fR,
 \&\f(CW\*(C`$elem\->asserted( \*(Aqd\*(Aq )\*(C'\fR would return true, since in the absence of
 an explicit \f(CW\*(C`l\*(C'\fR or \f(CW\*(C`u\*(C'\fR this class considers the \f(CW\*(C`^\*(C'\fR to explicitly
 assert \f(CW\*(C`d\*(C'\fR.
+.PP
+\&\fBNote\fR that if this is retracted before Perl 5.14 is released, this
+support will disappear. See \*(L"\s-1NOTICE\s0\*(R" in PPIx::Regexp for some explanation.
 .SH "METHODS"
 .IX Header "METHODS"
 This class provides the following public methods. Methods not documented
@@ -209,13 +216,6 @@ This method returns true if the token explicitly asserts the given
 modifier. The example would return true for the modifier in
 \&\f(CW\*(C`(?i:foo)\*(C'\fR, but false for \f(CW\*(C`(?\-i:foo)\*(C'\fR.
 .PP
-Starting with version 0.036_01, if the argument is a
-single-character modifier followed by an asterisk (intended as a wild
-card character), the return is the number of times that modifier
-appears. In this case an exception will be thrown if you specify a
-multi-character modifier (e.g.  \f(CW\*(Aqee*\*(Aq\fR), or if you specify one of the
-match semantics modifiers (e.g.  \f(CW\*(Aqa*\*(Aq\fR).
-.PP
 If called without an argument, or with an undef argument, all modifiers
 explicitly asserted by this token are returned.
 .SS "match_semantics"
@@ -227,8 +227,8 @@ explicitly asserted by this token are returned.
 .Ve
 .PP
 This method returns the match semantics asserted by the token, as one of
-the strings \f(CW\*(Aqa\*(Aq\fR, \f(CW\*(Aqaa\*(Aq\fR, \f(CW\*(Aqd\*(Aq\fR, \f(CW\*(Aql\*(Aq\fR, or \f(CW\*(Aqu\*(Aq\fR. If no explicit
-match semantics are asserted, this method returns \f(CW\*(C`undef\*(C'\fR.
+the letters \f(CW\*(C`a\*(C'\fR, \f(CW\*(C`d\*(C'\fR, \f(CW\*(C`l\*(C'\fR, or \f(CW\*(C`u\*(C'\fR. If no explicit match semantics
+are asserted, this method returns \f(CW\*(C`undef\*(C'\fR.
 .SS "modifiers"
 .IX Subsection "modifiers"
 .Vb 1
@@ -260,7 +260,7 @@ Support is by the author. Please file bug reports at
 Thomas R. Wyant, \s-1III\s0 \fIwyant at cpan dot org\fR
 .SH "COPYRIGHT AND LICENSE"
 .IX Header "COPYRIGHT AND LICENSE"
-Copyright (C) 2009\-2017 by Thomas R. Wyant, \s-1III\s0
+Copyright (C) 2009\-2011 by Thomas R. Wyant, \s-1III\s0
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

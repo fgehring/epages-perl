@@ -1,4 +1,4 @@
-# Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+# Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,7 +10,7 @@ package Devel::Cover::Report::Html;
 use strict;
 use warnings;
 
-our $VERSION = '1.25'; # VERSION
+our $VERSION = "0.79";
 
 use base "Devel::Cover::Report::Html_minimal";
 
@@ -20,15 +20,14 @@ __END__
 
 =head1 NAME
 
-Devel::Cover::Report::Html - HTML backend for Devel::Cover
-
-=head1 VERSION
-
-version 1.25
+Devel::Cover::Report::Html - Backend for HTML reporting of coverage
+statistics
 
 =head1 SYNOPSIS
 
- cover -report html
+ use Devel::Cover::Report::Html;
+
+ Devel::Cover::Report::Html->report($db, $options);
 
 =head1 DESCRIPTION
 
@@ -45,9 +44,13 @@ Devel::Cover::Report::Html_minimal.
 
 Huh?
 
+=head1 VERSION
+
+Version 0.79 - 5th August 2011
+
 =head1 LICENCE
 
-Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PICONV 1"
-.TH PICONV 1 "2017-06-10" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PICONV 1 "2011-04-13" "perl v5.12.3" "Perl Programmers Reference Guide"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -133,12 +133,13 @@
 piconv \-\- iconv(1), reinvented in perl
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-.Vb 6
-\&  piconv [\-f from_encoding] [\-t to_encoding]
-\&         [\-p|\-\-perlqq|\-\-htmlcref|\-\-xmlcref] [\-C N|\-c] [\-D] [\-S scheme]
-\&         [\-s string|file...]
+.Vb 7
+\&  piconv [\-f from_encoding] [\-t to_encoding] [\-s string] [files...]
 \&  piconv \-l
-\&  piconv \-r encoding_alias
+\&  piconv [\-C N|\-c|\-p]
+\&  piconv \-S scheme ...
+\&  piconv \-r encoding
+\&  piconv \-D ...
 \&  piconv \-h
 .Ve
 .SH "DESCRIPTION"
@@ -151,13 +152,13 @@ place of iconv for virtually any case.
 piconv converts the character encoding of either \s-1STDIN\s0 or files
 specified in the argument and prints out to \s-1STDOUT\s0.
 .PP
-Here is the list of options.  Some options can be in short format (\-f)
-or long (\-\-from) one.
-.IP "\-f,\-\-from \fIfrom_encoding\fR" 4
+Here is the list of options.  Each option can be in short format (\-f)
+or long (\-\-from).
+.IP "\-f,\-\-from from_encoding" 4
 .IX Item "-f,--from from_encoding"
 Specifies the encoding you are converting from.  Unlike \fBiconv\fR,
 this option can be omitted.  In such cases, the current locale is used.
-.IP "\-t,\-\-to \fIto_encoding\fR" 4
+.IP "\-t,\-\-to to_encoding" 4
 .IX Item "-t,--to to_encoding"
 Specifies the encoding you are converting to.  Unlike \fBiconv\fR,
 this option can be omitted.  In such cases, the current locale is used.
@@ -175,9 +176,6 @@ exist.  For example, the names are case-insensitive, and many standard
 and common aliases work, such as \*(L"latin1\*(R" for \*(L"\s-1ISO\-8859\-1\s0\*(R", or \*(L"ibm850\*(R"
 instead of \*(L"cp850\*(R", or \*(L"winlatin1\*(R" for \*(L"cp1252\*(R".  See Encode::Supported
 for a full discussion.
-.IP "\-r,\-\-resolve \fIencoding_alias\fR" 4
-.IX Item "-r,--resolve encoding_alias"
-Resolve \fIencoding_alias\fR to Encode canonical encoding name.
 .IP "\-C,\-\-check \fIN\fR" 4
 .IX Item "-C,--check N"
 Check the validity of the stream if \fIN\fR = 1.  When \fIN\fR = \-1, something
@@ -187,23 +185,26 @@ interesting happens when it encounters an invalid character.
 Same as \f(CW\*(C`\-C 1\*(C'\fR.
 .IP "\-p,\-\-perlqq" 4
 .IX Item "-p,--perlqq"
-Transliterate characters missing in encoding to \ex{\s-1HHHH\s0} where \s-1HHHH\s0 is the
-hexadecimal Unicode code point.
+.PD 0
 .IP "\-\-htmlcref" 4
 .IX Item "--htmlcref"
-Transliterate characters missing in encoding to &#NNN; where \s-1NNN\s0 is the
-decimal Unicode code point.
 .IP "\-\-xmlcref" 4
 .IX Item "--xmlcref"
-Transliterate characters missing in encoding to &#xHHHH; where \s-1HHHH\s0 is the
-hexadecimal Unicode code point.
+.PD
+Applies \s-1PERLQQ\s0, \s-1HTMLCREF\s0, \s-1XMLCREF\s0, respectively.  Try
+.Sp
+.Vb 1
+\&  piconv \-f utf8 \-t ascii \-\-perlqq
+.Ve
+.Sp
+To see what it does.
 .IP "\-h,\-\-help" 4
 .IX Item "-h,--help"
 Show usage.
 .IP "\-D,\-\-debug" 4
 .IX Item "-D,--debug"
 Invokes debugging mode.  Primarily for Encode hackers.
-.IP "\-S,\-\-scheme \fIscheme\fR" 4
+.IP "\-S,\-\-scheme scheme" 4
 .IX Item "-S,--scheme scheme"
 Selects which scheme is to be used for conversion.  Available schemes
 are as follows:

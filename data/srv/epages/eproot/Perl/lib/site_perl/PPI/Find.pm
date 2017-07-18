@@ -76,7 +76,7 @@ use Params::Util qw{_INSTANCE};
 
 use vars qw{$VERSION};
 BEGIN {
-        $VERSION = '1.224';
+        $VERSION = '1.215';
 }
 
 
@@ -160,7 +160,7 @@ returned the null list, which may also mean simply that no Elements
 were found that matched the condition.
 
 Because of this need to explicitly check for errors, an alternative
-return value mechanism is provide. If you pass the C<< array_ref => 1 >>
+return value mechanism is provide. If you pass the C<array_ref => 1>
 parameter to the method, it will return the list of matched Elements
 as a reference to an ARRAY. The method will return false if no elements
 were matched, or C<undef> on error.
@@ -190,7 +190,10 @@ sub in {
         $self->{matches} = [];
 
         # Execute the search
-        if ( !eval { $self->_execute; 1 } ) {
+        eval {
+                $self->_execute;
+        };
+        if ( $@ ) {
                 my $errstr = $@;
                 $errstr =~ s/\s+at\s+line\s+.+$//;
                 return $self->_error("Error while searching: $errstr", %params);
@@ -246,7 +249,10 @@ sub start {
         $self->{matches} = [];
 
         # Execute the search
-        if ( !eval { $self->_execute; 1 } ) {
+        eval {
+                $self->_execute;
+        };
+        if ( $@ ) {
                 my $errstr = $@;
                 $errstr =~ s/\s+at\s+line\s+.+$//;
                 $self->_error("Error while searching: $errstr");
@@ -288,7 +294,7 @@ stop the iteration prematurely. It resets the Find object and allows it to
 be safely reused.
 
 A Find object will be automatically finished when C<match> returns false.
-This means you should only need to call C<finish> when you stop
+This means you should only need to call C<finnish> when you stop
 iterating early.
 
 You may safely call this method even when not iterating and it will return

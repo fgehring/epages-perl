@@ -42,9 +42,9 @@ use Scalar::Util qw{ blessed looks_like_number };
 
 use PPIx::Regexp;
 use PPIx::Regexp::Tokenizer;
-use PPIx::Regexp::Util qw{ __choose_tokenizer_class __instance };
+use PPIx::Regexp::Util qw{ __instance };
 
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
 =head2 new
 
@@ -63,23 +63,12 @@ The following options are recognized:
 
 =over
 
-=item default_modifiers array_reference
-
-This argument is a reference to a list of default modifiers to be
-applied to the statement being parsed. See L<PPIx::Regexp|PPIx::Regexp>
-L<new()|PPIx::Regexp/new> for the details.
-
 =item encoding name
 
 This argument is the name of the encoding of the regular expression. If
 specified, it is passed through to
 L<< PPIx::Regexp->new()|PPIx::Regexp/new >>. It also causes an
 C<Encode::encode> to be done on any parse content dumped.
-
-=item explain boolean
-
-If true, this option causes the C<explain()> output of each object to be
-dumped.
 
 =item indent number
 
@@ -107,23 +96,6 @@ be dumped.
 If true, this option causes the C<perl_version_introduced> and
 C<perl_version_removed> values associated with each object dumped to be
 displayed.
-
-=item postderef boolean
-
-If true, postfix dereferences are recognized in code and interpolations.
-See the tokenizer's L<new()|PPIx::Regexp::Tokenizer/new> for details.
-
-=item strict boolean
-
-This option is passed on to the parser, where it specifies whether the
-parse should assume C<use re 'strict'> is in effect.
-
-The C<'strict'> pragma was introduced in Perl 5.22, and its
-documentation says that it is experimental, and that there is no
-commitment to backward compatibility. The same applies to the
-parse produced when this option is asserted.
-
-The default is false.
 
 =item significant boolean
 
@@ -176,7 +148,6 @@ ignored.
 {
 
     my %default = (
-        explain => 0,
         indent  => 2,
         margin  => 0,
         ordinal => 0,
@@ -196,13 +167,7 @@ ignored.
             lister => undef,
             object => undef,
             source => $re,
-            strict => $args{strict},
         };
-
-        foreach my $key ( qw{ default_modifiers parse postderef } ) {
-            exists $args{$key}
-                and $self->{$key} = $args{$key};
-        }
 
         foreach my $key ( keys %default ) {
             $self->{$key} = exists $args{$key} ?
@@ -222,11 +187,9 @@ ignored.
         } elsif ( ref $re && ! __instance( $re, 'PPI::Element' ) ) {
             croak "Do not know how to dump ", ref $re;
         } elsif ( $self->{tokens} ) {
-            my $tokenizer_class = __choose_tokenizer_class( $re, \%args )
-                or croak 'Unsupported data type';
             $self->{object} =
-                $tokenizer_class->new( $re, %args )
-                    or Carp::croak( $tokenizer_class->errstr() );
+                PPIx::Regexp::Tokenizer->new( $re, %args )
+                    or Carp::croak( PPIx::Regexp::Tokenizer->errstr() );
         } else {
             $self->{object} =
                 PPIx::Regexp->new( $re, %args )
@@ -314,11 +277,11 @@ sub _safe {
 }
 
 sub _safe_version {
-    my ( undef, $version ) = @_;        # Invocant unused
+    my ( $self, $version ) = @_;
     return defined $version ? "'$version'" : 'undef';
 }
 
-sub __nav {
+sub _nav {
     my ( $self, @args ) = @_;
     my $rslt = $self->_safe( @args );
     $rslt =~ s/ ' (\w+) ' , /$1 =>/smxg;
@@ -328,7 +291,7 @@ sub __nav {
 }
 
 sub _perl_version {
-    my ( undef, $elem ) = @_;           # Invocant unused
+    my ( $self, $elem ) = @_;
 
     my $rslt = $elem->perl_version_introduced() . ' <= $]';
     if ( my $max = $elem->perl_version_removed() ) {
@@ -366,22 +329,8 @@ sub _tokens_dump {
     return @rslt;
 }
 
-sub _format_default_modifiers {
-    my ( $self, $subr, $elem ) = @_;
-    my @arg = $self->_safe( $elem );
-    foreach my $attr ( qw{ default_modifiers parse postderef strict } ) {
-        defined ( my $val = $self->{$attr} )
-            or next;
-        'ARRAY' eq ref $val
-            and not @{ $val }
-            and next;
-        push @arg, "$attr => @{[ $self->_safe( $val ) ]}";
-    }
-    return sprintf '%-8s( %s );', $subr, join ', ', @arg;
-}
-
 sub _format_modifiers_dump {
-    my ( undef, $elem ) = @_;           # Invocant unused
+    my ( $self, $elem ) = @_;
     my %mods = $elem->modifiers();
     my @accum;
     $mods{match_semantics}
@@ -401,33 +350,14 @@ sub _tokens_test {
     not $self->{significant} or $elem->significant() or return;
 
     my @tokens = $elem->tokens();
-
     my @rslt = (
-        $self->_format_default_modifiers( tokenize => $elem ),
-        sprintf( 'count   ( %d );', scalar @tokens ),
+        'tokenize( ' . $self->_safe( $elem ) . ' );',
+        'count   ( ' . scalar @tokens . ' );',
     );
-
     my $inx = 0;
     foreach my $token ( @tokens ) {
         not $self->{significant} or $token->significant() or next;
         push @rslt, $token->__PPIX_DUMPER__test( $self, $inx++ );
-    }
-    return @rslt;
-}
-
-sub PPIx::Regexp::Element::__PPIX_DUMPER__dump_explanation {
-    my ( $self, undef, $line ) = @_;    # $dumper unused
-    my @expl = $self->explain()
-        or return $line;
-    1 == @expl
-        and return "$line\t$expl[0]";
-    wantarray
-        or return sprintf "%s\t%s", $line, join '; ', @expl;
-    ( my $blank = $line ) =~ s/\S/ /smxg;
-    my @rslt;
-    foreach my $splain ( @expl ) {
-        push @rslt, "$line\t$splain";
-        $line = $blank;
     }
     return @rslt;
 }
@@ -440,8 +370,7 @@ sub PPIx::Regexp::__PPIX_DUMPER__test {
 
     not $dumper->{significant} or $self->significant() or return;
 
-#   my $parse = 'parse   ( ' . $dumper->_safe( $self ) . ' );';
-    my $parse = $dumper->_format_default_modifiers( parse => $self );
+    my $parse = 'parse   ( ' . $dumper->_safe( $self ) . ' );';
     my $fail =  'value   ( failures => [], ' . $self->failures() . ' );';
 
     # Note that we can not use SUPER in the following because SUPER goes
@@ -464,22 +393,9 @@ sub PPIx::Regexp::Node::__PPIX_DUMPER__dump {
 
     my @rslt = ref $self;
     $self->isa( 'PPIx::Regexp' )
-        and $rslt[-1] .= $dumper->{verbose}
-            ? sprintf "\tfailures=%d\tmax_capture_number=%d",
-                $self->failures(), $self->max_capture_number()
-            : sprintf "\tfailures=%d", $self->failures();
-
+        and $rslt[-1] .= "\tfailures=" . $self->failures();
     $dumper->{perl_version}
         and $rslt[-1] .= "\t" . $dumper->_perl_version( $self );
-
-    if ( defined ( my $err = $self->error() ) ) {
-        $rslt[-1] .= "\t$err";
-    } else {
-        $dumper->{explain}
-            and push @rslt, $self->__PPIX_DUMPER__dump_explanation(
-                $dumper, pop @rslt );
-    }
-
     my $indent = ' ' x $dumper->{indent};
     foreach my $elem ( $self->children() ) {
         push @rslt, map { $indent . $_ } $elem->__PPIX_DUMPER__dump( $dumper );
@@ -494,18 +410,10 @@ sub PPIx::Regexp::Node::__PPIX_DUMPER__test {
 
     my @rslt;
     @rslt = (
-        'choose  ( ' . $dumper->__nav( $self->nav() ) . ' );',
+        'choose  ( ' . $dumper->_nav( $self->nav() ) . ' );',
         'class   ( ' . $dumper->_safe( ref $self ) . ' );',
         'count   ( ' . scalar $self->children() . ' );',
     );
-
-    if ( defined( my $err = $self->error() ) ) {
-
-        push @rslt,
-            'error   ( ' . $dumper->_safe( $err ) . ' );';
-
-    }
-
     if ( $dumper->{perl_version} ) {
         foreach my $method ( qw{
             perl_version_introduced
@@ -519,16 +427,6 @@ sub PPIx::Regexp::Node::__PPIX_DUMPER__test {
         push @rslt, $elem->__PPIX_DUMPER__test( $dumper );
     }
     return @rslt;
-}
-
-sub _format_value {
-    my ( $val ) = @_;
-    defined $val
-        or return 'undef';
-    $val =~ m/ \A [0-9]+ \z /smx
-        and return $val;
-    $val =~ s/ (?= [\\"] ) /\\/smxg;
-    return qq{"$val"};
 }
 
 {
@@ -554,13 +452,14 @@ sub _format_value {
         $dumper->{perl_version}
             and push @rslt, $dumper->_perl_version( $self );
         if ( $dumper->{verbose} ) {
-            foreach my $method ( qw{ number name max_capture_number } ) {
+            foreach my $method ( qw{ number name } ) {
                 $self->can( $method ) or next;
-                push @rslt, sprintf '%s=%s', $method, _format_value(
-                    $self->$method() );
+                my $val = $self->$method;
+                push @rslt, defined $val ?
+                    "$method=$val" :
+                    "$method undef";
             }
             foreach my $method ( qw{ can_be_quantified is_quantifier } ) {
-##              is_case_sensitive
                 $self->can( $method ) or next;
                 $self->$method() and push @rslt, $method;
             }
@@ -568,22 +467,7 @@ sub _format_value {
                 and push @rslt, $dumper->_format_modifiers_dump(
                 $self->type( 0 ) );
         }
-
-        foreach my $method ( 'start', undef, 'finish' ) {
-            my $ele = defined $method ? $self->$method() : $self
-                or next;
-            if ( defined ( my $err = $ele->error() ) ) {
-                push @rslt, $err;
-            }
-        }
-
-        @rslt = ( join "\t", @rslt );
-
-        $dumper->{explain}
-            and not defined $self->error()
-            and push @rslt, $self->__PPIX_DUMPER__dump_explanation(
-                $dumper, pop @rslt );
-
+        @rslt = ( join( "\t", @rslt ) );
         my $indent = ' ' x $dumper->{indent};
         foreach my $elem ( $self->children() ) {
             push @rslt, map { $indent . $_ }
@@ -601,7 +485,7 @@ sub PPIx::Regexp::Structure::__PPIX_DUMPER__test {
 
     my @nav = $self->nav();
     my @rslt = (
-        'choose  ( ' . $dumper->__nav( @nav ) . ' );',
+        'choose  ( ' . $dumper->_nav( @nav ) . ' );',
         'class   ( ' . $dumper->_safe( ref $self ) . ' );',
         'count   ( ' . scalar $self->children() . ' );',
     );
@@ -614,12 +498,12 @@ sub PPIx::Regexp::Structure::__PPIX_DUMPER__test {
     }
     foreach my $method ( qw{ start type finish } ) {
         my @eles = $self->$method();
-        push @rslt, 'choose  ( ' . $dumper->__nav(
+        push @rslt, 'choose  ( ' . $dumper->_nav(
             @nav, $method, [] ) . ' );',
             'count   ( ' . scalar @eles . ' );';
         foreach my $inx ( 0 .. $#eles ) {
             my $elem = $eles[$inx];
-            push @rslt, 'choose  ( ' . $dumper->__nav(
+            push @rslt, 'choose  ( ' . $dumper->_nav(
                 @nav, $method, $inx ) . ' );',
                 'class   ( ' . $dumper->_safe( ref $elem || $elem ) . ' );',
                 'content ( ' . $dumper->_safe( $elem ) . ' );';
@@ -647,62 +531,33 @@ sub PPIx::Regexp::Tokenizer::__PPIX_DUMPER__test {
 sub PPIx::Regexp::Token::__PPIX_DUMPER__dump {
     my ( $self, $dumper ) = @_;
 
-    not $dumper->{significant}
-        or $self->significant()
-        or return;
+    not $dumper->{significant} or $self->significant() or return;
 
     my @rslt = ( ref $self, $dumper->_safe( $self ) );
-
     $dumper->{perl_version}
         and push @rslt, $dumper->_perl_version( $self );
-
-    if ( defined( my $err = $self->error() ) ) {
-
-        return join "\t", @rslt, $err;
-
-    } else {
-
-        if ( $dumper->{ordinal} && $self->can( 'ordinal' )
-            && defined ( my $ord = $self->ordinal() ) ) {
-            push @rslt, sprintf '0x%02x', $ord;
-        }
-
-        if ( $dumper->{verbose} ) {
-
-            if ( $self->isa( 'PPIx::Regexp::Token::Reference' ) ) {
-                foreach my $method ( qw{ absolute name number } ) {
-                    defined( my $val = $self->$method() ) or next;
-                    push @rslt, "$method=$val";
-                }
-            }
-
-            foreach my $method (
-                qw{ significant can_be_quantified is_quantifier } ) {
-##              is_case_sensitive
-                $self->can( $method )
-                    and $self->$method()
-                    and push @rslt, $method;
-            }
-
-            $self->can( 'ppi' )
-                and push @rslt, $self->ppi()->content();
-
-            if ( $self->isa( 'PPIx::Regexp::Token::Modifier' ) ||
-                $self->isa( 'PPIx::Regexp::Token::GroupType::Modifier' )
-            ) {
-                push @rslt, $dumper->_format_modifiers_dump( $self );
-            }
-
-        }
-
-        @rslt = ( join "\t", @rslt );
-
-        $dumper->{explain}
-            and push @rslt, $self->__PPIX_DUMPER__dump_explanation(
-                $dumper, pop @rslt );
-
-        return @rslt;
+    if ( $dumper->{ordinal} && $self->can( 'ordinal' )
+        && defined ( my $ord = $self->ordinal() ) ) {
+        push @rslt, sprintf '0x%02x', $ord;
     }
+    if ( $dumper->{verbose} ) {
+        if ( $self->isa( 'PPIx::Regexp::Token::Reference' ) ) {
+            foreach my $method ( qw{ absolute name number } ) {
+                defined( my $val = $self->$method() ) or next;
+                push @rslt, "$method=$val";
+            }
+        }
+        foreach my $method (
+            qw{significant can_be_quantified is_quantifier } ) {
+            $self->$method() and push @rslt, $method;
+        }
+        if ( $self->isa( 'PPIx::Regexp::Token::Modifier' ) ||
+            $self->isa( 'PPIx::Regexp::Token::GroupType::Modifier' )
+        ) {
+            push @rslt, $dumper->_format_modifiers_dump( $self );
+        }
+    }
+    return join( "\t", @rslt );
 }
 
 sub PPIx::Regexp::Token::__PPIX_DUMPER__test {
@@ -712,46 +567,27 @@ sub PPIx::Regexp::Token::__PPIX_DUMPER__test {
 
     @nav or @nav = $self->nav();
     my @rslt = (
-        'choose  ( ' . join(', ', $dumper->__nav( @nav ) ) . ' );',
+        'choose  ( ' . join(', ', $dumper->_nav( @nav ) ) . ' );',
         'class   ( ' . $dumper->_safe( ref $self ) . ' );',
         'content ( ' . $dumper->_safe( $self ) . ' );',
     );
-
-    if ( defined( my $err = $self->error() ) ) {
-
-        push @rslt,
-            'error   ( ' . $dumper->_safe( $err ) . ' );';
-
-    } else {
-
-        if ( $dumper->{perl_version} ) {
-            foreach my $method ( qw{
-                perl_version_introduced
-                perl_version_removed
-            } ) {
-                push @rslt, "value   ( $method => [], " .
-                    $dumper->_safe_version( $self->$method() ) . ' );';
-            }
-        }
-
-        if ( $dumper->{verbose} ) {
-
-            foreach my $method (
-                qw{ significant can_be_quantified is_quantifier } ) {
-##              is_case_sensitive
-                $self->can( $method ) or next;
-                push @rslt, $self->$method() ?
-                    "true    ( $method => [] );" :
-                    "false   ( $method => [] );";
-            }
-
-            $self->can( 'ppi' )
-                and push @rslt, "value   ( ppi => [], " .
-                    $dumper->_safe( $self->ppi() ) . ' );';
-
+    if ( $dumper->{perl_version} ) {
+        foreach my $method ( qw{
+            perl_version_introduced
+            perl_version_removed
+        } ) {
+            push @rslt, "value   ( $method => [], " .
+                $dumper->_safe_version( $self->$method() ) . ' );';
         }
     }
-
+    if ( $dumper->{verbose} ) {
+        foreach my $method (
+            qw{significant can_be_quantified is_quantifier } ) {
+            push @rslt, $self->$method() ?
+                "true    ( $method => [] );" :
+                "false   ( $method => [] );";
+        }
+    }
     return @rslt;
 }
 
@@ -770,7 +606,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

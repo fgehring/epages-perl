@@ -35,7 +35,7 @@ use PPI::Token::Number ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-        $VERSION = '1.224';
+        $VERSION = '1.215';
         @ISA     = 'PPI::Token::Number';
 }
 
@@ -47,7 +47,9 @@ Returns the base for the number: 256.
 
 =cut
 
-sub base() { 256 }
+sub base {
+        return 256;
+}
 
 =pod
 
@@ -71,6 +73,27 @@ sub literal {
 #####################################################################
 # Tokenizer Methods
 
+=pod
+
+=begin testing 9
+
+my $doc1 = new_ok( 'PPI::Document' => [ \'1.2.3.4'  ] );
+my $doc2 = new_ok( 'PPI::Document' => [ \'v1.2.3.4' ] );
+isa_ok( $doc1->child(0), 'PPI::Statement' );
+isa_ok( $doc2->child(0), 'PPI::Statement' );
+isa_ok( $doc1->child(0)->child(0), 'PPI::Token::Number::Version' );
+isa_ok( $doc2->child(0)->child(0), 'PPI::Token::Number::Version' );
+
+my $literal1 = $doc1->child(0)->child(0)->literal;
+my $literal2 = $doc2->child(0)->child(0)->literal;
+is( length($literal1), 4, 'The literal length of doc1 is 4' );
+is( length($literal2), 4, 'The literal length of doc1 is 4' );
+is( $literal1, $literal2, 'Literals match for 1.2.3.4 vs v1.2.3.4' );
+
+=end testing
+
+=cut
+
 sub __TOKENIZER__on_char {
         my $class = shift;
         my $t     = shift;
@@ -86,7 +109,6 @@ sub __TOKENIZER__on_char {
                         # Take the . off the end of the token..
                         # and finish it, then make the .. operator.
                         chop $t->{token}->{content};
-                        $t->{class} = $t->{token}->set_class( 'Number::Float' );
                         $t->_new_token('Operator', '..');
                         return 0;
                 } else {
@@ -102,23 +124,17 @@ sub __TOKENIZER__on_char {
 sub __TOKENIZER__commit {
         my $t = $_[1];
 
-        # Capture the rest of the token
-        pos $t->{line} = $t->{line_cursor};
-        if ( $t->{line} !~ m/\G(v\d+(?:\.\d+)+|v\d+\b)/gc ) {
+        # Get the rest of the line
+        my $rest = substr( $t->{line}, $t->{line_cursor} );
+        unless ( $rest =~ /^(v\d+(?:\.\d+)*)/ ) {
                 # This was not a v-string after all (it's a word)
                 return PPI::Token::Word->__TOKENIZER__commit($t);
         }
 
-        my $content = $1;
-
-        # If there are no periods this could be a word starting with v\d
-        # Forced to be a word. Done.
-        return PPI::Token::Word->__TOKENIZER__commit($t)
-                if $content !~ /\./ and $t->__current_token_is_forced_word($content);
-
         # This is a v-string
-        $t->{line_cursor} += length $content;
-        $t->_new_token( 'Number::Version', $content );
+        my $vstring = $1;
+        $t->{line_cursor} += length($vstring);
+        $t->_new_token('Number::Version', $vstring);
         $t->_finalize_token->__TOKENIZER__on_char($t);
 }
 

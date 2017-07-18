@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/Modules/ProhibitAutomaticExportation.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::Modules::ProhibitAutomaticExportation;
 
 use 5.006001;
@@ -9,7 +16,7 @@ use Perl::Critic::Utils qw{ :severities };
 use List::MoreUtils qw(any);
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -122,7 +129,7 @@ and let the caller choose exactly which symbols to export.
 
     package Foo;
 
-    use Exporter 'import';
+    use base qw(Exporter);
     our @EXPORT      = qw(foo $bar @baz);                  # not ok
     our @EXPORT_OK   = qw(foo $bar @baz);                  # ok
     our %EXPORT_TAGS = ( all => [ qw(foo $bar @baz) ] );   # ok

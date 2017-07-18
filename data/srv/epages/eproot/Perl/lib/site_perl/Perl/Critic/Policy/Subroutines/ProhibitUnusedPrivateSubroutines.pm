@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/Subroutines/ProhibitUnusedPrivateSubroutines.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::Subroutines::ProhibitUnusedPrivateSubroutines;
 
 use 5.006001;
@@ -6,7 +13,6 @@ use strict;
 use warnings;
 
 use English qw< $EVAL_ERROR -no_match_vars >;
-use List::MoreUtils qw(any);
 use Readonly;
 
 use Perl::Critic::Utils qw{
@@ -15,7 +21,7 @@ use Perl::Critic::Utils qw{
 };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -43,18 +49,11 @@ sub supported_parameters {
             default_string  => $EMPTY,
             behavior        => 'string list',
         },
-        {
-            name            => 'skip_when_using',
-            description     =>
-                q<Modules that, if used within a file, will cause the policy to be disabled for this file>,
-            default_string  => $EMPTY,
-            behavior        => 'string list',
-        },
     );
 }
 
 sub default_severity     { return $SEVERITY_MEDIUM       }
-sub default_themes       { return qw( core maintenance certrec ) }
+sub default_themes       { return qw( core maintenance ) }
 sub applies_to           { return 'PPI::Statement::Sub'  }
 
 #-----------------------------------------------------------------------------
@@ -82,9 +81,6 @@ sub _parse_private_name_regex {
 
 sub violates {
     my ( $self, $elem, $document ) = @_;
-
-    my @skip_modules = keys %{ $self->{_skip_when_using} };
-    return if any { $document->uses_module($_) } @skip_modules;
 
     # Not interested in forward declarations, only the real thing.
     $elem->forward() and return;
@@ -358,13 +354,6 @@ These are added to the default list of exemptions from this policy. So the
 above allows C<< sub _bar {} >> and C<< sub _baz {} >>, even if they are not
 referred to in the module that defines them.
 
-You can configure this policy not to check private subroutines declared in a
-file that uses one or more particular named modules.  This allows you to, for
-example, exclude unused private subroutine checking in classes that are roles.
-
-    [Subroutines::ProhibitUnusedPrivateSubroutines]
-    skip_when_using = Moose::Role Moo::Role Role::Tiny
-
 
 =head1 HISTORY
 
@@ -377,19 +366,6 @@ which looks at the other side of the problem.
 
 Does not forbid C<< sub Foo::_foo{} >> because it does not know (and can not
 assume) what is in the C<Foo> package.
-
-Does not respect the scope caused by multiple packages in the same file.  For
-example a file:
-
-    package Foo;
-    sub _is_private { print "A private sub!"; }
-
-    package Bar;
-    _is_private();
-
-Will not trigger a violation even though C<Foo::_is_private> is not called.
-Similarly, C<skip_when_using> currently works on a I<file> level, not on a
-I<package scope> level.
 
 
 =head1 SEE ALSO

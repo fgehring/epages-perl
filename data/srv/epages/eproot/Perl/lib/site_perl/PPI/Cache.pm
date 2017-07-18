@@ -56,7 +56,7 @@ use PPI::Document ();
 
 use vars qw{$VERSION};
 BEGIN {
-        $VERSION = '1.224';
+        $VERSION = '1.215';
 }
 
 use constant VMS => !! ( $^O eq 'VMS' );
@@ -268,7 +268,7 @@ sub _md5hex {
         my $it     = _SCALAR($_[0])
                 ? PPI::Util::md5hex(${$_[0]})
                 : $_[0];
-        return (defined $it and ! ref $it and $it =~ /^[[:xdigit:]]{32}\z/s)
+        return (defined $it and ! ref $it and $it =~ /^[a-f0-9]{32}\z/si)
                 ? lc $it
                 : undef;
 }

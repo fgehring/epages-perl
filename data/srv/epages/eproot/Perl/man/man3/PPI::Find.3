@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPI::Find 3"
-.TH PPI::Find 3 "2017-05-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPI::Find 3 "2011-02-26" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -222,7 +222,7 @@ returned the null list, which may also mean simply that no Elements
 were found that matched the condition.
 .PP
 Because of this need to explicitly check for errors, an alternative
-return value mechanism is provide. If you pass the \f(CW\*(C`array_ref => 1\*(C'\fR
+return value mechanism is provide. If you pass the \f(CW\*(C`array_ref =\*(C'\fR 1>
 parameter to the method, it will return the list of matched Elements
 as a reference to an \s-1ARRAY\s0. The method will return false if no elements
 were matched, or \f(CW\*(C`undef\*(C'\fR on error.
@@ -252,7 +252,7 @@ stop the iteration prematurely. It resets the Find object and allows it to
 be safely reused.
 .PP
 A Find object will be automatically finished when \f(CW\*(C`match\*(C'\fR returns false.
-This means you should only need to call \f(CW\*(C`finish\*(C'\fR when you stop
+This means you should only need to call \f(CW\*(C`finnish\*(C'\fR when you stop
 iterating early.
 .PP
 You may safely call this method even when not iterating and it will return

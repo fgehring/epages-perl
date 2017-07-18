@@ -43,24 +43,10 @@ use base qw{ PPIx::Regexp::Token::GroupType };
 
 use PPIx::Regexp::Constant qw{ MINIMUM_PERL };
 
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
 # Return true if the token can be quantified, and false otherwise
 # sub can_be_quantified { return };
-
-{
-
-    my %explanation = (
-        '??'    => 'Evaluate code, use as regexp at this point',
-        '?p'    => 'Evaluate code, use as regexp at this point (removed in 5.9.5)',
-        '?'             => 'Evaluate code. Always matches.',
-    );
-
-    sub __explanation {
-        return \%explanation;
-    }
-
-}
 
 {
     my %perl_version_introduced = (
@@ -71,8 +57,7 @@ our $VERSION = '0.051';
 
     sub perl_version_introduced {
         my ( $self ) = @_;
-        return $perl_version_introduced{ $self->unescaped_content() } ||
-            '5.005';
+        return $perl_version_introduced{ $self->content() } || '5.005';
     }
 
 }
@@ -88,8 +73,6 @@ our $VERSION = '0.051';
         return $perl_version_removed{ $self->content() };
     }
 }
-
-=begin comment
 
 sub __PPIX_TOKENIZER__regexp {
     my ( $class, $tokenizer, $character ) = @_;
@@ -112,25 +95,6 @@ sub __PPIX_TOKENIZER__regexp {
     return;
 }
 
-=end comment
-
-=cut
-
-sub __defining_string {
-    return (
-        { suffix        => '{' },
-        '?',
-        '??',
-        '?p',
-    );
-}
-
-sub __match_setup {
-    my ( undef, $tokenizer ) = @_;      # Invocant unused
-    $tokenizer->expect( qw{ PPIx::Regexp::Token::Code } );
-    return;
-}
-
 1;
 
 __END__
@@ -146,7 +110,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

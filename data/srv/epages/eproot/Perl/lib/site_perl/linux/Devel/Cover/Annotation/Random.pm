@@ -1,4 +1,4 @@
-# Copyright 2004-2017, Paul Johnson (paul@pjcj.net)
+# Copyright 2004-2011, Paul Johnson (pjcj@cpan.org)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,16 +10,18 @@ package Devel::Cover::Annotation::Random;
 use strict;
 use warnings;
 
-our $VERSION = '1.25'; # VERSION
+our $VERSION = "0.79";
 
 use Getopt::Long;
 
-sub new {
+sub new
+{
     my $class = shift;
     bless {@_}, $class
 }
 
-sub get_options {
+sub get_options
+{
     my ($self, $opt) = @_;
     $self->{count} = 1;
     die "Bad option" unless
@@ -29,24 +31,28 @@ sub get_options {
                      ));
 }
 
-sub count {
+sub count
+{
     my $self = shift;
     $self->{count}
 }
 
-sub header {
+sub header
+{
     my $self = shift;
     my ($annotation) = @_;
     "rnd$annotation"
 }
 
-sub width {
+sub width
+{
     my $self = shift;
     my ($annotation) = @_;
     length $self->header($annotation)
 }
 
-sub text {
+sub text
+{
     my $self = shift;
     my ($file, $line, $annotation) = @_;
     return "" unless $line;
@@ -55,13 +61,15 @@ sub text {
     $self->{annotation}{$file}[$line][$annotation]
 }
 
-sub error {
+sub error
+{
     my $self = shift;
     my ($file, $line, $annotation) = @_;
     !$self->text($file, $line, $annotation)
 }
 
-sub class {
+sub class
+{
     my $self = shift;
     my ($file, $line, $annotation) = @_;
     return "" unless $line;
@@ -76,13 +84,9 @@ __END__
 
 Devel::Cover::Annotation::Random - Example annotation for formatters
 
-=head1 VERSION
-
-version 1.25
-
 =head1 SYNOPSIS
 
- cover -report text -annotation random -count 3  # Or any other report type
+ cover -report xxx -annotation random -count 3
 
 =head1 DESCRIPTION
 
@@ -97,9 +101,13 @@ It is designed to be called from the C<cover> program.
 
 Huh?
 
+=head1 VERSION
+
+Version 0.79 - 5th August 2011
+
 =head1 LICENCE
 
-Copyright 2004-2017, Paul Johnson (paul@pjcj.net)
+Copyright 2004-2011, Paul Johnson (pjcj@cpan.org)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

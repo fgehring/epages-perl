@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPI::Document 3"
-.TH PPI::Document 3 "2017-05-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPI::Document 3 "2011-02-26" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -174,8 +174,8 @@ the root node in a tree.
 \&\f(CW\*(C`STORABLE_thaw\*(C'\fR hooks to provide native support for Storable,
 if you have it installed.
 .PP
-However if you want to clone a Document, you are highly recommended
-to use the \f(CW\*(C`$Document\->clone\*(C'\fR method rather than Storable's
+However if you want to clone clone a Document, you are highly recommended
+to use the internal \f(CW\*(C`$Document\->clone\*(C'\fR method rather than Storable's
 \&\f(CW\*(C`dclone\*(C'\fR function (although \f(CW\*(C`dclone\*(C'\fR should still work).
 .SH "METHODS"
 .IX Header "METHODS"
@@ -225,7 +225,6 @@ optimisation flag, it is off by default and you will need to explicitly
 enable it.
 .PP
 Returns a \f(CW\*(C`PPI::Document\*(C'\fR object, or \f(CW\*(C`undef\*(C'\fR if parsing fails.
-PPI::Exception objects can also be thrown if there are parsing problems.
 .ie n .SS "set_cache $cache"
 .el .SS "set_cache \f(CW$cache\fP"
 .IX Subsection "set_cache $cache"

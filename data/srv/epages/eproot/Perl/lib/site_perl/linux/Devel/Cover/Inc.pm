@@ -1,4 +1,4 @@
-# Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+# Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -12,15 +12,14 @@ package Devel::Cover::Inc;
 use strict;
 use warnings;
 
-our $VERSION      = "1.25";
+our $VERSION      = "0.79";
 our $Perl_version = '5.012003';
-our $Base         = '/root/.cpanm/work/1497446926.3452/Devel-Cover-1.25';
-our @Inc          = qw( . /srv/epages/eproot/Cartridges /srv/epages/eproot/epages-perl/data/srv/epages/eproot/Perl/lib /srv/epages/eproot/epages-perl/data/srv/epages/eproot/Perl/lib/linux /srv/epages/eproot/epages-perl/data/srv/epages/eproot/Perl/lib/site_perl /srv/epages/eproot/epages-perl/data/srv/epages/eproot/Perl/lib/site_perl/i686-linux-thread-multi-64int /srv/epages/eproot/epages-perl/data/srv/epages/eproot/Perl/lib/site_perl/linux );
-chomp (our $Perl  = <<'EOV');  # Careful with \\ in the path
-/srv/epages/eproot/epages-perl/data/srv/epages/eproot/Perl/bin/perl.exe
-EOV
+our $Base         = '.';
+our @Inc = qq( . $ENV{EPAGES_CARTRIDGES} $ENV{EPAGES_PERL}/lib $ENV{EPAGES_PERL}/lib/linux $ENV{EPAGES_PERL}/lib/site_perl $ENV{EPAGES_PERL}/lib/site_perl/linux );
+our $Perl = $ENV{PERL};
 
-if ($Perl_version ne $]) {
+if ($Perl_version ne $])
+{
     print STDERR <<"EOM";
 
 This version of Devel::Cover was built with Perl version $Perl_version.

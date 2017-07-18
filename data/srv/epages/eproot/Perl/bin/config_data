@@ -1,5 +1,8 @@
 #!/srv/epages/eproot/Perl/bin/perl
 
+eval 'exec perl  -S $0 ${1+"$@"}'
+    if 0; # not running under some shell
+
 use strict;
 use Module::Build 0.25;
 use Getopt::Long;

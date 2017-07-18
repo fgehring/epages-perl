@@ -1,12 +1,13 @@
 package Module::Build::Platform::Unix;
 
 use strict;
-use warnings;
-our $VERSION = '0.4224';
+use vars qw($VERSION);
+$VERSION = '0.4203';
 $VERSION = eval $VERSION;
 use Module::Build::Base;
 
-our @ISA = qw(Module::Build::Base);
+use vars qw(@ISA);
+@ISA = qw(Module::Build::Base);
 
 sub is_executable {
   # We consider the owner bit to be authoritative on a file, because
@@ -42,8 +43,8 @@ sub _detildefy {
   my ($self, $value) = @_;
   $value =~ s[^~([^/]+)?(?=/|$)]   # tilde with optional username
     [$1 ?
-     (eval{(getpwnam $1)[7]} || "~$1") :
-     ($ENV{HOME} || eval{(getpwuid $>)[7]} || glob("~"))
+     ((getpwnam $1)[7] || "~$1") :
+     ($ENV{HOME} || (getpwuid $>)[7])
     ]ex;
   return $value;
 }

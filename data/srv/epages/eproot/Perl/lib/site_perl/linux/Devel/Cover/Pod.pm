@@ -1,4 +1,4 @@
-# Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+# Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,7 +10,7 @@ package Devel::Cover::Pod;
 use strict;
 use warnings;
 
-our $VERSION = '1.25'; # VERSION
+our $VERSION = "0.79";
 
 use base "Devel::Cover::Criterion";
 
@@ -23,7 +23,8 @@ sub percentage  { $_[0][0] ? 100 : 0 }
 sub error       { $_[0][0] xor !$_[0][2] }
 sub criterion   { 'pod' }
 
-sub calculate_summary {
+sub calculate_summary
+{
     my $self = shift;
     my ($db, $file) = @_;
 
@@ -45,10 +46,6 @@ __END__
 
 Devel::Cover::Pod - Code coverage metrics for Perl
 
-=head1 VERSION
-
-version 1.25
-
 =head1 SYNOPSIS
 
  use Devel::Cover::Pod;
@@ -67,9 +64,13 @@ Module for storing pod coverage information.
 
 Huh?
 
+=head1 VERSION
+
+Version 0.79 - 5th August 2011
+
 =head1 LICENCE
 
-Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

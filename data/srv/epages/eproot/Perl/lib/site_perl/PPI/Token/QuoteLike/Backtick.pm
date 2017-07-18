@@ -24,6 +24,8 @@ There are no methods available for C<PPI::Token::QuoteLike::Backtick>
 beyond those provided by the parent L<PPI::Token::QuoteLike>, L<PPI::Token>
 and L<PPI::Element> classes.
 
+Got any ideas for methods? Submit a report to rt.cpan.org!
+
 =cut
 
 use strict;
@@ -32,7 +34,7 @@ use PPI::Token::_QuoteEngine::Simple ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-        $VERSION = '1.224';
+        $VERSION = '1.215';
         @ISA     = qw{
                 PPI::Token::_QuoteEngine::Simple
                 PPI::Token::QuoteLike

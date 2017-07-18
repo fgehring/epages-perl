@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Utils/POD.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Utils::POD;
 
 use 5.006001;
@@ -15,9 +22,9 @@ use Perl::Critic::Exception::Fatal::Generic qw< throw_generic >;
 use Perl::Critic::Exception::IO qw< throw_io >;
 use Perl::Critic::Utils qw< :characters >;
 
-use Exporter 'import';
+use base 'Exporter';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 

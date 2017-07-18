@@ -1,10 +1,10 @@
 package Module::Build::PPMMaker;
 
 use strict;
-use warnings;
 use Config;
+use vars qw($VERSION);
 
-our $VERSION = '0.4224';
+$VERSION = '0.4203';
 $VERSION = eval $VERSION;
 
 # This code is mostly borrowed from ExtUtils::MM_Unix 6.10_03, with a
@@ -56,11 +56,11 @@ PPD
 
   foreach my $type (qw(requires)) {
     my $prereq = $build->$type();
-    foreach my $modname (sort keys %$prereq) {
+    while (my ($modname, $spec) = each %$prereq) {
       next if $modname eq 'perl';
 
       my $min_version = '0.0';
-      foreach my $c ($build->_parse_conditions($prereq->{$modname})) {
+      foreach my $c ($build->_parse_conditions($spec)) {
         my ($op, $version) = $c =~ /^\s*  (<=?|>=?|==|!=)  \s*  ([\w.]+)  \s*$/x;
 
         # This is a nasty hack because it fails if there is no >= op

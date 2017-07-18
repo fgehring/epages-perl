@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPI::Tokenizer 3"
-.TH PPI::Tokenizer 3 "2017-05-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPI::Tokenizer 3 "2011-02-26" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -173,7 +173,7 @@ This is where the truism \*(L"Only perl can parse Perl\*(R" comes from.
 .PP
 \&\s-1PPI\s0 uses a completely different approach by abandoning the (impossible)
 ability to parse Perl the same way that the interpreter does, and instead
-parsing the source as a document, using a document structure independently
+parsing the source as a document, using a document structure independantly
 derived from the Perl documentation and approximating the perl interpreter
 interpretation as closely as possible.
 .PP
@@ -243,7 +243,7 @@ Returns a reference to an \s-1ARRAY\s0 of PPI::Token objects on success
 or throws an exception on error.
 .SS "increment_cursor"
 .IX Subsection "increment_cursor"
-Although exposed as a public method, \f(CW\*(C`increment_cursor\*(C'\fR is implemented
+Although exposed as a public method, \f(CW\*(C`increment_method\*(C'\fR is implemented
 for expert use only, when writing lexers or other components that work
 directly on token streams.
 .PP
@@ -254,7 +254,7 @@ Return true if the cursor is incremented, \f(CW0\fR if already at the end of
 the file, or \f(CW\*(C`undef\*(C'\fR on error.
 .SS "decrement_cursor"
 .IX Subsection "decrement_cursor"
-Although exposed as a public method, \f(CW\*(C`decrement_cursor\*(C'\fR is implemented
+Although exposed as a public method, \f(CW\*(C`decrement_method\*(C'\fR is implemented
 for expert use only, when writing lexers or other components that work
 directly on token streams.
 .PP
@@ -270,7 +270,7 @@ beginning of the file, or \f(CW\*(C`undef\*(C'\fR on error.
 .IX Header "NOTES"
 .SS "How the Tokenizer Works"
 .IX Subsection "How the Tokenizer Works"
-Understanding the Tokenizer is not for the faint-hearted. It is by far
+Understanding the Tokenizer is not for the feint-hearted. It is by far
 the most complex and twisty piece of perl I've ever written that is actually
 still built properly and isn't a terrible spaghetti-like mess. In fact, you
 probably want to skip this section.
@@ -299,7 +299,7 @@ called in whatever token class we are currently in, which will examine the
 character at the current position, and handle it.
 .PP
 As the handler methods in the various token classes are called, they
-build up an output token array for the source code.
+build up a output token array for the source code.
 .PP
 Various parts of the Tokenizer use look-ahead, arbitrary-distance
 look-behind (although currently the maximum is three significant tokens),

@@ -15,14 +15,14 @@ Test::Warn - Perl extension to test methods for warnings
   warning_like  {foo(-dri => "/")} qr/unknown param/i, "an unknown parameter test";
   warnings_like {bar(1,1)} [qr/width.*small/i, qr/height.*small/i];
 
-  warning_is    {foo()} {carped => "didn't find the right parameters"};
+  warning_is    {foo()} {carped => "didn't found the right parameters"};
   warnings_like {foo()} [qr/undefined/,qr/undefined/,{carped => qr/no result/i}];
 
   warning_like {foo(undef)}                 'uninitialized';
   warning_like {bar(file => '/etc/passwd')} 'io';
 
-  warning_like {eval q/"$x"; $x;/}
-               [qw/void uninitialized/],
+  warning_like {eval q/"$x"; $x;/} 
+               [qw/void uninitialized/], 
                "some warnings at compile time";
 
   warnings_exist {...} [qr/expected warning/], "Expected warning is thrown";
@@ -33,7 +33,7 @@ A good style of Perl programming calls for a lot of diverse regression tests.
 
 This module provides a few convenience methods for testing warning based code.
 
-If you are not already familiar with the Test::More manpage
+If you are not already familiar with the Test::More manpage 
 now would be the time to go take a look.
 
 =head2 FUNCTIONS
@@ -42,30 +42,29 @@ now would be the time to go take a look.
 
 =item warning_is BLOCK STRING, TEST_NAME
 
-Tests that BLOCK gives the specified warning exactly once.
-The test fails if the BLOCK warns more than once or does not warn at all.
-If the string is undef,
+Tests that BLOCK gives exactly the one specified warning.
+The test fails if the BLOCK warns more then one times or doesn't warn.
+If the string is undef, 
 then the tests succeeds if the BLOCK doesn't give any warning.
-Another way to say that there are no warnings in the block
-is C<warnings_are {foo()} [], "no warnings">.
+Another way to say that there aren't any warnings in the block,
+is C<warnings_are {foo()} [], "no warnings in">.
 
-If you want to test for a warning given by Carp,
-you have to write something like:
+If you want to test for a warning given by carp,
+You have to write something like:
 C<warning_is {carp "msg"} {carped =E<gt> 'msg'}, "Test for a carped warning">.
-The test will fail if a "normal" warning is found instead of a "carped" one.
+The test will fail,
+if a "normal" warning is found instead of a "carped" one.
 
-Note: C<warn "foo"> would print something like C<foo at -e line 1>.
-This method ignores everything after the "at". Thus to match this warning
+Note: C<warn "foo"> would print something like C<foo at -e line 1>. 
+This method ignores everything after the at. That means, to match this warning
 you would have to call C<warning_is {warn "foo"} "foo", "Foo succeeded">.
 If you need to test for a warning at an exactly line,
-try something like C<warning_like {warn "foo"} qr/at XYZ.dat line 5/>.
-
-Warn messages with a trailing newline (like C<warn "foo\n">) don't produce the C<at -e line 1> message by Perl. Up to Test::Warn 0.30 such warning weren't supported by C<warning_is {warn "foo\n"} "foo\n">. Starting with version 0.31 they are supported, but also marked as experimental.
+try better something like C<warning_like {warn "foo"} qr/at XYZ.dat line 5/>.
 
 warning_is and warning_are are only aliases to the same method.
 So you also could write
 C<warning_is {foo()} [], "no warning"> or something similar.
-I decided to give two methods the same name to improve readability.
+I decided to give two methods to have some better readable method names.
 
 A true value is returned if the test succeeds, false otherwise.
 
@@ -75,31 +74,31 @@ The test name is optional, but recommended.
 =item warnings_are BLOCK ARRAYREF, TEST_NAME
 
 Tests to see that BLOCK gives exactly the specified warnings.
-The test fails if the warnings from BLOCK are not exactly the ones in ARRAYREF.
-If the ARRAYREF is equal to [],
+The test fails if the BLOCK warns a different number than the size of the ARRAYREf
+would have expected.
+If the ARRAYREF is equal to [], 
 then the test succeeds if the BLOCK doesn't give any warning.
 
 Please read also the notes to warning_is as these methods are only aliases.
 
-If you want more than one test for carped warnings, try this:
+If you want more than one tests for carped warnings look that way:
 C<warnings_are {carp "c1"; carp "c2"} {carped => ['c1','c2'];> or
 C<warnings_are {foo()} ["Warning 1", {carped => ["Carp 1", "Carp 2"]}, "Warning 2"]>.
-Note that C<{carped => ...}> must always be a hash ref.
+Note that C<{carped => ...}> has always to be a hash ref.
 
 =item warning_like BLOCK REGEXP, TEST_NAME
 
-Tests that BLOCK gives exactly one warning and it can be matched by
-the given regexp.
-If the string is undef,
-then the tests succeeds if the BLOCK doesn't give any warning.
+Tests that BLOCK gives exactly one warning and it can be matched to the given regexp.
+If the string is undef, 
+then the tests succeeds iff the BLOCK doesn't give any warning.
 
-The REGEXP is matched against the whole warning line,
-which in general has the form "WARNING at __FILE__ line __LINE__".
-So you can check for a warning in the file Foo.pm on line 5 with
+The REGEXP is matched after the whole warn line,
+which consists in general of "WARNING at __FILE__ line __LINE__".
+So you can check for a warning in at File Foo.pm line 5 with
 C<warning_like {bar()} qr/at Foo.pm line 5/, "Testname">.
-I don't know whether it makes sense to do such a test :-(
+I don't know whether it's sensful to do such a test :-(
 However, you should be prepared as a matching with 'at', 'file', '\d'
-or similar will always pass.
+or similar will always pass. 
 Think to the qr/^foo/ if you want to test for warning "foo something" in file foo.pl.
 
 You can also write the regexp in a string as "/.../"
@@ -124,18 +123,20 @@ The test name is optional, but recommended.
 Tests whether a BLOCK gives exactly one warning of the passed category.
 The categories are grouped in a tree,
 like it is expressed in perllexwarn.
-Also see L</BUGS AND LIMITATIONS>.
-
+Note, that they have the hierarchical structure from perl 5.8.0,
+wich has a little bit changed to 5.6.1 or earlier versions
+(You can access the internal used tree with C<$Test::Warn::Categorization::tree>, 
+although I wouldn't recommend it)
 
 Thanks to the grouping in a tree,
 it's simple possible to test for an 'io' warning,
 instead for testing for a 'closed|exec|layer|newline|pipe|unopened' warning.
 
-Note, that warnings occurring at compile time,
-can only be caught in an eval block. So
+Note, that warnings occuring at compile time,
+can only be catched in an eval block. So
 
-  warning_like {eval q/"$x"; $x;/}
-               [qw/void uninitialized/],
+  warning_like {eval q/"$x"; $x;/} 
+               [qw/void uninitialized/], 
                "some warnings at compile time";
 
 will work,
@@ -148,7 +149,7 @@ created with warnings::register.
 =item warnings_like BLOCK ARRAYREF, TEST_NAME
 
 Tests to see that BLOCK gives exactly the number of the specified warnings
-and all the warnings have to match in the defined order to the
+and all the warnings have to match in the defined order to the 
 passed regexes.
 
 Please read also the notes to warning_like as these methods are only aliases.
@@ -157,7 +158,7 @@ Similar to C<warnings_are>,
 you can test for multiple warnings via C<carp>
 and for warning categories, too:
 
-  warnings_like {foo()}
+  warnings_like {foo()} 
                 [qr/bar warning/,
                  qr/bar warning/,
                  {carped => qr/bar warning/i},
@@ -186,14 +187,7 @@ C<warning_like>,
 C<warnings_like>,
 C<warnings_exist> by default.
 
-=head1 BUGS AND LIMITATIONS
-
-Category check is done as qr/category_name/. In some case this works, like for
-category 'uninitialized'. For 'utf8' it does not work. Perl does not have a list
-of warnings, so it is not possible to generate one for Test::Warn.
-If you want to add a warning to a category, send a pull request. Modifications
-should be done to %warnings_in_category. You should look into perl source to check
-how warning is looking exactly.
+=head1 BUGS
 
 Please note that warnings with newlines inside are making a lot of trouble.
 The only sensible way to handle them is to use are the C<warning_like> or
@@ -214,13 +208,13 @@ tell me if you find a bug.
 Improve this documentation.
 
 The code has some parts doubled - especially in the test scripts.
-This is really awkward and must be changed.
+This is really awkward and has to be changed.
 
-Please feel free to suggest improvements.
+Please feel free to suggest me any improvements.
 
 =head1 SEE ALSO
 
-Have a look to the similar modules: L<Test::Exception>, L<Test::Trap>.
+Have a look to the similar L<Test::Exception> module. Test::Trap
 
 =head1 THANKS
 
@@ -235,10 +229,10 @@ Janek Schleicher, E<lt>bigj AT kamelfreund.deE<gt>
 
 Copyright 2002 by Janek Schleicher
 
-Copyright 2007-2014 by Alexandr Ciornii, L<http://chorny.net/>
+Copyright 2007-2011 by Alexandr Ciornii, L<http://chorny.net/>
 
 This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+it under the same terms as Perl itself. 
 
 =cut
 
@@ -252,14 +246,14 @@ use warnings;
 #use Array::Compare;
 use Sub::Uplevel 0.12;
 
-our $VERSION = '0.32';
+our $VERSION = '0.23';
 
 require Exporter;
 
 our @ISA = qw(Exporter);
 
 our %EXPORT_TAGS = ( 'all' => [ qw(
-    @EXPORT
+    @EXPORT     
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
@@ -369,12 +363,7 @@ sub _cmp_got_to_exp_warning {
     my ($got_kind, $got_msg) = %{ shift() };
     my ($exp_kind, $exp_msg) = %{ shift() };
     return 0 if ($got_kind eq 'warn') && ($exp_kind eq 'carped');
-    my $cmp;
-    if ($exp_msg =~ /\n$/s) {
-      $cmp = "$got_msg\n" eq $exp_msg;
-    } else {
-      $cmp = $got_msg =~ /^\Q$exp_msg\E at .+ line \d+\.?$/s;
-    }
+    my $cmp = $got_msg =~ /^\Q$exp_msg\E at .+ line \d+\.?$/;
     return $cmp;
 }
 
@@ -433,39 +422,114 @@ sub _diag_exp_warning {
     $Tester->diag( "didn't expect to find a warning" ) unless @_;
 }
 
+package Test::Warn::DAG_Node_Tree;
+
+use strict;
+use warnings;
+use base 'Tree::DAG_Node';
+
+
+sub nice_lol_to_tree {
+    my $class = shift;
+    $class->new(
+    {
+        name      => shift(),
+        daughters => [_nice_lol_to_daughters(shift())]
+    });
+}
+
+sub _nice_lol_to_daughters {
+    my @names = @{ shift() };
+    my @daughters = ();
+    my $last_daughter = undef;
+    foreach (@names) {
+        if (ref($_) ne 'ARRAY') {
+            $last_daughter = Tree::DAG_Node->new({name => $_});
+            push @daughters, $last_daughter;
+        } else {
+            $last_daughter->add_daughters(_nice_lol_to_daughters($_));
+        }
+    }
+    return @daughters;
+}
+
+sub depthsearch {
+    my ($self, $search_name) = @_;
+    my $found_node = undef;
+    $self->walk_down({callback => sub {
+        my $node = shift();
+        $node->name eq $search_name and $found_node = $node,!"go on";
+        "go on with searching";
+    }});
+    return $found_node;
+}
+
 package Test::Warn::Categorization;
 
 use Carp;
 
-my $bits = \%warnings::Bits;
-my @warnings = sort grep {
-  my $warn_bits = $bits->{$_};
-  #!grep { $_ ne $warn_bits && ($_ & $warn_bits) eq $_ } values %$bits;
-} keys %$bits;
-
-my %warnings_in_category = (
-  'utf8' => ['Wide character in \w+\b',],
+our $tree = Test::Warn::DAG_Node_Tree->nice_lol_to_tree(
+   all => [ 'closure',
+            'deprecated',
+            'exiting',
+            'glob',
+            'io'           => [ 'closed',
+                                'exec',
+                                'layer',
+                                'newline',
+                                'pipe',
+                                'unopened'
+                              ],
+            'misc',
+            'numeric',
+            'once',
+            'overflow',
+            'pack',
+            'portable',
+            'recursion',
+            'redefine',
+            'regexp',
+            'severe'       => [ 'debugging',
+                                'inplace',
+                                'internal',
+                                'malloc'
+                              ],
+            'signal',
+            'substr',
+            'syntax'       => [ 'ambiguous',
+                                'bareword',
+                                'digit',
+                                'parenthesis',
+                                'precedence',
+                                'printf',
+                                'prototype',
+                                'qw',
+                                'reserved',
+                                'semicolon'
+                              ],
+            'taint',
+            'threads',
+            'uninitialized',
+            'unpack',
+            'untie',
+            'utf8',
+            'void',
+            'y2k'
+           ]
 );
 
 sub _warning_category_regexp {
-    my $category = shift;
-    my $category_bits = $bits->{$category} or return;
-    my @category_warnings
-      = grep { ($bits->{$_} & $category_bits) eq $bits->{$_} } @warnings;
-
-    my @list =
-      map { exists $warnings_in_category{$_}? (@{ $warnings_in_category{$_}}) : ($_) }
-      @category_warnings;
-    my $re = join "|", @list;
-    return qr/$re/;
+    my $sub_tree = $tree->depthsearch(shift()) or return;
+    my $re = join "|", map {$_->name} $sub_tree->leaves_under;
+    return qr/(?=\w)$re/;
 }
 
 sub warning_like_category {
     my ($warning, $category) = @_;
-    my $re = _warning_category_regexp($category) or
+    my $re = _warning_category_regexp($category) or 
         carp("Unknown warning category '$category'"),return;
     my $ok = $warning =~ /$re/;
     return $ok;
 }
-
+ 
 1;

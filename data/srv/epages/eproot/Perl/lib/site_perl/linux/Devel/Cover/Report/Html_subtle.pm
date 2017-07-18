@@ -2,29 +2,17 @@ package Devel::Cover::Report::Html_subtle;
 use strict;
 use warnings;
 
-our $VERSION = '1.25'; # VERSION
+our $VERSION = "0.79";
 
-use Devel::Cover::DB;
-use Devel::Cover::Html_Common "launch";
-use Devel::Cover::Truth_Table;
+use Devel::Cover::DB 0.79;
+use Devel::Cover::Truth_Table 0.79;
 
-use Getopt::Long;
 use Template 2.00;
-use HTML::Entities;
+use CGI;
 
 my $Template;
 my %Filenames;
 my %File_exists;
-
-sub get_options {
-    my ($self, $opt) = @_;
-    $opt->{option}{outputfile} = "coverage.html";
-    die "Invalid command line options" unless
-        GetOptions($opt->{option},
-                   qw(
-                       outputfile=s
-                     ));
-}
 
 #-------------------------------------------------------------------------------
 # Subroutine : cvg_class()
@@ -76,9 +64,8 @@ sub print_summary {
         my $part = $db->{summary}{$file};
         for my $criterion (@showing) {
             my $pc = exists $part->{$criterion}
-                ? do { my $x = sprintf "%5.2f", $part->{$criterion}{percentage};
-                       chop $x; $x }
-                : "n/a";
+            ? sprintf "%4.1f", $part->{$criterion}{percentage}
+            : "n/a";
 
             if ($pc ne 'n/a') {
                 if ($criterion ne 'time') {
@@ -87,9 +74,11 @@ sub print_summary {
                 if (exists $Filenames{$file}) {
                     if ($criterion eq 'branch') {
                         $vals{$file}{$criterion}{link} = "$Filenames{$file}--branch.html";
-                    } elsif ($criterion eq 'condition') {
+                    }
+                    elsif ($criterion eq 'condition') {
                         $vals{$file}{$criterion}{link} = "$Filenames{$file}--condition.html";
-                    } elsif ($criterion eq 'subroutine') {
+                    }
+                    elsif ($criterion eq 'subroutine') {
                         $vals{$file}{$criterion}{link} = "$Filenames{$file}--subroutine.html";
                     }
                 }
@@ -112,7 +101,7 @@ sub print_summary {
         vals        => \%vals,
     };
 
-    my $html = "$options->{outputdir}/$options->{option}{outputfile}";
+    my $html = "$options->{outputdir}/coverage.html";
     $Template->process("summary", $vars, $html) or die $Template->error();
 
     print "HTML output sent to $html\n";
@@ -163,7 +152,7 @@ sub print_file {
         my %metric = get_metrics($db, $options, $file_data, $.);
         my %line = (
             number  => $.,
-            text    => encode_entities($l),
+            text    => CGI::escapeHTML($l),
             metrics => [],
         );
         $line{text} =~ s/\t/        /g;
@@ -181,20 +170,25 @@ sub print_file {
                     link  => "$Filenames{$file}--branch.html#line$."};
                 }
                 push @{$line{metrics}}, \@p;
-            } elsif ($c eq 'condition') {
+            }
+            elsif ($c eq 'condition') {
                 my @tt = $file_data->condition->truth_table($.);
                 my @p;
-                if (@tt) {
+                if (@tt)
+                {
                     foreach (@tt) {
                         push @p, {text  => sprintf("%.0f", $_->[0]->percentage),
                         class => cvg_class($_->[0]->percentage),
                         link  => "$Filenames{$file}--condition.html#line$."};
                     }
-                } else {
+                }
+                else
+                {
                     push @p, { text => "expression contains > 16 terms: ignored" };
                 }
                 push @{$line{metrics}}, \@p;
-            } elsif ($c eq 'subroutine') {
+            }
+            elsif ($c eq 'subroutine') {
                 my @p;
                 while (my $o = shift @{$metric{$c}}) {
                     push @p, {text  => $o->covered,
@@ -202,7 +196,8 @@ sub print_file {
                     link  => "$Filenames{$file}--subroutine.html#line$."};
                 }
                 push @{$line{metrics}}, \@p;
-            } else {
+            }
+            else {
                 my @p;
                 while (my $o = shift @{$metric{$c}}) {
                     push @p, {text  => ($c =~ /statement|pod|time/) ? $o->covered : $o->percentage,
@@ -261,7 +256,7 @@ sub print_branches {
                 class      => cvg_class($b->percentage),
                 parts      => [{text => 'T', class => $tf[0] ? 'covered' : 'uncovered'},
                 {text => 'F', class => $tf[1] ? 'covered' : 'uncovered'}],
-                text       => encode_entities($b->text),
+                text       => CGI::escapeHTML($b->text),
             };
         }
     }
@@ -301,7 +296,7 @@ sub print_conditions {
                 ref        => "line$location",
                 percentage => sprintf("%.0f", $c->[0]->percentage),
                 class      => cvg_class($c->[0]->percentage),
-                condition  => encode_entities($c->[1]),
+                condition  => CGI::escapeHTML($c->[1]),
                 coverage   => $c->[0]->html,
             };
         }
@@ -329,9 +324,11 @@ sub print_subroutines {
     return unless $subroutines;
 
     my @data;
-    for my $location ($subroutines->items) {
+    for my $location ($subroutines->items)
+    {
         my $l = $subroutines->location($location);
-        for my $sub (@$l) {
+        for my $sub (@$l)
+        {
             push @data, {
                 ref   => "line$location",
                 line  => $location,
@@ -389,7 +386,7 @@ package Devel::Cover::Report::Html_subtle::Template::Provider;
 use strict;
 use warnings;
 
-our $VERSION = '1.25'; # VERSION
+our $VERSION = "0.79";
 
 use base "Template::Provider";
 
@@ -407,8 +404,8 @@ sub fetch {
 $Templates{html} = <<'EOT';
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-This file was generated by Devel::Cover Version $VERSION
-Devel::Cover is copyright 2001-2012, Paul Johnson (paul\@pjcj.net)
+This file was generated by Devel::Cover Version 0.79
+Devel::Cover is copyright 2001-2011, Paul Johnson (pjcj\@cpan.org)
 Devel::Cover is free. It is licensed under the same terms as Perl itself.
 The latest version of Devel::Cover should be available from my homepage:
 http://www.pjcj.net
@@ -704,15 +701,14 @@ s/^\s+//gm for values %Templates;
 
 =head1 NAME
 
-Devel::Cover::Report::Html_subtle - HTML backend for Devel::Cover
-
-=head1 VERSION
-
-version 1.25
+Devel::Cover::Report::Html_subtle - Backend for HTML reporting of coverage
+statistics
 
 =head1 SYNOPSIS
 
- cover -report html_subtle
+ use Devel::Cover::Report::Html_subtle;
+
+ Devel::Cover::Report::Html_subtle->report($db, $options);
 
 =head1 DESCRIPTION
 
@@ -730,9 +726,13 @@ Michael Carman (mjcarman@mchsi.com).
 
 Huh?
 
+=head1 VERSION
+
+Version 0.79 - 5th August 2011
+
 =head1 LICENCE
 
-Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

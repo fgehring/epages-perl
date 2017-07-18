@@ -25,6 +25,10 @@ will be the first child.
 This class provides no public methods beyond those provided by its
 superclass.
 
+This class provides the following public methods. Methods not documented
+here are private, and unsupported in the sense that the author reserves
+the right to change or remove them without notice.
+
 =cut
 
 package PPIx::Regexp::Structure::Switch;
@@ -34,10 +38,32 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Structure };
 
-our $VERSION = '0.051';
+use PPIx::Regexp::Constant qw{
+    MINIMUM_PERL
+    STRUCTURE_UNKNOWN
+    TOKEN_UNKNOWN
+};
+
+our $VERSION = '0.020';
+
+=begin comment
+
+sub perl_version_introduced {
+    my ( $self ) = @_;
+    my $condition = $self->child( 0 ) or return;
+    $condition->isa( 'PPIx::Regexp::Structure' )
+        and return MINIMUM_PERL;
+    my $content = $condition->content();
+    $content =~ m/ \( \d+ \) /smx and return MINIMUM_PERL;
+    return '5.009005';
+}
+
+=end comment
+
+=cut
 
 sub __PPIX_LEXER__finalize {
-    my ( $self, $lexer ) = @_;
+    my ( $self ) = @_;
 
     # Assume no errors.
     my $rslt = 0;
@@ -67,19 +93,20 @@ sub __PPIX_LEXER__finalize {
             $kid->isa( 'PPIx::Regexp::Token::Operator' ) or next;
             $kid->content() eq '|' or next;
             --$alternations >= 0 and next;
-            $kid->__error( 'Too many alternatives for switch' );
+            bless $kid, TOKEN_UNKNOWN;
+            $rslt++;
         }
     } else {
         # If we could not figure out how many alternations were allowed,
         # it means we did not understand our condition. Rebless
         # ourselves to the unknown structure and count a parse failure.
-        $self->__error( 'Switch condition not understood' );
+        bless $self, STRUCTURE_UNKNOWN;
         $rslt++;
     }
 
     # Delegate to the superclass to finalize our children, now that we
     # have finished messing with them.
-    $rslt += $self->SUPER::__PPIX_LEXER__finalize( $lexer );
+    $rslt = $self->SUPER::__PPIX_LEXER__finalize();
 
     return $rslt;
 }
@@ -99,7 +126,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

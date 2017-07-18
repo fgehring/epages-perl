@@ -28,9 +28,6 @@ or from the replacement side of an s///e. Technically, interpolations
 are also code, but they parse differently and therefore end up in a
 different token.
 
-This token may not appear inside a regex set (i.e. C<(?[ ... ])>. If
-found, it will become a C<PPIx::Regexp::Token::Unknown>.
-
 =head1 METHODS
 
 This class provides the following public methods. Methods not documented
@@ -47,35 +44,23 @@ use warnings;
 use base qw{ PPIx::Regexp::Token };
 
 use PPI::Document;
-use PPIx::Regexp::Constant qw{ COOKIE_REGEX_SET };
 use PPIx::Regexp::Util qw{ __instance };
 
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
-use constant TOKENIZER_ARGUMENT_REQUIRED => 1;
-use constant VERSION_WHEN_IN_REGEX_SET => undef;
+sub _new {
+    my ( $class, $content ) = @_;
+    ref $class and $class = ref $class;
 
-sub __new {
-    my ( $class, $content, %arg ) = @_;
-
-    defined $arg{perl_version_introduced}
-        or $arg{perl_version_introduced} = '5.005';
-
-    my $self = $class->SUPER::__new( $content, %arg );
-
-    # TODO sort this out, since Token::Interpolation is a subclass, and
-    # those are legal in regex sets
-    if ( $arg{tokenizer}->cookie( COOKIE_REGEX_SET ) ) {
-        my $ver = $self->VERSION_WHEN_IN_REGEX_SET()
-            or return $self->__error( 'Code token not valid in Regex set' );
-        $self->{perl_version_introduced} < $ver
-            and $self->{perl_version_introduced} = $ver;
+    my $self = {};
+    if ( __instance( $content, 'PPI::Document' ) ) {
+        $self->{ppi} = $content;
+    } elsif ( ref $content ) {
+        return;
+    } else {
+        $self->{content} = $content;
     }
-
-    $arg{tokenizer}->__recognize_postderef( $self )
-        and $self->{perl_version_introduced} < 5.019005
-        and $self->{perl_version_introduced} = '5.019005';
-
+    bless $self, $class;
     return $self;
 }
 
@@ -90,8 +75,9 @@ sub content {
     }
 }
 
-sub explain {
-    return 'Perl expression';
+sub perl_version_introduced {
+    my ( $self ) = @_;
+    return $self->{perl_version_introduced};
 }
 
 =head2 ppi
@@ -117,19 +103,33 @@ sub ppi {
 # sub can_be_quantified { return };
 
 {
-    no warnings qw{ qw };       ## no critic (ProhibitNoWarnings)
 
-    my %accept = map { $_ => 1 } qw{ $ $# @ % & * };
+    my %default = (
+        perl_version_introduced => '5.005',     # When (?{...}) introduced.
+    );
 
-    # Say what casts are accepted, since not all are in am
-    # interpolation.
-    sub __postderef_accept_cast {
-        return \%accept;
+    sub __PPIX_TOKEN__post_make {
+        my ( $self, $tokenizer, $arg ) = @_;
+
+        if ( 'HASH' eq ref $arg ) {
+            foreach my $key ( qw{ perl_version_introduced } ) {
+                exists $arg->{$key}
+                    and $self->{$key} = $arg->{$key};
+            }
+        }
+
+        foreach my $key ( keys %default ) {
+            exists $self->{$key}
+                or $self->{$key} = $default{$key};
+        }
+
+        return;
     }
+
 }
 
 sub __PPIX_TOKENIZER__regexp {
-    my ( undef, $tokenizer, $character ) = @_;
+    my ( $class, $tokenizer, $character ) = @_;
 
     $character eq '{' or return;
 
@@ -154,7 +154,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text
