@@ -41,7 +41,6 @@ use base qw{ PPIx::Regexp::Support };
 use Carp qw{ confess };
 use PPIx::Regexp::Constant qw{ TOKEN_LITERAL TOKEN_UNKNOWN };
 use PPIx::Regexp::Node::Range                           ();
-use PPIx::Regexp::Node::Unknown                         ();
 use PPIx::Regexp::Structure                             ();
 use PPIx::Regexp::Structure::Assertion                  ();
 use PPIx::Regexp::Structure::BranchReset                ();
@@ -54,15 +53,14 @@ use PPIx::Regexp::Structure::Modifier                   ();
 use PPIx::Regexp::Structure::NamedCapture               ();
 use PPIx::Regexp::Structure::Quantifier                 ();
 use PPIx::Regexp::Structure::Regexp                     ();
-use PPIx::Regexp::Structure::RegexSet                   ();
 use PPIx::Regexp::Structure::Replacement                ();
 use PPIx::Regexp::Structure::Switch                     ();
 use PPIx::Regexp::Structure::Unknown                    ();
 use PPIx::Regexp::Token::Unmatched                      ();
 use PPIx::Regexp::Tokenizer                             ();
-use PPIx::Regexp::Util qw{ __choose_tokenizer_class __instance };
+use PPIx::Regexp::Util qw{ __instance };
 
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
 =head2 new
 
@@ -83,25 +81,17 @@ tokenizer, which interprets them or not as the case may be.
         my ( $class, $tokenizer, %args ) = @_;
         ref $class and $class = ref $class;
 
-        unless ( __instance( $tokenizer, 'PPIx::Regexp::Tokenizer' ) ) {
-            my $tokenizer_class = __choose_tokenizer_class(
-                $tokenizer, \%args )
-                or do {
-                    $errstr = 'Data not supported';
-                    return;
-                };
-            $tokenizer = $tokenizer_class->new( $tokenizer, %args )
-                or do {
-                    $errstr = $tokenizer_class->errstr();
-                    return;
-                };
-        }
+        __instance( $tokenizer, 'PPIx::Regexp::Tokenizer' )
+            or $tokenizer = PPIx::Regexp::Tokenizer->new( $tokenizer, %args )
+            or do {
+                $errstr = PPIx::Regexp::Tokenizer->errstr();
+                return;
+            };
 
         my $self = {
-            deferred    => [],  # Deferred tokens
-            failures    => 0,
-            strict      => $args{strict},
-            tokenizer   => $tokenizer,
+            deferred => [],     # Deferred tokens
+            failures => 0,
+            tokenizer => $tokenizer,
         };
 
         bless $self, $class;
@@ -154,29 +144,22 @@ sub lex {
     $self->{failures} = 0;
 
     # Accept everything up to the first delimiter.
-    my $kind;   # Initial PPIx::Regexp::Token::Structure
     {
         my $token = $self->_get_token()
             or return $self->_finalize( @content );
         $token->isa( 'PPIx::Regexp::Token::Delimiter' ) or do {
-            not $kind
-                and $token->isa( 'PPIx::Regexp::Token::Structure' )
-                and $kind = $token;
             push @content, $token;
             redo;
         };
         $self->_unget_token( $token );
     }
 
-    my ( $part_0_class, $part_1_class ) =
-        $self->{tokenizer}->__part_classes();
-
     # Accept the first delimited structure.
-    push @content, ( my $part_0 = $self->_get_delimited(
-            $part_0_class ) );
+    push @content, ( my $regexp = $self->_get_delimited(
+            'PPIx::Regexp::Structure::Regexp' ) );
 
     # If we are a substitution ...
-    if ( defined $part_1_class ) {
+    if ( $content[0]->content() eq 's' ) {
 
         # Accept any insignificant stuff.
         while ( my $token = $self->_get_token() ) {
@@ -190,55 +173,60 @@ sub lex {
 
         # Figure out if we should expect an opening bracket.
         my $expect_open_bracket = $self->close_bracket(
-            $part_0->start( 0 ) ) || 0;
+            $regexp->start( 0 ) ) || 0;
 
         # Accept the next delimited structure.
         push @content, $self->_get_delimited(
-                $part_1_class,
-                $expect_open_bracket,
+            'PPIx::Regexp::Structure::Replacement',
+            $expect_open_bracket,
         );
     }
 
-    # Accept the modifiers (we hope!) plus any trailing white space.
-    while ( my $token = $self->_get_token() ) {
-        push @content, $token;
-    }
+    # Accept the modifiers, we hope.
+    push @content, $self->_get_token();
 
     # Let all the elements finalize themselves, recording any additional
     # errors as they do so.
     $self->_finalize( @content );
 
     # If we found a regular expression (and we should have done so) ...
-    if ( $part_0 && $part_0->can( 'max_capture_number' ) ) {
-        # TODO the above line is really ugly. I'm wondering about
-        # string implementations like:
-        # * return a $part_0_class of undef (but that complicates the
-        #   lexing of the structure itself);
-        # * hang this logic on the tokenizer somehow (where it seems out
-        #   of place)
-        # * hang this logic on PPIx::Regexp::Structure::Regexp and
-        #   ::Replacement.
-        # I also need to figure out how to make \n backreferences come
-        # out as literals. Maybe that is a job best done by the
-        # tokenizer.
+    if ( $regexp ) {
 
         # Retrieve the maximum capture group.
-        my $max_capture = $part_0->max_capture_number();
+        my $max_capture = $regexp->max_capture_number();
 
-        # Hashify the known capture names
-        my $capture_name = {
-            map { $_ => 1 } $part_0->capture_names(),
-        };
+        # If we have any back references
+        if ( my $backrefs = $regexp->find(
+                'PPIx::Regexp::Token::Backreference' ) ) {
 
-        # For all the backreferences found
-        foreach my $elem ( @{ $part_0->find(
-            'PPIx::Regexp::Token::Backreference' ) || [] } ) {
-            # Rebless them as needed, recording any errors found.
-            $self->{failures} +=
-                $elem->__PPIX_LEXER__rebless(
-                    capture_name        => $capture_name,
-                    max_capture         => $max_capture,
-                );
+            # The break point for capture group numbers is either 9 or
+            # the actual number found, whichever is greater.
+            my $limit = $max_capture > 9 ? $max_capture : 9;
+
+            foreach my $elem ( @{ $backrefs } ) {
+
+                # Named or relative captures are not at issue.
+                $elem->is_named() and next;
+                $elem->is_relative() and next;
+
+                # Anything less than or equal to the break point remains
+                # a capture group.
+                $elem->absolute() <= $limit and next;
+
+                # Anything greater than the break point (in decimal)
+                # gets made a literal. Because the literal is octal, we
+                # make an unknown instead if it contains non-octal
+                # digits.
+                if ( $elem->content() =~ m/ [89] /smx ) {
+                    bless $elem, TOKEN_UNKNOWN;
+                    # We must hand-increment the failures since we
+                    # already finalized.
+                    $self->{failures}++;
+                } else {
+                    bless $elem, TOKEN_LITERAL;
+                }
+
+            }
         }
     }
 
@@ -246,24 +234,12 @@ sub lex {
 
 }
 
-=head2 strict
-
-This method returns true or false based on the value of the C<'strict'>
-argument to C<new()>.
-
-=cut
-
-sub strict {
-    my ( $self ) = @_;
-    return $self->{strict};
-}
-
 # Finalize the content array, updating the parse failures count as we
 # go.
 sub _finalize {
     my ( $self, @content ) = @_;
     foreach my $elem ( @content ) {
-        $self->{failures} += $elem->__PPIX_LEXER__finalize( $self );
+        $self->{failures} += $elem->__PPIX_LEXER__finalize();
     }
     defined wantarray and return @content;
     return;
@@ -275,7 +251,6 @@ sub _finalize {
         '{' => '}',
         '(' => ')',
         '[' => ']',
-        '(?['   => '])',
     ##  '<' => '>',
     );
 
@@ -327,7 +302,7 @@ sub _finalize {
 
                     # If the close bracket is not a parenthesis, it becomes
                     # a literal.
-                    TOKEN_LITERAL->__PPIX_ELEM__rebless( $token );
+                    bless $token, TOKEN_LITERAL;
                     push @{ $rslt[-1] }, $token;
 
                 } elsif ( $content eq ')'
@@ -341,8 +316,7 @@ sub _finalize {
 
                     # Unmatched close with no recovery.
                     $self->{failures}++;
-                    PPIx::Regexp::Token::Unmatched->
-                        __PPIX_ELEM__rebless( $token );
+                    bless $token, 'PPIx::Regexp::Token::Unmatched';
                     push @{ $rslt[-1] }, $token;
                 }
 
@@ -352,12 +326,10 @@ sub _finalize {
 
             # We have to hand-roll the Range object.
             if ( __instance( $rslt[-1][-2], 'PPIx::Regexp::Token::Operator' )
-                && $rslt[-1][-2]->content() eq '-'
-                && $rslt[-1][0] eq ']'  # It's a character class
-            ) {
+                && $rslt[-1][-2]->content() eq '-' ) {
                 my @tokens = splice @{ $rslt[-1] }, -3;
                 push @{ $rslt[-1] },
-                    PPIx::Regexp::Node::Range->__new( @tokens );
+                    PPIx::Regexp::Node::Range->_new( @tokens );
             }
         }
 
@@ -374,7 +346,7 @@ sub _finalize {
             my @last = @{ pop @rslt };
             shift @last;
             push @last, $self->_get_token();
-            return $class->__new( @last );
+            return $class->_new( @last );
         } else {
             confess "Missing data";
         }
@@ -405,7 +377,6 @@ sub _get_token {
         '(' => '_round',
         '[' => '_square',
         '{' => '_curly',
-        '(?['   => '_regex_set',
     );
 
     sub _make_node {
@@ -417,29 +388,28 @@ sub _get_token {
         if ( my $method = $handler{ $args[0]->content() } ) {
             @node = $self->$method( \@args );
         }
-        @node or @node = PPIx::Regexp::Structure->__new( @args );
+        @node or @node = PPIx::Regexp::Structure->_new( @args );
         push @{ $self->{_rslt}[-1] }, @node;
         return;
     }
 
 }
 
-# Called as $self->$method( ... ) in _make_node(), above
-sub _curly {    ## no critic (ProhibitUnusedPrivateSubroutines)
+sub _curly {
     my ( $self, $args ) = @_;
 
     if ( $args->[-1] && $args->[-1]->is_quantifier() ) {
 
         # If the tokenizer has marked the right curly as a quantifier,
         # make the whole thing a quantifier structure.
-        return PPIx::Regexp::Structure::Quantifier->__new( @{ $args } );
+        return PPIx::Regexp::Structure::Quantifier->_new( @{ $args } );
 
     } elsif ( $args->[-1] ) {
 
         # If there is a right curly but it is not a quantifier,
         # make both curlys into literals.
         foreach my $inx ( 0, -1 ) {
-            TOKEN_LITERAL->__PPIX_ELEM__rebless( $args->[$inx] );
+            bless $args->[$inx], TOKEN_LITERAL;
         }
 
         # Try to recover possible quantifiers not recognized because we
@@ -452,13 +422,12 @@ sub _curly {    ## no critic (ProhibitUnusedPrivateSubroutines)
 
         # If there is no right curly, just make a generic structure
         # TODO maybe this should be something else?
-        return PPIx::Regexp::Structure->__new( @{ $args } );
+        return PPIx::Regexp::Structure->_new( @{ $args } );
     }
 }
 
 # Recover from an unclosed left curly.
-# Called as $self->$revover( ... ) in _get_delimited, above
-sub _recover_curly {    ## no critic (ProhibitUnusedPrivateSubroutines)
+sub _recover_curly {
     my ( $self, $token ) = @_;
 
     # Get all the stuff we have accumulated for this curly.
@@ -467,17 +436,8 @@ sub _recover_curly {    ## no critic (ProhibitUnusedPrivateSubroutines)
     # Lose the right bracket, which we have already failed to match.
     shift @content;
 
-    # Rebless the left curly appropriately
-    if ( $self->{_rslt}[0][-1]->isa( 'PPIx::Regexp::Token::Assertion' )
-        && q<\b> eq $self->{_rslt}[0][-1]->content() ) {
-        # If following \b, it becomes an unknown.
-        TOKEN_UNKNOWN->__PPIX_ELEM__rebless( $content[0],
-            error       => 'Unterminated bound type',
-        );
-    } else {
-        # Rebless the left curly to a literal.
-        TOKEN_LITERAL->__PPIX_ELEM__rebless( $content[0] );
-    }
+    # Rebless the left curly to a literal.
+    bless $content[0], TOKEN_LITERAL;
 
     # Try to recover possible quantifiers not recognized because we
     # thought this was a structure.
@@ -509,22 +469,20 @@ sub _recover_curly {    ## no critic (ProhibitUnusedPrivateSubroutines)
 }
 
 sub _recover_curly_quantifiers {
-    my ( undef, $args ) = @_;   # Invocant unused
+    my ( $self, $args ) = @_;
 
     if ( __instance( $args->[0], TOKEN_LITERAL )
         && __instance( $args->[1], TOKEN_UNKNOWN )
         && PPIx::Regexp::Token::Quantifier->could_be_quantifier(
         $args->[1]->content() )
     ) {
-        PPIx::Regexp::Token::Quantifier->
-            __PPIX_ELEM__rebless( $args->[1] );
+        bless $args->[1], 'PPIx::Regexp::Token::Quantifier';
 
         if ( __instance( $args->[2], TOKEN_UNKNOWN )
             && PPIx::Regexp::Token::Greediness->could_be_greediness(
                 $args->[2]->content() )
         ) {
-            PPIx::Regexp::Token::Greediness
-                ->__PPIX_ELEM__rebless( $args->[2] );
+            bless $args->[2], 'PPIx::Regexp::Token::Greediness';
         }
 
     }
@@ -532,41 +490,16 @@ sub _recover_curly_quantifiers {
     return;
 }
 
-sub _in_regex_set {
-    my ( $self ) = @_;
-    foreach my $stack_entry ( reverse @{ $self->{_rslt} } ) {
-        $stack_entry->[0] eq '])'
-            and return 1;
-    }
-    return 0;
-}
-
-# Called as $self->$method( ... ) in _make_node(), above
-sub _round {    ## no critic (ProhibitUnusedPrivateSubroutines)
+sub _round {
     my ( $self, $args ) = @_;
 
-    # If we're inside a regex set, parens do not capture.
-    $self->_in_regex_set()
-        and return PPIx::Regexp::Structure->__new( @{ $args } );
-
-    # If /n is asserted, parens do not capture.
-    $self->{tokenizer}->modifier( 'n' )
-        and return PPIx::Regexp::Structure->__new( @{ $args } );
-
     # The instantiator will rebless based on the first token if need be.
-    return PPIx::Regexp::Structure::Capture->__new( @{ $args } );
+    return PPIx::Regexp::Structure::Capture->_new( @{ $args } );
 }
 
-# Called as $self->$method( ... ) in _make_node(), above
-sub _square {   ## no critic (ProhibitUnusedPrivateSubroutines)
-    my ( undef, $args ) = @_;   # Invocant unused
-    return PPIx::Regexp::Structure::CharClass->__new( @{ $args } );
-}
-
-# Called as $self->$method( ... ) in _make_node(), above
-sub _regex_set {        ## no critic (ProhibitUnusedPrivateSubroutines)
-    my ( undef, $args ) = @_;   # Invocant unused
-    return PPIx::Regexp::Structure::RegexSet->__new( @{ $args } );
+sub _square {
+    my ( $self, $args ) = @_;
+    return PPIx::Regexp::Structure::CharClass->_new( @{ $args } );
 }
 
 #       $self->_unget_token( $token );
@@ -597,7 +530,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

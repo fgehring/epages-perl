@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/TestingAndDebugging/ProhibitProlongedStrictureOverride.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::TestingAndDebugging::ProhibitProlongedStrictureOverride;
 
 use 5.006001;
@@ -8,7 +15,7 @@ use Readonly;
 use Perl::Critic::Utils qw{ :severities };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -30,7 +37,7 @@ sub supported_parameters {
 }
 
 sub default_severity { return $SEVERITY_HIGH            }
-sub default_themes   { return qw( core pbp bugs certrec )       }
+sub default_themes   { return qw( core pbp bugs )       }
 sub applies_to       { return 'PPI::Statement::Include' }
 
 #-----------------------------------------------------------------------------

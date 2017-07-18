@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Policy::Modules::RequireVersionVar 3"
-.TH Perl::Critic::Policy::Modules::RequireVersionVar 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Policy::Modules::RequireVersionVar 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -164,11 +164,11 @@ Perl's version system does not recognize lexical variables such as
 .PP
 so they are not accepted by this policy.
 .PP
-A common practice is to use the \f(CW\*(C`$Revision$\*(C'\fR keyword to
+A common practice is to use the \f(CW\*(C`$Revision: 4078 $\*(C'\fR keyword to
 automatically define the \f(CW$VERSION\fR variable like this:
 .PP
 .Vb 1
-\&    our ($VERSION) = \*(Aq$Revision$\*(Aq =~ m{ \e$Revision: \es+ (\eS+) }x;
+\&    our ($VERSION) = \*(Aq$Revision: 4078 $\*(Aq =~ m{ \e$Revision: \es+ (\eS+) }x;
 .Ve
 .SH "CONFIGURATION"
 .IX Header "CONFIGURATION"

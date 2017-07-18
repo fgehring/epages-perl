@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Policy::Subroutines::ProhibitReturnSort 3"
-.TH Perl::Critic::Policy::Subroutines::ProhibitReturnSort 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Policy::Subroutines::ProhibitReturnSort 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -151,8 +151,8 @@ sorted values to a temporary variable first.  For example:
 \&
 \&       return sort @list;  # not ok!
 \&
-\&       my @sorted_list = sort @list;
-\&       return @sorted_list # OK
+\&       @sorted_list = sort @list;
+\&       return @sort        # ok
 \&   }
 .Ve
 .SH "KNOWN BUGS"
@@ -182,7 +182,7 @@ This Policy was suggested by Ulrich Wisser and the <http://iis.se> team.
 Jeffrey Ryan Thalhammer <jeff@imaginative\-software.com>
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 2005\-2017 Imaginative Software Systems.  All rights reserved.
+Copyright (c) 2005\-2011 Imaginative Software Systems.  All rights reserved.
 .PP
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.  The full text of this license

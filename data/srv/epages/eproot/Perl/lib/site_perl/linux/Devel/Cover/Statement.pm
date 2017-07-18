@@ -1,4 +1,4 @@
-# Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+# Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,7 +10,7 @@ package Devel::Cover::Statement;
 use strict;
 use warnings;
 
-our $VERSION = '1.25'; # VERSION
+our $VERSION = "0.79";
 
 use base "Devel::Cover::Criterion";
 
@@ -31,10 +31,6 @@ __END__
 
 Devel::Cover::Statement - Code coverage metrics for Perl
 
-=head1 VERSION
-
-version 1.25
-
 =head1 SYNOPSIS
 
  use Devel::Cover::Statement;
@@ -53,9 +49,13 @@ Module for storing statement coverage information.
 
 Huh?
 
+=head1 VERSION
+
+Version 0.79 - 5th August 2011
+
 =head1 LICENCE
 
-Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

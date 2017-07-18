@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/InputOutput/ProhibitJoinedReadline.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::InputOutput::ProhibitJoinedReadline;
 
 use 5.006001;
@@ -9,11 +16,11 @@ use List::MoreUtils qw(any);
 use Perl::Critic::Utils qw{ :severities :classification parse_arg_list };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
-Readonly::Scalar my $DESC => q{Use "local $/ = undef" or Path::Tiny instead of joined readline}; ## no critic qw(InterpolationOfMetachars)
+Readonly::Scalar my $DESC => q{Use "local $/ = undef" or File::Slurp instead of joined readline}; ## no critic qw(InterpolationOfMetachars)
 Readonly::Scalar my $EXPL => [213];
 
 #-----------------------------------------------------------------------------
@@ -28,7 +35,7 @@ sub applies_to           { return 'PPI::Token::Word'     }
 sub violates {
     my ( $self, $elem, undef ) = @_;
 
-    return if $elem->content() ne 'join';
+    return if $elem ne 'join';
     return if ! is_function_call($elem);
     my @args = parse_arg_list($elem);
     shift @args; # ignore separator string
@@ -51,7 +58,7 @@ __END__
 
 =head1 NAME
 
-Perl::Critic::Policy::InputOutput::ProhibitJoinedReadline - Use C<local $/ = undef> or L<Path::Tiny|Path::Tiny> instead of joined readline.
+Perl::Critic::Policy::InputOutput::ProhibitJoinedReadline - Use C<local $/ = undef> or L<File::Slurp|File::Slurp> instead of joined readline.
 
 =head1 AFFILIATION
 
@@ -70,7 +77,7 @@ like so:
 
   do { local $/ = undef; <$fh> }
 
-or use L<Path::Tiny|Path::Tiny>, which is even faster.
+or use L<File::Slurp|File::Slurp>, which is even faster.
 
 B<Note> that if the C<ProhibitPunctuationVars> policy is also in effect,
 it will complain about the use of C<$/> in the line above.  In that

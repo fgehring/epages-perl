@@ -3,8 +3,7 @@ use 5.006;
 use strict;
 use warnings;
 package CPAN::Meta::History;
-
-our $VERSION = '2.150010';
+our $VERSION = '2.133380'; # VERSION
 
 1;
 
@@ -22,7 +21,7 @@ CPAN::Meta::History - history of CPAN Meta Spec changes
 
 =head1 VERSION
 
-version 2.150010
+version 2.133380
 
 =head1 DESCRIPTION
 
@@ -304,15 +303,11 @@ David Golden <dagolden@cpan.org>
 
 Ricardo Signes <rjbs@cpan.org>
 
-=item *
-
-Adam Kennedy <adamk@cpan.org>
-
 =back
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2010 by David Golden, Ricardo Signes, Adam Kennedy and Contributors.
+This software is copyright (c) 2010 by David Golden and Ricardo Signes.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

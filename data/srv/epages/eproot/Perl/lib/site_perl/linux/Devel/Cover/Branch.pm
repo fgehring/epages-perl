@@ -1,4 +1,4 @@
-# Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+# Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,7 +10,7 @@ package Devel::Cover::Branch;
 use strict;
 use warnings;
 
-our $VERSION = '1.25'; # VERSION
+our $VERSION = "0.79";
 
 use base "Devel::Cover::Criterion";
 
@@ -25,25 +25,29 @@ sub text        { $_[0][1]{text} }
 sub criterion   { 'branch' }
 
 
-sub percentage {
+sub percentage
+{
     my $t = $_[0]->total;
     sprintf "%3d", $t ? $_[0]->covered / $t * 100 : 0
 }
-
-sub error {
+sub error
+{
     my $self = shift;
-    if (@_) {
+    if (@_)
+    {
         my $c = shift;
         return !($self->covered($c) xor $self->uncoverable($c));
     }
     my $e = 0;
-    for my $c (0 .. $#{$self->[0]}) {
+    for my $c (0 .. $#{$self->[0]})
+    {
         $e++ if !($self->covered($c) xor $self->uncoverable($c));
     }
     $e
 }
 
-sub calculate_summary {
+sub calculate_summary
+{
     my $self = shift;
     my ($db, $file) = @_;
 
@@ -64,10 +68,6 @@ __END__
 
 Devel::Cover::Branch - Code coverage metrics for Perl
 
-=head1 VERSION
-
-version 1.25
-
 =head1 SYNOPSIS
 
  use Devel::Cover::Branch;
@@ -86,9 +86,13 @@ Module for storing branch coverage information.
 
 Huh?
 
+=head1 VERSION
+
+Version 0.79 - 5th August 2011
+
 =head1 LICENCE
 
-Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

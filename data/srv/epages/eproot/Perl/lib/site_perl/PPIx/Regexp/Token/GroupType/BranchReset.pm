@@ -34,27 +34,27 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Token::GroupType };
 
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
 # Return true if the token can be quantified, and false otherwise
 # sub can_be_quantified { return };
-
-{
-    my %explanation = (
-        '?|'    => 'Re-use capture group numbers',
-    );
-
-    sub __explanation {
-        return \%explanation;
-    }
-}
 
 sub perl_version_introduced {
     return '5.009005';
 }
 
-sub __defining_string {
-    return '?|';
+sub __PPIX_TOKENIZER__regexp {
+    my ( $class, $tokenizer, $character ) = @_;
+
+    # The actual expression being matched it \A \? \|. The extra
+    # optional escapes are because any of the non-open-bracket
+    # punctuation characters may also be the delimiter.
+    if ( my $accept = $tokenizer->find_regexp(
+            qr{ \A \\? \? \\? \| }smx ) ) {
+        return $accept;
+    }
+
+    return;
 }
 
 1;
@@ -72,7 +72,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

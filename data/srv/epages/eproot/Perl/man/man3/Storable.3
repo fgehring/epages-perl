@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Storable 3"
-.TH Storable 3 "2014-06-15" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Storable 3 "2011-01-09" "perl v5.12.3" "Perl Programmers Reference Guide"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -584,12 +584,12 @@ This returns the file format version as number.  It is a string like
 \&\*(L"2.007\*(R".  This value is suitable for numeric comparisons.
 .Sp
 The constant function \f(CW\*(C`Storable::BIN_VERSION_NV\*(C'\fR returns a comparable
-number that represents the highest file version number that this
-version of Storable fully supports (but see discussion of
+number that represent the highest file version number that this
+version of Storable fully support (but see discussion of
 \&\f(CW$Storable::accept_future_minor\fR above).  The constant
 \&\f(CW\*(C`Storable::BIN_WRITE_VERSION_NV\*(C'\fR function returns what file version
 is written and might be less than \f(CW\*(C`Storable::BIN_VERSION_NV\*(C'\fR in some
-configurations.
+configuations.
 .ie n .IP """major"", ""minor""" 4
 .el .IP "\f(CWmajor\fR, \f(CWminor\fR" 4
 .IX Item "major, minor"
@@ -697,37 +697,6 @@ compartment:
 \&        my $code = thaw($serialized);
 \&        $code\->() == 42;
 .Ve
-.SH "SECURITY WARNING"
-.IX Header "SECURITY WARNING"
-\&\fBDo not accept Storable documents from untrusted sources!\fR
-.PP
-Some features of Storable can lead to security vulnerabilities if you
-accept Storable documents from untrusted sources. Most obviously, the
-optional (off by default) \s-1CODE\s0 reference serialization feature allows
-transfer of code to the deserializing process. Furthermore, any
-serialized object will cause Storable to helpfully load the module
-corresponding to the class of the object in the deserializing module.
-For manipulated module names, this can load almost arbitrary code.
-Finally, the deserialized object's destructors will be invoked when
-the objects get destroyed in the deserializing process. Maliciously
-crafted Storable documents may put such objects in the value of
-a hash key that is overridden by another key/value pair in the
-same hash, thus causing immediate destructor execution.
-.PP
-In a future version of Storable, we intend to provide options to disable
-loading modules for classes and to disable deserializing objects
-altogether. \fINonetheless, Storable deserializing documents from
-untrusted sources is expected to have other, yet undiscovered,
-security concerns such as allowing an attacker to cause the deserializer
-to crash hard.\fR
-.PP
-\&\fBTherefore, let me repeat: Do not accept Storable documents from
-untrusted sources!\fR
-.PP
-If your application requires accepting data from untrusted sources, you
-are best off with a less powerful and more-likely safe serialization format
-and implementation. If your data is sufficiently simple, \s-1JSON\s0 is a good
-choice and offers maximum interoperability.
 .SH "WARNING"
 .IX Header "WARNING"
 If you're using references as keys within your hash tables, you're bound
@@ -837,7 +806,7 @@ correct behaviour.
 What this means is that if you have data written by Storable 1.x running
 on perl 5.6.0 or 5.6.1 configured with 64 bit integers on Unix or Linux
 then by default this Storable will refuse to read it, giving the error
-\&\fIByte order is not compatible\fR.  If you have such data then you
+\&\fIByte order is not compatible\fR.  If you have such data then you you
 should set \f(CW$Storable::interwork_56_64bit\fR to a true value to make this
 Storable read and write files with the old header.  You should also
 migrate your data, or any older perl you are communicating with, to this
@@ -856,7 +825,7 @@ Thank you to (in chronological order):
 .Vb 10
 \&        Jarkko Hietaniemi <jhi@iki.fi>
 \&        Ulrich Pfeifer <pfeifer@charly.informatik.uni\-dortmund.de>
-\&        Benjamin A. Holzman <bholzman@earthlink.net>
+\&        Benjamin A. Holzman <bah@ecnvantage.com>
 \&        Andrew Ford <A.Ford@ford\-mason.co.uk>
 \&        Gisle Aas <gisle@aas.no>
 \&        Jeff Gresham <gresham_jeffrey@jpmorgan.com>
@@ -867,8 +836,6 @@ Thank you to (in chronological order):
 \&        Salvador Ortiz Garcia <sog@msg.com.mx>
 \&        Dominic Dunlop <domo@computer.org>
 \&        Erik Haugan <erik@solbors.no>
-\&        Benjamin A. Holzman <ben.holzman@grantstreet.com>
-\&        Reini Urban <rurban@cpanel.net>
 .Ve
 .PP
 for their bug reports, suggestions and contributions.
@@ -881,15 +848,11 @@ simply counting the objects instead of tagging them (leading to
 a binary incompatibility for the Storable image starting at version
 0.6\-\-older images are, of course, still properly understood).
 Murray Nesbitt made Storable thread-safe.  Marc Lehmann added overloading
-and references to tied items support.  Benjamin Holzman added a performance
-improvement for overloaded classes; thanks to Grant Street Group for footing
-the bill.
+and references to tied items support.
 .SH "AUTHOR"
 .IX Header "AUTHOR"
-Storable was written by Raphael Manfredi
-\&\fI<Raphael_Manfredi@pobox.com>\fR
-Maintenance is now done by the perl5\-porters
-\&\fI<perl5\-porters@perl.org>\fR
+Storable was written by Raphael Manfredi \fI<Raphael_Manfredi@pobox.com>\fR
+Maintenance is now done by the perl5\-porters \fI<perl5\-porters@perl.org>\fR
 .PP
 Please e\-mail us with problems, bug fixes, comments and complaints,
 although if you have compliments you should send them to Raphael.

@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/DEVELOPER.pod $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 =pod
 
 =for stopwords lookup RequireBlockGrep
@@ -39,7 +46,7 @@ L<PPI::Document|PPI::Document> tree and invokes each of the
 L<Perl::Critic::Policy|Perl::Critic::Policy> subclasses at the
 appropriate node.  The Policy can inspect the node, look at the
 surrounding nodes, and do whatever else it wants.  If the Policy
-decides that a coding standard has been violated, it returns one
+decides that that a coding standard has been violated, it returns one
 or more L<Perl::Critic::Violation|Perl::Critic::Violation> objects.
 If there are no violations, then the Policy returns nothing.
 
@@ -760,7 +767,7 @@ parsed value for later use by the C<violates()> method.
 An example parser (without enough error handling) for the above
 example declaration:
 
-    use Path::Tiny;
+    use File::Slurp qw< slurp >;
 
     use Perl::Critic::Exception::Configuration::Option::Policy::ParameterValue
         qw{ throw_policy_value };
@@ -779,7 +786,7 @@ example declaration:
                     message_suffix => 'is not readable.';
             }
 
-            @thingies = path($config_string)->slurp;
+            @thingies = slurp $config_string;
         }
 
         $self->{_thingies} = \@thingies;
@@ -1043,7 +1050,7 @@ only to say:
 =head1 TESTING YOUR POLICY
 
 The L<Perl::Critic> distribution also contains a framework for testing your
-Policy.  See L<Perl::Critic::TestUtils> for the details.
+Policy.  See L<Test::Perl::Critic::Policy> for the details.
 
 =head1 HINT
 

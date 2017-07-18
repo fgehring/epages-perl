@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Module::Build::Tiny 3"
-.TH Module::Build::Tiny 3 "2014-10-12" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Module::Build::Tiny 3 "2013-10-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -133,7 +133,7 @@
 Module::Build::Tiny \- A tiny replacement for Module::Build
 .SH "VERSION"
 .IX Header "VERSION"
-version 0.039
+version 0.030
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 .Vb 2
@@ -224,7 +224,7 @@ Module::Build has an extremely permissive way of argument handling, Module::Buil
 .IP "\(bu" 4
 \&.modulebuildrc
 .Sp
-Module::Build::Tiny does not support .modulebuildrc files. In particular, this means that versions of local::lib older than 1.006008 may break with \f(CW\*(C`ERROR: Can\*(Aqt create /usr/local/somepath\*(C'\fR. If the output of \f(CW\*(C`perl \-Mlocal::lib\*(C'\fR contains \f(CW\*(C`MODULEBUILDRC\*(C'\fR but not \f(CW\*(C`PERL_MB_OPT \*(C'\fR, you will need to upgrade it to resolve this issue.
+Module::Build::Tiny does not support .modulebuildrc files. In particular, this means that versions of local::lib older than 1.006008 may break. Upgrading it resolves this issue.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 Module::Build

@@ -37,7 +37,7 @@ use warnings;
 
 use PPIx::Regexp::Util qw{ __instance };
 
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
 =head2 close_bracket
 
@@ -57,7 +57,7 @@ brackets: (), {}, [], and <>.
     );
 
     sub close_bracket {
-        my ( undef, $char ) = @_;       # Invocant unused
+        my ( $self, $char ) = @_;
         defined $char or return;
         __instance( $char, 'PPIx::Regexp::Element' )
             and $char = $char->content();
@@ -119,12 +119,12 @@ loaded.
 
 }
 
-# This method is to be used only by the PPIx-Regexp package. It returns
+# This method is to be used only by the PPIx::Regexp package. It returns
 # the first of its arguments which is defined. It will go away when
 # (or if!) these modules get 'use 5.010;' at the top.
 
-sub __defined_or {
-    my ( undef, @args ) = @_;   # Invocant unused
+sub _defined_or {
+    my ( $self, @args ) = @_;
     foreach my $arg ( @args ) {
         defined $arg and return $arg;
     }
@@ -146,7 +146,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

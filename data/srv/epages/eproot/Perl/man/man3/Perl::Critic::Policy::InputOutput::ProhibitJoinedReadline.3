@@ -124,13 +124,13 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Policy::InputOutput::ProhibitJoinedReadline 3"
-.TH Perl::Critic::Policy::InputOutput::ProhibitJoinedReadline 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Policy::InputOutput::ProhibitJoinedReadline 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-Perl::Critic::Policy::InputOutput::ProhibitJoinedReadline \- Use "local $/ = undef" or Path::Tiny instead of joined readline.
+Perl::Critic::Policy::InputOutput::ProhibitJoinedReadline \- Use "local $/ = undef" or File::Slurp instead of joined readline.
 .SH "AFFILIATION"
 .IX Header "AFFILIATION"
 This Policy is part of the core Perl::Critic
@@ -148,7 +148,7 @@ like so:
 \&  do { local $/ = undef; <$fh> }
 .Ve
 .PP
-or use Path::Tiny, which is even faster.
+or use File::Slurp, which is even faster.
 .PP
 \&\fBNote\fR that if the \f(CW\*(C`ProhibitPunctuationVars\*(C'\fR policy is also in effect,
 it will complain about the use of \f(CW$/\fR in the line above.  In that

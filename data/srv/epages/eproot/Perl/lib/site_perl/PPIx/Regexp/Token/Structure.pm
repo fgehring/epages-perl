@@ -40,7 +40,6 @@ use base qw{ PPIx::Regexp::Token };
 use PPIx::Regexp::Constant qw{
     COOKIE_CLASS
     COOKIE_QUANT
-    COOKIE_REGEX_SET
     MINIMUM_PERL
     TOKEN_LITERAL
 };
@@ -53,7 +52,7 @@ use PPIx::Regexp::Token::Backreference  ();
 use PPIx::Regexp::Token::Backtrack      ();
 use PPIx::Regexp::Token::Recursion      ();
 
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
 # Return true if the token can be quantified, and false otherwise
 
@@ -63,29 +62,6 @@ sub can_be_quantified {
     ref $self or return;
     return $quant{ $self->content() };
 };
-
-{
-
-    my %explanation = (
-        ''              => 'Match regexp',
-        '('             => 'Capture or grouping',
-        '(?['   => 'Extended character class',
-        ')'             => 'End capture or grouping',
-        '['             => 'Character class',
-        ']'             => 'End character class',
-        '])'    => 'End extended character class',
-        'm'             => 'Match regexp',
-        'qr'    => 'Regexp object definition',
-        's'     => 'Replace regexp with string or expression',
-        '{'             => 'Explicit quantifier',
-        '}'             => 'End explicit quantifier',
-    );
-
-    sub __explanation {
-        return \%explanation;
-    }
-
-}
 
 sub is_quantifier {
     my ( $self ) = @_;
@@ -106,7 +82,6 @@ sub is_quantifier {
 
     my %perl_version_introduced = (
         qr      => '5.005',
-        '(?['   => '5.017008',
     );
 
     sub perl_version_introduced {
@@ -133,7 +108,7 @@ sub is_quantifier {
     ;
 
     sub __PPIX_TOKENIZER__regexp {
-        my ( undef, $tokenizer, $character ) = @_;
+        my ( $class, $tokenizer, $character ) = @_;
 
         # We are not interested in anything but delimiters.
         $delim{$character} or return;
@@ -143,8 +118,6 @@ sub is_quantifier {
         if ( $tokenizer->cookie( COOKIE_CLASS ) ) {
             $character eq ']'
                 or return $tokenizer->make_token( 1, TOKEN_LITERAL );
-            $tokenizer->cookie( COOKIE_CLASS, undef );
-            return 1;
         }
 
         # Open parentheses have various interesting possibilities ...
@@ -161,24 +134,6 @@ sub is_quantifier {
                 }
             }
 
-            # Modifier changes are local to this parenthesis group
-            $tokenizer->modifier_duplicate();
-
-            # The regex-set functionality introduced with 5.17.8 is most
-            # conveniently handled by treating the initial '(?[' and
-            # final '])' as ::Structure tokens. Fortunately for us,
-            # perl5178delta documents that these may not have interior
-            # spaces.
-
-            if ( my $accept = $tokenizer->find_regexp(
-                    qr{ \A [(] [?] [[] }smx     # ] ) - help for vim
-                )
-            ) {
-                $tokenizer->cookie( COOKIE_REGEX_SET, sub { return 1 } );
-                $tokenizer->modifier_modify( x => 1 );  # Implicitly /x
-                return $accept;
-            }
-
             # We expect certain tokens only after a left paren.
             $tokenizer->expect(
                 'PPIx::Regexp::Token::GroupType::Modifier',
@@ -189,6 +144,9 @@ sub is_quantifier {
                 'PPIx::Regexp::Token::GroupType::Subexpression',
                 'PPIx::Regexp::Token::GroupType::Switch',
             );
+
+            # Modifier changes are local to this parenthesis group
+            $tokenizer->modifier_duplicate();
 
             # Accept the parenthesis.
             return 1;
@@ -209,7 +167,7 @@ sub is_quantifier {
 
             # If the prior token can not be quantified, all this is
             # unnecessary.
-            $tokenizer->prior_significant_token( 'can_be_quantified' )
+            $tokenizer->prior( 'can_be_quantified' )
                 or return 1;
 
             # We make our token now, before setting the cookie. Otherwise
@@ -229,8 +187,7 @@ sub is_quantifier {
                         my $character = $token->content();
                         if ( $character eq ',' ) {
                             $commas++ and return;
-                            return $tokenizer->prior_significant_token(
-                                'content' ) ne '{';
+                            return $tokenizer->prior( 'content' ) ne '{';
                         }
                         return $character =~ m/ \A \d \z /smx;
                     }
@@ -255,7 +212,7 @@ sub is_quantifier {
         if ( $character eq '}' ) {
             $tokenizer->cookie( COOKIE_QUANT, undef )
                 or return 1;
-            $tokenizer->prior_significant_token( 'class' )->isa( __PACKAGE__ )
+            $tokenizer->prior( 'class' )->isa( __PACKAGE__ )
                 and return 1;
             my $token = $tokenizer->make_token( 1 );
             $token->{is_quantifier} = 1;
@@ -300,28 +257,8 @@ sub is_quantifier {
         # per perlop, the metas outside a [] are {}[]()^$.|*+?\
         # The difference is that {}[().|*+? are not metas in [], but - is.
 
-        # Close bracket is complicated by the addition of regex sets.
-        # And more complicated by the fact that you can have an
-        # old-style character class inside a regex set. Fortunately they
-        # have not (yet!) permitted nested regex sets.
+        # On encountering our close bracket, we need to delete the cookie.
         if ( $character eq ']' ) {
-
-            # If we find '])' and COOKIE_REGEX_SET is present, we have a
-            # regex set. We need to delete the cookie and accept both
-            # characters.
-            if ( ( my $accept = $tokenizer->find_regexp(
-                    # help vim - ( [
-                    qr{ \A []] [)] }smx
-                ) )
-                && $tokenizer->cookie( COOKIE_REGEX_SET )
-
-            ) {
-                $tokenizer->cookie( COOKIE_REGEX_SET, undef );
-                return $accept;
-            }
-
-            # Otherwise we assume we're in a bracketed character class,
-            # delete the cookie, and accept the close bracket.
             $tokenizer->cookie( COOKIE_CLASS, undef );
             return 1;
         }
@@ -355,7 +292,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

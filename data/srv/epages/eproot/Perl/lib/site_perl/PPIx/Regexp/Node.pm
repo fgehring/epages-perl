@@ -36,17 +36,14 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Element };
 
-use Carp;
 use List::Util qw{ max };
-use PPIx::Regexp::Constant qw{ MINIMUM_PERL NODE_UNKNOWN };
+use PPIx::Regexp::Constant qw{ MINIMUM_PERL };
 use PPIx::Regexp::Util qw{ __instance };
 use Scalar::Util qw{ refaddr };
 
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
-use constant ELEMENT_UNKNOWN    => NODE_UNKNOWN;
-
-sub __new {
+sub _new {
     my ( $class, @children ) = @_;
     ref $class and $class = ref $class;
     foreach my $elem ( @children ) {
@@ -284,15 +281,14 @@ sub last_element {
 This method returns the maximum value of C<perl_version_introduced>
 returned by any of its elements. In other words, it returns the minimum
 version of Perl under which this node is valid. If there are no
-elements, 5.000 is returned, since that is the minimum value of Perl
+elements, 5.006 is returned, since that is the minimum value of Perl
 supported by this package.
 
 =cut
 
 sub perl_version_introduced {
     my ( $self ) = @_;
-    return max( grep { defined $_ } MINIMUM_PERL,
-        $self->{perl_version_introduced},
+    return max( MINIMUM_PERL,
         map { $_->perl_version_introduced() } $self->elements() );
 }
 
@@ -391,13 +387,8 @@ sub tokens {
     return ( map { $_->tokens() } $self->elements() );
 }
 
-sub unescaped_content {
-    my ( $self ) = @_;
-    return join '', map { $_->unescaped_content() } $self->elements();
-}
-
 # Help for nav();
-sub __nav {
+sub _nav {
     my ( $self, $child ) = @_;
     refaddr( $child->parent() ) == refaddr( $self )
         or return;
@@ -407,27 +398,14 @@ sub __nav {
     return ( $method => [ $inx ] );
 }
 
-sub __error {
-    my ( $self, $msg, %arg ) = @_;
-    defined $msg
-        or $msg = 'Was class ' . ref $self;
-    $self->{error} = $msg;
-    bless $self, $self->ELEMENT_UNKNOWN();
-    foreach my $key ( keys %arg ) {
-        $self->{$key} = $arg{$key};
-    }
-    return 1;
-}
-
-
 # Called by the lexer once it has done its worst to all the tokens.
-# Called as a method with the lexer as argument. The return is the
-# number of parse failures discovered when finalizing.
+# Called as a method with no arguments. The return is the number of
+# parse failures discovered when finalizing.
 sub __PPIX_LEXER__finalize {
-    my ( $self, $lexer ) = @_;
+    my ( $self ) = @_;
     my $rslt = 0;
     foreach my $elem ( $self->elements() ) {
-        $rslt += $elem->__PPIX_LEXER__finalize( $lexer );
+        $rslt += $elem->__PPIX_LEXER__finalize();
     }
     return $rslt;
 }
@@ -456,7 +434,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

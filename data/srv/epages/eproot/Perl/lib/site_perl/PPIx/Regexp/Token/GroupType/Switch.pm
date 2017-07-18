@@ -35,18 +35,7 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Token::GroupType };
 
-our $VERSION = '0.051';
-
-{
-
-    my %explanation = (
-        '?'     => q<Match one of the following '|'-delimited alternatives>,
-    );
-
-    sub __explanation {
-        return \%explanation;
-    }
-}
+our $VERSION = '0.020';
 
 sub perl_version_introduced {
 #   my ( $self ) = @_;
@@ -55,8 +44,6 @@ sub perl_version_introduced {
 
 # Return true if the token can be quantified, and false otherwise
 # sub can_be_quantified { return };
-
-=begin comment
 
 sub __PPIX_TOKENIZER__regexp {
     my ( $class, $tokenizer, $character ) = @_;
@@ -81,24 +68,6 @@ sub __PPIX_TOKENIZER__regexp {
 
 }
 
-=end comment
-
-=cut
-
-sub __defining_string {
-    return (
-        { suffix => '(' },
-        '?',
-    );
-}
-
-sub __match_setup {
-    my ( undef, $tokenizer ) = @_;      # Invocant unused
-    $tokenizer->expect( qw{ PPIx::Regexp::Token::Condition } );
-    return;
-}
-
-
 1;
 
 __END__
@@ -114,7 +83,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

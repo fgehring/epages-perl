@@ -10,81 +10,14 @@ use Scalar::Util qw{ blessed };
 
 use base qw{ Exporter };
 
-our @EXPORT_OK = qw{ __choose_tokenizer_class __instance __to_ordinal_en };
+our @EXPORT_OK = qw{ __instance };
 
-our $VERSION = '0.051';
-
-{
-
-    my @ppi_zoo = (
-        [ 'PPI::Token::Regexp::Transliterate' ],
-
-        [ 'PPI::Token::Regexp', 'PPIx::Regexp::Tokenizer' ],
-        [ 'PPI::Token::QuoteLike::Regexp', 'PPIx::Regexp::Tokenizer' ],
-
-        [ 'PPI::Token::Quote',
-            'PPIx::Regexp::StringTokenizer' ],
-        [ 'PPI::Token::QuoteLike::Command',
-            'PPIx::Regexp::StringTokenizer' ],
-        [ 'PPI::Token::QuoteLike::BackTick',
-            'PPIx::Regexp::StringTokenizer' ],
-        [ 'PPI::Token::HereDoc',
-            'PPIx::Regexp::StringTokenizer' ],
-    );
-
-    my %parse_type = (
-        guess   => sub {
-            my ( $content ) = @_;
-            if ( __instance( $content, 'PPI::Element' ) ) {
-                foreach ( @ppi_zoo ) {
-                    $content->isa( $_->[0] )
-                        and return $_->[1];
-                }
-                return;
-            } elsif ( ref $content ) {
-                return;
-            } else {
-                return $content =~ m/ \A \s*
-                (?: ["'`] | << | (?: (?: qq | q | qx ) \b ) ) /smx ?
-                'PPIx::Regexp::StringTokenizer' :
-                'PPIx::Regexp::Tokenizer';
-            }
-        },
-        regex   => sub {
-            return 'PPIx::Regexp::Tokenizer';
-        },
-        string  => sub {
-            return 'PPIx::Regexp::StringTokenizer';
-        },
-    );
-
-    sub __choose_tokenizer_class {
-        my ( $content, $arg ) = @_;
-        my $parse = defined $arg->{parse} ? $arg->{parse} : 'regex';
-        my $code = $parse_type{$parse}
-            or return PPIx::Regexp::Tokenizer->__set_errstr(
-            "Unknown parse type '$parse'" );
-        return $code->( $content );
-    }
-
-}
+our $VERSION = '0.020';
 
 sub __instance {
     my ( $object, $class ) = @_;
     blessed( $object ) or return;
     return $object->isa( $class );
-}
-
-sub __to_ordinal_en {
-    my ( $num ) = @_;
-    $num += 0;
-    1 == $num % 10
-        and return "${num}st";
-    2 == $num % 10
-        and return "${num}nd";
-    3 == $num % 10
-        and return "${num}rd";
-    return "${num}th";
 }
 
 1;
@@ -129,16 +62,6 @@ This subroutine returns true if its first argument is an instance of the
 class specified by its second argument. Unlike C<UNIVERSAL::isa>, the
 result is always false unless the first argument is a reference.
 
-=head2 __to_ordinal_en
-
-This subroutine takes as its argument an integer and returns a string
-representing its ordinal in English. For example
-
- say __to_ordinal_en( 17 );
- # 17th
-
-=cut
-
 
 =head1 SEE ALSO
 
@@ -159,7 +82,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2010-2017 by Thomas R. Wyant, III
+Copyright (C) 2010-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

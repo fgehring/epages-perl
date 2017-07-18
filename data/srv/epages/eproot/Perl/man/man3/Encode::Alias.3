@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Encode::Alias 3"
-.TH Encode::Alias 3 "2017-06-10" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Encode::Alias 3 "2011-01-09" "perl v5.12.3" "Perl Programmers Reference Guide"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -133,12 +133,10 @@
 Encode::Alias \- alias definitions to encodings
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-.Vb 5
+.Vb 3
 \&  use Encode;
 \&  use Encode::Alias;
-\&  define_alias( "newName" => ENCODING);
-\&  define_alias( qr/.../ => ENCODING);
-\&  define_alias( sub { return ENCODING if ...; } );
+\&  define_alias( newName => ENCODING);
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
@@ -146,8 +144,7 @@ Allows newName to be used as an alias for \s-1ENCODING\s0. \s-1ENCODING\s0 may b
 either the name of an encoding or an encoding object (as described 
 in Encode).
 .PP
-Currently the first argument to \fIdefine_alias()\fR can be specified in the
-following ways:
+Currently \fInewName\fR can be specified in the following ways:
 .IP "As a simple string." 4
 .IX Item "As a simple string."
 .PD 0
@@ -176,7 +173,7 @@ experienced.  Use this feature with caution.
 .Sp
 The same effect as the example above in a different way.  The coderef
 takes the alias name as an argument and returns a canonical name on
-success or undef if not.  Note the second argument is ignored if provided.
+success or undef if not.  Note the second argument is not required.
 Use this with even more caution than the regex version.
 .PP
 \fIChanges in code reference aliasing\fR
@@ -190,7 +187,7 @@ As of Encode 1.87, the older form
 .PP
 no longer works.
 .PP
-Encode up to 1.86 internally used \*(L"local \f(CW$_\fR\*(R" to implement this older
+Encode up to 1.86 internally used \*(L"local \f(CW$_\fR\*(R" to implement ths older
 form.  But consider the code below;
 .PP
 .Vb 6
@@ -231,10 +228,6 @@ to do so.  And
 .Ve
 .PP
 gets the factory settings back.
-.PP
-Note that \fIdefine_alias()\fR will not be able to override the canonical name
-of encodings. Encodings are first looked up by canonical name before
-potential aliases are tried.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 Encode, Encode::Supported

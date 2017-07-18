@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Pod::Simple::XHTML 3"
-.TH Pod::Simple::XHTML 3 "2016-11-30" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Pod::Simple::XHTML 3 "2011-01-09" "perl v5.12.3" "Perl Programmers Reference Guide"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -150,26 +150,6 @@ validating \s-1HTML\s0.
 This is a subclass of Pod::Simple::Methody and inherits all its
 methods. The implementation is entirely different than
 Pod::Simple::HTML, but it largely preserves the same interface.
-.SS "Minimal code"
-.IX Subsection "Minimal code"
-.Vb 6
-\&  use Pod::Simple::XHTML;
-\&  my $psx = Pod::Simple::XHTML\->new;
-\&  $psx\->output_string(\emy $html);
-\&  $psx\->parse_file(\*(Aqpath/to/Module/Name.pm\*(Aq);
-\&  open my $out, \*(Aq>\*(Aq, \*(Aqout.html\*(Aq or die "Cannot open \*(Aqout.html\*(Aq: $!\en";
-\&  print $out $html;
-.Ve
-.PP
-You can also control the character encoding and entities. For example, if
-you're sure that the \s-1POD\s0 is properly encoded (using the \f(CW\*(C`=encoding\*(C'\fR command),
-you can prevent high-bit characters from being encoded as \s-1HTML\s0 entities and
-declare the output character set as \s-1UTF\-8\s0 before parsing, like so:
-.PP
-.Vb 2
-\&  $psx\->html_charset(\*(AqUTF\-8\*(Aq);
-\&  $psx\->html_encode_chars(q{&<>\*(Aq"});
-.Ve
 .SH "METHODS"
 .IX Header "METHODS"
 Pod::Simple::XHTML offers a number of methods that modify the format of
@@ -217,11 +197,6 @@ not set by default.
 .SS "html_doctype"
 .IX Subsection "html_doctype"
 A document type tag for the file. This option is not set by default.
-.SS "html_charset"
-.IX Subsection "html_charset"
-The character set to declare in the Content-Type meta tag created by default
-for \f(CW\*(C`html_header_tags\*(C'\fR. Note that this option will be ignored if the value of
-\&\f(CW\*(C`html_header_tags\*(C'\fR is changed. Defaults to \*(L"\s-1ISO\-8859\-1\s0\*(R".
 .SS "html_header_tags"
 .IX Subsection "html_header_tags"
 Additional arbitrary \s-1HTML\s0 tags for the header of the document. The
@@ -233,16 +208,6 @@ default value is just a content type header tag:
 .PP
 Add additional meta tags here, or blocks of inline \s-1CSS\s0 or JavaScript
 (wrapped in the appropriate tags).
-.PP
-\fIhtml_encode_chars\fR
-.IX Subsection "html_encode_chars"
-.PP
-A string containing all characters that should be encoded as \s-1HTML\s0 entities,
-specified using the regular expression character class syntax (what you find
-within brackets in regular expressions). This value will be passed as the
-second argument to the \f(CW\*(C`encode_entities\*(C'\fR function of HTML::Entities. If
-HTML::Entities is not installed, then any characters other than \f(CW\*(C`&<\*(C'\fR"'>
-will be encoded numerically.
 .SS "html_h_level"
 .IX Subsection "html_h_level"
 This is the level of \s-1HTML\s0 \*(L"Hn\*(R" element to which a Pod \*(L"head1\*(R" corresponds.  For
@@ -277,15 +242,6 @@ to the empty string.
 .IX Subsection "index"
 Whether to add a table-of-contents at the top of each page (called an
 index for the sake of tradition).
-.SS "anchor_items"
-.IX Subsection "anchor_items"
-Whether to anchor every definition \f(CW\*(C`=item\*(C'\fR directive. This needs to be
-enabled if you want to be able to link to specific \f(CW\*(C`=item\*(C'\fR directives, which
-are output as \f(CW\*(C`<dt>\*(C'\fR elements. Disabled by default.
-.SS "backlink"
-.IX Subsection "backlink"
-Whether to turn every =head1 directive into a link pointing to the top 
-of the page (specifically, the opening body tag).
 .SH "SUBCLASSING"
 .IX Header "SUBCLASSING"
 If the standard options aren't enough, you may want to subclass
@@ -300,7 +256,7 @@ want to override this if you are adding a custom element type that does
 more than just display formatted text. Perhaps adding a way to generate
 \&\s-1HTML\s0 tables from an extended version of \s-1POD\s0.
 .PP
-So, let's say you want to add a custom element called 'foo'. In your
+So, let's say you want add a custom element called 'foo'. In your
 subclass's \f(CW\*(C`new\*(C'\fR method, after calling \f(CW\*(C`SUPER::new\*(C'\fR you'd call:
 .PP
 .Vb 1
@@ -319,26 +275,11 @@ something like:
 \&      my ($self, $text) = @_;
 \&      if ($self\->{\*(Aqin_foo\*(Aq}) {
 \&          $self\->{\*(Aqscratch\*(Aq} .= build_foo_html($text);
-\&          return;
+\&      } else {
+\&          $self\->{\*(Aqscratch\*(Aq} .= $text;
 \&      }
-\&      $self\->SUPER::handle_text($text);
 \&  }
 .Ve
-.SS "handle_code"
-.IX Subsection "handle_code"
-This method handles the body of text that is marked up to be code.
-You might for instance override this to plug in a syntax highlighter.
-The base implementation just escapes the text.
-.PP
-The callback methods \f(CW\*(C`start_code\*(C'\fR and \f(CW\*(C`end_code\*(C'\fR emits the \f(CW\*(C`code\*(C'\fR tags
-before and after \f(CW\*(C`handle_code\*(C'\fR is invoked, so you might want to override these
-together with \f(CW\*(C`handle_code\*(C'\fR if this wrapping isn't suitable.
-.PP
-Note that the code might be broken into multiple segments if there are
-nested formatting codes inside a \f(CW\*(C`C<...>\*(C'\fR sequence.  In between the
-calls to \f(CW\*(C`handle_code\*(C'\fR other markup tags might have been emitted in that
-case.  The same is true for verbatim sections if the \f(CW\*(C`codes_in_verbatim\*(C'\fR
-option is turned on.
 .SS "accept_targets_as_html"
 .IX Subsection "accept_targets_as_html"
 This method behaves like \f(CW\*(C`accept_targets_as_text\*(C'\fR, but also marks the region
@@ -399,9 +340,6 @@ The id must start with a letter (a\-z or A\-Z)
 All subsequent characters can be letters, numbers (0\-9), hyphens (\-),
 underscores (_), colons (:), and periods (.).
 .IP "\(bu" 4
-The final character can't be a hyphen, colon, or period. URLs ending with these
-characters, while allowed by \s-1XHTML\s0, can be awkward to extract from plain text.
-.IP "\(bu" 4
 Each id must be unique within the document.
 .PP
 In addition, the returned value will be unique within the context of the
@@ -429,8 +367,8 @@ pod\-people@perl.org mail list. Send an empty email to
 pod\-people\-subscribe@perl.org to subscribe.
 .PP
 This module is managed in an open GitHub repository,
-https://github.com/perl\-pod/pod\-simple/ <https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone git://github.com/perl\-pod/pod\-simple.git <git://github.com/perl-pod/pod-simple.git> and send patches!
+http://github.com/theory/pod\-simple/ <http://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
+to clone git://github.com/theory/pod\-simple.git <git://github.com/theory/pod-simple.git> and send patches!
 .PP
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug\-pod\-simple@rt.cpan.org>.
@@ -446,7 +384,7 @@ without any warranty; without even the implied warranty of
 merchantability or fitness for a particular purpose.
 .SH "ACKNOWLEDGEMENTS"
 .IX Header "ACKNOWLEDGEMENTS"
-Thanks to Hurricane Electric <http://he.net/> for permission to use its
+Thanks to Hurricane Electrict <http://he.net/> for permission to use its
 Linux man pages online <http://man.he.net/> site for man page links.
 .PP
 Thanks to search.cpan.org <http://search.cpan.org/> for permission to use the

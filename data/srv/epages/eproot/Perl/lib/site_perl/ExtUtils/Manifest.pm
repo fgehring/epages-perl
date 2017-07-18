@@ -5,24 +5,27 @@ use Config;
 use File::Basename;
 use File::Copy 'copy';
 use File::Find;
-use File::Spec 0.8;
+use File::Spec;
 use Carp;
 use strict;
-use warnings;
 
-our $VERSION = '1.70';
-our @ISA = ('Exporter');
-our @EXPORT_OK = qw(mkmanifest
+use vars qw($VERSION @ISA @EXPORT_OK
+          $Is_MacOS $Is_VMS $Is_VMS_mode $Is_VMS_lc $Is_VMS_nodot
+          $Debug $Verbose $Quiet $MANIFEST $DEFAULT_MSKIP);
+
+$VERSION = '1.60';
+@ISA=('Exporter');
+@EXPORT_OK = qw(mkmanifest
                 manicheck  filecheck  fullcheck  skipcheck
                 manifind   maniread   manicopy   maniadd
                 maniskip
                );
 
-our $Is_MacOS = $^O eq 'MacOS';
-our $Is_VMS   = $^O eq 'VMS';
-our $Is_VMS_mode = 0;
-our $Is_VMS_lc = 0;
-our $Is_VMS_nodot = 0;  # No dots in dir names or double dots in files
+$Is_MacOS = $^O eq 'MacOS';
+$Is_VMS   = $^O eq 'VMS';
+$Is_VMS_mode = 0;
+$Is_VMS_lc = 0;
+$Is_VMS_nodot = 0;  # No dots in dir names or double dots in files
 
 if ($Is_VMS) {
     require VMS::Filespec if $Is_VMS;
@@ -50,22 +53,18 @@ if ($Is_VMS) {
     $Is_VMS_nodot = 0 if ($vms_efs);
 }
 
-our $Debug   = $ENV{PERL_MM_MANIFEST_DEBUG} || 0;
-our $Verbose = defined $ENV{PERL_MM_MANIFEST_VERBOSE} ?
+$Debug   = $ENV{PERL_MM_MANIFEST_DEBUG} || 0;
+$Verbose = defined $ENV{PERL_MM_MANIFEST_VERBOSE} ?
                    $ENV{PERL_MM_MANIFEST_VERBOSE} : 1;
-our $Quiet = 0;
-our $MANIFEST = 'MANIFEST';
+$Quiet = 0;
+$MANIFEST = 'MANIFEST';
 
-our $DEFAULT_MSKIP = File::Spec->catfile( dirname(__FILE__), "$MANIFEST.SKIP" );
+$DEFAULT_MSKIP = File::Spec->catfile( dirname(__FILE__), "$MANIFEST.SKIP" );
 
 
 =head1 NAME
 
 ExtUtils::Manifest - utilities to write and check a MANIFEST file
-
-=head1 VERSION
-
-version 1.70
 
 =head1 SYNOPSIS
 
@@ -125,7 +124,6 @@ sub mkmanifest {
     $bakbase =~ s/\./_/g if $Is_VMS_nodot; # avoid double dots
     rename $MANIFEST, "$bakbase.bak" unless $manimiss;
     open M, "> $MANIFEST" or die "Could not open $MANIFEST: $!";
-    binmode M, ':raw';
     my $skip = maniskip();
     my $found = manifind();
     my($key,$val,$file,%all);
@@ -163,14 +161,6 @@ sub clean_up_filename {
   my $filename = shift;
   $filename =~ s|^\./||;
   $filename =~ s/^:([^:]+)$/$1/ if $Is_MacOS;
-  if ( $Is_VMS ) {
-      $filename =~ s/\.$//;                           # trim trailing dot
-      $filename = VMS::Filespec::unixify($filename);  # unescape spaces, etc.
-      if( $Is_VMS_lc ) {
-          $filename = lc($filename);
-          $filename = uc($filename) if $filename =~ /^MANIFEST(\.SKIP)?$/i;
-      }
-  }
   return $filename;
 }
 
@@ -192,6 +182,11 @@ sub manifind {
         my $name = clean_up_filename($File::Find::name);
         warn "Debug: diskfile $name\n" if $Debug;
         return if -d $_;
+
+        if( $Is_VMS_lc ) {
+            $name =~ s#(.*)\.$#\L$1#;
+            $name = uc($name) if $name =~ /^MANIFEST(\.SKIP)?$/i;
+        }
         $found->{$name} = "";
     };
 
@@ -199,7 +194,7 @@ sub manifind {
     # $File::Find::name is unavailable.
     # Also, it's okay to use / here, because MANIFEST files use Unix-style
     # paths.
-    find({wanted => $wanted, follow_fast => 1},
+    find({wanted => $wanted},
          $Is_MacOS ? ":" : ".");
 
     return $found;
@@ -358,7 +353,7 @@ sub maniread {
 
         # filename may contain spaces if enclosed in ''
         # (in which case, \\ and \' are escapes)
-        if (($file, $comment) = /^'((?:\\[\\']|.+)+)'\s*(.*)/) {
+        if (($file, $comment) = /^'(\\[\\']|.+)+'\s*(.*)/) {
             $file =~ s/\\([\\'])/$1/g;
         }
         else {
@@ -383,10 +378,8 @@ sub maniread {
                 warn "Debug: Illegal name $file changed to $okfile\n" if $Debug;
                 $file = $okfile;
             }
-            if( $Is_VMS_lc ) {
-                $file = lc($file);
-                $file = uc($file) if $file =~ /^MANIFEST(\.SKIP)?$/i;
-            }
+            $file = lc($file)
+                unless $Is_VMS_lc &&($file =~ /^MANIFEST(\.SKIP)?$/);
         }
 
         $read->{$file} = $comment;
@@ -485,7 +478,6 @@ sub _check_mskip_directives {
         warn "Problem opening $mfile: $!";
         return;
     }
-    binmode M, ':raw';
     print M $_ for (@lines);
     close M;
     return;
@@ -699,7 +691,6 @@ sub maniadd {
 
     open(MANIFEST, ">>$MANIFEST") or
       die "maniadd() could not open $MANIFEST: $!";
-    binmode MANIFEST, ':raw';
 
     foreach my $file (_sort @needed) {
         my $comment = $additions->{$file} || '';
@@ -741,7 +732,6 @@ sub _fix_manifest {
     if ( $must_rewrite ) {
         1 while unlink $MANIFEST; # avoid multiple versions on VMS
         open MANIFEST, ">", $MANIFEST or die "(must_rewrite=$must_rewrite) Could not open >$MANIFEST: $!";
-        binmode MANIFEST, ':raw';
         for (my $i=0; $i<=$#manifest; $i+=2) {
             print MANIFEST "$manifest[$i]\n";
         }
@@ -897,14 +887,9 @@ L<ExtUtils::MakeMaker> which has handy targets for most of the functionality.
 
 Andreas Koenig C<andreas.koenig@anima.de>
 
-Currently maintained by the Perl Toolchain Gang.
-
-=head1 COPYRIGHT AND LICENSE
-
-This software is copyright (c) 1996- by Andreas Koenig.
-
-This is free software; you can redistribute it and/or modify it under
-the same terms as the Perl 5 programming language system itself.
+Maintained by Michael G Schwern C<schwern@pobox.com> within the
+ExtUtils-MakeMaker package and, as a separate CPAN package, by
+Randy Kobes C<r.kobes@uwinnipeg.ca>.
 
 =cut
 

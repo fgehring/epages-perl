@@ -35,11 +35,7 @@ use warnings;
 
 use base qw{ PPIx::Regexp::Token };
 
-use PPIx::Regexp::Constant qw{
-    LITERAL_LEFT_CURLY_ALLOWED
-};
-
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
 # Return true if the token can be quantified, and false otherwise
 sub can_be_quantified { return };
@@ -59,32 +55,14 @@ is, if it is '*', '+', or '?'.
 =cut
 
 sub could_be_quantifier {
-    my ( undef, $string ) = @_;         # Invocant unused
+    my ( $class, $string ) = @_;
     return $quantifier{$string};
 }
 
-{
-
-    my %explanation = (
-        '*'     => 'match zero or more times',
-        '+'     => 'match one or more times',
-        '?'     => 'match zero or one time',
-    );
-
-    sub __explanation {
-        return \%explanation;
-    }
-
-}
-
-sub __following_literal_left_curly_disallowed_in {
-    return LITERAL_LEFT_CURLY_ALLOWED;
-}
-
 sub __PPIX_TOKENIZER__regexp {
-    my ( undef, $tokenizer, $character ) = @_;
+    my ( $class, $tokenizer, $character ) = @_;
 
-    $tokenizer->prior_significant_token( 'can_be_quantified' )
+    $tokenizer->prior( 'can_be_quantified' )
         or return;
 
     return $quantifier{$character};
@@ -105,7 +83,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

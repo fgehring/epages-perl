@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/Variables/ProhibitUnusedVariables.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::Variables::ProhibitUnusedVariables;
 
 use 5.006001;
@@ -12,7 +19,7 @@ use PPI::Token::Symbol;
 use Perl::Critic::Utils qw< :characters :severities >;
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -23,7 +30,7 @@ Readonly::Scalar my $EXPL =>
 
 sub supported_parameters { return ()                     }
 sub default_severity     { return $SEVERITY_MEDIUM       }
-sub default_themes       { return qw< core maintenance certrec > }
+sub default_themes       { return qw< core maintenance > }
 sub applies_to           { return qw< PPI::Document >    }
 
 #-----------------------------------------------------------------------------
@@ -46,7 +53,7 @@ sub violates {
         next DECLARATION if 'my' ne $declaration->type();
 
         my @children = $declaration->schildren();
-        next DECLARATION if any { $_->content() eq q<=> } @children;
+        next DECLARATION if any { $_ eq q<=> } @children;
 
         VARIABLE:
         foreach my $variable ( $declaration->variables() ) {

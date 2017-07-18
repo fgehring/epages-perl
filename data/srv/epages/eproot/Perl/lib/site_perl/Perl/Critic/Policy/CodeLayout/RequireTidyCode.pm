@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/CodeLayout/RequireTidyCode.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::CodeLayout::RequireTidyCode;
 
 use 5.006001;
@@ -5,7 +12,6 @@ use strict;
 use warnings;
 
 use English qw(-no_match_vars);
-use IO::String qw< >;
 use Readonly;
 
 use Perl::Tidy qw< >;
@@ -13,7 +19,7 @@ use Perl::Tidy qw< >;
 use Perl::Critic::Utils qw{ :booleans :characters :severities };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -43,8 +49,7 @@ sub initialize_if_enabled {
 
     # Set configuration if defined
     if (defined $self->{_perltidyrc} && $self->{_perltidyrc} eq $EMPTY) {
-        my $rc = $EMPTY;
-        $self->{_perltidyrc} = \$rc;
+        $self->{_perltidyrc} = \$EMPTY;
     }
 
     return $TRUE;
@@ -71,7 +76,7 @@ sub violates {
     # Remove the shell fix code from the top of program, if applicable
     ## no critic (ProhibitComplexRegexes)
     my $shebang_re = qr< [#]! [^\015\012]+ [\015\012]+ >xms;
-    my $shell_re   = qr<eval [ ] 'exec [ ] [^\015\012]* [ ] \$0 [ ] \$[{]1[+]"\$@"}'
+    my $shell_re   = qr<eval [ ] 'exec [ ] [^\015\012]* [ ] \$0 [ ] \${1[+]"\$@"}'
                         [ \t]*[\012\015]+ [ \t]* if [^\015\012]+ [\015\012]+ >xms;
     $source =~ s/\A ($shebang_re) $shell_re /$1/xms;
 
@@ -83,32 +88,14 @@ sub violates {
     # another program.  Also, we need to override the
     # stdout and stderr redirects that the user may have
     # configured in their .perltidyrc file.
-    # Also override -b because we are using dest and source.
-    local @ARGV = qw(-nst -nse -nb);
+    local @ARGV = qw(-nst -nse);
 
     # Trap Perl::Tidy errors, just in case it dies
     my $eval_worked = eval {
-
-        # Perl::Tidy 20120619 no longer accepts a scalar reference for stdio.
-        my $handle = IO::String->new( $stderr );
-
-        # Begining with version 20120619, Perl::Tidy modifies $source. So we
-        # make a copy so we can get a good comparison after tidying. Doing an
-        # s/// on $source after the fact appears not to work with previous
-        # versions of Perl::Tidy.
-        my $source_copy = $source;
-
-        # In version 20120619 (and possibly earlier), Perl::Tidy assigns the
-        # stderr parameter directly to *STDERR.  So when our $stderr goes out
-        # of scope, the handle gets closed.  Subsequent calls to warn() will
-        # then cause a fatal exception.  See RT #78182 for more details.  In
-        # the meantime, we workaround it by localizing STDERR first.
-        local *STDERR = \*STDERR;
-
         Perl::Tidy::perltidy(
-            source      => \$source_copy,
+            source      => \$source,
             destination => \$dest,
-            stderr      => $handle,
+            stderr      => \$stderr,
             defined $self->{_perltidyrc} ? (perltidyrc => $self->{_perltidyrc}) : (),
        );
        1;

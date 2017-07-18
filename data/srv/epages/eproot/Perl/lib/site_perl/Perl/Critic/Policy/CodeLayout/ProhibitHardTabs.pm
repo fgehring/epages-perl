@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/CodeLayout/ProhibitHardTabs.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::CodeLayout::ProhibitHardTabs;
 
 use 5.006001;
@@ -8,7 +15,7 @@ use Readonly;
 use Perl::Critic::Utils qw{ :booleans :severities };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -19,7 +26,7 @@ Readonly::Scalar my $EXPL => [ 20 ];
 
 # The following regex should probably be "qr{^ .* [^\t]+ \t}xms" but it doesn't
 # match when I expect it to.  I haven't figured out why, so I used "\S" to
-# approximately mean "not a tab", and that seemed to work.
+# approximately mean "not a tab", and that seemd to work.
 
 Readonly::Scalar my $NON_LEADING_TAB_REGEX => qr{^ .* \S+ \t }xms;
 
@@ -37,7 +44,7 @@ sub supported_parameters {
 }
 
 sub default_severity { return $SEVERITY_MEDIUM    }
-sub default_themes   { return qw( core cosmetic pbp )   }
+sub default_themes   { return qw( core cosmetic ) }
 sub applies_to       { return 'PPI::Token'        }
 
 #-----------------------------------------------------------------------------

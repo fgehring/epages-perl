@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/ControlStructures/ProhibitNegativeExpressionsInUnlessAndUntilConditions.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::ControlStructures::ProhibitNegativeExpressionsInUnlessAndUntilConditions;
 
 use 5.006001;
@@ -10,7 +17,7 @@ use Perl::Critic::Utils qw< :characters :severities :classification hashify >;
 
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -28,7 +35,7 @@ sub applies_to           { return 'PPI::Token::Word'         }
 sub violates {
     my ( $self, $token, undef ) = @_;
 
-    return if $token->content() ne 'until' && $token->content() ne 'unless';
+    return if $token ne 'until' && $token ne 'unless';
 
     return if is_hash_key($token);
     return if is_subroutine_name($token);
@@ -85,7 +92,7 @@ sub _get_condition_elements {
     my $element = $token;
     while (
             $element = $element->snext_sibling()
-        and $element->content() ne $SCOLON
+        and $element ne $SCOLON
     ) {
         push @condition_elements, $element;
     }

@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/BuiltinFunctions/ProhibitSleepViaSelect.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::BuiltinFunctions::ProhibitSleepViaSelect;
 
 use 5.006001;
@@ -8,7 +15,7 @@ use Readonly;
 use Perl::Critic::Utils qw{ :severities :classification :ppi };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -28,7 +35,7 @@ sub applies_to           { return 'PPI::Token::Word'  }
 sub violates {
     my ($self, $elem, undef) = @_;
 
-    return if $elem->content() ne 'select';
+    return if ($elem ne 'select');
     return if ! is_function_call($elem);
 
     my @arguments = parse_arg_list($elem);

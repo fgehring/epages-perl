@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPIx::Regexp::Token::Interpolation 3"
-.TH PPIx::Regexp::Token::Interpolation 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPIx::Regexp::Token::Interpolation 3 "2011-04-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -150,8 +150,8 @@ expression. In the \*(L"\s-1SYNOPSIS\s0\*(R" the \f(CW$foo\fR would be represent
 object of this class.
 .SH "METHODS"
 .IX Header "METHODS"
-This class provides the following public methods beyond those provided
-by its superclass.
+This class provides no public methods beyond those provided by its
+superclass.
 .SS "ppi"
 .IX Subsection "ppi"
 This convenience method returns the PPI::Document
@@ -162,8 +162,8 @@ not be the same as the content of the original
 \&\f(CW\*(C`PPIx::Regexp::Token::Interpolation\*(C'\fR. This can happen because
 interpolated variable names may be enclosed in curly brackets, but this
 does not happen in normal code. For example, in \f(CW\*(C`/${foo}bar/\*(C'\fR, the
-content of the \f(CW\*(C`PPIx::Regexp::Token::Interpolation\*(C'\fR object will be
-\&\f(CW\*(Aq${foo}\*(Aq\fR, but the content of the \f(CW\*(C`PPI::Document\*(C'\fR will be \f(CW\*(Aq$foo\*(Aq\fR.
+content of the \f(CW\*(C`PPIx\*(C'\fR object will be \f(CW\*(Aq${foo}\*(Aq\fR, but the content of
+the \f(CW\*(C`PPI::Document\*(C'\fR will be \f(CW\*(Aq$foo\*(Aq\fR.
 .SH "SUPPORT"
 .IX Header "SUPPORT"
 Support is by the author. Please file bug reports at
@@ -173,7 +173,7 @@ Support is by the author. Please file bug reports at
 Thomas R. Wyant, \s-1III\s0 \fIwyant at cpan dot org\fR
 .SH "COPYRIGHT AND LICENSE"
 .IX Header "COPYRIGHT AND LICENSE"
-Copyright (C) 2009\-2017 by Thomas R. Wyant, \s-1III\s0
+Copyright (C) 2009\-2011 by Thomas R. Wyant, \s-1III\s0
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

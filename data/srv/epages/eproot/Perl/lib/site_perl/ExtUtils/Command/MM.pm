@@ -10,20 +10,14 @@ our @ISA = qw(Exporter);
 
 our @EXPORT  = qw(test_harness pod2man perllocal_install uninstall
                   warn_if_old_packlist test_s cp_nonempty);
-our $VERSION = '7.30';
-$VERSION = eval $VERSION;
+our $VERSION = '6.84';
 
 my $Is_VMS = $^O eq 'VMS';
 
-sub mtime {
-  no warnings 'redefine';
-  local $@;
-  *mtime = (eval { require Time::HiRes } && defined &Time::HiRes::stat)
-    ? sub { (Time::HiRes::stat($_[0]))[9] }
-    : sub { (             stat($_[0]))[9] }
-  ;
-  goto &mtime;
-}
+eval {  require Time::HiRes; die unless Time::HiRes->can("stat"); };
+*mtime = $@ ?
+ sub { [             stat($_[0])]->[9] } :
+ sub { [Time::HiRes::stat($_[0])]->[9] } ;
 
 =head1 NAME
 
@@ -122,9 +116,8 @@ sub pod2man {
                 'section|s=s', 'release|r=s', 'center|c=s',
                 'date|d=s', 'fixed=s', 'fixedbold=s', 'fixeditalic=s',
                 'fixedbolditalic=s', 'official|o', 'quotes|q=s', 'lax|l',
-                'name|n=s', 'perm_rw=i', 'utf8|u'
+                'name|n=s', 'perm_rw=i'
     );
-    delete $options{utf8} unless $Pod::Man::VERSION >= 2.17;
 
     # If there's no files, don't bother going further.
     return 0 unless @ARGV;
@@ -137,9 +130,6 @@ sub pod2man {
     # This isn't a valid Pod::Man option and is only accepted for backwards
     # compatibility.
     delete $options{lax};
-    my $count = scalar @ARGV / 2;
-    my $plural = $count == 1 ? 'document' : 'documents';
-    print "Manifying $count pod $plural\n";
 
     do {{  # so 'next' works
         my ($pod, $man) = splice(@ARGV, 0, 2);
@@ -147,6 +137,8 @@ sub pod2man {
         next if ((-e $man) &&
                  (mtime($man) > mtime($pod)) &&
                  (mtime($man) > mtime("Makefile")));
+
+        print "Manifying $man\n";
 
         my $parser = Pod::Man->new(%options);
         $parser->parse_from_file($pod, $man)
@@ -219,9 +211,8 @@ sub perllocal_install {
                            : @ARGV;
 
     my $pod;
-    my $time = gmtime($ENV{SOURCE_DATE_EPOCH} || time);
-    $pod = sprintf <<'POD', scalar($time), $type, $name, $name;
- =head2 %s: C<%s> L<%s|%s>
+    $pod = sprintf <<POD, scalar localtime;
+ =head2 %s: C<$type> L<$name|$name>
 
  =over 4
 

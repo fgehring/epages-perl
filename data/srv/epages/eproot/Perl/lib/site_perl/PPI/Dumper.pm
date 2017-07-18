@@ -37,7 +37,7 @@ use Params::Util qw{_INSTANCE};
 
 use vars qw{$VERSION};
 BEGIN {
-        $VERSION = '1.224';
+        $VERSION = '1.215';
 }
 
 
@@ -92,7 +92,7 @@ made much clearer. True/false value, on by default.
 
 Should the dumper show comment tokens. In situations where you have
 a lot of comments, the code can often be made clearer by ignoring
-comment tokens. True/false value, on by default.
+comment tokens. True/value value, on by default.
 
 =item locations
 
@@ -183,7 +183,7 @@ sub string {
 The C<list> method generates the dump and provides it as a raw
 list, without trailing newlines.
 
-Returns a list or the null list if there is an error while generating
+Returns a list or the null list if there is an error while generation
 the dump.
 
 =cut
@@ -266,7 +266,6 @@ sub _element_string {
                         my $content = $Element->content;
                         $content =~ s/\n/\\n/g;
                         $content =~ s/\t/\\t/g;
-                        $content =~ s/\f/\\f/g;
                         $string .= "  \t'$content'";
                 }
 

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPI 3"
-.TH PPI 3 "2017-05-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPI 3 "2011-02-26" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -177,7 +177,7 @@ The cause of this problem was Perl's complex and dynamic grammar.
 Although there is typically not a huge diversity in the grammar of most
 Perl code, certain issues cause large problems when it comes to parsing.
 .PP
-Indeed, quite early in Perl's history Tom Christiansen introduced the Perl
+Indeed, quite early in Perl's history Tom Christenson introduced the Perl
 community to the quote \fI\*(L"Nothing but perl can parse Perl\*(R"\fR, or as it is
 more often stated now as a truism:
 .PP
@@ -228,8 +228,8 @@ resources, such as libraries upon which the code may depend, and
 without needing to run an instance of perl alongside or inside the parser.
 .PP
 Historically, using an embedded perl parser was widely considered to be
-the most likely avenue for finding a solution to parsing Perl. It has been
-investigated from time to time, but attempts have generally failed or
+the most likely avenue for finding a solution to \f(CW\*(C`Parse::Perl\*(C'\fR. It was
+investigated from time to time and attempts have generally failed or
 suffered from sufficiently bad corner cases that they were abandoned.
 .SS "What Does \s-1PPI\s0 Stand For?"
 .IX Subsection "What Does PPI Stand For?"
@@ -255,6 +255,16 @@ to leave the \f(CW\*(C`Parse::Perl\*(C'\fR namespace free for any such effort.
 Since that time I've been able to prove to my own satisfaction that it
 \&\fBis\fR truly impossible to accurately parse Perl as both code and document
 at once. For the academics, parsing Perl suffers from the \*(L"Halting Problem\*(R".
+.PP
+With this in mind \f(CW\*(C`Parse::Perl\*(C'\fR has now been co-opted as the title for
+the SourceForge project that publishes \s-1PPI\s0 and a large collection of other
+applications and modules related to the (document) parsing of Perl source
+code.
+.PP
+You can find this project at <http://sf.net/projects/parseperl>,
+however we no longer use the SourceForge \s-1CVS\s0 server.  Instead, the
+current development version of \s-1PPI\s0 is available via \s-1SVN\s0 at
+<http://svn.ali.as/cpan/trunk/PPI/>.
 .SS "Why Parse Perl?"
 .IX Subsection "Why Parse Perl?"
 Once you can accept that we will never be able to parse Perl well enough
@@ -267,7 +277,7 @@ What are the things that people might want a \*(L"Perl parser\*(R" for.
 Analyzing the contents of a Perl document to automatically generate
 documentation, in parallel to, or as a replacement for, \s-1POD\s0 documentation.
 .Sp
-Allow an indexer to locate and process all the comments and
+Allow an indexer to to locate and process all the comments and
 documentation from code for \*(L"full text search\*(R" applications.
 .IP "Structural and Quality Analysis" 4
 .IX Item "Structural and Quality Analysis"
@@ -276,9 +286,6 @@ situations relating to particular phrases, techniques or locations.
 .Sp
 Index functions, variables and packages within Perl code, and doing search
 and graph (in the node/edge sense) analysis of large code bases.
-.Sp
-Perl::Critic, based on \s-1PPI\s0, is a large, thriving tool for bug detection
-and style analysis of Perl code.
 .IP "Refactoring" 4
 .IX Item "Refactoring"
 Make structural, syntax, or other changes to code in an automated manner,
@@ -337,9 +344,13 @@ Specifically, it allows the use characters from the Latin\-1 character
 set to be used in quotes, comments, and \s-1POD\s0. Primarily, this covers
 languages from Europe and South America.
 .PP
-\&\s-1PPI\s0 does \fBnot\fR currently provide support for Unicode.
-If you need Unicode support and would like to help,
-contact the author. (contact details below)
+\&\s-1PPI\s0 does \fBnot\fR currently provide support for Unicode, although there
+is an initial implementation available in a development branch from
+\&\s-1CVS\s0.
+.PP
+If you need Unicode support, and would like to help stress test the
+Unicode support so we can move it to the main branch and enable it
+in the main release should contact the author. (contact details below)
 .SS "Round Trip Safe"
 .IX Subsection "Round Trip Safe"
 When \s-1PPI\s0 parses a file it builds \fBeverything\fR into the model, including
@@ -602,8 +613,8 @@ via the included PPI::Dumper).
 \&  PPI::Document
 \&    PPI::Token::Comment                \*(Aq#!/usr/bin/perl\en\*(Aq
 \&    PPI::Token::Whitespace             \*(Aq\en\*(Aq
-\&    PPI::Statement
-\&      PPI::Token::Word                 \*(Aqprint\*(Aq
+\&    PPI::Statement::Expression
+\&      PPI::Token::Bareword             \*(Aqprint\*(Aq
 \&      PPI::Structure::List             ( ... )
 \&        PPI::Token::Whitespace         \*(Aq \*(Aq
 \&        PPI::Statement::Expression
@@ -612,14 +623,14 @@ via the included PPI::Dumper).
 \&      PPI::Token::Structure            \*(Aq;\*(Aq
 \&    PPI::Token::Whitespace             \*(Aq\en\*(Aq
 \&    PPI::Token::Whitespace             \*(Aq\en\*(Aq
-\&    PPI::Statement
-\&      PPI::Token::Word                 \*(Aqexit\*(Aq
+\&    PPI::Statement::Expression
+\&      PPI::Token::Bareword             \*(Aqexit\*(Aq
 \&      PPI::Structure::List             ( ... )
 \&      PPI::Token::Structure            \*(Aq;\*(Aq
 \&    PPI::Token::Whitespace             \*(Aq\en\*(Aq
 .Ve
 .PP
-Please note that in this example, strings are only listed for the
+Please note that in this this example, strings are only listed for the
 \&\fBactual\fR PPI::Token that contains that string. Structures are listed
 with the type of brace characters it represents noted.
 .PP
@@ -631,14 +642,14 @@ whitespace. Here it is again, sans the distracting whitespace tokens.
 .Vb 12
 \&  PPI::Document
 \&    PPI::Token::Comment                \*(Aq#!/usr/bin/perl\en\*(Aq
-\&    PPI::Statement
-\&      PPI::Token::Word                 \*(Aqprint\*(Aq
+\&    PPI::Statement::Expression
+\&      PPI::Token::Bareword             \*(Aqprint\*(Aq
 \&      PPI::Structure::List             ( ... )
 \&        PPI::Statement::Expression
 \&          PPI::Token::Quote::Double    \*(Aq"Hello World!"\*(Aq
 \&      PPI::Token::Structure            \*(Aq;\*(Aq
-\&    PPI::Statement
-\&      PPI::Token::Word                 \*(Aqexit\*(Aq
+\&    PPI::Statement::Expression
+\&      PPI::Token::Bareword             \*(Aqexit\*(Aq
 \&      PPI::Structure::List             ( ... )
 \&      PPI::Token::Structure            \*(Aq;\*(Aq
 .Ve
@@ -694,7 +705,7 @@ The base class for all Perl statements. Generic \*(L"evaluate for side-effects\*
 statements are of this actual type. Other more interesting statement types
 belong to one of its children.
 .Sp
-See its own documentation for a longer description and list of all of the
+See it's own documentation for a longer description and list of all of the
 different statement types and sub-classes.
 .IP "PPI::Structure" 4
 .IX Item "PPI::Structure"
@@ -749,15 +760,20 @@ There are no special install instructions for \s-1PPI\s0, and the normal
 apply.
 .SH "EXTENDING"
 .IX Header "EXTENDING"
-The \s-1PPI\s0 namespace itself is reserved for use by \s-1PPI\s0 itself.
+The \s-1PPI\s0 namespace itself is reserved for the sole use of the modules under
+the umbrella of the \f(CW\*(C`Parse::Perl\*(C'\fR SourceForge project.
+.PP
+<http://sf.net/projects/parseperl>
+.PP
 You are recommended to use the PPIx:: namespace for PPI-specific
 modifications or prototypes thereof, or Perl:: for modules which provide
 a general Perl language-related functions.
 .PP
-If what you wish to implement looks like it fits into the PPIx:: namespace,
-you should consider contacting the \s-1PPI\s0 maintainers on GitHub first, as what
-you want may already be in progress, or you may wish to consider contributing
-to \s-1PPI\s0 itself.
+If what you wish to implement looks like it fits into PPIx:: namespace,
+you should consider contacting the \f(CW\*(C`Parse::Perl\*(C'\fR mailing list (detailed on
+the SourceForge site) first, as what you want may already be in progress,
+or you may wish to consider joining the team and doing it within the
+\&\f(CW\*(C`Parse::Perl\*(C'\fR project itself.
 .SH "TO DO"
 .IX Header "TO DO"
 \&\- Many more analysis and utility methods for \s-1PDOM\s0 classes
@@ -773,32 +789,36 @@ to \s-1PPI\s0 itself.
 \&\- Full understanding of scoping (due 1.300)
 .SH "SUPPORT"
 .IX Header "SUPPORT"
-The most recent version of \s-1PPI\s0 is available at the following address.
+This module is stored in an Open Repository at the following address.
 .PP
-<http://search.cpan.org/~mithaldu/PPI/>
+<http://svn.ali.as/cpan/trunk/PPI>
 .PP
-\&\s-1PPI\s0 source is maintained in a GitHub repository at the following address.
+Write access to the repository is made available automatically to any
+published \s-1CPAN\s0 author, and to most other volunteers on request.
 .PP
-<https://github.com/adamkennedy/PPI>
+If you are able to submit your bug report in the form of new (failing)
+unit tests, or can apply your fix directly instead of submitting a patch,
+you are \fBstrongly\fR encouraged to do so, as the author currently maintains
+over 100 modules and it can take some time to deal with non\-\*(L"Critical\*(R" bug
+reports or patches.
 .PP
-Contributions via GitHub pull request are welcome.
+This will also guarentee that your issue will be addressed in the next
+release of the module.
 .PP
-Bug fixes in the form of pull requests or bug reports with
-new (failing) unit tests have the best chance of being addressed
-by busy maintainers, and are \fBstrongly\fR encouraged.
+For large changes though, please consider creating a branch so that they
+can be properly reviewed and trialed before being applied to the trunk.
 .PP
-If you cannot provide a test or fix, or don't have time to do so,
-then regular bug reports are still accepted and appreciated via the
-GitHub bug tracker.
+If you cannot provide a direct test or fix, or don't have time to do so,
+then regular bug reports are still accepted and appreciated via the \s-1CPAN\s0
+bug tracker.
 .PP
-<https://github.com/adamkennedy/PPI/issues>
+<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=PPI>
 .PP
-The \f(CW\*(C`ppidump\*(C'\fR utility that is part of the Perl::Critic distribution
-is a useful tool for demonstrating how \s-1PPI\s0 is parsing (or misparsing)
-small code snippets, and for providing information for bug reports.
+For other issues or questions, contact the \f(CW\*(C`Parse::Perl\*(C'\fR project mailing
+list.
 .PP
-For other issues, questions, or commercial or media-related enquiries,
-contact the author.
+For commercial or media-related enquiries, or to have your \s-1SVN\s0 commit bit
+enabled, contact the author.
 .SH "AUTHOR"
 .IX Header "AUTHOR"
 Adam Kennedy <adamk@cpan.org>

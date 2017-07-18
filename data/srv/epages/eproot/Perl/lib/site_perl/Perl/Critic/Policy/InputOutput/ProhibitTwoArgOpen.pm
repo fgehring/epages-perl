@@ -1,3 +1,10 @@
+##############################################################################
+#      $URL: http://perlcritic.tigris.org/svn/perlcritic/trunk/distributions/Perl-Critic/lib/Perl/Critic/Policy/InputOutput/ProhibitTwoArgOpen.pm $
+#     $Date: 2011-05-15 16:34:46 -0500 (Sun, 15 May 2011) $
+#   $Author: clonezone $
+# $Revision: 4078 $
+##############################################################################
+
 package Perl::Critic::Policy::InputOutput::ProhibitTwoArgOpen;
 
 use 5.006001;
@@ -11,7 +18,7 @@ use version;
 use Perl::Critic::Utils qw{ :severities :classification :ppi };
 use base 'Perl::Critic::Policy';
 
-our $VERSION = '1.128';
+our $VERSION = '1.116';
 
 #-----------------------------------------------------------------------------
 
@@ -26,7 +33,7 @@ Readonly::Scalar my $MINIMUM_VERSION => version->new(5.006);
 
 sub supported_parameters { return ()                         }
 sub default_severity     { return $SEVERITY_HIGHEST          }
-sub default_themes       { return qw(core pbp bugs security certrule) }
+sub default_themes       { return qw(core pbp bugs security) }
 sub applies_to           { return 'PPI::Token::Word'         }
 
 #-----------------------------------------------------------------------------
@@ -34,7 +41,7 @@ sub applies_to           { return 'PPI::Token::Word'         }
 sub violates {
     my ($self, $elem, $document) = @_;
 
-    return if $elem->content() ne 'open';
+    return if $elem ne 'open';
     return if ! is_function_call($elem);
 
     my $version = $document->highest_explicit_perl_version();

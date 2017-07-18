@@ -43,34 +43,14 @@ use Carp qw{ confess };
 
 use PPIx::Regexp::Constant qw{ RE_CAPTURE_NAME };
 
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
-use constant TOKENIZER_ARGUMENT_REQUIRED => 1;
-
-sub __new {
-    my ( $class, $content, %arg ) = @_;
-
-    defined $arg{perl_version_introduced}
-        or $arg{perl_version_introduced} = '5.009005';
-
-    my $self = $class->SUPER::__new( $content, %arg );
-
-    foreach my $name ( $arg{tokenizer}->capture() ) {
-        defined $name or next;
-        $self->{name} = $name;
-        return $self;
-    }
-
-    confess 'Programming error - can not figure out capture name';
-}
+use constant NAMED_CAPTURE =>
+    qr{ \A \\? \? (?: P? < ( @{[ RE_CAPTURE_NAME ]} ) \\? > |
+                \\? ' ( @{[ RE_CAPTURE_NAME ]} ) \\? ' ) }smxo;
 
 # Return true if the token can be quantified, and false otherwise
 # sub can_be_quantified { return };
-
-sub explain {
-    my ( $self ) = @_;
-    return sprintf q<Capture match into '%s'>, $self->name();
-}
 
 =head2 name
 
@@ -83,21 +63,40 @@ sub name {
     return $self->{name};
 }
 
-sub __make_group_type_matcher {
-    return {
-        ''      => [
-            qr/ \A [?] P? < ( @{[ RE_CAPTURE_NAME ]} ) > /smxo,
-            qr/ \A [?] ' ( @{[ RE_CAPTURE_NAME ]} ) ' /smxo,
-        ],
-        '?'     => [
-            qr/ \A \\ [?] P? < ( @{[ RE_CAPTURE_NAME ]} ) > /smxo,
-            qr/ \A \\ [?] ' ( @{[ RE_CAPTURE_NAME ]} ) ' /smxo,
-        ],
-        q{'}    => [
-            qr/ \A [?] P? < ( @{[ RE_CAPTURE_NAME ]} ) > /smxo,
-            qr/ \A [?] \\ ' ( @{[ RE_CAPTURE_NAME ]} ) \\ ' /smxo,
-        ],
-    };
+sub perl_version_introduced {
+    return '5.009005';
+}
+
+sub __PPIX_TOKEN__post_make {
+    my ( $self, $tokenizer ) = @_;
+    if ( $tokenizer ) {
+        foreach my $name ( $tokenizer->capture() ) {
+            defined $name or next;
+            $self->{name} = $name;
+            return;
+        }
+    } else {
+        foreach my $name (
+            $self->content() =~ m/ @{[ NAMED_CAPTURE ]} /smxo ) {
+            defined $name or next;
+            $self->{name} = $name;
+            return;
+        }
+    }
+
+    confess 'Programming error - can not figure out capture name';
+}
+
+sub __PPIX_TOKENIZER__regexp {
+    my ( $class, $tokenizer, $character ) = @_;
+
+    # The optional escapes are because any of the non-open-bracket
+    # punctuation characters may be the expression delimiter.
+    if ( my $accept = $tokenizer->find_regexp( NAMED_CAPTURE ) ) {
+        return $accept;
+    }
+
+    return;
 }
 
 1;
@@ -115,7 +114,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

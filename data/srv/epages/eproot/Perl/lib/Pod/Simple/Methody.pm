@@ -4,7 +4,7 @@ package Pod::Simple::Methody;
 use strict;
 use Pod::Simple ();
 use vars qw(@ISA $VERSION);
-$VERSION = '3.35';
+$VERSION = '3.14';
 @ISA = ('Pod::Simple');
 
 # Yes, we could use named variables, but I want this to be impose
@@ -32,7 +32,7 @@ sub _handle_element_end {
   ( $_[0]->can( 'end_' . $_[1] )
     || return
   )->(
-    $_[0], $_[2]
+    $_[0]
   );
 }
 
@@ -115,8 +115,8 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
+L<http://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/theory/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

@@ -48,15 +48,12 @@ use warnings;
 use base qw{ PPIx::Regexp::Node };
 
 use Carp qw{ confess };
-use PPIx::Regexp::Constant qw{ STRUCTURE_UNKNOWN };
 use PPIx::Regexp::Util qw{ __instance };
 use Scalar::Util qw{ refaddr };
 
-our $VERSION = '0.051';
+our $VERSION = '0.020';
 
-use constant ELEMENT_UNKNOWN => STRUCTURE_UNKNOWN;
-
-sub __new {
+sub _new {
     my ( $class, @args ) = @_;
     my %brkt;
     if ( ref $args[0] eq 'HASH' ) {
@@ -81,7 +78,7 @@ sub __new {
 
     $class->_check_for_interpolated_match( \%brkt, \@args );
 
-    my $self = $class->SUPER::__new( @args )
+    my $self = $class->SUPER::_new( @args )
         or return;
 
     if ( __instance( $brkt{type}[0], 'PPIx::Regexp::Token::GroupType' ) ) {
@@ -105,10 +102,6 @@ sub __new {
             $val->_parent( $self );
         }
     }
-
-    @{ $self->{finish} }
-        or $self->{error} = 'Missing end delimiter';
-
     return $self;
 }
 
@@ -131,17 +124,6 @@ sub elements {
     } else {
         return;
     }
-}
-
-sub explain {
-    my ( $self ) = @_;
-    if ( my $type = $self->type() ) {
-        return $type->explain();
-    }
-    if ( my $start = $self->start() ) {
-        return $start->explain();
-    }
-    return $self->__no_explanation();
 }
 
 =head2 finish
@@ -253,7 +235,7 @@ sub type {
 
 # Check for things like (?$foo:...) or (?$foo)
 sub _check_for_interpolated_match {
-    my ( undef, $brkt, $args ) = @_;    # Invocant unused
+    my ( $class, $brkt, $args ) = @_;
 
     # Everything we are interested in begins with a literal '?' followed
     # by an interpolation.
@@ -273,13 +255,12 @@ sub _check_for_interpolated_match {
         && $args->[2]->content() eq ':' ) {
 
         # Rebless the '?' as a GroupType::Modifier.
-        PPIx::Regexp::Token::GroupType::Modifier->__PPIX_ELEM__rebless(
-            $args->[0] );
+        bless $args->[0], 'PPIx::Regexp::Token::GroupType::Modifier';
+        # Note that we do _not_ want __PPIX_TOKEN__post_make here.
 
         # Rebless the ':' as a GroupType, just so it does not look like
         # something to match against.
-        PPIx::Regexp::Token::GroupType->__PPIX_ELEM__rebless(
-            $args->[2] );
+        bless $args->[2], 'PPIx::Regexp::Token::GroupType';
 
         # Shove our three significant tokens into the type.
         push @{ $brkt->{type} }, splice @{ $args }, 0, 3;
@@ -307,15 +288,13 @@ sub _check_for_interpolated_match {
             && $args->[4]->content() eq ':' ) {
 
             # Rebless the '?' as a GroupType::Modifier.
-            PPIx::Regexp::Token::GroupType::Modifier->__PPIX_ELEM__rebless(
-                $args->[0] );
+            bless $args->[0], 'PPIx::Regexp::Token::GroupType::Modifier';
+            # Note that we do _not_ want __PPIX_TOKEN__post_make here.
 
             # Rebless the '-' and ':' as GroupType, just so they do not
             # look like something to match against.
-            PPIx::Regexp::Token::GroupType->__PPIX_ELEM__rebless(
-                $args->[2] );
-            PPIx::Regexp::Token::GroupType->__PPIX_ELEM__rebless(
-                $args->[4] );
+            bless $args->[2], 'PPIx::Regexp::Token::GroupType';
+            bless $args->[4], 'PPIx::Regexp::Token::GroupType';
 
             # Shove our five significant tokens into the type.
             push @{ $brkt->{type} }, splice @{ $args }, 0, 5;
@@ -339,8 +318,8 @@ sub _check_for_interpolated_match {
     }
 
     # Rebless the '?' as a GroupType::Modifier.
-    PPIx::Regexp::Token::GroupType::Modifier->__PPIX_ELEM__rebless(
-        $args->[0] );
+    bless $args->[0], 'PPIx::Regexp::Token::GroupType::Modifier';
+    # Note that we do _not_ want __PPIX_TOKEN__post_make here.
 
     # Shove all the contents of $args into type, using splice to leave
     # @{ $args } empty after we do this.
@@ -365,7 +344,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

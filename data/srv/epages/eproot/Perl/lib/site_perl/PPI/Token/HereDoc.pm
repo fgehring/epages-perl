@@ -24,7 +24,7 @@ and newlines may not matter in most Perl code, but they matter in here-docs.
 They are also tricky to store as an object. They look sort of like an
 operator and a string, but they don't act like it. And they have a second
 section that should be something like a separate token, but isn't because a
-string can span from above the here-doc content to below it.
+strong can span from above the here-doc content to below it.
 
 So when parsing, this is what we do.
 
@@ -89,7 +89,7 @@ use PPI::Token ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-        $VERSION = '1.224';
+        $VERSION = '1.215';
         @ISA     = 'PPI::Token';
 }
 
@@ -152,8 +152,8 @@ sub __TOKENIZER__on_char {
         ### FIXME - This regex, and this method in general, do not yet allow
         ### for the null here-doc, which terminates at the first
         ### empty line.
-        pos $t->{line} = $t->{line_cursor};
-        if ( $t->{line} !~ m/\G( \s* (?: "[^"]*" | '[^']*' | `[^`]*` | \\?\w+ ) )/gcx ) {
+        my $rest_of_line = substr( $t->{line}, $t->{line_cursor} );
+        unless ( $rest_of_line =~ /^( \s* (?: "[^"]*" | '[^']*' | `[^`]*` | \\?\w+ ) )/x  ) {
                 # Degenerate to a left-shift operation
                 $t->{token}->set_class('Operator');
                 return $t->_finalize_token->__TOKENIZER__on_char( $t );
@@ -201,10 +201,14 @@ sub __TOKENIZER__on_char {
                 return undef;
         }
 
+        # Define $line outside of the loop, so that if we encounter the
+        # end of the file, we have access to the last line still.
+        my $line;
+
         # Suck in the HEREDOC
-        $token->{_heredoc} = \my @heredoc;
+        $token->{_heredoc} = [];
         my $terminator = $token->{_terminator} . "\n";
-        while ( defined( my $line = $t->_get_line ) ) {
+        while ( defined($line = $t->_get_line) ) {
                 if ( $line eq $terminator ) {
                         # Keep the actual termination line for consistency
                         # when we are re-assembling the file
@@ -215,30 +219,29 @@ sub __TOKENIZER__on_char {
                 }
 
                 # Add the line
-                push @heredoc, $line;
+                push @{$token->{_heredoc}}, $line;
         }
 
         # End of file.
         # Error: Didn't reach end of here-doc before end of file.
+        # $line might be undef if we get NO lines.
+        if ( defined $line and $line eq $token->{_terminator} ) {
+                # If the last line matches the terminator
+                # but is missing the newline, we want to allow
+                # it anyway (like perl itself does). In this case
+                # perl would normally throw a warning, but we will
+                # also ignore that as well.
+                pop @{$token->{_heredoc}};
+                $token->{_terminator_line} = $line;
+        } else {
+                # The HereDoc was not properly terminated.
+                $token->{_terminator_line} = undef;
 
-        # If the here-doc block is not empty, look at the last line to determine if
-        # the here-doc terminator is missing a newline (which Perl would fail to
-        # compile but is easy to detect) or if the here-doc block was just not
-        # terminated at all (which Perl would fail to compile as well).
-        $token->{_terminator_line} = undef;
-        if ( @heredoc and defined $heredoc[-1] ) {
-                # See PPI::Tokenizer, the algorithm there adds a space at the end of the
-                # document that we need to make sure we remove.
-                if ( $t->{source_eof_chop} ) {
-                        chop $heredoc[-1];
+                # Trim off the trailing whitespace
+                if ( defined $token->{_heredoc}->[-1] and $t->{source_eof_chop} ) {
+                        chop $token->{_heredoc}->[-1];
                         $t->{source_eof_chop} = '';
                 }
-
-                # Check if the last line of the file matches the terminator without
-                # newline at the end. If so, remove it from the content and set it as
-                # the terminator line.
-                $token->{_terminator_line} = pop @heredoc
-                  if $heredoc[-1] eq $token->{_terminator};
         }
 
         # Set a hint for PPI::Document->serialize so it can

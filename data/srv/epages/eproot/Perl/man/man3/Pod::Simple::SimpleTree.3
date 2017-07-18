@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Pod::Simple::SimpleTree 3"
-.TH Pod::Simple::SimpleTree 3 "2016-11-30" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Pod::Simple::SimpleTree 3 "2011-01-09" "perl v5.12.3" "Perl Programmers Reference Guide"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -135,15 +135,15 @@ Pod::Simple::SimpleTree \-\- parse Pod into a simple parse tree
 .IX Header "SYNOPSIS"
 .Vb 1
 \&  % cat ptest.pod
-\&
+\&  
 \&  =head1 PIE
-\&
+\&  
 \&  I like B<pie>!
-\&
+\&  
 \&  % perl \-MPod::Simple::SimpleTree \-MData::Dumper \-e \e
 \&     "print Dumper(Pod::Simple::SimpleTree\->new\->parse_file(shift)\->root)" \e
 \&     ptest.pod
-\&
+\&  
 \&  $VAR1 = [
 \&            \*(AqDocument\*(Aq,
 \&            { \*(Aqstart_line\*(Aq => 1 },
@@ -187,7 +187,7 @@ the form: \f(CW\*(C`[ \f(CIelementname\f(CW, \e%attributes, \f(CI...subnodes...\
 See the example tree dump in the Synopsis, above.
 .PP
 Every text node in the tree is represented by a simple (non-ref)
-string scalar.  So you can test \f(CW\*(C`ref($node)\*(C'\fR to see whether you have
+string scalar.  So you can test \f(CW\*(C`ref($node)\*(C'\fR to see whather you have
 an element node or just a text node.
 .PP
 The top node in the tree is \f(CW\*(C`[ \*(AqDocument\*(Aq, \e%attributes,
@@ -206,8 +206,8 @@ pod\-people@perl.org mail list. Send an empty email to
 pod\-people\-subscribe@perl.org to subscribe.
 .PP
 This module is managed in an open GitHub repository,
-https://github.com/perl\-pod/pod\-simple/ <https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone git://github.com/perl\-pod/pod\-simple.git <git://github.com/perl-pod/pod-simple.git> and send patches!
+http://github.com/theory/pod\-simple/ <http://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
+to clone git://github.com/theory/pod\-simple.git <git://github.com/theory/pod-simple.git> and send patches!
 .PP
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug\-pod\-simple@rt.cpan.org>.

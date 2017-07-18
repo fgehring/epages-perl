@@ -26,8 +26,7 @@ require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
 
 our @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
-our $VERSION = '7.30';
-$VERSION = eval $VERSION;
+our $VERSION = '6.84';
 
 
 =item os_flavor
@@ -51,7 +50,6 @@ sub init_linker {
 
     $self->{PERL_ARCHIVE} ||=
       File::Spec->catdir('$(PERL_INC)',$Config{libperl});
-    $self->{PERL_ARCHIVEDEP} ||= '';
     $self->{PERL_ARCHIVE_AFTER} ||= '';
     $self->{EXPORT_LIST}  ||= '';
 }

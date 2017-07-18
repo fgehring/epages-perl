@@ -62,7 +62,7 @@ use PPI::Exception  ();
 
 use vars qw{$VERSION $errstr *_PARENT %ROUND %RESOLVE};
 BEGIN {
-        $VERSION = '1.224';
+        $VERSION = '1.215';
         $errstr  = '';
 
         # Faster than having another method call just
@@ -222,7 +222,10 @@ sub lex_tokenizer {
 
         # Lex the token stream into the document
         $self->{Tokenizer} = $Tokenizer;
-        if ( !eval { $self->_lex_document($Document); 1 } ) {
+        eval {
+                $self->_lex_document($Document);
+        };
+        if ( $@ ) {
                 # If an error occurs DESTROY the partially built document.
                 undef $Document;
                 if ( _INSTANCE($@, 'PPI::Exception') ) {
@@ -241,6 +244,21 @@ sub lex_tokenizer {
 
 #####################################################################
 # Lex Methods - Document Object
+
+=pod
+
+=begin testing _lex_document 3
+
+# Validate the creation of a null statement
+SCOPE: {
+        my $token = new_ok( 'PPI::Token::Structure' => [ ')'    ] );
+        my $brace = new_ok( 'PPI::Statement::UnmatchedBrace' => [ $token ] );
+        is( $brace->content, ')', '->content ok' );
+}
+
+=end testing
+
+=cut
 
 sub _lex_document {
         my ($self, $Document) = @_;
@@ -292,7 +310,7 @@ sub _lex_document {
                 # Is this the close of a structure.
                 if ( $Token->__LEXER__closes ) {
                         # Because we are at the top of the tree, this is an error.
-                        # This means either a mis-parsing, or a mistake in the code.
+                        # This means either a mis-parsing, or an mistake in the code.
                         # To handle this, we create a "Naked Close" statement
                         $self->_add_element( $Document,
                                 PPI::Statement::UnmatchedBrace->new($Token)
@@ -349,10 +367,6 @@ BEGIN {
                 'UNITCHECK' => 'PPI::Statement::Scheduled',
                 'INIT'      => 'PPI::Statement::Scheduled',
                 'END'       => 'PPI::Statement::Scheduled',
-
-                # Special subroutines for which 'sub' is optional
-                'AUTOLOAD'  => 'PPI::Statement::Sub',
-                'DESTROY'   => 'PPI::Statement::Sub',
 
                 # Loading and context statement
                 'package'   => 'PPI::Statement::Package',
@@ -440,28 +454,6 @@ sub _statement {
 
         # Is it a token in our known classes list
         my $class = $STATEMENT_CLASSES{$Token->content};
-        if ( $class ) {
-                # Is the next significant token a =>
-                # Read ahead to the next significant token
-                my $Next;
-                while ( $Next = $self->_get_token ) {
-                        if ( !$Next->significant ) {
-                                push @{$self->{delayed}}, $Next;
-                                next;
-                        }
-
-                        last if
-                                !$Next->isa( 'PPI::Token::Operator' ) or $Next->content ne '=>';
-
-                        # Got the next token
-                        # Is an ordinary expression
-                        $self->_rollback( $Next );
-                        return 'PPI::Statement';
-                }
-
-                # Rollback and continue
-                $self->_rollback( $Next );
-        }
 
         # Handle potential barewords for subscripts
         if ( $Parent->isa('PPI::Structure::Subscript') ) {
@@ -555,16 +547,8 @@ sub _statement {
                         }
 
                         # Found the next significant token.
-                        if (
-                                $Next->isa('PPI::Token::Operator')
-                                and
-                                $Next->content eq '=>'
-                        ) {
-                                # Is an ordinary expression
-                                $self->_rollback( $Next );
-                                return 'PPI::Statement';
                         # Is it a v6 use?
-                        } elsif ( $Next->content eq 'v6' ) {
+                        if ( $Next->content eq 'v6' ) {
                                 $self->_rollback( $Next );
                                 return 'PPI::Statement::Include::Perl6';
                         } else {
@@ -706,7 +690,7 @@ sub _lex_end {
         $self->_rollback;
 }
 
-# For many statements, it can be difficult to determine the end-point.
+# For many statements, it can be dificult to determine the end-point.
 # This method takes a statement and the next significant token, and attempts
 # to determine if the there is a statement boundary between the two, or if
 # the statement can continue with the token.
@@ -726,23 +710,22 @@ sub _continues {
                 return '';
         }
 
-        # Alrighty then, there are six implied-end statement types:
-        # ::Scheduled blocks, ::Sub declarations, ::Compound, ::Given, ::When,
-        # and ::Package statements.
-        return 1
-                if ref $Statement !~ /\b(?:Scheduled|Sub|Compound|Given|When|Package)$/;
+        # Alrighty then, there are only five implied end statement types,
+        # ::Scheduled blocks, ::Sub declarations, ::Compound, ::Given, and ::When
+        # statements.
+        unless ( ref($Statement) =~ /\b(?:Scheduled|Sub|Compound|Given|When)$/ ) {
+                return 1;
+        }
 
-        # Of these six, ::Scheduled, ::Sub, ::Given, and ::When follow the same
-        # simple rule and can be handled first.  The block form of ::Package
-        # follows the rule, too.  (The non-block form of ::Package
-        # requires a statement terminator, and thus doesn't need to have
-        # an implied end detected.)
+        # Of these five, ::Scheduled, ::Sub, ::Given, and ::When follow the same
+        # simple rule and can be handled first.
         my @part      = $Statement->schildren;
         my $LastChild = $part[-1];
-        # If the last significant element of the statement is a block,
-        # then an implied-end statement is done, no questions asked.
-        return !$LastChild->isa('PPI::Structure::Block')
-                if !$Statement->isa('PPI::Statement::Compound');
+        unless ( $Statement->isa('PPI::Statement::Compound') ) {
+                # If the last significant element of the statement is a block,
+                # then a scheduled statement is done, no questions asked.
+                return ! $LastChild->isa('PPI::Structure::Block');
+        }
 
         # Now we get to compound statements, which kind of suck (to lex).
         # However, of them all, the 'if' type, which includes unless, are
@@ -1075,20 +1058,11 @@ BEGIN {
                 'map'  => 'PPI::Structure::Block',
                 'sort' => 'PPI::Structure::Block',
                 'do'   => 'PPI::Structure::Block',
-                # rely on 'continue' + block being handled elsewhere
-                # rely on 'eval' + block being handled elsewhere
 
                 # Hash constructors
                 'scalar' => 'PPI::Structure::Constructor',
                 '='      => 'PPI::Structure::Constructor',
                 '||='    => 'PPI::Structure::Constructor',
-                '&&='    => 'PPI::Structure::Constructor',
-                '//='    => 'PPI::Structure::Constructor',
-                '||'     => 'PPI::Structure::Constructor',
-                '&&'     => 'PPI::Structure::Constructor',
-                '//'     => 'PPI::Structure::Constructor',
-                '?'      => 'PPI::Structure::Constructor',
-                ':'      => 'PPI::Structure::Constructor',
                 ','      => 'PPI::Structure::Constructor',
                 '=>'     => 'PPI::Structure::Constructor',
                 '+'      => 'PPI::Structure::Constructor', # per perlref
@@ -1110,6 +1084,99 @@ BEGIN {
         );
 }
 
+=pod
+
+=begin testing _curly 26
+
+my $document = PPI::Document->new(\<<'END_PERL');
+use constant { One => 1 };
+use constant 1 { One => 1 };
+$foo->{bar};
+$foo[1]{bar};
+$foo{bar};
+sub {1};
+grep { $_ } 0 .. 2;
+map { $_ => 1 } 0 .. 2;
+sort { $b <=> $a } 0 .. 2;
+do {foo};
+$foo = { One => 1 };
+$foo ||= { One => 1 };
+1, { One => 1 };
+One => { Two => 2 };
+{foo, bar};
+{foo => bar};
+{};
++{foo, bar};
+{; => bar};
+@foo{'bar', 'baz'};
+@{$foo}{'bar', 'baz'};
+${$foo}{bar};
+return { foo => 'bar' };
+bless { foo => 'bar' };
+END_PERL
+
+isa_ok( $document, 'PPI::Document' );
+$document->index_locations();
+
+my @statements;
+foreach my $elem ( @{ $document->find( 'PPI::Statement' ) || [] } ) {
+        $statements[ $elem->line_number() - 1 ] ||= $elem;
+}
+
+is( scalar(@statements), 24, 'Found 24 statements' );
+
+isa_ok( $statements[0]->schild(2), 'PPI::Structure::Constructor',
+        'The curly in ' . $statements[0]);
+isa_ok( $statements[1]->schild(3), 'PPI::Structure::Constructor',
+        'The curly in ' . $statements[1]);
+isa_ok( $statements[2]->schild(2), 'PPI::Structure::Subscript',
+        'The curly in ' . $statements[2]);
+isa_ok( $statements[3]->schild(2), 'PPI::Structure::Subscript',
+        'The curly in ' . $statements[3]);
+isa_ok( $statements[4]->schild(1), 'PPI::Structure::Subscript',
+        'The curly in ' . $statements[4]);
+isa_ok( $statements[5]->schild(1), 'PPI::Structure::Block',
+        'The curly in ' . $statements[5]);
+isa_ok( $statements[6]->schild(1), 'PPI::Structure::Block',
+        'The curly in ' . $statements[6]);
+isa_ok( $statements[7]->schild(1), 'PPI::Structure::Block',
+        'The curly in ' . $statements[7]);
+isa_ok( $statements[8]->schild(1), 'PPI::Structure::Block',
+        'The curly in ' . $statements[8]);
+isa_ok( $statements[9]->schild(1), 'PPI::Structure::Block',
+        'The curly in ' . $statements[9]);
+isa_ok( $statements[10]->schild(2), 'PPI::Structure::Constructor',
+        'The curly in ' . $statements[10]);
+isa_ok( $statements[11]->schild(3), 'PPI::Structure::Constructor',
+        'The curly in ' . $statements[11]);
+isa_ok( $statements[12]->schild(2), 'PPI::Structure::Constructor',
+        'The curly in ' . $statements[12]);
+isa_ok( $statements[13]->schild(2), 'PPI::Structure::Constructor',
+        'The curly in ' . $statements[13]);
+isa_ok( $statements[14]->schild(0), 'PPI::Structure::Block',
+        'The curly in ' . $statements[14]);
+isa_ok( $statements[15]->schild(0), 'PPI::Structure::Constructor',
+        'The curly in ' . $statements[15]);
+isa_ok( $statements[16]->schild(0), 'PPI::Structure::Constructor',
+        'The curly in ' . $statements[16]);
+isa_ok( $statements[17]->schild(1), 'PPI::Structure::Constructor',
+        'The curly in ' . $statements[17]);
+isa_ok( $statements[18]->schild(0), 'PPI::Structure::Block',
+        'The curly in ' . $statements[18]);
+isa_ok( $statements[19]->schild(1), 'PPI::Structure::Subscript',
+        'The curly in ' . $statements[19]);
+isa_ok( $statements[20]->schild(2), 'PPI::Structure::Subscript',
+        'The curly in ' . $statements[20]);
+isa_ok( $statements[21]->schild(2), 'PPI::Structure::Subscript',
+        'The curly in ' . $statements[21]);
+isa_ok( $statements[22]->schild(1), 'PPI::Structure::Constructor',
+        'The curly in ' . $statements[22]);
+isa_ok( $statements[23]->schild(1), 'PPI::Structure::Constructor',
+        'The curly in ' . $statements[23]);
+
+=end testing
+
+=cut
 
 # Given a parent element, and a { token to open a structure, determine
 # the class that the structure should be.
@@ -1149,12 +1216,6 @@ sub _curly {
                                         and return 'PPI::Structure::Subscript';
                         }
                 }
-
-                # Are we the second or third argument of package?
-                # E.g.: 'package Foo {}' or 'package Foo v1.2.3 {}'
-                return 'PPI::Structure::Block'
-                        if $Parent->isa('PPI::Statement::Package');
-
                 if ( $CURLY_CLASSES{$content} ) {
                         # Known type
                         return $CURLY_CLASSES{$content};
@@ -1198,7 +1259,7 @@ sub _curly {
         # We need to scan ahead.
         my $Next;
         my $position = 0;
-        my @delayed;
+        my @delayed  = ();
         while ( $Next = $self->_get_token ) {
                 unless ( $Next->significant ) {
                         push @delayed, $Next;
@@ -1230,6 +1291,23 @@ sub _curly {
         return 'PPI::Structure::Block';
 }
 
+=pod
+
+=begin testing _lex_structure 4
+
+# Validate the creation of a null statement
+SCOPE: {
+        my $token = new_ok( 'PPI::Token::Structure' => [ ';'    ] );
+        my $null  = new_ok( 'PPI::Statement::Null'  => [ $token ] );
+        is( $null->content, ';', '->content ok' );
+}
+
+# Validate the creation of an empty statement
+new_ok( 'PPI::Statement' => [ ] );
+
+=end testing
+
+=cut
 
 sub _lex_structure {
         my ($self, $Structure) = @_;
@@ -1346,7 +1424,7 @@ sub _get_token {
 #     $self->{Tokenizer}->get_token;
 # }
 
-# Delay the addition of insignificant elements.
+# Delay the addition of a insignificant elements.
 # This ended up being inlined.
 # sub _delay_element {
 #     my $self    = shift;
@@ -1362,13 +1440,14 @@ sub _add_element {
         # my $Element = _INSTANCE(shift, 'PPI::Element') or die "Bad param 2";
 
         # Handle a special case, where a statement is not fully resolved
-        if ( ref $Parent eq 'PPI::Statement'
-                   and my $first = $Parent->schild(0) ) {
-                if ( $first->isa('PPI::Token::Label')
-                           and !(my $second = $Parent->schild(1)) ) {
-                        my $new_class = $STATEMENT_CLASSES{$second->content};
+        if ( ref $Parent eq 'PPI::Statement' ) {
+                my $first  = $Parent->schild(0);
+                my $second = $Parent->schild(1);
+                if ( $first and $first->isa('PPI::Token::Label') and ! $second ) {
                         # It's a labelled statement
-                        bless $Parent, $new_class if $new_class;
+                        if ( $STATEMENT_CLASSES{$second->content} ) {
+                                bless $Parent, $STATEMENT_CLASSES{$second->content};
+                        }
                 }
         }
 

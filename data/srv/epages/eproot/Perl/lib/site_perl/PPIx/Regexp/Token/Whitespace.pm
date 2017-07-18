@@ -11,20 +11,17 @@ PPIx::Regexp::Token::Whitespace - Represent whitespace
 =head1 INHERITANCE
 
 C<PPIx::Regexp::Token::Whitespace> is a
-L<PPIx::Regexp::NoOp|PPIx::Regexp::NoOp>.
+L<PPIx::Regexp::Token|PPIx::Regexp::Token>.
 
 C<PPIx::Regexp::Token::Whitespace> has no descendants.
 
 =head1 DESCRIPTION
 
 This class represents whitespace. It will appear inside the regular
-expression only if the C</x> modifier is present, but it may also appear
-between the type and the opening delimiter (e.g. C<qr {foo}>) or after
+expression only if the /x modifier is present, but it may also appear
+between the type and the opening delimiter (e.g. C<qr {foo}> or after
 the regular expression in a bracketed substitution (e.g. C<s{foo}
 {bar}>).
-
-If the C</xx> modifier is present, it can also appear inside bracketed
-character classes. This was introduced in Perl 5.25.9.
 
 =head1 METHODS
 
@@ -38,56 +35,38 @@ package PPIx::Regexp::Token::Whitespace;
 use strict;
 use warnings;
 
-use base qw{ PPIx::Regexp::Token::NoOp };
+use base qw{ PPIx::Regexp::Token };
 
-use PPIx::Regexp::Constant qw{ COOKIE_REGEX_SET MINIMUM_PERL };
+our $VERSION = '0.020';
 
-our $VERSION = '0.051';
-
-sub __new {
-    my ( $class, $content, %arg ) = @_;
-
-    defined $arg{perl_version_introduced}
-        or $arg{perl_version_introduced} =
-        ( grep { 127 < ord } split qr{}, $content )
-        ? '5.021001'
-        : MINIMUM_PERL;
-
-    return $class->SUPER::__new( $content, %arg );
-}
-
-sub explain {
-    my ( $self ) = @_;
-    my $parent;
-    if (
-        $parent = $self->parent()
-            and $parent->isa( 'PPIx::Regexp' )
-    ) {
-        return $self->SUPER::explain();
-    } elsif ( $self->in_regex_set() ) {
-        return q<Not significant in extended character class>;
-    } elsif ( my $count = $self->modifier_asserted( 'x*' ) ) {
-        return q<Not significant under /> . ( 'x' x $count );
-    } else {
-        return $self->SUPER::explain();
-    }
+sub significant {
+    return;
 }
 
 sub whitespace {
     return 1;
 }
 
+# Return true if the token can be quantified, and false otherwise
+# sub can_be_quantified { return };
+
 # Objects of this class are generated either by the tokenizer itself
 # (when scanning for delimiters) or by PPIx::Regexp::Token::Literal (if
 # it hits a match for \s and finds the regular expression has the /x
 # modifier asserted.
-#
-# sub __PPIX_TOKENIZER__regexp {
-#     my ( $class, $tokenizer, $character ) = @_;
-#
-#     return scalar $tokenizer->find_regexp( qr{ \A \s+ }smx );
-#
-# }
+
+=begin comment
+
+sub __PPIX_TOKENIZER__regexp {
+    my ( $class, $tokenizer, $character ) = @_;
+
+    return scalar $tokenizer->find_regexp( qr{ \A \s+ }smx );
+
+}
+
+=end comment
+
+=cut
 
 1;
 
@@ -104,7 +83,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPIx::Regexp::Token::GroupType 3"
-.TH PPIx::Regexp::Token::GroupType 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPIx::Regexp::Token::GroupType 3 "2011-04-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -161,65 +161,6 @@ abstract.
 .IX Header "METHODS"
 This class provides no public methods beyond those provided by its
 superclass.
-.SS "_\|_defining_string"
-.IX Subsection "__defining_string"
-.Vb 1
-\& my $string = $class\->_\|_defining_string();
-.Ve
-.PP
-This method is private to the \f(CW\*(C`PPIx\-Regexp\*(C'\fR package, and is documented
-for the author's benefit only. It may be changed or revoked without
-notice.
-.PP
-This method returns an array of strings that define the specific group
-type.  These strings will normally start with \f(CW\*(Aq?\*(Aq\fR.
-.PP
-Optionally, the first returned item may be a hash reference. The only
-supported key is \f(CW\*(C`{suffix}\*(C'\fR, which is a string to be suffixed to each
-of the regular expressions made by \f(CW\*(C`_\|_make_group_type_matcher()\*(C'\fR out of
-the defining strings, inside a \f(CW\*(C`(?= ... )\*(C'\fR, so that it is not included
-in the match.
-.PP
-This method \fBmust\fR be overridden, unless \f(CW\*(C`_\|_make_group_type_matcher()\*(C'\fR
-is. The override \fBmust\fR return the same thing each time, since the
-results of \f(CW\*(C`_\|_make_group_type_matcher()\*(C'\fR are cached.
-.SS "_\|_make_group_type_matcher"
-.IX Subsection "__make_group_type_matcher"
-.Vb 1
-\& my $hash_ref = $class\->_\|_make_group_type_matcher();
-.Ve
-.PP
-This method is private to the \f(CW\*(C`PPIx\-Regexp\*(C'\fR package, and is documented
-for the author's benefit only. It may be changed or revoked without
-notice.
-.PP
-This method returns a reference to a hash. The keys are regexp delimiter
-characters which appear in the defining strings for the group type. For
-each key, the value is a reference to an array of \f(CW\*(C`Regexp\*(C'\fR objects,
-properly escaped for the key character. Key \f(CW\*(Aq\*(Aq\fR provides the regular
-expressions to be used if the regexp delimiter does not appear in any of
-the defining strings.
-.PP
-If this method is overridden by the subclass, method
-\&\f(CW\*(C`_\|_defining_string()\*(C'\fR need not be, unless the overridden
-\&\f(CW\*(C`_\|_make_group_type_matcher()\*(C'\fR calls \f(CW\*(C`_\|_defining_string()\*(C'\fR.
-.SS "_\|_match_setup"
-.IX Subsection "__match_setup"
-.Vb 1
-\& $class\->_\|_match_setup( $tokenizer );
-.Ve
-.PP
-This method is private to the \f(CW\*(C`PPIx\-Regexp\*(C'\fR package, and is documented
-for the author's benefit only. It may be changed or revoked without
-notice.
-.PP
-This method performs whatever setup is needed once it is determined that
-the given group type has been detected.  This method is called only if
-the class matched at the current position in the string being parsed. It
-must perform whatever extra setup is needed for the match. It returns
-nothing.
-.PP
-This method need not be overridden. The default does nothing.
 .SH "SUPPORT"
 .IX Header "SUPPORT"
 Support is by the author. Please file bug reports at
@@ -229,7 +170,7 @@ Support is by the author. Please file bug reports at
 Thomas R. Wyant, \s-1III\s0 \fIwyant at cpan dot org\fR
 .SH "COPYRIGHT AND LICENSE"
 .IX Header "COPYRIGHT AND LICENSE"
-Copyright (C) 2009\-2017 by Thomas R. Wyant, \s-1III\s0
+Copyright (C) 2009\-2011 by Thomas R. Wyant, \s-1III\s0
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

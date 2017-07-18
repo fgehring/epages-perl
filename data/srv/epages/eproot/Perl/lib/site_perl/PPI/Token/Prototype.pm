@@ -23,7 +23,7 @@ prototype is a lot more like a string. Its job is to provide hints
 to the perl compiler on what type of arguments a particular subroutine
 expects, which the compiler uses to validate parameters at compile-time,
 and allows programmers to use the functions without explicit parameter
-parens.
+braces.
 
 Due to the rise of OO Perl coding, which ignores these prototypes, they
 are most often used to allow for constant-like things, and to "extend"
@@ -51,7 +51,7 @@ use PPI::Token ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-        $VERSION = '1.224';
+        $VERSION = '1.215';
         @ISA     = 'PPI::Token';
 }
 
@@ -59,16 +59,17 @@ sub __TOKENIZER__on_char {
         my $class = shift;
         my $t     = shift;
 
-        # Suck in until we find the closing paren (or the end of line)
-        pos $t->{line} = $t->{line_cursor};
-        die "regex should always match" if $t->{line} !~ m/\G(.*?(?:\)|$))/gc;
-        $t->{token}->{content} .= $1;
-        $t->{line_cursor} += length $1;
+        # Suck in until we find the closing bracket (or the end of line)
+        my $line = substr( $t->{line}, $t->{line_cursor} );
+        if ( $line =~ /^(.*?(?:\)|$))/ ) {
+                $t->{token}->{content} .= $1;
+                $t->{line_cursor} += length $1;
+        }
 
         # Shortcut if end of line
         return 0 unless $1 =~ /\)$/;
 
-        # Found the closing paren
+        # Found the closing bracket
         $t->_finalize_token->__TOKENIZER__on_char( $t );
 }
 
@@ -77,18 +78,14 @@ sub __TOKENIZER__on_char {
 =head2 prototype
 
 The C<prototype> accessor returns the actual prototype pattern, stripped
-of flanking parens and of all whitespace. This mirrors the behavior of
-the Perl C<prototype> builtin function.
-
-Note that stripping parens and whitespace means that the return of
-C<prototype> can be an empty string.
+of braces and any whitespace inside the pattern.
 
 =cut
 
 sub prototype {
         my $self  = shift;
         my $proto = $self->content;
-        $proto =~ s/(^\(|\)$|\s+)//g;
+        $proto =~ s/\(\)\s//g; # Strip brackets and whitespace
         $proto;
 }
 

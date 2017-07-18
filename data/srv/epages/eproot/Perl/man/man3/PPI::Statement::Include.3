@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPI::Statement::Include 3"
-.TH PPI::Statement::Include 3 "2017-05-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPI::Statement::Include 3 "2011-02-26" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -162,7 +162,7 @@ But basically, they cover three situations.
 .PP
 Firstly, a dependency on a particular version of perl (for which the
 \&\f(CW\*(C`version\*(C'\fR method returns true), a pragma (for which the \f(CW\*(C`pragma\*(C'\fR method
-returns true), or the loading (and unloading via no) of modules.
+returns true, or the loading (and unloading via no) of modules.
 .SH "METHODS"
 .IX Header "METHODS"
 \&\f(CW\*(C`PPI::Statement::Include\*(C'\fR has a number of methods in addition to the standard
@@ -243,9 +243,8 @@ dependency.
 The \f(CW\*(C`version_literal\*(C'\fR method has the same behavior as \f(CW\*(C`version()\*(C'\fR, but the
 version is returned as a numeric literal.  Returns false if the statement is
 not a version dependency.
-.SS "arguments"
-.IX Subsection "arguments"
-The \f(CW\*(C`arguments\*(C'\fR method gives you the rest of the statement after the
+.PP
+The \f(CW\*(C`arguments\*(C'\fR method gives you the rest of the statement after the the
 module/pragma and module version, i.e. the stuff that will be used to
 construct what gets passed to the module's \f(CW\*(C`import()\*(C'\fR subroutine.  This does
 include the comma, etc. operators, but doesn't include non-significant direct

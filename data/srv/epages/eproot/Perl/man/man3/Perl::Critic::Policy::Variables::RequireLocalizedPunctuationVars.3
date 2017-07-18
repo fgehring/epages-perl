@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Policy::Variables::RequireLocalizedPunctuationVars 3"
-.TH Perl::Critic::Policy::Variables::RequireLocalizedPunctuationVars 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Policy::Variables::RequireLocalizedPunctuationVars 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -144,7 +144,7 @@ magic variable in a non-trivial program, do it in a local scope.
 .PP
 For example, to slurp a filehandle into a scalar, it's common to set
 the record separator to undef instead of a newline.  If you choose to
-do this (instead of using Path::Tiny!) then be sure to
+do this (instead of using File::Slurp!) then be sure to
 localize the global and change it for as short a time as possible.
 .PP
 .Vb 3

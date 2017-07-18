@@ -1,4 +1,4 @@
-# Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+# Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 # This software is free.  It is licensed under the same terms as Perl itself.
 
@@ -10,35 +10,41 @@ package Devel::Cover::DB::File;
 use strict;
 use warnings;
 
-our $VERSION = '1.25'; # VERSION
+our $VERSION = "0.79";
 
-use Devel::Cover::Criterion;
+use Devel::Cover::Criterion 0.79;
 
-use Devel::Cover::Dumper;
+use Data::Dumper; $Data::Dumper::Indent = 1; $Data::Dumper::Sortkeys = 1;
 
-sub calculate_summary {
+sub calculate_summary
+{
     my $self = shift;
     my ($db, $file, $options) = @_;
 
     my $s = $db->{summary}{$file} ||= {};
 
-    for my $criterion ($self->items) {
+    for my $criterion ($self->items)
+    {
         next unless $options->{$criterion};
-        for my $location ($self->$criterion()->locations) {
-            for my $cover (@$location) {
+        for my $location ($self->$criterion()->locations)
+        {
+            for my $cover (@$location)
+            {
                 $cover->calculate_summary($db, $file);
             }
         }
     }
 }
 
-sub calculate_percentage {
+sub calculate_percentage
+{
     my $self = shift;
     my ($db, $s) = @_;
 
     # print STDERR Dumper $s;
 
-    for my $criterion ($self->items) {
+    for my $criterion ($self->items)
+    {
         next unless exists $s->{$criterion};
         my $c = "Devel::Cover::\u$criterion";
         # print "$c\n";
@@ -57,10 +63,6 @@ __END__
 
 Devel::Cover::DB::File - Code coverage metrics for Perl
 
-=head1 VERSION
-
-version 1.25
-
 =head1 SYNOPSIS
 
  use Devel::Cover::DB::File;
@@ -77,9 +79,13 @@ version 1.25
 
 Huh?
 
+=head1 VERSION
+
+Version 0.79 - 5th August 2011
+
 =head1 LICENCE
 
-Copyright 2001-2017, Paul Johnson (paul@pjcj.net)
+Copyright 2001-2011, Paul Johnson (pjcj@cpan.org)
 
 This software is free.  It is licensed under the same terms as Perl itself.
 

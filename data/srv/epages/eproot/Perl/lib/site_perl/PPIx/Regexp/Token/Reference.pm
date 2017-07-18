@@ -42,55 +42,7 @@ use base qw{ PPIx::Regexp::Token };
 use Carp qw{ confess };
 use List::Util qw{ first };
 
-our $VERSION = '0.051';
-
-sub __new {
-    my ( $class, $content, %arg ) = @_;
-
-    if ( defined $arg{capture} ) {
-    } elsif ( defined $arg{tokenizer} ) {
-        $arg{capture} = first { defined $_ } $arg{tokenizer}->capture();
-    }
-
-    unless ( defined $arg{capture} ) {
-        foreach ( $class->__PPIX_TOKEN__recognize() ) {
-            my ( $re, $a ) = @{ $_ };
-            $content =~ $re or next;
-            @arg{ keys %{ $a } } = @{ $a }{ keys %{ $a } };
-            foreach my $inx ( 1 .. $#- ) {
-                defined $-[$inx] or next;
-                $arg{capture} = substr $content, $-[$inx], $+[$inx] - $-[$inx];
-                last;
-            }
-            last;
-        }
-    }
-
-    defined $arg{capture}
-        or confess q{Programming error - reference '},
-            $content, q{' of unknown form};
-
-    my $self = $class->SUPER::__new( $content, %arg )
-        or return;
-
-    $self->{is_named} = $arg{is_named};
-
-    my $capture = delete $arg{capture};
-
-    if ( $self->{is_named} ) {
-        $self->{absolute} = undef;
-        $self->{is_relative} = undef;
-        $self->{name} = $capture;
-    } elsif ( $capture !~ m/ \A [-+] /smx ) {
-        $self->{absolute} = $self->{number} = $capture;
-        $self->{is_relative} = undef;
-    } else {
-        $self->{number} = $capture;
-        $self->{is_relative} = 1;
-    }
-
-    return $self;
-}
+our $VERSION = '0.020';
 
 =head2 absolute
 
@@ -179,6 +131,62 @@ sub __PPIX_LEXER__record_capture_number {
     return $number;
 }
 
+# Called after the token is manufactured. The calling sequence is
+# $token->__PPIX_TOKEN__post_make( $tokenizer, $arg );
+# For the sake of reblessing into this class, we are expected to deal
+# with the situation where the optional argument is missing.
+sub __PPIX_TOKEN__post_make {
+    my ( $self, $tokenizer, $arg ) = @_;
+
+    my $capture;
+    if ( defined $arg ) {
+        $tokenizer
+            and $capture = first { defined $_ } $tokenizer->capture();
+        defined $capture or $capture = $arg->{capture};
+    } else {
+        my $content = $self->content();
+        foreach ( $self->__PPIX_TOKEN__recognize() ) {
+            my ( $re, $a ) = @{ $_ };
+            $content =~ $re or next;
+            $arg = $a;
+            if ( exists $arg->{capture} ) {
+                $capture = $arg->{capture};
+            } else {
+                foreach my $inx ( 1 .. $#- ) {
+                    defined $-[$inx] or next;
+                    $capture = substr $content, $-[$inx], $+[$inx] - $-[$inx];
+                    last;
+                }
+            }
+            last;
+        }
+    }
+
+    defined $capture
+        or confess q{Programming error - reference '},
+            $self->content(), q{' of unknown form};
+
+    foreach my $key ( keys %{ $arg } ) {
+        $key eq 'capture' and next;
+        $self->{$key} = $arg->{$key};
+    }
+
+    if ( $arg->{is_named} ) {
+        $self->{absolute} = undef;
+        $self->{is_relative} = undef;
+        $self->{name} = $capture;
+    } elsif ( $capture !~ m/ \A [-+] /smx ) {
+        $self->{absolute} = $self->{number} = $capture;
+        $self->{is_relative} = undef;
+    } else {
+        $self->{number} = $capture;
+        $self->{is_relative} = 1;
+    }
+
+    return;
+};
+
+
 1;
 
 __END__
@@ -194,7 +202,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

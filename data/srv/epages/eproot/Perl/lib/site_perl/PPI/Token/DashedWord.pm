@@ -31,7 +31,7 @@ use PPI::Token ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-        $VERSION = '1.224';
+        $VERSION = '1.215';
         @ISA     = 'PPI::Token';
 }
 
@@ -41,6 +41,28 @@ BEGIN {
 
 Returns the value of the dashed word as a string.  This differs from
 C<content> because C<-Foo'Bar> expands to C<-Foo::Bar>.
+
+=begin testing literal 9
+
+my @pairs = (
+        "-foo",        '-foo',
+        "-Foo::Bar",   '-Foo::Bar',
+        "-Foo'Bar",    '-Foo::Bar',
+);
+while ( @pairs ) {
+        my $from  = shift @pairs;
+        my $to    = shift @pairs;
+        my $doc   = PPI::Document->new( \"( $from => 1 );" );
+        isa_ok( $doc, 'PPI::Document' );
+        my $word = $doc->find_first('Token::DashedWord');
+        SKIP: {
+                skip( "PPI::Token::DashedWord is deactivated", 2 );
+                isa_ok( $word, 'PPI::Token::DashedWord' );
+                is( $word && $word->literal, $to, "The source $from becomes $to ok" );
+        }
+}
+
+=end testing
 
 =cut
 
@@ -55,8 +77,8 @@ sub __TOKENIZER__on_char {
         my $t = $_[1];
 
         # Suck to the end of the dashed bareword
-        pos $t->{line} = $t->{line_cursor};
-        if ( $t->{line} =~ m/\G(\w+)/gc ) {
+        my $line = substr( $t->{line}, $t->{line_cursor} );
+        if ( $line =~ /^(\w+)/ ) {
                 $t->{token}->{content} .= $1;
                 $t->{line_cursor} += length $1;
         }

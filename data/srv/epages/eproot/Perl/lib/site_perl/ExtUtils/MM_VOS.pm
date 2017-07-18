@@ -1,8 +1,7 @@
 package ExtUtils::MM_VOS;
 
 use strict;
-our $VERSION = '7.30';
-$VERSION = eval $VERSION;
+our $VERSION = '6.84';
 
 require ExtUtils::MM_Unix;
 our @ISA = qw(ExtUtils::MM_Unix);

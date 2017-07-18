@@ -37,40 +37,7 @@ use base qw{ PPIx::Regexp::Token::Reference };
 
 use PPIx::Regexp::Constant qw{ RE_CAPTURE_NAME };
 
-our $VERSION = '0.051';
-
-{
-
-    my %explanation = (
-        '(DEFINE)'      => 'Define a group to be recursed into',
-        '(R)'   => 'True if recursing',
-    );
-
-    sub explain {
-        my ( $self ) = @_;
-        my $content = $self->content();
-        if ( defined( my $expl = $explanation{$content} ) ) {
-            return $expl;
-        }
-        if ( $content =~ m/ \A [(] R /smx ) {   # )
-            $self->is_named()
-                and return sprintf
-                q<True if recursing directly inside capture group '%s'>,
-                $self->name();
-            return sprintf
-                q<True if recursing directly inside capture group %d>,
-                $self->absolute();
-        }
-        $self->is_named()
-            and return sprintf
-            q<True if capture group '%s' matched>,
-            $self->name();
-        return sprintf
-            q<True if capture group %d matched>,
-            $self->absolute();
-    }
-
-}
+our $VERSION = '0.020';
 
 sub perl_version_introduced {
     my ( $self ) = @_;
@@ -107,7 +74,7 @@ sub __PPIX_TOKEN__recognize {
 # sub can_be_quantified { return };
 
 sub __PPIX_TOKENIZER__regexp {
-    my ( undef, $tokenizer ) = @_;      # Invocant, $character unused
+    my ( $class, $tokenizer, $character ) = @_;
 
     foreach ( @recognize ) {
         my ( $re, $arg ) = @{ $_ };
@@ -133,7 +100,7 @@ Thomas R. Wyant, III F<wyant at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2017 by Thomas R. Wyant, III
+Copyright (C) 2009-2011 by Thomas R. Wyant, III
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl 5.10.0. For more details, see the full text

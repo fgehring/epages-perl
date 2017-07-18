@@ -1,4 +1,4 @@
-# Copyright 2007-2017, Paul Johnson (paul@pjcj.net)
+# Copyright 2007-2011, Paul Johnson (pjcj@cpan.org)
 # except where otherwise noted.
 
 # This software is free.  It is licensed under the same terms as Perl itself,
@@ -12,7 +12,7 @@ package Devel::Cover::Web;
 use strict;
 use warnings;
 
-our $VERSION = '1.25'; # VERSION
+our $VERSION = "0.79";
 
 use Exporter;
 
@@ -21,10 +21,12 @@ our @EXPORT_OK = "write_file";
 
 my %Files;
 
-sub write_file {
+sub write_file
+{
     my ($directory, $file) = @_;
 
-    while (my ($f, $contents) = each %Files) {
+    while (my($f, $contents) = each %Files)
+    {
         next if
             $file ne "all" &&
             (($file eq "js" || $file eq "css") && $f !~ /\.$file$/) &&
@@ -79,10 +81,16 @@ th,.h,.hh,.sh,.sv {
     background-color   : #cccccc;
     border             : solid 1px #333333;
     padding            : 0em 0.2em;
+    width              : 2.5em;
     -moz-border-radius : 4px;
 }
 
+.hh {
+    width: 25%;
+}
+
 .sh {
+    width       : 0;
     color       : #CD5555;
     font-weight : bold;
     padding     : 0.2em;
@@ -895,10 +903,6 @@ EOF
 
 Devel::Cover::Web - Files for JavaScript or CSS
 
-=head1 VERSION
-
-version 1.25
-
 =head1 SYNOPSIS
 
  use Devel::Cover::Web "write_file";
@@ -928,9 +932,13 @@ Output the specified file to the specified directory.
 
 Huh?
 
+=head1 VERSION
+
+Version 0.79 - 5th August 2011
+
 =head1 LICENCE
 
-Copyright 2007-2017, Paul Johnson (paul@pjcj.net) except where otherwise noted.
+Copyright 2007-2011, Paul Johnson (pjcj@cpan.org) except where otherwise noted.
 
 This software is free.  It is licensed under the same terms as Perl itself,
 except where otherwise noted.

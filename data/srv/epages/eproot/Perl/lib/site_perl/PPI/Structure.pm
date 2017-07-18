@@ -23,7 +23,7 @@ type should actually exist in the tree.
 
 =head2 Elements vs Children
 
-A B<PPI::Structure> has an unusual existence. Unlike a L<PPI::Document>
+A B<PPI::Structure> has an unusual existance. Unlike a L<PPI::Document>
 or L<PPI::Statement>, which both simply contain other elements, a
 structure B<both> contains and consists of content.
 
@@ -47,7 +47,7 @@ loops, literal lists, and braces used for precedence-ordering purposes.
 =head2 L<PPI::Structure::For>
 
 Although B<not> used for the C<foreach> loop list, this B<is> used for
-the special case of the round-brace three-part semicolon-separated C<for>
+the special case of the round-brace three-part semicolon-seperated C<for>
 loop expression (the traditional C style for loop).
 
 =head2 L<PPI::Structure::Given>
@@ -96,7 +96,7 @@ use PPI::Exception ();
 
 use vars qw{$VERSION @ISA *_PARENT};
 BEGIN {
-        $VERSION = '1.224';
+        $VERSION = '1.215';
         @ISA     = 'PPI::Node';
         *_PARENT = *PPI::Element::_PARENT;
 }
@@ -186,9 +186,10 @@ sub finish { $_[0]->{finish} }
 =head2 braces
 
 The C<braces> method is a utility method which returns the brace type,
-regardless of whether both or just one of the braces is defined.
+regardless of whether has both braces defined, or just the starting
+brace, or just the ending brace.
 
-Returns one of the three strings C<'[]'>, C<'{}'>, or C<'()'>, or C<undef>
+Returns on of the three strings C<'[]'>, C<'{}'>, or C<'()'>, or C<undef>
 on error (primarily not having a start brace, as mentioned above).
 
 =cut

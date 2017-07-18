@@ -1,12 +1,13 @@
 package Module::Build::Platform::Default;
 
 use strict;
-use warnings;
-our $VERSION = '0.4224';
+use vars qw($VERSION);
+$VERSION = '0.4203';
 $VERSION = eval $VERSION;
 use Module::Build::Base;
 
-our @ISA = qw(Module::Build::Base);
+use vars qw(@ISA);
+@ISA = qw(Module::Build::Base);
 
 1;
 __END__

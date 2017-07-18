@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PPI::Token::Attribute 3"
-.TH PPI::Token::Attribute 3 "2017-05-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH PPI::Token::Attribute 3 "2011-02-26" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -152,6 +152,8 @@ treated by Perl (and thus by us) as a single string.
 .IX Header "METHODS"
 This class provides some additional methods beyond those provided by its
 PPI::Token and PPI::Element parent classes.
+.PP
+Got any ideas for methods? Submit a report to rt.cpan.org!
 .SS "identifier"
 .IX Subsection "identifier"
 The \f(CW\*(C`identifier\*(C'\fR attribute returns the identifier part of the attribute.
@@ -160,13 +162,13 @@ That is, for the attribute \f(CW\*(C`foo(bar)\*(C'\fR, the \f(CW\*(C`identifier\
 return \f(CW"foo"\fR.
 .SS "parameters"
 .IX Subsection "parameters"
-The \f(CW\*(C`parameters\*(C'\fR method returns the parameter string for the attribute.
+The \f(CW\*(C`parameters\*(C'\fR method returns the parameter strong for the attribute.
 .PP
 That is, for the attribute \f(CW\*(C`foo(bar)\*(C'\fR, the \f(CW\*(C`parameters\*(C'\fR method would
 return \f(CW"bar"\fR.
 .PP
 Returns the parameters as a string (including the null string \f(CW\*(Aq\*(Aq\fR for
-the case of an attribute such as \f(CW\*(C`foo()\*(C'\fR.)
+the case of an attribute such as \f(CW\*(C`foo()\*(C'\fR.
 .PP
 Returns \f(CW\*(C`undef\*(C'\fR if the attribute does not have parameters.
 .SH "SUPPORT"

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Perl::Critic::Policy::Variables::RequireNegativeIndices 3"
-.TH Perl::Critic::Policy::Variables::RequireNegativeIndices 3 "2017-06-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Perl::Critic::Policy::Variables::RequireNegativeIndices 3 "2011-06-03" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -137,27 +137,35 @@ This Policy is part of the core Perl::Critic
 distribution.
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-Perl treats a negative array subscript as an offset from the end. Given
-this, the preferred way to get the last element is \f(CW$x[\-1]\fR, not
-\&\f(CW$x[$#x]\fR or \f(CW$x[@x\-1]\fR, and the preferred way to get the next-to-last
-is \f(CW$x[\-2]\fR, not \f(CW\*(C`$x[$#x\-1\*(C'\fR or \f(CW$x[@x\-2]\fR.
+Conway points out that
 .PP
-The biggest argument against the non-preferred forms is that \fBtheir
-semantics change\fR when the computed index becomes negative. If \f(CW@x\fR
-contains at least two elements, \f(CW$x[$#x\-1]\fR and \f(CW$x[@x\-2]\fR are
-equivalent to \f(CW$x[\-2]\fR. But if it contains a single element,
-\&\f(CW$x[$#x\-1]\fR and \f(CW$x[@x\-2]\fR are both equivalent to \f(CW$x[\-1]\fR. Simply
-put, the preferred form is more likely to do what you actually want.
+.Vb 4
+\&    $arr[$#arr];
+\&    $arr[$#arr\-1];
+\&    $arr[@arr\-1];
+\&    $arr[@arr\-2];
+.Ve
 .PP
-As Conway points out, the preferred forms also perform better, are more
-readable, and are easier to maintain.
+are equivalent to
+.PP
+.Vb 4
+\&    $arr[\-1];
+\&    $arr[\-2];
+\&    $arr[\-1];
+\&    $arr[\-2];
+.Ve
+.PP
+and the latter are more readable, performant and maintainable.  The
+latter is because the programmer no longer needs to keep two variable
+names matched.
 .PP
 This policy notices all of the simple forms of the above problem, but
 does not recognize any of these more complex examples:
 .PP
-.Vb 2
+.Vb 3
 \&    $some\->[$data_structure]\->[$#{$some\->[$data_structure]} \-1];
-\&    my $ref = \e@arr; $ref\->[$#arr];
+\&    my $ref = \e@arr;
+\&    $ref\->[$#arr];
 .Ve
 .SH "CONFIGURATION"
 .IX Header "CONFIGURATION"

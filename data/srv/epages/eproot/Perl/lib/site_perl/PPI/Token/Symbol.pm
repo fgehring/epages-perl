@@ -33,7 +33,7 @@ use PPI::Token   ();
 
 use vars qw{$VERSION @ISA};
 BEGIN {
-        $VERSION = '1.224';
+        $VERSION = '1.215';
         @ISA     = 'PPI::Token';
 }
 
@@ -61,8 +61,8 @@ variations.
 sub canonical {
         my $symbol = shift->content;
         $symbol =~ s/\s+//;
-        $symbol =~ s/\'/::/g;
         $symbol =~ s/(?<=[\$\@\%\&\*])::/main::/;
+        $symbol =~ s/\'/::/g;
         $symbol;
 }
 
@@ -161,8 +161,8 @@ sub __TOKENIZER__on_char {
         my $t = $_[1];
 
         # Suck in till the end of the symbol
-        pos $t->{line} = $t->{line_cursor};
-        if ( $t->{line} =~ m/\G([\w:\']+)/gc ) {
+        my $line = substr( $t->{line}, $t->{line_cursor} );
+        if ( $line =~ /^([\w:\']+)/ ) {
                 $t->{token}->{content} .= $1;
                 $t->{line_cursor}      += length $1;
         }

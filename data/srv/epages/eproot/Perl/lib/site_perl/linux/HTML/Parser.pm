@@ -1,9 +1,15 @@
 package HTML::Parser;
 
+# Copyright 1996-2009, Gisle Aas.
+# Copyright 1999-2000, Michael A. Chase.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+
 use strict;
 use vars qw($VERSION @ISA);
 
-$VERSION = "3.72";
+$VERSION = "3.68";
 
 require HTML::Entities;
 
@@ -367,7 +373,7 @@ Empty element tags look like start tags, but end with the character
 sequence "/>" instead of ">".  When recognized by C<HTML::Parser> they
 cause an artificial end event in addition to the start event.  The
 C<text> for the artificial end event will be empty and the C<tokenpos>
-array will be undefined even though the token array will have one
+array will be undefined even though the the token array will have one
 element containing the tag name.
 
 =item $p->marked_sections
@@ -644,7 +650,9 @@ names are forced to lower case.
 General entities are decoded in the attribute values and
 one layer of matching quotes enclosing the attribute values is removed.
 
-The Unicode character set is assumed for entity decoding.
+The Unicode character set is assumed for entity decoding.  With Perl
+version 5.6 or earlier only the Latin-1 range is supported, and
+entities for characters outside the range 0..255 are left unchanged.
 
 =item C<@attr>
 
@@ -1184,14 +1192,12 @@ The result of decoding will be a mix of encoded and decoded characters
 for any entities that expand to characters with code above 127.  This
 is not a good thing.
 
-The recommended solution is to apply Encode::decode_utf8() on the data before
-feeding it to the $p->parse().  For $p->parse_file() pass a file that has been
-opened in ":utf8" mode.
+The solution is to use the Encode::encode_utf8() on the data before
+feeding it to the $p->parse().  For $p->parse_file() pass a file that
+has been opened in ":utf8" mode.
 
-The alternative solution is to enable the C<utf8_mode> and not decode before
-passing strings to $p->parse().  The parser can process raw undecoded UTF-8
-sanely if the C<utf8_mode> is enabled, or if the "attr", "@attr" or "dtext"
-argspecs are avoided.
+The parser can process raw undecoded UTF-8 sanely if the C<utf8_mode>
+is enabled or if the "attr", "@attr" or "dtext" argspecs is avoided.
 
 =item Parsing string decoded with wrong endianness
 
@@ -1225,7 +1231,7 @@ be found at L<http://www.is-thought.co.uk/book/sgml-8.htm>.
 
 =head1 COPYRIGHT
 
- Copyright 1996-2016 Gisle Aas. All rights reserved.
+ Copyright 1996-2008 Gisle Aas. All rights reserved.
  Copyright 1999-2000 Michael A. Chase.  All rights reserved.
 
 This library is free software; you can redistribute it and/or
