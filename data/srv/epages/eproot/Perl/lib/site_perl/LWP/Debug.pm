@@ -17,12 +17,12 @@ sub import
     my @symbols = ();
     my @levels = ();
     for (@_) {
-	if (/^[-+]/) {
-	    push(@levels, $_);
-	}
-	else {
-	    push(@symbols, $_);
-	}
+        if (/^[-+]/) {
+            push(@levels, $_);
+        }
+        else {
+            push(@symbols, $_);
+        }
     }
     Exporter::export($pack, $callpkg, @symbols);
     level(@levels);
@@ -32,19 +32,19 @@ sub import
 sub level
 {
     for (@_) {
-	if ($_ eq '+') {              # all on
-	    # switch on all levels
-	    %current_level = map { $_ => 1 } @levels;
-	}
-	elsif ($_ eq '-') {           # all off
-	    %current_level = ();
-	}
-	elsif (/^([-+])(\w+)$/) {
-	    $current_level{$2} = $1 eq '+';
-	}
-	else {
-	    Carp::croak("Illegal level format $_");
-	}
+        if ($_ eq '+') {              # all on
+            # switch on all levels
+            %current_level = map { $_ => 1 } @levels;
+        }
+        elsif ($_ eq '-') {           # all off
+            %current_level = ();
+        }
+        elsif (/^([-+])(\w+)$/) {
+            $current_level{$2} = $1 eq '+';
+        }
+        else {
+            Carp::croak("Illegal level format $_");
+        }
     }
 }
 
@@ -67,26 +67,28 @@ sub _log
 
 __END__
 
+=pod
+
 =head1 NAME
 
 LWP::Debug - deprecated
 
 =head1 DESCRIPTION
 
-LWP::Debug used to provide tracing facilities, but these are not used
+LWP::Debug is used to provide tracing facilities, but these are not used
 by LWP any more.  The code in this module is kept around
-(undocumented) so that 3rd party code that happen to use the old
+(undocumented) so that 3rd party code that happens to use the old
 interfaces continue to run.
 
 One useful feature that LWP::Debug provided (in an imprecise and
 troublesome way) was network traffic monitoring.  The following
-section provide some hints about recommended replacements.
+section provides some hints about recommended replacements.
 
 =head2 Network traffic monitoring
 
 The best way to monitor the network traffic that LWP generates is to
-use an external TCP monitoring program.  The Wireshark program
-(L<http://www.wireshark.org/>) is highly recommended for this.
+use an external TCP monitoring program.  The
+L<WireShark|http://www.wireshark.org/> program is highly recommended for this.
 
 Another approach it to use a debugging HTTP proxy server and make
 LWP direct all its traffic via this one.  Call C<< $ua->proxy >> to
@@ -108,3 +110,5 @@ request and response objects that pass through LWP:
 =head1 SEE ALSO
 
 L<LWP::UserAgent>
+
+=cut

@@ -1,19 +1,20 @@
-# Copyrights 2006-2011 by Mark Overmeer.
+# Copyrights 2006-2016 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 package XML::Compile::Translate::Reader;
 use vars '$VERSION';
-$VERSION = '1.22';
+$VERSION = '1.54';
 
 use base 'XML::Compile::Translate';
 
 use strict;
 use warnings;
-no warnings 'once';
+no warnings 'once', 'recursion';
 
 use Log::Report 'xml-compile', syntax => 'SHORT';
-use List::Util qw/first/;
+use List::Util   qw/first/;
+use Scalar::Util qw/weaken blessed/;
 
 use XML::Compile::Util qw/pack_type odd_elements type_of_node SCHEMA2001i/;
 use XML::Compile::Iterator ();
@@ -68,7 +69,7 @@ sub typemapToHooks($$)
             $hook = sub {$object->fromXML($_[1], $type)};
         }
 
-        push @$hooks, { type => $type, after => $hook };
+        push @$hooks, +{action => 'READER', type => $type, after => $hook};
     }
     $hooks;
 }
@@ -77,7 +78,7 @@ sub makeElementWrapper
 {   my ($self, $path, $processor) = @_;
     # no copy of $_[0], because it may be a large string
     sub { my $tree;
-          if(ref $_[0] && UNIVERSAL::isa($_[0], 'XML::LibXML::Iterator'))
+          if(blessed $_[0] && $_[0]->isa('XML::LibXML::Iterator'))
           {   $tree = $_[0];
           }
           else
@@ -90,9 +91,11 @@ sub makeElementWrapper
           }
 
           my $data = ($processor->($tree))[-1];
-          defined $data
-              or error __x"data not recognized, found a `{type}'"
-                  , type => type_of_node $tree->node;
+          unless(defined $data)
+          {    my $node = $tree->node;
+               error __x"data not recognized, found a `{type}' at {where}"
+                  , type => type_of_node $node, where => $node->nodePath;
+          }
           $data;
         };
 }
@@ -127,7 +130,7 @@ sub makeSequence($@)
     {   my ($take, $action) = @pairs;
         my $code
          = (ref $action eq 'BLOCK' || ref $action eq 'ANY')
-         ? sub { $action->($_[0])}
+         ? sub { $action->($_[0]) }
          : sub { $action->($_[0] && $_[0]->currentType eq $take ? $_[0]:undef)};
         return bless $code, 'BLOCK';
     }
@@ -136,6 +139,7 @@ sub makeSequence($@)
     sub { my $tree = shift;
           my @res;
           my @do = @pairs;
+
           while(@do)
           {   my ($take, $do) = (shift @do, shift @do);
               push @res, ref $do eq 'BLOCK'
@@ -207,8 +211,7 @@ sub makeChoice($@)
 
           my @special_errors;
           foreach (@specials)
-          {
-              my @d = try { $_->($tree) };
+          {   my @d = try { $_->($tree) };
               return @d if !$@ && @d;
               push @special_errors, $@->wasFatal->message if $@;
           }
@@ -222,8 +225,9 @@ sub makeChoice($@)
               or error __x"choice needs more elements at {path}"
                    , path => $path, _class => 'misfit';
 
+
           my @elems = sort keys %do;
-          trace "choose element from @elems or fix special" if @elems;
+          trace "choose element from @elems or fix special at $path" if @elems;
           trace "failed specials in choice: $_" for @special_errors;
 
           error __x"no applicable choice for `{tag}' at {path}"
@@ -400,7 +404,7 @@ sub makeBlockHandler
 
 sub makeElementHandler
 {   my ($self, $path, $label, $min, $max, $required, $optional) = @_;
-    $max eq "0" and return sub {};  # max can be "unbounded"
+    $max eq "0" and return sub {};  # max can be "unbounded", hence strcmp
 
     if($max ne 'unbounded' && $max==1)
     {   return $min==1
@@ -417,7 +421,7 @@ sub makeElementHandler
                 ($label => $pairs[1]);
               };
     }
-        
+
     if($max ne 'unbounded' && $min>=$max)
     {   return
         sub { my $tree = shift;
@@ -471,7 +475,7 @@ sub makeRequired
     sub { my $tree  = shift;  # can be undef
           my @pairs = $do->($tree);
           @pairs
-          or error __x"data for element or block starting with `{tag}' missing at {path}"
+              or error __x"data for element or block starting with `{tag}' missing at {path}"
                , tag => $label, path => $path, _class => 'misfit';
           @pairs;
         };
@@ -482,6 +486,7 @@ sub makeElementHref
 {   my ($self, $path, $ns, $childname, $do) = @_;
 
     sub { my $tree  = shift;
+
           return ($childname => $tree->node)
               if defined $tree
               && $tree->nodeType eq $childname
@@ -518,7 +523,7 @@ sub makeElementDefault
        and return sub
         { my $tree = shift;
           return ($childname => $def)
-              if !defined $tree 
+              if !defined $tree
               || $tree->nodeType ne $childname
               || $tree->node->textContent eq '';
 
@@ -558,27 +563,8 @@ sub makeElementFixed
         };
 }
 
-sub makeElementNillable
-{   my ($self, $path, $ns, $childname, $do) = @_;
-
-    # some people cannot read the specs.
-    my $inas = $self->{interpret_nillable_as_optional};
-
-    sub { my $tree = shift;
-          my $value;
-          if(defined $tree && $tree->nodeType eq $childname)
-          {   my $nil = $tree->node->getAttributeNS(SCHEMA2001i, 'nil') || '';
-              $value = ($nil eq 'true' || $nil eq '1') ? 'NIL' : $do->($tree);
-          }
-          elsif($inas) { return ($childname => undef) }  # explicit undef
-          else { $value = $do->(undef) }
-
-          defined $value ? ($childname => $value) : ();
-        };
-}
-
 sub makeElementAbstract
-{   my ($self, $path, $ns, $childname, $do) = @_;
+{   my ($self, $path, $ns, $childname, $do, $tag) = @_;
     sub { my $tree = shift or return ();
           $tree->nodeType eq $childname or return ();
 
@@ -591,47 +577,65 @@ sub makeElementAbstract
 # complexType and complexType/ComplexContent
 #
 
+# Be warned that the location reported in 'path' may not be the actual
+# location, caused by the cashing of compiled schema components.  The
+# path you see is the first path where that element was encountered.
+sub _not_processed($$)
+{   my ($child, $path) = @_;
+    error __x"element `{name}' not processed for {path} at {where}"
+      , name => type_of_node($child), path => $path
+      , _class => 'misfit', where => $child->nodePath;
+}
+
 sub makeComplexElement
-{   my ($self, $path, $tag, $elems, $attrs, $attrs_any) = @_;
+{   my ($self, $path, $tag, $elems, $attrs, $attrs_any,undef,$is_nillable) = @_;
 #my @e = @$elems; my @a = @$attrs;
+
     my @elems = odd_elements @$elems;
     my @attrs = (odd_elements(@$attrs), @$attrs_any);
 
-    @elems > 1 || @attrs and return
-    sub { my $tree = shift or return ();
-          my $node = $tree->node;
-          my %complex
-           = ( (map {$_->($tree)} @elems)
-             , (map {$_->($node)} @attrs)
-             );
+    $is_nillable and return
+    sub { my $tree    = shift or return ();
+          my $node    = $tree->node;
+          my %complex =
+            ( ($tree->nodeNil ? (_ => 'NIL') : (map $_->($tree), @elems))
+            , (map $_->($node), @attrs)
+            );
 
-          defined $tree->currentChild
-              and error __x"element `{name}' not processed at {path}"
-                      , name => $tree->currentType, path => $path
-                      , _class => 'misfit';
+          _not_processed $tree->currentChild, $path
+              if $tree->currentChild;
+
+          ($tag => \%complex);
+        };
+
+    @elems > 1 || @attrs and return
+    sub { my $tree    = shift or return ();
+          my $node    = $tree->node;
+          my %complex = ((map $_->($tree), @elems), (map $_->($node), @attrs));
+
+          _not_processed $tree->currentChild, $path
+              if $tree->currentChild;
 
           ($tag => \%complex);
         };
 
     @elems || return
     sub { my $tree = shift or return ();
-          defined $tree->currentChild
-              and error __x"element `{name}' not processed at {path}"
-                    , name => $tree->currentType, path => $path
-                    , _class => 'misfit';
+          _not_processed $tree->currentChild, $path
+              if $tree->currentChild;
+
           ($tag => {});
         };
 
     my $el = shift @elems;
     sub { my $tree    = shift or return ();
           my %complex = $el->($tree);
-          defined $tree->currentChild
-              and error __x"element `{name}' not processed at {path}"
-                      , name => $tree->currentType, path => $path
-                      , _class => 'misfit';
+
+          _not_processed $tree->currentChild, $path
+              if $tree->currentChild;
+
           ($tag => \%complex);
         };
-    
 }
 
 #
@@ -639,16 +643,15 @@ sub makeComplexElement
 #
 
 sub makeTaggedElement
-{   my ($self, $path, $tag, $st, $attrs, $attrs_any) = @_;
+{   my ($self, $path, $tag, $st, $attrs, $attrs_any,undef,$is_nillable) = @_;
     my @attrs = (odd_elements(@$attrs), @$attrs_any);
 
     sub { my $tree   = shift or return ();
-          my $simple = $st->($tree);
+          my $simple = $is_nillable && ref $tree && $tree->nodeNil ? 'NIL' : $st->($tree);
+          ref $tree or return ($tag => {_ => $simple});
           my $node   = $tree->node;
-          my @pairs  = map {$_->($node)} @attrs;
-          defined $simple or @pairs or return ();
-          defined $simple or $simple = 'undef';
-          ($tag => {_ => $simple, @pairs});
+          my @pairs  = map $_->($node), @attrs;
+          defined $simple || @pairs ?  ($tag => {_ => $simple, @pairs}) : ();
         };
 }
 
@@ -657,15 +660,16 @@ sub makeTaggedElement
 #
 
 sub makeMixedElement
-{   my ($self, $path, $tag, $elems, $attrs, $attrs_any) = @_;
+{   my ($self, $path, $tag, $elems, $attrs, $attrs_any,undef,$is_nillable) = @_;
     my @attrs = (odd_elements(@$attrs), @$attrs_any);
     my $mixed = $self->{mixed_elements}
          or panic "how to handle mixed?";
+$is_nillable and panic "nillable mixed not yet supported";
 
       ref $mixed eq 'CODE'
     ? sub { my $tree = shift or return;
             my $node = $tree->node or return;
-            my @v = $mixed->($node);
+            my @v = $mixed->($path, $node);
             @v ? ($tag => $v[0]) : ();
           }
 
@@ -675,17 +679,17 @@ sub makeMixedElement
     : $mixed eq 'ATTRIBUTES'
     ? sub { my $tree   = shift or return;
             my $node   = $tree->node;
-            my @pairs  = map {$_->($node)} @attrs;
+            my @pairs  = map $_->($node), @attrs;
             ($tag => { _ => $node, @pairs
                      , _MIXED_ELEMENT_MODE => 'ATTRIBUTES'});
-          } 
+          }
     : $mixed eq 'TEXTUAL'
     ? sub { my $tree   = shift or return;
             my $node   = $tree->node;
-            my @pairs  = map {$_->($node)} @attrs;
+            my @pairs  = map $_->($node), @attrs;
             ($tag => { _ => $node->textContent, @pairs
                      , _MIXED_ELEMENT_MODE => 'TEXTUAL'});
-          } 
+          }
     : $mixed eq 'XML_STRING'
     ? sub { my $tree   = shift or return;
             my $node   = $tree->node or return;
@@ -704,10 +708,17 @@ sub makeMixedElement
 #
 
 sub makeSimpleElement
-{   my ($self, $path, $tag, $st) = @_;
-    sub { my $value = $st->(@_);
-          defined $value ? ($tag => $value) : ();
-        };
+{   my ( $self, $path, $tag, $st, undef, undef, $comptype, $is_nillable) = @_;
+
+      $is_nillable
+    ? sub { my $tree  = shift or return $st->(undef);
+            my $value = (ref $tree && $tree->nodeNil) ? 'NIL' : $st->($tree);
+            defined $value ? ($tag => $value) : ();
+          }
+    : sub { my $value = $st->(@_);
+            defined $value ? ($tag => $value) : ();
+          };
+
 }
 
 sub default_anytype_handler($$)
@@ -721,7 +732,8 @@ sub makeBuiltin
 {   my ($self, $path, $node, $type, $def, $check_values) = @_;
 
     if($type =~ m/}anyType$/)
-    {   if(my $a = $self->{any_type})
+    {
+        if(my $a = $self->{any_type})
         {   return sub {
                my $node
                  = ref $_[0] && UNIVERSAL::isa($_[0], 'XML::Compile::Iterator')
@@ -732,7 +744,7 @@ sub makeBuiltin
         {   return sub
               { ref $_[0] or return $_[0];
                 my $node = UNIVERSAL::isa($_[0], 'XML::Compile::Iterator')
-                 ? $_[0]->node : $_[0];
+                  ? $_[0]->node : $_[0];
                 (first{ UNIVERSAL::isa($_, 'XML::LibXML::Element') }
                      $node->childNodes) ? $node : $node->textContent;
               };
@@ -777,7 +789,7 @@ sub makeList
              = UNIVERSAL::isa($tree, 'XML::LibXML::Node') ? $tree
              : ref $tree ? $tree->node : undef;
           my $v = ref $tree ? $tree->textContent : $tree;
-          my @v = grep {defined} map {$st->($_, $node)} split(" ",$v);
+          my @v = grep defined, map $st->($_, $node), split " ", $v;
           @v ? \@v : undef;
         };
 }
@@ -827,7 +839,7 @@ sub makeUnion
           for(@types) { my $v = try { $_->($tree) }; $@ or return $v }
           my $text = $tree->textContent;
 
-          substr $text, 20, -1, '...' if length($text) > 73;
+          substr $text, 20, -5, '...' if length($text) > 50;
           error __x"no match for `{text}' in union at {path}"
              , text => $text, path => $path;
         };
@@ -861,7 +873,7 @@ sub makeAttributeProhibited
 sub makeAttribute
 {   my ($self, $path, $ns, $tag, $label, $do) = @_;
     sub { my $node = $_[0]->getAttributeNodeNS($ns, $tag);
-          defined $node or return ();;
+          defined $node or return ();
           my $val = $do->($node);
           defined $val ? ($label => $val) : ();
         };
@@ -917,17 +929,17 @@ sub makeSubstgroup
     keys %do or return bless sub { () }, 'BLOCK';
 
     bless
-    sub { my $tree = shift;
-          my $type = ($tree ? $tree->currentType : undef)
+    sub { my $tree  = shift;
+          my $type  = ($tree ? $tree->currentType : undef)
               or error __x"no data for substitution group {type} at {path}"
-                    , type => $base, path => $path;
+                    , type => $base, path => $path, class => 'misfit';
 
-          my $do   = $do{$type}
-              or return;
-
+          my $do    = $do{$type} or return ();
           my @subst = $do->[1]($tree->descend);
+          @subst or return ();
+
           $tree->nextChild;
-          @subst ? ($do->[0] => $subst[1]) : ();   # key-rewrite
+          ($do->[0] => $subst[1]);   # key-rewrite
         }, 'BLOCK';
 }
 
@@ -937,8 +949,8 @@ sub makeAnyAttribute
 {   my ($self, $path, $handler, $yes, $no, $process) = @_;
     return () unless defined $handler;
 
-    my %yes = map { ($_ => 1) } @{$yes || []};
-    my %no  = map { ($_ => 1) } @{$no  || []};
+    my %yes = map +($_ => 1), @{$yes || []};
+    my %no  = map +($_ => 1), @{$no  || []};
 
     # Takes all, before filtering
     my $all =
@@ -953,6 +965,8 @@ sub makeAnyAttribute
           }
           @result;
         };
+
+    weaken $self;
 
     # Create filter if requested
     my $run = $handler eq 'TAKE_ALL' ? $all
@@ -977,8 +991,8 @@ sub makeAnyElement
 {   my ($self, $path, $handler, $yes, $no, $process, $min, $max) = @_;
     $handler ||= 'SKIP_ALL';
 
-    my %yes = map { ($_ => 1) } @{$yes || []};
-    my %no  = map { ($_ => 1) } @{$no  || []};
+    my %yes = map +($_ => 1), @{$yes || []};
+    my %no  = map +($_ => 1), @{$no  || []};
 
     # Takes all, before filtering
     my $any = ($max eq 'unbounded' || $max > 1)
@@ -1001,14 +1015,13 @@ sub makeAnyElement
           $count >= $min
               or error __x"too few any elements, requires {min} and got {found}"
                     , min => $min, found => $count;
+
           %result;
       }
     : sub
-      {   my $tree  = shift or return ();
-          my $child = $tree->currentChild
-              or return ();
-
-          my $ns = $child->namespaceURI || '';
+      {   my $tree  = shift               or return ();
+          my $child = $tree->currentChild or return ();
+          my $ns    = $child->namespaceURI || '';
 
           (!keys %yes || $yes{$ns}) && !(keys %no && $no{$ns})
               or return ();
@@ -1016,8 +1029,12 @@ sub makeAnyElement
           $tree->nextChild;
           (type_of_node($child), $child);
       };
- 
+
     bless $any, 'ANY';
+
+# I would like to weaken here, but "ANY" needs the whole compiler structure
+# intact: someone has to catch it.
+#   weaken $self;
 
     # Create filter if requested
     my $run
@@ -1055,9 +1072,13 @@ sub makeXsiTypeSwitch($$$$)
                 or error __x"specified xsi:type list for `{default}' does not contain `{got}'"
                      , default => $default_type, got => $type;
         }
-        else { ($alt, $code) = ($default_type, $types->{$default_type}) }
+        else
+        {   ($alt, $code) = ($default_type, $types->{$default_type});
+        }
 
         my ($t, $d) = $code->($tree);
+        defined $t or return ();
+
         $d = { _ => $d } if ref $d ne 'HASH';
         $d->{XSI_TYPE} ||= $alt;
         ($t, $d);
@@ -1066,32 +1087,36 @@ sub makeXsiTypeSwitch($$$$)
 
 # any kind of hook
 
-sub makeHook($$$$$$)
-{   my ($self, $path, $r, $tag, $before, $replace, $after) = @_;
+sub makeHook($$$$$$$)
+{   my ($self, $path, $r, $tag, $before, $replace, $after, $fulltype) = @_;
     return $r unless $before || $replace || $after;
 
     return sub { ($_[0]->node->localName => 'SKIPPED') }
-        if $replace && grep {$_ eq 'SKIP'} @$replace;
+        if $replace && grep $_ eq 'SKIP', @$replace;
 
-    my @replace = $replace ? map {$self->_decodeReplace($path,$_)} @$replace:();
-    my @before  = $before  ? map {$self->_decodeBefore($path,$_) } @$before :();
-    my @after   = $after   ? map {$self->_decodeAfter($path,$_)  } @$after  :();
+    my @replace = $replace ? map $self->_decodeReplace($path,$_),@$replace : ();
+    my @before  = $before  ? map $self->_decodeBefore($path,$_), @$before  : ();
+    my @after   = $after   ? map $self->_decodeAfter($path,$_),  @$after   : ();
+
+    weaken $self;
 
     sub
      { my $tree = shift or return ();
        my $xml  = $tree->node;
        foreach (@before)
-       {   $xml = $_->($xml, $path);
+       {   $xml = $_->($xml, $path, $fulltype);
            defined $xml or return ();
        }
+
+       my $process = sub { $r->($tree->descend($xml)) };
        my @h = @replace
-             ? map {$_->( $xml,$self,$path,$tag
-                        , sub {$r->($tree->descend($xml))} )} @replace
-             : $r->($tree->descend($xml));
+         ? map $_->($xml, $self, $path, $tag, $process, $fulltype), @replace
+         : $process->();
+
        @h or return ();
-       my $h = @h==1 ? {_ => $h[0]} : $h[1];  # detect simpleType
+       my $h = @h==1 ? $h[0] : $h[1];  # detect simpleType
        foreach my $after (@after)
-       {   $h = $after->($xml, $h, $path);
+       {   $h = $after->($xml, $h, $path, $fulltype);
            defined $h or return ();
        }
        ($tag => $h);
@@ -1103,71 +1128,81 @@ sub _decodeBefore($$)
     return $call if ref $call eq 'CODE';
 
       $call eq 'PRINT_PATH' ? sub {print "$_[1]\n"; $_[0] }
-    : error __x"labeled before hook `{call}' undefined for READER",call=>$call;
+    : error __x"labeled before hook `{call}' undefined for READER", call=>$call;
 }
 
 sub _decodeReplace($$)
 {   my ($self, $path, $call) = @_;
     return $call if ref $call eq 'CODE';
 
-    error __x"labeled replace hook `{call}' undefined for READER", call=>$call;
+      $call eq 'XML_NODE'  ? sub { ($_[3] => $_[0]) }    # don't parse XML
+    : error __x"labeled replace hook `{call}' undefined for READER",call=>$call;
 }
+
+my %after =
+  ( PRINT_PATH   => sub {print "$_[2]\n"; $_[1] }
+  , INCLUDE_PATH => sub { my $h = $_[1];
+        $h = { _ => $h } if ref $h ne 'HASH';
+        $h->{_PATH} = $_[0];
+        $h;
+    }
+  , XML_NODE     => sub { my $h = $_[1];
+        $h = { _ => $h } if ref $h ne 'HASH';
+        $h->{_XML_NODE} = $_[0];
+        $h;
+    }
+  , ELEMENT_ORDER => sub { my ($xml, $h) = @_;
+        $h = { _ => $h } if ref $h ne 'HASH';
+        my @order = map type_of_node($_)
+          , grep $_->isa('XML::LibXML::Element'), $xml->childNodes;
+        $h->{_ELEMENT_ORDER} = \@order;
+        $h;
+    }
+  , ATTRIBUTE_ORDER => sub { my ($xml, $h) = @_;
+        $h = { _ => $h } if ref $h ne 'HASH';
+        my @order = map $_->nodeName, $xml->attributes;
+        $h->{_ATTRIBUTE_ORDER} = \@order;
+        $h;
+    }
+  , NODE_TYPE => sub { my ($xml, $h) = @_;
+        $h = { _ => $h } if ref $h ne 'HASH';
+        $h->{_NODE_TYPE} = type_of_node $xml;
+        $h;
+    }
+  );
 
 sub _decodeAfter($$)
 {   my ($self, $path, $call) = @_;
     return $call if ref $call eq 'CODE';
 
-      $call eq 'PRINT_PATH'
-    ? sub {print "$_[2]\n"; $_[1] }
-    : $call eq 'XML_NODE'
-    ? sub { my $h = $_[1];
-            $h = { _ => $h } if ref $h ne 'HASH';
-            $h->{_XML_NODE} = $_[0];
-            $h;
-          }
-    : $call eq 'ELEMENT_ORDER'
-    ? sub { my ($xml, $h) = @_;
-            $h = { _ => $h } if ref $h ne 'HASH';
-            my @order = map {type_of_node $_}
-                grep { $_->isa('XML::LibXML::Element') }
-                    $xml->childNodes;
-            $h->{_ELEMENT_ORDER} = \@order;
-            $h;
-          }
-    : $call eq 'ATTRIBUTE_ORDER'
-    ? sub { my ($xml, $h) = @_;
-            $h = { _ => $h } if ref $h ne 'HASH';
-            my @order = map {$_->nodeName} $xml->attributes;
-            $h->{_ATTRIBUTE_ORDER} = \@order;
-            $h;
-          }
-    : $call eq 'NODE_TYPE'
-    ? sub { my ($xml, $h) = @_;
-            $h = { _ => $h } if ref $h ne 'HASH';
-            $h->{_NODE_TYPE} = type_of_node $xml;
-            $h;
-          }
-    : error __x"labeled after hook `{call}' undefined for READER", call=> $call;
+    # The 'after' can be called on a single.  In that case, turn it into
+    # a HASH for additional information.
+    my $dec = $after{$call}
+        or error __x"labeled after hook `{call}' undefined for READER"
+            , call=> $call;
+
+    $dec;
 }
 
 sub makeBlocked($$$)
 {   my ($self, $where, $class, $type) = @_;
+    my $err_type = $self->prefixed($type) || $type;
 
     # errors are produced in class=misfit to allow other choices to succeed.
       $class eq 'anyType'
     ? { st => sub { error __x"use of `{type}' blocked at {where}"
-              , type => $type, where => $where, _class => 'misfit';
+              , type => $err_type, where => $where, _class => 'misfit';
           }}
     : $class eq 'simpleType'
     ? { st => sub { error __x"use of {class} `{type}' blocked at {where}"
-              , class => $class, type => $type, where => $where
+              , class => $class, type => $err_type, where => $where
               , _class => 'misfit';
           }}
     : $class eq 'complexType'
     ? { elems => [] }
     : $class eq 'ref'
     ? { st => sub { error __x"use of referenced `{type}' blocked at {where}"
-              , type => $type, where => $where, _class => 'misfit';
+              , type => $err_type, where => $where, _class => 'misfit';
           }}
     : panic "blocking of $class for $type not implemented";
 }

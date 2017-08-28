@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::SOAP11::Operation - defines a SOAP11 interaction
@@ -18,29 +20,36 @@ XML::Compile::SOAP11::Operation - defines a SOAP11 interaction
 Objects of this type define one possible SOAP11 interaction, either
 client side or server side.
 
+Extends L<"DESCRIPTION" in XML::Compile::SOAP::Operation|XML::Compile::SOAP::Operation/"DESCRIPTION">.
+ 
 =head1 METHODS
 
+Extends L<"METHODS" in XML::Compile::SOAP::Operation|XML::Compile::SOAP::Operation/"METHODS">.
+ 
 =head2 Constructors
 
+Extends L<"Constructors" in XML::Compile::SOAP::Operation|XML::Compile::SOAP::Operation/"Constructors">.
+ 
 =over 4
 
-=item XML::Compile::SOAP11::Operation-E<gt>B<new>(OPTIONS)
+=item XML::Compile::SOAP11::Operation-E<gt>B<new>(%options)
 
 C<input_def>, C<output_def> and C<fault_def> are HASHes which contain
 the input and output message header, body and fault-header definitions
 in WSDL1.1 style.
 
- -Option    --Defined in     --Default
-  action      XML::Compile::SOAP::Operation  undef
-  endpoints   XML::Compile::SOAP::Operation  []
-  fault_def                    <undef>
-  input_def                    <undef>
-  kin         XML::Compile::SOAP::Operation  <required>
-  nam         XML::Compile::SOAP::Operation  <required>
-  output_def                   <undef>
-  schemas     XML::Compile::SOAP::Operation  <required>
-  style                        'document'
-  transport   XML::Compile::SOAP::Operation  'HTTP'
+ -Option     --Defined in                   --Default
+  action       XML::Compile::SOAP::Operation  undef
+  endpoints    XML::Compile::SOAP::Operation  []
+  fault_def                                   <undef>
+  input_def                                   <undef>
+  kind         XML::Compile::SOAP::Operation  <required>
+  name         XML::Compile::SOAP::Operation  <required>
+  output_def                                  <undef>
+  schemas      XML::Compile::SOAP::Operation  <required>
+  server_type  XML::Compile::SOAP::Operation  undef
+  style                                       'document'
+  transport    XML::Compile::SOAP::Operation  'HTTP'
 
 =over 2
 
@@ -52,13 +61,15 @@ in WSDL1.1 style.
 
 =item input_def => HASH
 
-=item kin => d
+=item kind => 'one-way'|...
 
-=item nam => e
+=item name => STRING
 
 =item output_def => HASH
 
 =item schemas => XML::Compile::Cache
+
+=item server_type => NAME
 
 =item style => 'document'|'rpc'
 
@@ -70,57 +81,63 @@ in WSDL1.1 style.
 
 =head2 Accessors
 
+Extends L<"Accessors" in XML::Compile::SOAP::Operation|XML::Compile::SOAP::Operation/"Accessors">.
+ 
 =over 4
 
-=item $obj-E<gt>B<bindingName>
+=item $obj-E<gt>B<bindingName>()
 
-See L<XML::Compile::SOAP::Operation/"Accessors">
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
-=item $obj-E<gt>B<clientClass>
+=item $obj-E<gt>B<clientClass>()
 
-See L<XML::Compile::SOAP::Operation/"Accessors">
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
-=item $obj-E<gt>B<endPoints>
+=item $obj-E<gt>B<endPoints>()
 
-See L<XML::Compile::SOAP::Operation/"Accessors">
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
-=item $obj-E<gt>B<kind>
+=item $obj-E<gt>B<kind>()
 
-See L<XML::Compile::SOAP::Operation/"Accessors">
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
-=item $obj-E<gt>B<name>
+=item $obj-E<gt>B<longName>()
 
-See L<XML::Compile::SOAP::Operation/"Accessors">
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
-=item $obj-E<gt>B<portName>
+=item $obj-E<gt>B<name>()
 
-See L<XML::Compile::SOAP::Operation/"Accessors">
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
-=item $obj-E<gt>B<schemas>
+=item $obj-E<gt>B<portName>()
 
-See L<XML::Compile::SOAP::Operation/"Accessors">
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
-=item $obj-E<gt>B<serverClass>
+=item $obj-E<gt>B<schemas>()
 
-See L<XML::Compile::SOAP::Operation/"Accessors">
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
-=item $obj-E<gt>B<serviceName>
+=item $obj-E<gt>B<serverClass>()
 
-See L<XML::Compile::SOAP::Operation/"Accessors">
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
-=item $obj-E<gt>B<soapAction>
+=item $obj-E<gt>B<serviceName>()
 
-See L<XML::Compile::SOAP::Operation/"Accessors">
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
-=item $obj-E<gt>B<style>
+=item $obj-E<gt>B<soapAction>()
 
-=item $obj-E<gt>B<version>
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
-See L<XML::Compile::SOAP::Operation/"Accessors">
+=item $obj-E<gt>B<style>()
+
+=item $obj-E<gt>B<version>()
+
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
 =item $obj-E<gt>B<wsaAction>('INPUT'|'OUTPUT')
 
-See L<XML::Compile::SOAP::Operation/"Accessors">
+Inherited, see L<XML::Compile::SOAP::Operation/"Accessors">
 
 =back
 
@@ -128,19 +145,44 @@ See L<XML::Compile::SOAP::Operation/"Accessors">
 
 Operations are often modified by SOAP extensions.
 See L<XML::Compile::SOAP::WSA|XML::Compile::SOAP::WSA>, for instance. Also demonstrated in
-the FAQ, XML::Compile::SOAP::FAQ.
+the FAQ, L<XML::Compile::SOAP::FAQ|XML::Compile::SOAP::FAQ>.
 
 =over 4
 
-=item $obj-E<gt>B<addHeader>(('INPUT'|'OUTPUT'|'FAULT'), LABEL, ELEM)
+=item $obj-E<gt>B<addHeader>( <'INPUT'|'OUTPUT'|'FAULT'>, $label, $element, %options )
+
+Add a header definitions.  Many protocols on top of SOAP, like WSS, add
+headers to the operations which are not specified in the WSDL.
+
+[2.31] When you add a header with same $label again, it will get silently
+ignored unless the $element type differs. An $element is either a full
+type or a [3.00] prefixed type.
+
+ -Option        --Default
+  destination     undef
+  mustUnderstand  undef
+
+=over 2
+
+=item destination => ROLE
+
+[2.33] adds the destination attribute.
+
+=item mustUnderstand => BOOLEAN
+
+[2.33] adds the mustUnderstand attribute.
+
+=back
 
 =back
 
 =head2 Handlers
 
+Extends L<"Handlers" in XML::Compile::SOAP::Operation|XML::Compile::SOAP::Operation/"Handlers">.
+ 
 =over 4
 
-=item $obj-E<gt>B<compileClient>(OPTIONS)
+=item $obj-E<gt>B<compileClient>(%options)
 
 Returns one CODE reference which handles the processing for this
 operation. Options C<transporter>, C<transport_hook>, and
@@ -150,18 +192,18 @@ You pass that CODE reference an input message of the correct
 type, as pure Perl HASH structure.  An 'request-response' operation
 will return then answer, or C<undef> in case of failure.  An 'one-way'
 operation with return C<undef> in case of failure, and a true value
-when successfull.
+when successful.
 
 You B<cannot> pass options for L<XML::Compile::Schema::compile()|XML::Compile::Schema/"Compilers">, like
 C<<sloppy_integers => 0>>, hooks or typemaps this way. Provide these to
 the C<::WSDL> or other C<::Cache> object which defines the types, via
 C<new> option C<opts_rw> and friends.
 
-=item $obj-E<gt>B<compileHandler>(OPTIONS)
+=item $obj-E<gt>B<compileHandler>(%options)
 
 Prepare the routines which will decode the request and encode the answer,
 as will be run on the server. The L<XML::Compile::SOAP::Server|XML::Compile::SOAP::Server> will
-connect these. All OPTIONS will get passed to
+connect these. All %options will get passed to
 L<XML::Compile::SOAP11::Server::compileHandler()|XML::Compile::SOAP::Server/"Actions">
 
  -Option  --Default
@@ -178,29 +220,31 @@ Determines whether the handler belongs to a received message.
 
 =back
 
-=item $obj-E<gt>B<compileTransporter>(OPTIONS)
+=item $obj-E<gt>B<compileTransporter>(%options)
 
-See L<XML::Compile::SOAP::Operation/"Handlers">
+Inherited, see L<XML::Compile::SOAP::Operation/"Handlers">
 
 =back
 
 =head2 Helpers
 
+Extends L<"Helpers" in XML::Compile::SOAP::Operation|XML::Compile::SOAP::Operation/"Helpers">.
+ 
 =over 4
 
-=item $obj-E<gt>B<explain>(WSDL, FORMAT, DIRECTION, OPTIONS)
+=item $obj-E<gt>B<explain>($wsdl, $format, $direction, %options)
 
 [since 2.13]
 
 Dump an annotated structure showing how the operation works, helping
-developers to understand the schema. FORMAT is always C<PERL>: C<XML>
-is not yet supported.
+developers to understand the schema. The $format must be string "PERL".
+($format "XML" is not yet supported)
 
-The DIRECTION is C<INPUT>, it will return the message which the client
-sends to the server (input for the server). The C<OUTPUT> message is
-sent as response by the server.
+When the $direction is string "INPUT", it will return the message which
+the client sends to the server (input for the server). The "OUTPUT"
+message is sent as response by the server.
 
-All OPTIONS besides those described here are passed to
+All %options besides those described here are passed to
 L<XML::Compile::Schema::template()|XML::Compile::Schema/"Compilers">, when C<recurse> is enabled.
 
  -Option     --Default
@@ -217,42 +261,25 @@ Append the templates of all the part structures.
 
 =back
 
-=item XML::Compile::SOAP11::Operation-E<gt>B<register>(URI, ENVNS)
+=item $obj-E<gt>B<parsedWSDL>(%options)
 
-See L<XML::Compile::SOAP::Operation/"Helpers">
+Inherited, see L<XML::Compile::SOAP::Operation/"Helpers">
 
 =back
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2007-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

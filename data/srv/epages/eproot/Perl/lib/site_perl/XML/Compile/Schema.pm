@@ -1,11 +1,11 @@
-# Copyrights 2006-2011 by Mark Overmeer.
+# Copyrights 2006-2016 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 
 package XML::Compile::Schema;
 use vars '$VERSION';
-$VERSION = '1.22';
+$VERSION = '1.54';
 
 use base 'XML::Compile';
 
@@ -42,7 +42,7 @@ sub init($)
     if(my $h2 = $args->{hooks})
     {   $self->addHook($_) for ref $h2 eq 'ARRAY' ? @$h2 : $h2;
     }
- 
+
     $self->{key_rewrite} = [];
     if(my $kr = $args->{key_rewrite})
     {   $self->addKeyRewrite(ref $kr eq 'ARRAY' ? @$kr : $kr);
@@ -74,7 +74,11 @@ sub addHooks(@)
 }
 
 
-sub hooks() { @{shift->{hooks}} }
+sub hooks(;$)
+{   my $hooks = shift->{hooks};
+    my $dir   = shift or return @$hooks;
+    grep +(!$_->{action} || $_->{action} eq $dir), @$hooks;
+}
 
 
 sub addTypemaps(@)
@@ -98,13 +102,12 @@ sub addSchemas($@)
     {   push @nsopts, $o => delete $opts{$o} if exists $opts{$o};
     }
 
-
     UNIVERSAL::isa($node, __PACKAGE__)
         and error __x"use useSchema(), not addSchemas() for a {got} object"
              , got => ref $node;
 
     UNIVERSAL::isa($node, 'XML::LibXML::Node')
-        or error __x"required is a XML::LibXML::Node";
+        or error __x"addSchema() requires an XML::LibXML::Node";
 
     $node = $node->documentElement
         if $node->isa('XML::LibXML::Document');
@@ -188,16 +191,18 @@ sub compile($$@)
         $args{ignore_facets} = ! $args{validation};
     }
     else
-    {   exists $args{check_values}   or $args{check_values} = 1;
-        exists $args{check_occurs}   or $args{check_occurs} = 1;
+    {   exists $args{check_values} or $args{check_values} = 1;
+        exists $args{check_occurs} or $args{check_occurs} = 1;
     }
 
-    my $iut = exists $args{ignore_unused_tags} ? $args{ignore_unused_tags}
-      : $self->{unused_tags};
+    my $iut = exists $args{ignore_unused_tags}
+      ? $args{ignore_unused_tags} : $self->{unused_tags};
+
     $args{ignore_unused_tags}
       = !defined $iut ? undef : ref $iut eq 'Regexp' ? $iut : qr/^/;
 
-    exists $args{include_namespaces} or $args{include_namespaces} = 1;
+    exists $args{include_namespaces}
+        or $args{include_namespaces} = 1;
 
     if($args{sloppy_integers} ||= 0)
     {   eval "require Math::BigInt";
@@ -220,7 +225,7 @@ sub compile($$@)
     my $nss   = $self->namespaces;
 
     my ($h1, $h2) = (delete $args{hook}, delete $args{hooks});
-    my @hooks = $self->hooks;
+    my @hooks = $self->hooks($action);
     push @hooks, ref $h1 eq 'ARRAY' ? @$h1 : $h1 if $h1;
     push @hooks, ref $h2 eq 'ARRAY' ? @$h2 : $h2 if $h2;
 
@@ -237,6 +242,13 @@ sub compile($$@)
     # Option rename in 0.88
     $args{any_element}    ||= delete $args{anyElement};
     $args{any_attribute}  ||= delete $args{anyAttribute};
+
+    if(my $xi = $args{xsi_type})
+    {   my $nss = $self->namespaces;
+        foreach (keys %$xi)
+        {   $xi->{$_} = $nss->autoexpand_xsi_type($_) if $xi->{$_} eq 'AUTO';
+        }
+    }
 
     my $transl = XML::Compile::Translate->new
      ( $action
@@ -259,73 +271,84 @@ sub _namespaceTable($;$$)
         if ref $table eq 'ARRAY';
 
     $table->{$_}    = { uri => $_, prefix => $table->{$_} }
-        for grep {ref $table->{$_} ne 'HASH'} keys %$table;
+        for grep ref $table->{$_} ne 'HASH', keys %$table;
 
-    do { $_->{used} = 0 for values %$table }
-        if $reset_count;
+    if($reset_count)
+    {   $_->{used} = 0 for values %$table;
+    }
 
     $table->{''}    = {uri => '', prefix => '', used => 0}
-        if $block_default && !grep {$_->{prefix} eq ''} values %$table;
+        if $block_default && !grep $_->{prefix} eq '', values %$table;
+
+    # very strong preference for 'xsi'
+    $table->{&SCHEMA2001i} = {uri => SCHEMA2001i, prefix => 'xsi', used => 0};
 
     $table;
 }
 
-# undocumented, on purpose: do we like this interface?
+
 sub compileType($$@)
 {   my ($self, $action, $type, %args) = @_;
 
     # translator can only create elements, not types.
-    my $elem           = delete $args{element}
-       or error __x"compileType requires an element name to be created";
+    my $elem           = delete $args{element} || $type;
     my ($ens, $elocal) = unpack_type $elem;
     my ($ns, $local)   = unpack_type $type;
 
     my $SchemaNS = SCHEMA2001;
-    $self->importDefinitions( <<_DIRTY_TRICK );
+
+    my $defs     = $ns ? <<_DIRTY_TRICK1 : <<_DIRTY_TRICK2;
 <schema xmlns="$SchemaNS"
    targetNamespace="$ens"
-   xmlns:tns="$ns"
-   elementFormDefault="qualified">
+   xmlns:tns="$ns">
   <element name="$elocal" type="tns:$local" />
 </schema>
-_DIRTY_TRICK
+_DIRTY_TRICK1
+<schema xmlns="$SchemaNS"
+   targetNamespace="$ens"
+   elementFormDefault="unqualified"
+   >
+  <element name="$elocal" type="$local" />
+</schema>
+_DIRTY_TRICK2
 
-     $self->compile($action, $elem, %args);
+    $self->importDefinitions($defs);
+    $self->compile($action, $elem, %args);
 }
 
 
 sub template($@)
 {   my ($self, $action, $type, %args) = @_;
 
-    my $to_perl
-      = $action eq 'PERL' ? 1
-      : $action eq 'XML'  ? 0
+    my ($to_perl, $to_xml)
+      = $action eq 'PERL' ? (1, 0)
+      : $action eq 'XML'  ? (0, 1)
+      : $action eq 'TREE' ? (0, 0)
       : error __x"template output is either in XML or PERL layout, not '{action}'"
         , action => $action;
 
     my $show
       = exists $args{show_comments} ? $args{show_comments}
-      : exists $args{show} ? $args{show} # pre-0.79 option name 
+      : exists $args{show} ? $args{show} # pre-0.79 option name
       : 'ALL';
 
-    $show = 'struct,type,occur,facets' if $show eq 'ALL';
-    $show = '' if $show eq 'NONE';
-    my @comment = map { ("show_$_" => 1) } split m/\,/, $show;
+    $show    = 'struct,type,occur,facets' if $show eq 'ALL';
+    $show    = '' if $show eq 'NONE';
+    my %show = map {("show_$_" => 1)} split m/\,/, $show;
+    my $nss  = $self->namespaces;
 
-    my $nss = $self->namespaces;
-
-    my $indent              = $args{indent} || "  ";
-    $args{check_occurs}     = 1;
-    $args{mixed_elements} ||= 'ATTRIBUTES';
-    $args{default_values} ||= 'EXTEND';
-    $args{abstract_types} ||= 'ERROR';
+    my $indent                  = $args{indent} || "  ";
+    $args{check_occurs}         = 1;
+    $args{mixed_elements}     ||= 'ATTRIBUTES';
+    $args{default_values}     ||= 'EXTEND';
+    $args{abstract_types}     ||= 'ERROR';
 
     exists $args{include_namespaces}
         or $args{include_namespaces} = 1;
 
     # it could be used to add extra comment lines
     error __x"typemaps not implemented for XML template examples"
-        if $action eq 'XML' && defined $args{typemap} && keys %{$args{typemap}};
+        if $to_xml && defined $args{typemap} && keys %{$args{typemap}};
 
     my @rewrite = $self->_key_rewrite(delete $args{key_rewrite});
     my @blocked = $self->_block_nss(delete $args{block_namespace});
@@ -336,8 +359,11 @@ sub template($@)
       , !$args{use_default_namespace}
       );
 
-    $table->{&SCHEMA2001}  ||= {prefix => 'xs',  uri => SCHEMA2001,  used => 0};
-    $table->{&SCHEMA2001i} ||= {prefix => 'xsi', uri => SCHEMA2001i, used => 0};
+    my $used = $to_xml && $show{show_type};
+    $table->{&SCHEMA2001}
+       ||= +{prefix => 'xs',  uri => SCHEMA2001,  used => $used};
+    $table->{&SCHEMA2001i}
+       ||= +{prefix => 'xsi', uri => SCHEMA2001i, used => $used};
 
     my $transl  = XML::Compile::Translate->new
      ( 'TEMPLATE'
@@ -357,15 +383,19 @@ sub template($@)
 #use Data::Dumper; $Data::Dumper::Indent = 1; warn Dumper $ast;
 
     if($to_perl)
-    {   return $transl->toPerl($ast, @comment
-           , indent => $indent, skip_header => $args{skip_header})
+    {   return $transl->toPerl($ast, %show, indent => $indent
+          , skip_header => $args{skip_header})
     }
 
-    # to_xml
-    my $doc  = XML::LibXML::Document->new('1.1', 'UTF-8');
-    my $node = $transl->toXML($doc,$ast, @comment
-      , indent => $indent, skip_header => $args{skip_header});
-    $node->toString(1);
+    if($to_xml)
+    {   my $doc  = XML::LibXML::Document->new('1.1', 'UTF-8');
+        my $node = $transl->toXML($doc, $ast, %show
+          , indent => $indent, skip_header => $args{skip_header});
+        return $node->toString(1);
+    }
+
+    # return tree
+    $ast;
 }
 
 #------------------------------------------
@@ -380,8 +410,8 @@ sub namespaces() { shift->{namespaces} }
 my (%schemaByFilestamp, %schemaByChecksum);
 
 sub importDefinitions($@)
-{   my ($self, $thing, %options) = @_;
-    my @data = ref $thing eq 'ARRAY' ? @$thing : $thing;
+{   my ($self, $frags, %options) = @_;
+    my @data = ref $frags eq 'ARRAY' ? @$frags : $frags;
 
     # this is a horrible hack, but by far the simpelest solution to
     # avoid dataToXML process the same info twice.
@@ -443,7 +473,7 @@ sub _parseFile($)
     my $self = $thing;
 
     my ($mtime, $size) = (stat $fn)[9,7];
-    my $filestamp = basename($fn) . '-'. $mtime . '-' . $size;
+    my $filestamp = File::Spec->rel2abs($fn) . '-'. $mtime . '-' . $size;
 
     if($self->{_cache_file}{$filestamp})
     {   trace "reusing schemas from file $filestamp";

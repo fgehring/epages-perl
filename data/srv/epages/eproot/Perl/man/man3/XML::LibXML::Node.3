@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::Node 3"
-.TH XML::LibXML::Node 3 "2009-10-07" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::Node 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -140,6 +140,7 @@ XML::LibXML::Node \- Abstract Base Class of XML::LibXML Nodes
 \&  $node\->setNodeName( $newName );
 \&  $bool = $node\->isSameNode( $other_node );
 \&  $bool = $node\->isEqual( $other_node );
+\&  $num = $node\->unique_key;
 \&  $content = $node\->nodeValue;
 \&  $content = $node\->textContent;
 \&  $type = $node\->nodeType;
@@ -148,7 +149,7 @@ XML::LibXML::Node \- Abstract Base Class of XML::LibXML Nodes
 \&  $oldnode = $node\->replaceChild( $newNode, $oldNode );
 \&  $node\->replaceNode($newNode);
 \&  $childnode = $node\->appendChild( $childnode );
-\&  $childnode = $node\->addChild( $chilnode );
+\&  $childnode = $node\->addChild( $childnode );
 \&  $node = $parent\->addNewChild( $nsURI, $name );
 \&  $node\->addSibling($newNode);
 \&  $newnode =$node\->cloneNode( $deep );
@@ -174,10 +175,12 @@ XML::LibXML::Node \- Abstract Base Class of XML::LibXML Nodes
 \&  $xmlstring = $node\->toString($format,$docencoding);
 \&  $c14nstring = $node\->toStringC14N();
 \&  $c14nstring = $node\->toStringC14N($with_comments, $xpath_expression , $xpath_context);
+\&  $c14nstring = $node\->toStringC14N_v1_1();
+\&  $c14nstring = $node\->toStringC14N_v1_1($with_comments, $xpath_expression , $xpath_context);
 \&  $ec14nstring = $node\->toStringEC14N();
 \&  $ec14nstring = $node\->toStringEC14N($with_comments, $xpath_expression, $inclusive_prefix_list);
 \&  $ec14nstring = $node\->toStringEC14N($with_comments, $xpath_expression, $xpath_context, $inclusive_prefix_list);
-\&  $str = $doc\->serialize($format); 
+\&  $str = $doc\->serialize($format);
 \&  $localname = $node\->localname;
 \&  $nameprefix = $node\->prefix;
 \&  $uri = $node\->namespaceURI();
@@ -241,6 +244,18 @@ returns \s-1TRUE\s0 (1) if the given nodes refer to the same node structure, oth
 deprecated version of \fIisSameNode()\fR.
 .Sp
 \&\fI\s-1NOTE\s0\fR isEqual will change behaviour to follow the \s-1DOM\s0 specification
+.IP "unique_key" 4
+.IX Item "unique_key"
+.Vb 1
+\&  $num = $node\->unique_key;
+.Ve
+.Sp
+This function is not specified for any \s-1DOM\s0 level. It returns a key guaranteed
+to be unique for this node, and to always be the same value for this node. In
+other words, two node objects return the same key if and only if isSameNode
+indicates that they are the same node.
+.Sp
+The returned key value is useful as a key in hashes.
 .IP "nodeValue" 4
 .IX Item "nodeValue"
 .Vb 1
@@ -275,8 +290,8 @@ section in the XML::LibXML manual page).
 .Ve
 .Sp
 Unbinds the Node from its siblings and Parent, but not from the Document it
-belongs to. If the node is not inserted into the \s-1DOM\s0 afterwards it will be lost
-after the program terminated. From a low level view, the unbound node is
+belongs to. If the node is not inserted into the \s-1DOM\s0 afterwards, it will be
+lost after the program terminates. From a low level view, the unbound node is
 stripped from the context it is and inserted into a (hidden) document-fragment.
 .IP "removeChild" 4
 .IX Item "removeChild"
@@ -315,7 +330,7 @@ node is not part of the document, the node will be imported first.
 .IP "addChild" 4
 .IX Item "addChild"
 .Vb 1
-\&  $childnode = $node\->addChild( $chilnode );
+\&  $childnode = $node\->addChild( $childnode );
 .Ve
 .Sp
 As an alternative to \fIappendChild()\fR one can use the \fIaddChild()\fR function. This
@@ -381,7 +396,7 @@ by the given node.
 \&  $newnode =$node\->cloneNode( $deep );
 .Ve
 .Sp
-\&\fIcloneNode\fR creates a copy of \f(CW$node\fR. When \f(CW$deep\fR is set to 1 (true) the function will copy all childnodes as well.
+\&\fIcloneNode\fR creates a copy of \f(CW$node\fR. When \f(CW$deep\fR is set to 1 (true) the function will copy all child nodes as well.
 If \f(CW$deep\fR is 0 only the current node will be copied. Note that in case of
 element, attributes are copied even if \f(CW$deep\fR is 0.
 .Sp
@@ -432,23 +447,23 @@ or \s-1CDATA\s0 node consisting of whitespace only). This method is not defined 
 \&  $boolean = $node\->hasChildNodes();
 .Ve
 .Sp
-If the current node has Childnodes this function returns \s-1TRUE\s0 (1), otherwise it
-returns \s-1FALSE\s0 (0, not undef).
+If the current node has child nodes this function returns \s-1TRUE\s0 (1), otherwise
+it returns \s-1FALSE\s0 (0, not undef).
 .IP "firstChild" 4
 .IX Item "firstChild"
 .Vb 1
 \&  $childnode = $node\->firstChild;
 .Ve
 .Sp
-If a node has childnodes this function will return the first node in the
-childlist.
+If a node has child nodes this function will return the first node in the child
+list.
 .IP "lastChild" 4
 .IX Item "lastChild"
 .Vb 1
 \&  $childnode = $node\->lastChild;
 .Ve
 .Sp
-If the \f(CW$node\fR has childnodes this function returns the last child node.
+If the \f(CW$node\fR has child nodes this function returns the last child node.
 .IP "ownerDocument" 4
 .IX Item "ownerDocument"
 .Vb 1
@@ -513,9 +528,9 @@ Note, that \f(CW$refNode\fR has to be passed explicitly even if it is undef.
 .Ve
 .Sp
 \&\fIfindnodes\fR evaluates the xpath expression (XPath 1.0) on the current node and returns the
-resulting node set as an array. In scalar context returns a XML::LibXML::NodeList object.
+resulting node set as an array. In scalar context, returns an XML::LibXML::NodeList object.
 .Sp
-The xpath expression can be passed either as a string or or as a XML::LibXML::XPathExpression object.
+The xpath expression can be passed either as a string, or as a XML::LibXML::XPathExpression object.
 .Sp
 \&\fI\s-1NOTE\s0 \s-1ON\s0 \s-1NAMESPACES\s0 \s-1AND\s0 \s-1XPATH\s0\fR:
 .Sp
@@ -561,10 +576,10 @@ See also XML::LibXML::XPathContext\->findnodes.
 .Sp
 \&\fIfind\fR evaluates the XPath 1.0 expression using the current node as the context of the
 expression, and returns the result depending on what type of result the XPath
-expression had. For example, the XPath \*(L"1 * 3 + 52\*(R" results in a XML::LibXML::Number object being returned. Other expressions might return a XML::LibXML::Boolean object, or a XML::LibXML::Literal object (a string). Each of those objects uses Perl's overload feature to \*(L"do
+expression had. For example, the XPath \*(L"1 * 3 + 52\*(R" results in a XML::LibXML::Number object being returned. Other expressions might return an XML::LibXML::Boolean object, or an XML::LibXML::Literal object (a string). Each of those objects uses Perl's overload feature to \*(L"do
 the right thing\*(R" in different contexts.
 .Sp
-The xpath expression can be passed either as a string or or as a XML::LibXML::XPathExpression object.
+The xpath expression can be passed either as a string, or as a XML::LibXML::XPathExpression object.
 .Sp
 See also XML::LibXML::XPathContext\->find.
 .IP "findvalue" 4
@@ -586,7 +601,7 @@ select=\*(L"some_xpath\*(R"/>.
 .Sp
 See also XML::LibXML::XPathContext\->findvalue.
 .Sp
-The xpath expression can be passed either as a string or or as a XML::LibXML::XPathExpression object.
+The xpath expression can be passed either as a string, or as a XML::LibXML::XPathExpression object.
 .IP "exists" 4
 .IX Item "exists"
 .Vb 1
@@ -665,6 +680,15 @@ An optional parameter \f(CW$xpath_context\fR can be used to pass an XML::LibXML:
 for mapping namespace prefixes used in the XPath expression to namespace URIs.
 Note, however, that \f(CW$node\fR will be used as the context node for the evaluation,
 not the context node of \f(CW$xpath_context\fR!
+.IP "toStringC14N_v1_1" 4
+.IX Item "toStringC14N_v1_1"
+.Vb 2
+\&  $c14nstring = $node\->toStringC14N_v1_1();
+\&  $c14nstring = $node\->toStringC14N_v1_1($with_comments, $xpath_expression , $xpath_context);
+.Ve
+.Sp
+This function behaves like \fItoStringC14N()\fR except that it uses the
+\&\*(L"\s-1XML_C14N_1_1\s0\*(R" constant for canonicalising using the \*(L"C14N 1.1 spec\*(R".
 .IP "toStringEC14N" 4
 .IX Item "toStringEC14N"
 .Vb 3
@@ -738,7 +762,7 @@ the same way, it is required to test what kind of node is handled while
 accessing the functions result.
 .Sp
 If this function is called in array context the attribute nodes are returned as
-an array. In scalar context the function will return a XML::LibXML::NamedNodeMap object.
+an array. In scalar context, the function will return a XML::LibXML::NamedNodeMap object.
 .IP "lookupNamespaceURI" 4
 .IX Item "lookupNamespaceURI"
 .Vb 1
@@ -806,7 +830,7 @@ it does not return the document base (5.1.3), use method \f(CW\*(C`URI\*(C'\fR o
 \&  $node\->setBaseURI($strURI);
 .Ve
 .Sp
-This method only does something useful for an element node in a \s-1XML\s0 document.
+This method only does something useful for an element node in an \s-1XML\s0 document.
 It sets the xml:base attribute on the node to \f(CW$strURI\fR, which effectively sets
 the base \s-1URI\s0 of the node to the same value.
 .Sp
@@ -841,12 +865,12 @@ If the line_numbers flag of the parser was not activated before parsing,
 \&\fIline_number()\fR will always return 0.
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Matt Sergeant, 
-Christian Glahn, 
+Matt Sergeant,
+Christian Glahn,
 Petr Pajas
 .SH "VERSION"
 .IX Header "VERSION"
-1.70
+2.0129
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 2001\-2007, AxKit.com Ltd.
@@ -854,3 +878,7 @@ Petr Pajas
 2002\-2006, Christian Glahn.
 .PP
 2006\-2009, Petr Pajas.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

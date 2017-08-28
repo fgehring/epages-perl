@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::SOAP::Client - SOAP message initiators
@@ -28,7 +30,7 @@ base class.  The primary must contain the C<new>.
 
 =over 4
 
-=item $obj-E<gt>B<compileClient>(OPTIONS)
+=item $obj-E<gt>B<compileClient>(%options)
 
  -Option   --Default
   async      <false>
@@ -36,6 +38,7 @@ base class.  The primary must contain the C<new>.
   encode     <required>
   kind       request-response
   name       <undef>
+  soap       'SOAP11'
   transport  <required>
 
 =over 2
@@ -67,6 +70,11 @@ interaction.  Only C<request-response> (the default) and C<one-way> are
 currently supported.
 
 =item name => STRING
+
+=item soap => OBJECT|'SOAP11'|'SOAP12'
+
+When the transport parameter is an object, this is used to wrap the
+SOAP content according to the matching transporter regulation.
 
 =item transport => CODE|OBJECT
 
@@ -182,7 +190,7 @@ Now, calling the compiled function can be done like this:
 
 If the first arguments for the code ref is a HASH, then there may be
 a second which specifies the required character-set.  The default is
-C<UTF-8>, which is very much adviced.
+C<UTF-8>, which is very much advised.
 
 =head3 Parameter unpacking (Document Style)
 
@@ -481,34 +489,17 @@ equivalent to the C<%data_in> from the client.
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2007-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

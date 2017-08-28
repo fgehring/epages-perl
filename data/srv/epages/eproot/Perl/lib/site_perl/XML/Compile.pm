@@ -1,14 +1,14 @@
-# Copyrights 2006-2011 by Mark Overmeer.
+# Copyrights 2006-2016 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 
 use warnings;
 use strict;
 
 package XML::Compile;
 use vars '$VERSION';
-$VERSION = '1.22';
+$VERSION = '1.54';
 
 
 use Log::Report 'xml-compile';
@@ -33,7 +33,7 @@ __PACKAGE__->addSchemaDirs($ENV{SCHEMA_DIRECTORIES});
 __PACKAGE__->addSchemaDirs(__FILE__);
 
 
-sub new($@)
+sub new(@)
 {   my $class = shift;
     my $top   = @_ % 2 ? shift : undef;
 
@@ -80,7 +80,7 @@ sub initParser(@)
       ( line_numbers    => 1
       , no_network      => 1
       , expand_xinclude => 0
-      , expand_entities => 1                                                  
+      , expand_entities => 1
       , load_ext_dtd    => 0
       , ext_ent_handler =>
            sub { alert __x"parsing external entities disabled"; '' }
@@ -123,9 +123,14 @@ sub dataToXML($)
     elsif(-f $raw)
     {   ($xml, %details) = $thing->_parseFile($raw);
     }
+    elsif($raw !~ /[\n\r<]/ && $raw =~ m![/\\]|\.xsd$|\.wsdl!i)
+    {   error __x"file {fn} does not exist", fn => $raw;
+    }
     else
     {   my $data = "$raw";
-        $data = substr($data, 0, 39) . '...' if length($data) > 40;
+        $data = substr($data, 0, 59) . '...'
+            if length($data) > 60 && $data =~ m/\</;
+
         error __x"don't known how to interpret XML data\n   {data}"
            , data => $data;
     }

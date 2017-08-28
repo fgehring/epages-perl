@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::Attr 3"
-.TH XML::LibXML::Attr 3 "2009-10-07" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::Attr 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -136,7 +136,7 @@ XML::LibXML::Attr \- XML::LibXML Attribute Class
 .Vb 3
 \&  use XML::LibXML;
 \&  # Only methods specific to Attribute nodes are listed here,
-\&  # see XML::LibXML::Node manpage for other methods
+\&  # see the XML::LibXML::Node manpage for other methods
 \&
 \&  $attr = XML::LibXML::Attr\->new($name [,$value]);
 \&  $string = $attr\->getValue();
@@ -162,7 +162,7 @@ Many functions listed here are extensively documented in the \s-1DOM\s0 Level 3 
 \&  $attr = XML::LibXML::Attr\->new($name [,$value]);
 .Ve
 .Sp
-Class constructor. If you need to work with \s-1ISO\s0 encoded strings, you should \fIalways\fR use the \f(CW\*(C`createAttrbute\*(C'\fR of XML::LibXML::Document.
+Class constructor. If you need to work with \s-1ISO\s0 encoded strings, you should \fIalways\fR use the \f(CW\*(C`createAttribute\*(C'\fR of XML::LibXML::Document.
 .IP "getValue" 4
 .IX Item "getValue"
 .Vb 1
@@ -234,12 +234,12 @@ encoding for the output string (which is then passed to Perl as a byte string).
 Otherwise the string is passed to Perl as (\s-1UTF\-8\s0 encoded) characters.
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Matt Sergeant, 
-Christian Glahn, 
+Matt Sergeant,
+Christian Glahn,
 Petr Pajas
 .SH "VERSION"
 .IX Header "VERSION"
-1.70
+2.0129
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 2001\-2007, AxKit.com Ltd.
@@ -247,3 +247,7 @@ Petr Pajas
 2002\-2006, Christian Glahn.
 .PP
 2006\-2009, Petr Pajas.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

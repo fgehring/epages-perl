@@ -1,19 +1,20 @@
-# Copyrights 2007-2011 by Mark Overmeer.
+# Copyrights 2007-2017 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 use warnings;
 use strict;
 
 package XML::Compile::XOP::Include;
 use vars '$VERSION';
-$VERSION = '2.24';
+$VERSION = '3.21';
 
 
 use Log::Report 'xml-compile-soap', syntax => 'SHORT';
 use XML::Compile::SOAP::Util qw/:xop10/;
 use HTTP::Message            ();
-use File::Slurp              qw/read_file write_file/;
+use File::Slurp::Tiny        qw/read_file write_file/;
+use Encode                   qw/decode FB_CROAK/;
 
 
 use overload '""'     => 'content'
@@ -31,16 +32,18 @@ sub new(@)
 sub fromMime($)
 {   my ($class, $http) = @_;
 
-    my $cid = $http->header('Content-ID') || 'NONE';
+    my $cid = $http->header('Content-ID') || '<NONE>';
     if($cid !~ s/^\s*\<(.*?)\>\s*$/$1/ )
     {   warning __x"part has illegal Content-ID: `{cid}'", cid => $cid;
         return ();
     }
 
+    my $content = $http->decoded_content(ref => 1) || $http->content(ref => 1);
     $class->new
-     ( bytes => $http->decoded_content(ref => 1)
-     , cid   => $cid
-     , type  => scalar $http->content_type
+     ( bytes   => $content
+     , cid     => $cid
+     , type    => scalar $http->content_type
+     , charset => scalar $http->content_type_charset
      );
 }
 
@@ -59,6 +62,18 @@ sub content(;$)
     $byref ? $self->{bytes} : ${$self->{bytes}};
 }
 
+
+sub string() {
+        my $self = shift;
+    my $cs = $self->contentCharset || 'UTF-8';
+    decode $cs, $self->content, FB_CROAK;
+}
+
+
+sub contentType()    { shift->{type} }
+sub contentCharset() { shift->{charset} }
+
+#---------
 
 sub xmlNode($$$$)
 {   my ($self, $doc, $path, $tag) = @_;

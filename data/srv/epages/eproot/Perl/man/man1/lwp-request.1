@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "LWP-REQUEST 1"
-.TH LWP-REQUEST 1 "2012-02-11" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH LWP-REQUEST 1 "2017-01-31" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -230,22 +230,22 @@ Do \fBnot\fR print the content of the response.
 .IX Item "-o <format>"
 Process \s-1HTML\s0 content in various ways before printing it.  If the
 content type of the response is not \s-1HTML\s0, then this option has no
-effect.  The legal format values are; \fItext\fR, \fIps\fR, \fIlinks\fR,
-\&\fIhtml\fR and \fIdump\fR.
+effect.  The legal format values are; \f(CW\*(C`text\*(C'\fR, \f(CW\*(C`ps\*(C'\fR, \f(CW\*(C`links\*(C'\fR,
+\&\f(CW\*(C`html\*(C'\fR and \f(CW\*(C`dump\*(C'\fR.
 .Sp
-If you specify the \fItext\fR format then the \s-1HTML\s0 will be formatted as
-plain latin1 text.  If you specify the \fIps\fR format then it will be
+If you specify the \f(CW\*(C`text\*(C'\fR format then the \s-1HTML\s0 will be formatted as
+plain \f(CW\*(C`latin1\*(C'\fR text.  If you specify the \f(CW\*(C`ps\*(C'\fR format then it will be
 formatted as Postscript.
 .Sp
-The \fIlinks\fR format will output all links found in the \s-1HTML\s0 document.
+The \f(CW\*(C`links\*(C'\fR format will output all links found in the \s-1HTML\s0 document.
 Relative links will be expanded to absolute ones.
 .Sp
-The \fIhtml\fR format will reformat the \s-1HTML\s0 code and the \fIdump\fR format
+The \f(CW\*(C`html\*(C'\fR format will reformat the \s-1HTML\s0 code and the \f(CW\*(C`dump\*(C'\fR format
 will just dump the \s-1HTML\s0 syntax tree.
 .Sp
 Note that the \f(CW\*(C`HTML\-Tree\*(C'\fR distribution needs to be installed for this
 option to work.  In addition the \f(CW\*(C`HTML\-Format\*(C'\fR distribution needs to
-be installed for \fI\-o text\fR or \fI\-o ps\fR to work.
+be installed for \f(CW\*(C`\-o text\*(C'\fR or \f(CW\*(C`\-o ps\*(C'\fR to work.
 .IP "\-v" 4
 .IX Item "-v"
 Print the version number of the program and quit.

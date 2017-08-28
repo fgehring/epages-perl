@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Schema::BuiltInFacets 3"
-.TH XML::Compile::Schema::BuiltInFacets 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Schema::BuiltInFacets 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -152,37 +152,21 @@ dynamically.
 The content is not for end-users, but called by the schema translator.
 .SH "FUNCTIONS"
 .IX Header "FUNCTIONS"
-.IP "\fBbuiltin_facet\fR(\s-1PATH\s0, \s-1ARGS\s0, \s-1TYPE\s0, [\s-1VALUE\s0])" 4
-.IX Item "builtin_facet(PATH, ARGS, TYPE, [VALUE])"
+.ie n .IP "\fBbuiltin_facet\fR( $path, $args, $type, [$value] )" 4
+.el .IP "\fBbuiltin_facet\fR( \f(CW$path\fR, \f(CW$args\fR, \f(CW$type\fR, [$value] )" 4
+.IX Item "builtin_facet( $path, $args, $type, [$value] )"
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

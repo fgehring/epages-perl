@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::LibXML::Simple - XML::LibXML clone of XML::Simple::XMLin()
@@ -9,14 +11,18 @@ XML::LibXML::Simple - XML::LibXML clone of XML::Simple::XMLin()
 
 =head1 SYNOPSIS
 
+  my $xml  = ...;  # filename, fh, string, or XML::LibXML-node
+
+Imperative:
+
   use XML::LibXML::Simple   qw(XMLin);
-  my $xml = XMLin <xml file or string>, OPTIONS;
+  my $data = XMLin $xml, %options;
 
 Or the Object Oriented way:
 
   use XML::LibXML::Simple   ();
-  my $xs = XML::Simple->new(OPTIONS);
-  my $ref = $xs->XMLin(<xml file or string>, OPTIONS);
+  my $xs   = XML::LibXML::Simple->new(%options);
+  my $data = $xs->XMLin($xml, %options);
 
 =head1 DESCRIPTION
 
@@ -30,13 +36,13 @@ uses plain Perl or SAX parsers.
 
 =over 4
 
-=item XML::LibXML::Simple-E<gt>B<new>(OPTIONS)
+=item XML::LibXML::Simple-E<gt>B<new>(%options)
 
 Instantiate an object, which can be used to call L<XMLin()|XML::LibXML::Simple/"Translators"> on.  You can
-provide OPTIONS to this constructor (to be reused for each call to XMLin)
+provide %options to this constructor (to be reused for each call to XMLin)
 and with each call of XMLin (to be used once)
 
-For XML-DATA and descriptions of the OPTIONS see the L</DETAILS>
+For descriptions of the %options see the L</DETAILS>
 section of this manual page.
 
 =back
@@ -45,9 +51,9 @@ section of this manual page.
 
 =over 4
 
-=item $obj-E<gt>B<XMLin>(XML-DATA, OPTIONS)
+=item $obj-E<gt>B<XMLin>($xmldata, %options)
 
-For XML-DATA and descriptions of the OPTIONS see the L</DETAILS>
+For $xmldata and descriptions of the %options see the L</DETAILS>
 section of this manual page.
 
 =back
@@ -55,42 +61,12 @@ section of this manual page.
 =head1 FUNCTIONS
 
 The functions C<XMLin> (exported implictly) and C<xml_in>
-(exported on request) simply call C<< XML::Simple->new->XMLin() >>
+(exported on request) simply call C<<XML::LibXML::Simple->new->XMLin() >>
 with the provided parameters.
 
 =head1 DETAILS
 
-=head2 Differences with XML::Simple
-
-In general, the output and the options are equivalent, although this
-module has some differences with XML::Simple to be aware of.
-
-=over 4
-
-=item only L<XMLin()|XML::LibXML::Simple/"Translators"> is supported
-
-If you want to write XML then use a schema (for instance with
-XML::Compile). Do not attempt to create XML by hand!  If you still
-think you need it, then have a look at XMLout() as implemented by
-XML::Simple or any of a zillion template systems.
-
-=item no "variables" option
-
-IMO, you should use a templating system if you want variables filled-in
-in the input: it is not a task for this module.
-
-=item empty elements are not removed
-
-Being empty has a meaning which should not be ignored.
-
-=item ForceArray options
-
-There are a few small differences in the result of the C<forcearray> option,
-because XML::Simple seems to behave inconsequently.
-
-=back
-
-=head2 Parameter XML-DATA
+=head2 Parameter $xmldata
 
 As first parameter to L<XMLin()|XML::LibXML::Simple/"Translators"> must provide the XML message to be
 translated into a Perl structure.  Choose one of the following:
@@ -103,36 +79,53 @@ If the filename contains no directory components, C<XMLin()> will look for the
 file in each directory in the SearchPath (see OPTIONS below) and in the
 current directory.  eg:
 
-  $ref = XMLin('/etc/params.xml');
+  $data = XMLin('/etc/params.xml', %options);
 
-Note, the filename C<< - >> (dash) can be used to parse from STDIN.
+=item A dash  (-)
+
+Parse from STDIN.
+
+  $data = XMLin('-', %options);
 
 =item undef
 
+[deprecated]
 If there is no XML specifier, C<XMLin()> will check the script directory and
 each of the SearchPath directories for a file with the same name as the script
 but with the extension '.xml'.  Note: if you wish to specify options, you
 must specify the value 'undef'.  eg:
 
-  $ref = XMLin(undef, ForceArray => 1);
+  $data = XMLin(undef, ForceArray => 1);
+
+This feature is available for backwards compatibility with XML::Simple,
+but quite sensitive.  You can easily hit the wrong xml file as input.
+Please do not use it: always use an explicit filename.
 
 =item A string of XML
 
 A string containing XML (recognised by the presence of '<' and '>' characters)
 will be parsed directly.  eg:
 
-  $ref = XMLin('<opt username="bob" password="flurp" />');
+  $data = XMLin('<opt username="bob" password="flurp" />', %options);
 
 =item An IO::Handle object
 
-An IO::Handle object will be read to EOF and its contents parsed. eg:
+In this case, XML::LibXML::Parser will read the XML data directly from
+the provided file.
 
-  $fh = IO::File->new('/etc/params.xml');
-  $ref = XMLin($fh);
+  # $fh = IO::File->new('/etc/params.xml') or die;
+  open my $fh, '<:encoding(utf8)', '/etc/params.xml' or die;
+
+  $data = XMLin($fh, %options);
+
+=item An XML::LibXML::Document or ::Element
+
+[Not available in XML::Simple] When you have a pre-parsed XML::LibXML
+node, you can pass that.
 
 =back
 
-=head2 OPTIONS
+=head2 Parameter %options
 
 L<XML::LibXML::Simple|XML::LibXML::Simple> supports most options defined by XML::Simple, so
 the interface is quite compatible.  Minor changes apply.  This explanation
@@ -166,15 +159,15 @@ In alphabetic order:
 When text content is parsed to a hash value, this option let's you specify a
 name for the hash key to override the default 'content'.  So for example:
 
-  XMLin('<opt one="1">Text</opt>', ContentKey => 'text')
+  XMLin('<opt one="1">Two</opt>', ContentKey => 'text')
 
 will parse to:
 
-  { 'one' => 1, 'text' => 'Text' }
+  { one => 1, text => 'Two' }
 
 instead of:
 
-  { 'one' => 1, 'content' => 'Text' }
+  { one => 1, content => 'Two' }
 
 You can also prefix your selected key name with a '-' character to have 
 C<XMLin()> try a little harder to eliminate unnecessary 'content' keys after
@@ -190,18 +183,18 @@ array folding.  For example:
 will parse to:
 
   {
-    'item' => {
-      'one' =>  'First'
-      'two' =>  'Second'
+     item => {
+      one =>  'First'
+      two =>  'Second'
     }
   }
 
 rather than this (without the '-'):
 
   {
-    'item' => {
-      'one' => { 'content' => 'First' }
-      'two' => { 'content' => 'Second' }
+    item => {
+      one => { content => 'First' }
+      two => { content => 'Second' }
     }
   }
 
@@ -217,17 +210,11 @@ XML:
 
 would parse to this:
 
-    {
-      'name' => [
-                  'value'
-                ]
-    }
+    { name => [ 'value' ] }
 
 instead of this (the default):
 
-    {
-      'name' => 'value'
-    }
+    { name => 'value' }
 
 This option is especially useful if the data structure is likely to be written
 back out as XML and the default behaviour of rolling single nested elements up
@@ -265,15 +252,15 @@ a hash value even when there are no attributes.  So for example:
 will parse to:
 
   {
-    'x' => {           'content' => 'text1' },
-    'y' => { 'a' => 2, 'content' => 'text2' }
+    x => {         content => 'text1' },
+    y => { a => 2, content => 'text2' }
   }
 
 instead of:
 
   {
-    'x' => 'text1',
-    'y' => { 'a' => 2, 'content' => 'text2' }
+    x => 'text1',
+    y => { 'a' => 2, 'content' => 'text2' }
   }
 
 =item GroupTags => { grouping tag => grouped tag } I<# handy>
@@ -293,8 +280,8 @@ Would normally be read into a structure like this:
 
   {
     searchpath => {
-                    dir => [ '/usr/bin', '/usr/local/bin', '/usr/X11/bin' ]
-                  }
+       dir => [ '/usr/bin', '/usr/local/bin', '/usr/X11/bin' ]
+    }
   }
 
 But when read in with the appropriate value for 'GroupTags':
@@ -313,6 +300,51 @@ attributes or elements other than the grouped element.
 You can specify multiple 'grouping element' to 'grouped element' mappings in
 the same hashref.  If this option is combined with C<KeyAttr>, the array
 folding will occur first and then the grouped element names will be eliminated.
+
+=item HookNodes => CODE
+
+Select document nodes to apply special tricks.
+Introduced in [0.96], not available in XML::Simple.
+
+When this option is provided, the CODE will be called once the XML DOM
+tree is ready to get transformed into Perl.  Your CODE should return
+either C<undef> (nothing to do) or a HASH which maps values of
+unique_key (see XML::LibXML::Node method C<unique_key> onto CODE
+references to be called.
+
+Once the translater from XML into Perl reaches a selected node, it will
+call your routine specific for that node.  That triggering node found
+is the only parameter.  When you return C<undef>, the node will not be
+found in the final result.  You may return any data (even the node itself)
+which will be included in the final result as is, under the name of the
+original node.
+
+Example:
+
+   my $out = XMLin $file, HookNodes => \&protect_html;
+
+   sub protect_html($$)
+   {   # $obj is the instantated XML::Compile::Simple object
+       # $xml is a XML::LibXML::Element to get transformed
+       my ($obj, $xml) = @_;
+
+       my %hooks;    # collects the table of hooks
+
+       # do an xpath search for HTML
+       my $xpc   = XML::LibXML::XPathContext->new($xml);
+       my @nodes = $xpc->findNodes(...); #XXX
+       @nodes or return undef;
+
+       my $as_text = sub { $_[0]->toString(0) };  # as text
+       #  $as_node = sub { $_[0] };               # as node
+       #  $skip    = sub { undef };               # not at all
+
+       # the same behavior for all xpath nodes, in this example
+       $hook{$_->unique_key} = $as_text
+           for @nodes;
+ 
+       \%hook;
+   }
 
 =item KeepRoot => 1 I<# handy>
 
@@ -343,30 +375,24 @@ For example, this XML:
 would, by default, parse to this:
 
     {
-      'user' => [
-                  {
-                    'login' => 'grep',
-                    'fullname' => 'Gary R Epstein'
-                  },
-                  {
-                    'login' => 'stty',
-                    'fullname' => 'Simon T Tyson'
-                  }
-                ]
+      user => [
+         { login    => 'grep',
+           fullname => 'Gary R Epstein'
+         },
+         { login    => 'stty',
+           fullname => 'Simon T Tyson'
+         }
+      ]
     }
 
 If the option 'KeyAttr => "login"' were used to specify that the 'login'
 attribute is a key, the same XML would parse to:
 
     {
-      'user' => {
-                  'stty' => {
-                              'fullname' => 'Simon T Tyson'
-                            },
-                  'grep' => {
-                              'fullname' => 'Gary R Epstein'
-                            }
-                }
+      user => {
+         stty => { fullname => 'Simon T Tyson' },
+         grep => { fullname => 'Gary R Epstein' }
+      }
     }
 
 The key attribute names should be supplied in an arrayref if there is more
@@ -403,16 +429,16 @@ The option 'KeyAttr => { user => "+login" }' will cause this XML:
 to parse to this data structure:
 
     {
-      'user' => {
-                  'stty' => {
-                              'fullname' => 'Simon T Tyson',
-                              'login'    => 'stty'
-                            },
-                  'grep' => {
-                              'fullname' => 'Gary R Epstein',
-                              'login'    => 'grep'
-                            }
-                }
+      user => {
+         stty => {
+            fullname => 'Simon T Tyson',
+            login    => 'stty'
+         },
+         grep => {
+            fullname => 'Gary R Epstein',
+            login    => 'grep'
+         }
+      }
     }
 
 The '+' indicates that the value of the key attribute should be copied
@@ -421,16 +447,16 @@ rather than moved to the folded hash key.
 A '-' prefix would produce this result:
 
     {
-      'user' => {
-                  'stty' => {
-                              'fullname' => 'Simon T Tyson',
-                              '-login'    => 'stty'
-                            },
-                  'grep' => {
-                              'fullname' => 'Gary R Epstein',
-                              '-login'    => 'grep'
-                            }
-                }
+      user => {
+         stty => {
+            fullname => 'Simon T Tyson',
+            -login   => 'stty'
+         },
+         grep => {
+            fullname => 'Gary R Epstein',
+            -login    => 'grep'
+         }
+      }
     }
 
 =item NoAttr => 1 I<# handy>
@@ -444,19 +470,19 @@ values for the option are:
 
 =over 4
 
-=item 0
+=item "0"
 
 (default) whitespace is passed through unaltered (except of course for the
 normalisation of whitespace in attribute values which is mandated by the XML
 recommendation)
 
-=item 1
+=item "1"
 
 whitespace is normalised in any value used as a hash key (normalising means
 removing leading and trailing whitespace and collapsing sequences of whitespace
 characters to a single space)
 
-=item 2
+=item "2"
 
 whitespace is normalised in all text content
 
@@ -575,8 +601,8 @@ When C<XMLin()> reads the following very simple piece of XML:
 it returns the following data structure:
 
     {
-      'username' => 'testuser',
-      'password' => 'frodo'
+      username => 'testuser',
+      password => 'frodo'
     }
 
 The identical result could have been produced with this alternative XML:
@@ -603,21 +629,16 @@ Repeated nested elements are represented as anonymous arrays:
     </opt>
 
     {
-      'person' => [
-                    {
-                      'email' => [
-                                   'joe@smith.com',
-                                   'jsmith@yahoo.com'
-                                 ],
-                      'firstname' => 'Joe',
-                      'lastname' => 'Smith'
-                    },
-                    {
-                      'email' => 'bob@smith.com',
-                      'firstname' => 'Bob',
-                      'lastname' => 'Smith'
-                    }
-                  ]
+      person => [
+        { email     => [ 'joe@smith.com', 'jsmith@yahoo.com' ],
+          firstname => 'Joe',
+          lastname  => 'Smith'
+        },
+        { email     => 'bob@smith.com',
+          firstname => 'Bob',
+          lastname  => 'Smith'
+        }
+      ]
     }
 
 Nested elements with a recognised key attribute are transformed (folded) from
@@ -631,20 +652,20 @@ option):
     </opt>
 
     {
-      'person' => {
-                    'jbloggs' => {
-                                   'firstname' => 'Joe',
-                                   'lastname' => 'Bloggs'
-                                 },
-                    'tsmith' => {
-                                  'firstname' => 'Tom',
-                                  'lastname' => 'Smith'
-                                },
-                    'jsmith' => {
-                                  'firstname' => 'Joe',
-                                  'lastname' => 'Smith'
-                                }
-                  }
+      person => {
+         jbloggs => {
+            firstname => 'Joe',
+            lastname  => 'Bloggs'
+         },
+         tsmith  => {
+            firstname => 'Tom',
+            lastname  => 'Smith'
+         },
+         jsmith => {
+            firstname => 'Joe',
+            lastname => 'Smith'
+         }
+      }
     }
 
 The <anon> tag can be used to form anonymous arrays:
@@ -657,14 +678,11 @@ The <anon> tag can be used to form anonymous arrays:
     </opt>
 
     {
-      'head' => [
-                  [ 'Col 1', 'Col 2', 'Col 3' ]
-                ],
-      'data' => [
-                  [ 'R1C1', 'R1C2', 'R1C3' ],
-                  [ 'R2C1', 'R2C2', 'R2C3' ],
-                  [ 'R3C1', 'R3C2', 'R3C3' ]
-                ]
+      head => [ [ 'Col 1', 'Col 2', 'Col 3' ] ],
+      data => [ [ 'R1C1', 'R1C2', 'R1C3' ],
+                [ 'R2C1', 'R2C2', 'R2C3' ],
+                [ 'R3C1', 'R3C2', 'R3C3' ]
+              ]
     }
 
 Anonymous arrays can be nested to arbirtrary levels and as a special case, if
@@ -694,8 +712,8 @@ will be represented as a hashref with the text content in the 'content' key
   </opt>
 
   {
-    'one' => 'first',
-    'two' => { 'attr' => 'value', 'content' => 'second' }
+    one => 'first',
+    two => { attr => 'value', content => 'second' }
   }
 
 Mixed content (elements which contain both text content and nested elements)
@@ -703,18 +721,58 @@ will be not be represented in a useful way - element order and significant
 whitespace will be lost.  If you need to work with mixed content, then
 XML::Simple is not the right tool for your job - check out the next section.
 
+=head2 Differences to XML::Simple
+
+In general, the output and the options are equivalent, although this
+module has some differences with XML::Simple to be aware of.
+
+=over 4
+
+=item only L<XMLin()|XML::LibXML::Simple/"Translators"> is supported
+
+If you want to write XML then use a schema (for instance with
+XML::Compile). Do not attempt to create XML by hand!  If you still
+think you need it, then have a look at XMLout() as implemented by
+XML::Simple or any of a zillion template systems.
+
+=item no "variables" option
+
+IMO, you should use a templating system if you want variables filled-in
+in the input: it is not a task for this module.
+
+=item empty elements are not removed
+
+Being empty has a meaning which should not be ignored.
+
+=item ForceArray options
+
+There are a few small differences in the result of the C<forcearray> option,
+because XML::Simple seems to behave inconsequently.
+
+=item hooks
+
+XML::Simple does not support hooks.
+
+=back
+
 =head1 SEE ALSO
 
-L<XML::Compile> for processing XML when a schema is available
+L<XML::Compile> for processing XML when a schema is available.  When you
+have a schema, the data and structure of your message get validated.
 
-L<XML::Simple>, the SAX and original implementation
+L<XML::Simple>, the original implementation which interface is followed
+as closely as possible.
 
-=head1 COPYRIGHT
+=head1 COPYRIGHTS
 
 The interface design and large parts of the documentation were taken
 from the L<XML::Simple> module, written by
 Grant McLean E<lt>grantm@cpan.orgE<gt>
 
-This version was composed by Mark Overmeer F<perl@overmeer.net>
-See L<http://perl.overmeer.net/xml-libxml-simple>
+Copyrights of the perl code and the related documentation by
+2008-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+See F<http://www.perl.com/perl/misc/Artistic.html>
 

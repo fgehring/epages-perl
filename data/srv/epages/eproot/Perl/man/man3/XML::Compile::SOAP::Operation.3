@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::SOAP::Operation 3"
-.TH XML::Compile::SOAP::Operation 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::SOAP::Operation 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -153,39 +153,46 @@ a server.
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.IP "XML::Compile::SOAP::Operation\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::SOAP::Operation->new(OPTIONS)"
-.Vb 7
-\& \-Option   \-\-Default
-\&  action     undef
-\&  endpoints  []
-\&  kin        <required>
-\&  nam        <required>
-\&  schemas    <required>
-\&  transport  \*(AqHTTP\*(Aq
+.IP "XML::Compile::SOAP::Operation\->\fBnew\fR(%options)" 4
+.IX Item "XML::Compile::SOAP::Operation->new(%options)"
+.Vb 8
+\& \-Option     \-\-Default
+\&  action       undef
+\&  endpoints    []
+\&  kind         <required>
+\&  name         <required>
+\&  schemas      <required>
+\&  server_type  undef
+\&  transport    \*(AqHTTP\*(Aq
 .Ve
 .RS 4
 .IP "action => \s-1STRING\s0" 2
 .IX Item "action => STRING"
-Some string which is refering to the action which is taken.  For \s-1SOAP\s0
+Some string which is referring to the action which is taken.  For \s-1SOAP\s0
 protocols, this defines the soapAction header.
 .IP "endpoints => ADDRESS|ARRAY" 2
 .IX Item "endpoints => ADDRESS|ARRAY"
 Where to contact the server.
-.IP "kin => d" 2
-.IX Item "kin => d"
+.IP "kind => 'one\-way'|..." 2
+.IX Item "kind => 'one-way'|..."
 This returns the type of operation this is.  There are four kinds, which
 are returned as strings \f(CW\*(C`one\-way\*(C'\fR, \f(CW\*(C`request\-response\*(C'\fR, \f(CW\*(C`sollicit\-response\*(C'\fR,
 and \f(CW\*(C`notification\*(C'\fR.  The latter two are initiated by a server, the former
 two by a client.
-.IP "nam => e" 2
-.IX Item "nam => e"
+.IP "name => \s-1STRING\s0" 2
+.IX Item "name => STRING"
 .PD 0
 .IP "schemas => XML::Compile::Cache" 2
 .IX Item "schemas => XML::Compile::Cache"
+.IP "server_type => \s-1NAME\s0" 2
+.IX Item "server_type => NAME"
+.PD
+Most server implementations show some problems.  Also, servers may produce
+responses using their own namespaces (like for error codes).  When you know
+which server you are talking to, the quirks of the specific server type can
+be loaded.  Read more in the \*(L"Supported servers\*(R" in XML::Compile::SOAP.
 .IP "transport => URI|'\s-1HTTP\s0'" 2
 .IX Item "transport => URI|'HTTP'"
-.PD
 \&\f(CW\*(C`HTTP\*(C'\fR is short for \f(CW\*(C`http://schemas.xmlsoap.org/soap/http/\*(C'\fR, which
 is a constant to indicate that transport should use the HyperText
 Transfer Protocol.
@@ -194,51 +201,58 @@ Transfer Protocol.
 .RE
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBbindingName\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBbindingName\fR" 4
-.IX Item "$obj->bindingName"
+.ie n .IP "$obj\->\fBbindingName\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBbindingName\fR()" 4
+.IX Item "$obj->bindingName()"
 .PD 0
-.ie n .IP "$obj\->\fBclientClass\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBclientClass\fR" 4
-.IX Item "$obj->clientClass"
+.ie n .IP "$obj\->\fBclientClass\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBclientClass\fR()" 4
+.IX Item "$obj->clientClass()"
 .PD
 Returns the class name which implements the Client side for this protocol.
-.ie n .IP "$obj\->\fBendPoints\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBendPoints\fR" 4
-.IX Item "$obj->endPoints"
+.ie n .IP "$obj\->\fBendPoints\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBendPoints\fR()" 4
+.IX Item "$obj->endPoints()"
 Returns the list of alternative URLs for the end-point, which should
 be defined within the service's port declaration.
-.ie n .IP "$obj\->\fBkind\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBkind\fR" 4
-.IX Item "$obj->kind"
+.ie n .IP "$obj\->\fBkind\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBkind\fR()" 4
+.IX Item "$obj->kind()"
 .PD 0
-.ie n .IP "$obj\->\fBname\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBname\fR" 4
-.IX Item "$obj->name"
-.ie n .IP "$obj\->\fBportName\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBportName\fR" 4
-.IX Item "$obj->portName"
-.ie n .IP "$obj\->\fBschemas\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBschemas\fR" 4
-.IX Item "$obj->schemas"
-.ie n .IP "$obj\->\fBserverClass\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBserverClass\fR" 4
-.IX Item "$obj->serverClass"
+.ie n .IP "$obj\->\fBlongName\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBlongName\fR()" 4
+.IX Item "$obj->longName()"
+.PD
+[3.06] prefix the service name before the operation name, to make it
+really unique.  A \f(CW\*(C`#\*(C'\fR is used as separator.
+.ie n .IP "$obj\->\fBname\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBname\fR()" 4
+.IX Item "$obj->name()"
+.PD 0
+.ie n .IP "$obj\->\fBportName\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBportName\fR()" 4
+.IX Item "$obj->portName()"
+.ie n .IP "$obj\->\fBschemas\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBschemas\fR()" 4
+.IX Item "$obj->schemas()"
+.ie n .IP "$obj\->\fBserverClass\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBserverClass\fR()" 4
+.IX Item "$obj->serverClass()"
 .PD
 Returns the class name which implements the Server side for this protocol.
-.ie n .IP "$obj\->\fBserviceName\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBserviceName\fR" 4
-.IX Item "$obj->serviceName"
+.ie n .IP "$obj\->\fBserviceName\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBserviceName\fR()" 4
+.IX Item "$obj->serviceName()"
 .PD 0
-.ie n .IP "$obj\->\fBsoapAction\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBsoapAction\fR" 4
-.IX Item "$obj->soapAction"
+.ie n .IP "$obj\->\fBsoapAction\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBsoapAction\fR()" 4
+.IX Item "$obj->soapAction()"
 .PD
 Used for the \f(CW\*(C`soapAction\*(C'\fR header in \s-1HTTP\s0 transport, for routing
 messages through firewalls.
-.ie n .IP "$obj\->\fBversion\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBversion\fR" 4
-.IX Item "$obj->version"
+.ie n .IP "$obj\->\fBversion\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBversion\fR()" 4
+.IX Item "$obj->version()"
 .PD 0
 .ie n .IP "$obj\->\fBwsaAction\fR('\s-1INPUT\s0'|'\s-1OUTPUT\s0')" 4
 .el .IP "\f(CW$obj\fR\->\fBwsaAction\fR('\s-1INPUT\s0'|'\s-1OUTPUT\s0')" 4
@@ -250,16 +264,16 @@ Action to be used with a message sent to the server (input to the
 server). The \f(CW\*(C`OUTPUT\*(C'\fR is used by the server in its message back.
 .SS "Handlers"
 .IX Subsection "Handlers"
-.ie n .IP "$obj\->\fBcompileClient\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileClient\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileClient(OPTIONS)"
+.ie n .IP "$obj\->\fBcompileClient\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileClient\fR(%options)" 4
+.IX Item "$obj->compileClient(%options)"
 Returns one \s-1CODE\s0 reference which handles the conversion from a perl
 data-structure into a request message, the transmission of the
 request, the receipt of the answer, and the decoding of that answer
 into a Perl data-structure.
-.ie n .IP "$obj\->\fBcompileHandler\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileHandler\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileHandler(OPTIONS)"
+.ie n .IP "$obj\->\fBcompileHandler\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileHandler\fR(%options)" 4
+.IX Item "$obj->compileHandler(%options)"
 Returns a code reference which translates in incoming \s-1XML\s0 message
 into Perl a data-structure, then calls the callback.  The result of
 the callback is encoded from Perl into \s-1XML\s0 and returned.
@@ -275,9 +289,9 @@ the callback is encoded from Perl into \s-1XML\s0 and returned.
 .RS 4
 .RE
 .PD 0
-.ie n .IP "$obj\->\fBcompileTransporter\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileTransporter\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileTransporter(OPTIONS)"
+.ie n .IP "$obj\->\fBcompileTransporter\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileTransporter\fR(%options)" 4
+.IX Item "$obj->compileTransporter(%options)"
 .PD
 Create the transporter code for a certain specific target.
 .Sp
@@ -302,59 +316,65 @@ used when no explicit \f(CW\*(C`endpoint\*(C'\fR is provided.
 Passed to XML::Compile::Transport::compileClient(hook).  Can be
 used to create off-line tests and last resort work-arounds.  See the
 DETAILs chapter in the XML::Compile::Transport manual page.
-.IP "transporter => \s-1CODE\s0" 2
-.IX Item "transporter => CODE"
+.IP "transporter => CODE|XML::Compile::Transport\-object" 2
+.IX Item "transporter => CODE|XML::Compile::Transport-object"
 The routine which will be used to exchange the data with the server.
 This code is created by an \fIXML::Compile::Transport::compileClient()\fR
-extension. By default, a transporter compatible to the protocol
-is created.  However, in most cases you want to reuse one (\s-1HTTP1\s0.1)
-connection to a server.
+extension.
+.Sp
+By default, a transporter compatible to the protocol is created.  However,
+in most cases you want to reuse one (\s-1HTTP1\s0.1) connection to a server.
+.Sp
+[3.14] You may provide a XML::Compile::Transport object as well.  Its
+\&\fIcompileClient()\fR will be called for you.
 .RE
 .RS 4
 .RE
 .SS "Helpers"
 .IX Subsection "Helpers"
-.ie n .IP "$obj\->\fBexplain\fR(\s-1WSDL\s0, \s-1FORMAT\s0, \s-1DIRECTION\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBexplain\fR(\s-1WSDL\s0, \s-1FORMAT\s0, \s-1DIRECTION\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->explain(WSDL, FORMAT, DIRECTION, OPTIONS)"
+.ie n .IP "$obj\->\fBexplain\fR($wsdl, $format, $direction, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBexplain\fR($wsdl, \f(CW$format\fR, \f(CW$direction\fR, \f(CW%options\fR)" 4
+.IX Item "$obj->explain($wsdl, $format, $direction, %options)"
 Dump an annotated structure showing how the operation works, helping
-developers to understand the schema. \s-1FORMAT\s0 is \f(CW\*(C`PERL\*(C'\fR or \f(CW\*(C`XML\*(C'\fR.
+developers to understand the schema. \f(CW$format\fR is \f(CW\*(C`PERL\*(C'\fR or \f(CW\*(C`XML\*(C'\fR.
 .Sp
-The \s-1DIRECTION\s0 is \f(CW\*(C`INPUT\*(C'\fR, it will return the message which the client
+The \f(CW$direction\fR is \f(CW\*(C`INPUT\*(C'\fR, it will return the message which the client
 sends to the server (input for the server). The \f(CW\*(C`OUTPUT\*(C'\fR message is
 sent as response by the server.
-.IP "XML::Compile::SOAP::Operation\->\fBregister\fR(\s-1URI\s0, \s-1ENVNS\s0)" 4
-.IX Item "XML::Compile::SOAP::Operation->register(URI, ENVNS)"
-Declare an operation type, but \s-1WSDL\s0 specific \s-1URI\s0 and envelope namespace.
+.ie n .IP "$obj\->\fBparsedWSDL\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBparsedWSDL\fR(%options)" 4
+.IX Item "$obj->parsedWSDL(%options)"
+[2.29] For some purposes, it is useful to get access to the parsed \s-1WSDL\s0
+structure.
+.Sp
+\&\fBBe aware\fR that the structure returned is consided \*(L"internal\*(R"
+and strongly influenced by behavior of XML::Compile; backwards
+compatibility will not be maintained at all cost.
+.Sp
+You can use \fIXML::Compile::Schema::template()\fR format \f(CW\*(C`TREE\*(C'\fR to get
+more details about the element types mentioned in this structure.
+.Sp
+example:
+.Sp
+.Vb 3
+\&  use Data::Dumper;
+\&  $Data::Dumper::Indent    = 1;
+\&  $Data::Dumper::Quotekeys = 0;
+\&
+\&  print Dumper $op\->parsedWSDL;
+.Ve
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

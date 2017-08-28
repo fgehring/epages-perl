@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Transport::SOAPHTTP 3"
-.TH XML::Compile::Transport::SOAPHTTP 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Transport::SOAPHTTP 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -152,33 +152,45 @@ XML::Compile::Transport::SOAPHTTP \- exchange XML\-SOAP via HTTP
 \&   );
 \&
 \& my ($xmlout, $trace) = $call\->($xmlin);
+\&
+\& $wsdl\->compileCalls(transport => $send);
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 This module handles the exchange of (\s-1XML\s0) messages, according to the
 rules of \s-1SOAP\s0 (any version).  The module does not known how to parse
 or compose \s-1XML\s0, but only worries about the \s-1HTTP\s0 aspects.
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in XML::Compile::Transport.
 .SH "METHODS"
 .IX Header "METHODS"
+Extends \*(L"\s-1METHODS\s0\*(R" in XML::Compile::Transport.
 .SS "Constructors"
 .IX Subsection "Constructors"
-.IP "XML::Compile::Transport::SOAPHTTP\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::Transport::SOAPHTTP->new(OPTIONS)"
-The \f(CW\*(C`keep_alive\*(C'\fR and \f(CW\*(C`timeout\*(C'\fR options are used when an LWP::UserAgent
-is created, and ignored when you provide such an object.  In the latter
-case, the values for those are inquired such that you can see the setting
-directly from the passed object.
+Extends \*(L"Constructors\*(R" in XML::Compile::Transport.
+.IP "XML::Compile::Transport::SOAPHTTP\->\fBnew\fR(%options)" 4
+.IX Item "XML::Compile::Transport::SOAPHTTP->new(%options)"
+Create a SOAP-over-HTTP handler, implemented as a wrapper around
+LWP::UserAgent.
 .Sp
-If you need to change UserAgent settings later, you can always directly
-access the LWP::UserAgent object via \fIuserAgent()\fR.
+If you need to change UserAgent settings (for instance at runtime),
+you can always directly access the internal \f(CW\*(C`LWP::UserAgent\*(C'\fR object
+via \fIuserAgent()\fR.
+.Sp
+\&\fBWarning:\fR The \f(CW\*(C`keep_alive\*(C'\fR and \f(CW\*(C`timeout\*(C'\fR options are only used when
+an default internal \f(CW\*(C`LWP::UserAgent\*(C'\fR is created; this is only once in a
+program.  Later instantiations of this ::SOAPHTTP will share that default
+agent, even though these passed parameters have different parameters.
+If that is not what you want, then pass your own \f(CW\*(C`user_agent\*(C'\fR object to
+the constructor to avoid the use of the default.
 .Sp
 .Vb 6
-\& \-Option    \-\-Defined in     \-\-Default
+\& \-Option    \-\-Defined in             \-\-Default
 \&  address     XML::Compile::Transport  \*(Aqhttp://localhost\*(Aq
 \&  charset     XML::Compile::Transport  \*(Aqutf\-8\*(Aq
-\&  keep_alive                   <true>
-\&  timeout                      180
-\&  user_agent                   <created when needed>
+\&  keep_alive                           <true>
+\&  timeout                              180
+\&  user_agent                           <created when needed>
 .Ve
 .RS 4
 .IP "address => URI|ARRAY\-of\-URI" 2
@@ -197,85 +209,118 @@ The server may close it earlier.  Do not set the timeout too long, because
 you want objects to be cleaned-up.
 .IP "user_agent => LWP::UserAgent object" 2
 .IX Item "user_agent => LWP::UserAgent object"
-If you pass your own user agent, you will be able to configure
-it. Otherwise, one will be created with all the defaults. Providing
-your own user agents \-or at least have a look at the configuration\-
-seems like a good idea.
+If you do not pass your own user agent, a default will be created for you.
 .RE
 .RS 4
 .RE
 .SS "\s-1WSDL11\s0"
 .IX Subsection "WSDL11"
-.ie n .IP "$obj\->\fBwsdl11Init\fR(\s-1WSDL\s0, \s-1ARGS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBwsdl11Init\fR(\s-1WSDL\s0, \s-1ARGS\s0)" 4
-.IX Item "$obj->wsdl11Init(WSDL, ARGS)"
+Extends \*(L"\s-1WSDL11\s0\*(R" in XML::Compile::Transport.
+.ie n .IP "$obj\->\fBwsdl11Init\fR($wsdl, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBwsdl11Init\fR($wsdl, \f(CW$args\fR)" 4
+.IX Item "$obj->wsdl11Init($wsdl, $args)"
 .PD 0
-.IP "XML::Compile::Transport::SOAPHTTP\->\fBwsdl11Init\fR(\s-1WSDL\s0, \s-1ARGS\s0)" 4
-.IX Item "XML::Compile::Transport::SOAPHTTP->wsdl11Init(WSDL, ARGS)"
+.ie n .IP "XML::Compile::Transport::SOAPHTTP\->\fBwsdl11Init\fR($wsdl, $args)" 4
+.el .IP "XML::Compile::Transport::SOAPHTTP\->\fBwsdl11Init\fR($wsdl, \f(CW$args\fR)" 4
+.IX Item "XML::Compile::Transport::SOAPHTTP->wsdl11Init($wsdl, $args)"
 .PD
-See \*(L"\s-1WSDL11\s0\*(R" in XML::Compile::SOAP::Extension
+Inherited, see \*(L"\s-1WSDL11\s0\*(R" in XML::Compile::SOAP::Extension
 .SS "\s-1SOAP11\s0"
 .IX Subsection "SOAP11"
-.ie n .IP "$obj\->\fBsoap11ClientWrapper\fR(\s-1OPERATION\s0, \s-1CALL\s0, \s-1ARGS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBsoap11ClientWrapper\fR(\s-1OPERATION\s0, \s-1CALL\s0, \s-1ARGS\s0)" 4
-.IX Item "$obj->soap11ClientWrapper(OPERATION, CALL, ARGS)"
-See \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension
-.ie n .IP "$obj\->\fBsoap11HandlerWrapper\fR(\s-1OPERATION\s0, \s-1CALLBACK\s0, \s-1ARGS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBsoap11HandlerWrapper\fR(\s-1OPERATION\s0, \s-1CALLBACK\s0, \s-1ARGS\s0)" 4
-.IX Item "$obj->soap11HandlerWrapper(OPERATION, CALLBACK, ARGS)"
-See \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension
-.ie n .IP "$obj\->\fBsoap11OperationInit\fR(\s-1OPERATION\s0, \s-1ARGS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBsoap11OperationInit\fR(\s-1OPERATION\s0, \s-1ARGS\s0)" 4
-.IX Item "$obj->soap11OperationInit(OPERATION, ARGS)"
+Extends \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::Transport.
+.ie n .IP "$obj\->\fBsoap11ClientWrapper\fR($operation, $call, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap11ClientWrapper\fR($operation, \f(CW$call\fR, \f(CW$args\fR)" 4
+.IX Item "$obj->soap11ClientWrapper($operation, $call, $args)"
+Inherited, see \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension
+.ie n .IP "$obj\->\fBsoap11HandlerWrapper\fR($operation, $callback, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap11HandlerWrapper\fR($operation, \f(CW$callback\fR, \f(CW$args\fR)" 4
+.IX Item "$obj->soap11HandlerWrapper($operation, $callback, $args)"
+Inherited, see \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension
+.ie n .IP "$obj\->\fBsoap11OperationInit\fR($operation, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap11OperationInit\fR($operation, \f(CW$args\fR)" 4
+.IX Item "$obj->soap11OperationInit($operation, $args)"
 .PD 0
-.IP "XML::Compile::Transport::SOAPHTTP\->\fBsoap11OperationInit\fR(\s-1OPERATION\s0, \s-1ARGS\s0)" 4
-.IX Item "XML::Compile::Transport::SOAPHTTP->soap11OperationInit(OPERATION, ARGS)"
+.ie n .IP "XML::Compile::Transport::SOAPHTTP\->\fBsoap11OperationInit\fR($operation, $args)" 4
+.el .IP "XML::Compile::Transport::SOAPHTTP\->\fBsoap11OperationInit\fR($operation, \f(CW$args\fR)" 4
+.IX Item "XML::Compile::Transport::SOAPHTTP->soap11OperationInit($operation, $args)"
 .PD
-See \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension
+Inherited, see \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension
+.SS "\s-1SOAP12\s0"
+.IX Subsection "SOAP12"
+Extends \*(L"\s-1SOAP12\s0\*(R" in XML::Compile::Transport.
+.ie n .IP "$obj\->\fBsoap12ClientWrapper\fR($operation, $call, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap12ClientWrapper\fR($operation, \f(CW$call\fR, \f(CW$args\fR)" 4
+.IX Item "$obj->soap12ClientWrapper($operation, $call, $args)"
+Inherited, see \*(L"\s-1SOAP12\s0\*(R" in XML::Compile::SOAP::Extension
+.ie n .IP "$obj\->\fBsoap12HandlerWrapper\fR($operation, $callback, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap12HandlerWrapper\fR($operation, \f(CW$callback\fR, \f(CW$args\fR)" 4
+.IX Item "$obj->soap12HandlerWrapper($operation, $callback, $args)"
+Inherited, see \*(L"\s-1SOAP12\s0\*(R" in XML::Compile::SOAP::Extension
+.ie n .IP "$obj\->\fBsoap12OperationInit\fR($operation, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap12OperationInit\fR($operation, \f(CW$args\fR)" 4
+.IX Item "$obj->soap12OperationInit($operation, $args)"
+.PD 0
+.ie n .IP "XML::Compile::Transport::SOAPHTTP\->\fBsoap12OperationInit\fR($operation, $args)" 4
+.el .IP "XML::Compile::Transport::SOAPHTTP\->\fBsoap12OperationInit\fR($operation, \f(CW$args\fR)" 4
+.IX Item "XML::Compile::Transport::SOAPHTTP->soap12OperationInit($operation, $args)"
+.PD
+Inherited, see \*(L"\s-1SOAP12\s0\*(R" in XML::Compile::SOAP::Extension
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBaddress\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBaddress\fR" 4
-.IX Item "$obj->address"
-See \*(L"Accessors\*(R" in XML::Compile::Transport
-.ie n .IP "$obj\->\fBaddresses\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBaddresses\fR" 4
-.IX Item "$obj->addresses"
-See \*(L"Accessors\*(R" in XML::Compile::Transport
-.ie n .IP "$obj\->\fBcharset\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcharset\fR" 4
-.IX Item "$obj->charset"
-See \*(L"Accessors\*(R" in XML::Compile::Transport
-.ie n .IP "$obj\->\fBuserAgent\fR([AGENT|(undef, \s-1OPTIONS\s0)])" 4
-.el .IP "\f(CW$obj\fR\->\fBuserAgent\fR([AGENT|(undef, \s-1OPTIONS\s0)])" 4
-.IX Item "$obj->userAgent([AGENT|(undef, OPTIONS)])"
+Extends \*(L"Accessors\*(R" in XML::Compile::Transport.
+.ie n .IP "$obj\->\fBaddress\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBaddress\fR()" 4
+.IX Item "$obj->address()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Transport
+.ie n .IP "$obj\->\fBaddresses\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBaddresses\fR()" 4
+.IX Item "$obj->addresses()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Transport
+.ie n .IP "$obj\->\fBcharset\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcharset\fR()" 4
+.IX Item "$obj->charset()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Transport
+.ie n .IP "$obj\->\fBdefaultUserAgent\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBdefaultUserAgent\fR()" 4
+.IX Item "$obj->defaultUserAgent()"
+.PD 0
+.IP "XML::Compile::Transport::SOAPHTTP\->\fBdefaultUserAgent\fR()" 4
+.IX Item "XML::Compile::Transport::SOAPHTTP->defaultUserAgent()"
+.PD
+[3.07] Returns the used LWP::UserAgent, available after the compilation
+of the \s-1SOAP\s0 call(s).
+.ie n .IP "$obj\->\fBuserAgent\fR( [$agent|<undef, %options>] )" 4
+.el .IP "\f(CW$obj\fR\->\fBuserAgent\fR( [$agent|<undef, \f(CW%options\fR>] )" 4
+.IX Item "$obj->userAgent( [$agent|<undef, %options>] )"
 Returns the User Agent which will be used.  You may change the
-configuration of the \s-1AGENT\s0 (the returned LWP::UserAgent object)
+configuration of the \f(CW$agent\fR (the returned LWP::UserAgent object)
 or provide one yourself.  See also new(user_agent).
 .Sp
 Changes to the agent configuration can be made before or after the
 compilation, or even inbetween \s-1SOAP\s0 calls.
 .SS "Handlers"
 .IX Subsection "Handlers"
-.ie n .IP "$obj\->\fBcompileClient\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileClient\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileClient(OPTIONS)"
+Extends \*(L"Handlers\*(R" in XML::Compile::Transport.
+.ie n .IP "$obj\->\fBcompileClient\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileClient\fR(%options)" 4
+.IX Item "$obj->compileClient(%options)"
 Compile an \s-1HTTP\s0 client handler.  Returned is a subroutine which is called
 with a text represenation of the \s-1XML\s0 request, or an XML::LibXML tree.
 In \s-1SCALAR\s0 context, an XML::LibXML parsed tree of the answer message
 is returned.  In \s-1LIST\s0 context, that answer is followed by a \s-1HASH\s0 which
 contains trace information.
 .Sp
-.Vb 9
-\& \-Option   \-\-Defined in     \-\-Default
-\&  action                      \*(Aq\*(Aq
-\&  header                      <created>
-\&  hook       XML::Compile::Transport  <undef>
-\&  kind                        \*(Aqrequest\-response\*(Aq
-\&  method                      \*(AqPOST\*(Aq
-\&  mime_type                   <depends on soap version>
-\&  mpost_id                    42
-\&  soap                        \*(AqSOAP11\*(Aq
+.Vb 10
+\& \-Option    \-\-Defined in             \-\-Default
+\&  action                               \*(Aq\*(Aq
+\&  header                               <created>
+\&  hook        XML::Compile::Transport  <undef>
+\&  kind                                 \*(Aqrequest\-response\*(Aq
+\&  method                               \*(AqPOST\*(Aq
+\&  mime_type                            <depends on soap version>
+\&  mpost_id                             42
+\&  soap                                 \*(AqSOAP11\*(Aq
+\&  xml_format  XML::Compile::Transport  0
 .Ve
 .RS 4
 .IP "action => \s-1URI\s0" 2
@@ -312,8 +357,12 @@ With method \f(CW\*(C`M\-POST\*(C'\fR, the header extension fields require (any)
 to be grouped.
 .IP "soap => '\s-1SOAP11\s0'|'\s-1SOAP12\s0'|OBJECT" 2
 .IX Item "soap => 'SOAP11'|'SOAP12'|OBJECT"
+.PD 0
+.IP "xml_format => 0|1|2" 2
+.IX Item "xml_format => 0|1|2"
 .RE
 .RS 4
+.PD
 .Sp
 example: create a client
 .Sp
@@ -334,50 +383,37 @@ example: create a client
 \& my $answer = $call\->($request); # drop $trace info immediately
 .Ve
 .RE
-.ie n .IP "$obj\->\fBheaderAddVersions\fR(\s-1HEADER\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBheaderAddVersions\fR(\s-1HEADER\s0)" 4
-.IX Item "$obj->headerAddVersions(HEADER)"
+.ie n .IP "$obj\->\fBheaderAddVersions\fR($header)" 4
+.el .IP "\f(CW$obj\fR\->\fBheaderAddVersions\fR($header)" 4
+.IX Item "$obj->headerAddVersions($header)"
 .PD 0
-.IP "XML::Compile::Transport::SOAPHTTP\->\fBheaderAddVersions\fR(\s-1HEADER\s0)" 4
-.IX Item "XML::Compile::Transport::SOAPHTTP->headerAddVersions(HEADER)"
+.IP "XML::Compile::Transport::SOAPHTTP\->\fBheaderAddVersions\fR($header)" 4
+.IX Item "XML::Compile::Transport::SOAPHTTP->headerAddVersions($header)"
 .PD
 Adds some lines about module versions, which may help debugging
 or error reports.  This is called when a new client or server
 is being created.
+.SH "DETAILS"
+.IX Header "DETAILS"
+Extends \*(L"\s-1DETAILS\s0\*(R" in XML::Compile::Transport.
 .SH "Helpers"
 .IX Header "Helpers"
-.IP "XML::Compile::Transport::SOAPHTTP\->\fBregister\fR(\s-1URI\s0)" 4
-.IX Item "XML::Compile::Transport::SOAPHTTP->register(URI)"
-See \*(L"Helpers\*(R" in XML::Compile::Transport
+Extends \*(L"Helpers\*(R" in XML::Compile::Transport.
+.IP "XML::Compile::Transport::SOAPHTTP\->\fBregister\fR($uri)" 4
+.IX Item "XML::Compile::Transport::SOAPHTTP->register($uri)"
+Inherited, see \*(L"Helpers\*(R" in XML::Compile::Transport
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

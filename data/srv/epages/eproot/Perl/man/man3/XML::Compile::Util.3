@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Util 3"
-.TH XML::Compile::Util 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Util 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -157,8 +157,9 @@ in the same long URIs each time again: \s-1XMLNS\s0, \s-1SCHEMA1999\s0,
 \&\s-1SCHEMA2000\s0, \s-1SCHEMA2001\s0, and SCHEMA2001i.
 .SS "Packing"
 .IX Subsection "Packing"
-.IP "\fBpack_id\fR(\s-1NAMESPACE\s0, \s-1ID\s0)" 4
-.IX Item "pack_id(NAMESPACE, ID)"
+.ie n .IP "\fBpack_id\fR($ns, $id)" 4
+.el .IP "\fBpack_id\fR($ns, \f(CW$id\fR)" 4
+.IX Item "pack_id($ns, $id)"
 Translates the two arguments into one compact string representation of
 the node id.
 .Sp
@@ -168,10 +169,11 @@ example:
 \& print pack_id \*(Aqhttp://my\-ns\*(Aq, \*(Aqmy\-id\*(Aq;
 \& # shows:  http://my\-ns#my\-id
 .Ve
-.IP "\fBpack_type\fR([\s-1NAMESPACE\s0], \s-1LOCALNAME\s0)" 4
-.IX Item "pack_type([NAMESPACE], LOCALNAME)"
+.ie n .IP "\fBpack_type\fR( [$ns], $localname )" 4
+.el .IP "\fBpack_type\fR( [$ns], \f(CW$localname\fR )" 4
+.IX Item "pack_type( [$ns], $localname )"
 Translates the arguments into one compact string representation of
-the node type.  When the \s-1NAMESPACE\s0 is not present, \f(CW\*(C`undef\*(C'\fR, or an
+the node type.  When the \f(CW$ns\fR is not present, \f(CW\*(C`undef\*(C'\fR, or an
 empty string, then no namespace is presumed, and no curly braces
 part made.
 .Sp
@@ -186,51 +188,58 @@ example:
 \& print pack_type \*(Aq\*(Aq, \*(Aqmy\-type\*(Aq;
 \& # all three show:   my\-type
 .Ve
-.IP "\fBunpack_type\fR(\s-1STRING\s0)" 4
-.IX Item "unpack_type(STRING)"
+.IP "\fBunpack_id\fR($string)" 4
+.IX Item "unpack_id($string)"
 Returns a \s-1LIST\s0 of two elements: the name-space and the id, as
-included in the \s-1STRING\s0.  That \s-1STRING\s0 must be compatible with the
+included in the \f(CW$string\fR.  That \f(CW$string\fR must be compatible with the
 result of \fIpack_id()\fR.
+.IP "\fBunpack_type\fR($string)" 4
+.IX Item "unpack_type($string)"
+Returns a \s-1LIST\s0 of two elements: the name-space and the localname, as
+included in the \f(CW$string\fR.  That \f(CW$string\fR must be compatible with the
+result of \fIpack_type()\fR.  When no name-space is present, an empty
+string is used.
 .SS "Other"
 .IX Subsection "Other"
+.ie n .IP "\fBadd_duration\fR( $duration, [$time] )" 4
+.el .IP "\fBadd_duration\fR( \f(CW$duration\fR, [$time] )" 4
+.IX Item "add_duration( $duration, [$time] )"
+[1.44] Add the \f(CW$duration\fR to the \f(CW$time\fR (defaults to 'now')  This is an
+expensive operation: in many cases the \fIduration2secs()\fR produces
+useful results as well.
+.Sp
+example:
+.Sp
+.Vb 2
+\&   my $now      = time;
+\&   my $deadline = add_duration \*(AqP1M\*(Aq, $now;  # deadline in 1 month
+.Ve
+.IP "\fBduration2secs\fR($duration)" 4
+.IX Item "duration2secs($duration)"
+[1.44] Translate any format into seconds.  This is an example of
+a valid duration: \f(CW\*(C`\-PT1M30.5S\*(C'\fR  Average month and year lengths
+are used.  If you need more precise calculations, then use \fIadd_duration()\fR.
 .IP "\fBeven_elements\fR(\s-1LIST\s0)" 4
 .IX Item "even_elements(LIST)"
 Returns the even-numbered elements from the \s-1LIST\s0.
 .IP "\fBodd_elements\fR(\s-1LIST\s0)" 4
 .IX Item "odd_elements(LIST)"
 Returns the odd-numbered elements from the \s-1LIST\s0.
-.IP "\fBtype_of_node\fR(\s-1NODE\s0)" 4
-.IX Item "type_of_node(NODE)"
+.IP "\fBtype_of_node\fR($node)" 4
+.IX Item "type_of_node($node)"
 Translate an XML::LibXML::Node into a packed type.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

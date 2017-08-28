@@ -1,6 +1,6 @@
 #!/srv/epages/eproot/Perl/bin/perl
 
-eval 'exec perl  -S $0 ${1+"$@"}'
+eval 'exec /srv/epages/eproot/Perl/bin/perl  -S $0 ${1+"$@"}'
     if 0; # not running under some shell
 
 use warnings;
@@ -39,7 +39,7 @@ defined $xml_input
 
 $format = uc $format;
 die "ERROR: format must be either 'PERL' or 'XML'\n"
-   if $format ne 'PERL' && $format ne 'XML';
+    if $format ne 'PERL' && $format ne 'XML';
 
 my $parser = XML::LibXML->new;
 
@@ -125,7 +125,7 @@ By default, the output is to stdout.
 
 =item --show STRING
 
-A comma seperated list of comment components which should be included,
+A comma separated list of comment components which should be included,
 by default C<ALL>.  An empty string or C<NONE> will exclude all comments.
 The STRING can also be a comma separated combination of C<struct>, C<type>,
 C<occur>, and C<facets>.

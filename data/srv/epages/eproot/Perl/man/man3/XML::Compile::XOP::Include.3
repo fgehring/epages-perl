@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::XOP::Include 3"
-.TH XML::Compile::XOP::Include 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::XOP::Include 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -141,7 +141,7 @@ XML::Compile::XOP::Include \- Represents one XOP node.
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-Represents one data-set which will be represented as seperate (binary)
+Represents one data-set which will be represented as separate (binary)
 object during transport.  This can only be used on data fields which
 are base64Binary.
 .PP
@@ -151,16 +151,16 @@ XML::Compile::XOP method to create them.
 The object is overloaded to produce the contained data when a scalar is
 required, for instance when you call functions like \*(L"length\*(R".  This means
 that, hopefully, the end-user does not see much of a difference between
-data which is transported inline or packaged seperately.
+data which is transported inline or packaged separately.
 .SH "METHODS"
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.IP "XML::Compile::XOP::Include\->\fBfromMime\fR(\s-1OBJECT\s0)" 4
-.IX Item "XML::Compile::XOP::Include->fromMime(OBJECT)"
+.IP "XML::Compile::XOP::Include\->\fBfromMime\fR($object)" 4
+.IX Item "XML::Compile::XOP::Include->fromMime($object)"
 Collect the data from a HTTP::Message object.
-.IP "XML::Compile::XOP::Include\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::XOP::Include->new(OPTIONS)"
+.IP "XML::Compile::XOP::Include\->\fBnew\fR(%options)" 4
+.IX Item "XML::Compile::XOP::Include->new(%options)"
 You have to specify either a \f(CW\*(C`file\*(C'\fR or \f(CW\*(C`byte\*(C'\fR source.  Otherwise, the
 constructor will return \f(CW\*(C`undef\*(C'\fR.
 .Sp
@@ -197,71 +197,66 @@ The MIME-Type of the data.
 .PD
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBcid\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcid\fR" 4
-.IX Item "$obj->cid"
+.ie n .IP "$obj\->\fBcid\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcid\fR()" 4
+.IX Item "$obj->cid()"
 Returns the Content-ID.
-.ie n .IP "$obj\->\fBcontent\fR([\s-1BYREF\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBcontent\fR([\s-1BYREF\s0])" 4
-.IX Item "$obj->content([BYREF])"
-Returns the content, when \s-1BYREF\s0 (boolean) is true, then the value is
+.ie n .IP "$obj\->\fBcontent\fR( [$byref] )" 4
+.el .IP "\f(CW$obj\fR\->\fBcontent\fR( [$byref] )" 4
+.IX Item "$obj->content( [$byref] )"
+Returns the content, when \f(CW$byref\fR (boolean) is true, then the value is
 returned by reference.
+.ie n .IP "$obj\->\fBcontentCharset\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcontentCharset\fR()" 4
+.IX Item "$obj->contentCharset()"
+Returns the character set, as provided by the Content-Type header.
+.ie n .IP "$obj\->\fBcontentType\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcontentType\fR()" 4
+.IX Item "$obj->contentType()"
+Returns the media type included in the Content-Type header.
+.ie n .IP "$obj\->\fBstring\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBstring\fR()" 4
+.IX Item "$obj->string()"
+Returns the content as string in Perl internal encoding.
 .SS "Processing"
 .IX Subsection "Processing"
-.ie n .IP "$obj\->\fBmimePart\fR([\s-1HEADERS\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBmimePart\fR([\s-1HEADERS\s0])" 4
-.IX Item "$obj->mimePart([HEADERS])"
+.ie n .IP "$obj\->\fBmimePart\fR( [$headers] )" 4
+.el .IP "\f(CW$obj\fR\->\fBmimePart\fR( [$headers] )" 4
+.IX Item "$obj->mimePart( [$headers] )"
 Produce the message part which contains a normal mime representation
-of a binary file.  You may provide an initial \s-1HEADERS\s0 (HTTP::Headers)
+of a binary file.  You may provide an initial \f(CW$headers\fR (HTTP::Headers)
 object, or an \s-1ARRAY\s0 of headers to instantiate such an object.
-.ie n .IP "$obj\->\fBwrite\fR(FILENAME|FILEHANDLE)" 4
-.el .IP "\f(CW$obj\fR\->\fBwrite\fR(FILENAME|FILEHANDLE)" 4
-.IX Item "$obj->write(FILENAME|FILEHANDLE)"
+.ie n .IP "$obj\->\fBwrite\fR($filename|$fh)" 4
+.el .IP "\f(CW$obj\fR\->\fBwrite\fR($filename|$fh)" 4
+.IX Item "$obj->write($filename|$fh)"
 Write the content to the specified \s-1FILE\s0.
-.ie n .IP "$obj\->\fBxmlNode\fR(\s-1DOCUMENT\s0, \s-1PATH\s0, \s-1TAG\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBxmlNode\fR(\s-1DOCUMENT\s0, \s-1PATH\s0, \s-1TAG\s0)" 4
-.IX Item "$obj->xmlNode(DOCUMENT, PATH, TAG)"
-The \s-1DOCUMENT\s0 will be used to construct the node from.  The \s-1PATH\s0
+.ie n .IP "$obj\->\fBxmlNode\fR($document, $path, $tag)" 4
+.el .IP "\f(CW$obj\fR\->\fBxmlNode\fR($document, \f(CW$path\fR, \f(CW$tag\fR)" 4
+.IX Item "$obj->xmlNode($document, $path, $tag)"
+The \f(CW$document\fR will be used to construct the node from.  The \f(CW$path\fR
 is an indicator for the location of the node within the data
-structure (used in error messages).  The \s-1TAG\s0 is the prefixed name
+structure (used in error messages).  The \f(CW$tag\fR is the prefixed name
 for the node to be created.
 .Sp
 Returned is an \s-1XML\s0 node to be included in the output tree.
 .SH "OVERLOAD"
 .IX Header "OVERLOAD"
-.ie n .IP "overload: \fB"""" (stringification)\fR" 4
-.el .IP "overload: \fB``'' (stringification)\fR" 4
-.IX Item "overload: """" (stringification)"
+.ie n .IP "overload: \fB""""\fR" 4
+.el .IP "overload: \fB``''\fR" 4
+.IX Item "overload: """""
 This object stringifies to its binary content.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

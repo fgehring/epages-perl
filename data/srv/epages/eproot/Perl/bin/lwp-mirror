@@ -1,6 +1,6 @@
 #!/srv/epages/eproot/Perl/bin/perl -w
 
-eval 'exec perl -w -S $0 ${1+"$@"}'
+eval 'exec /srv/epages/eproot/Perl/bin/perl -w -S $0 ${1+"$@"}'
     if 0; # not running under some shell
 
 # Simple mirror utility using LWP
@@ -50,7 +50,7 @@ $progname = $0;
 $progname =~ s,.*/,,;  # use basename only
 $progname =~ s/\.\w*$//; #strip extension if any
 
-$VERSION = "6.05";
+$VERSION = "6.17";
 
 $opt_h = undef;  # print usage
 $opt_v = undef;  # print version

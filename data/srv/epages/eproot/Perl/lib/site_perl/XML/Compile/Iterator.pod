@@ -1,6 +1,10 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::Iterator - reduce view on a node tree
+
+=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
@@ -15,23 +19,23 @@ The main user for this object currently is L<XML::Compile::Translate|XML::Compil
 
 =over 4
 
-=item $obj-E<gt>B<descend>([NODE, [PATH, [FILTER]]])
+=item $obj-E<gt>B<descend>( [$node, [$path, [$filter]]] )
 
-The NODE is a child of the node handled by the iterator where this
-method is called upon.  Without explicit NODE, the current node is used.
+The $node is a child of the node handled by the iterator where this
+method is called upon.  Without explicit $node, the current node is used.
 Returned is a new L<XML::Compile::Iterator|XML::Compile::Iterator> object.  The new iterator
-will use the same FILTER as the parent iterator by default.  The internal
-administered path with be extended with the PATH.
+will use the same $filter as the parent iterator by default.  The internal
+administered path with be extended with the $path.
 
-=item XML::Compile::Iterator-E<gt>B<new>(NODE, PATH, FILTER,)
+=item XML::Compile::Iterator-E<gt>B<new>($node, $path, $filter,)
 
-The NODE is a XML::LibXML::Node object, of which the direct childs
+The $node is a XML::LibXML::Node object, of which the direct children
 are inspected.
 
-The FILTER a CODE reference which is called for each child node.
-The only paramter is the parent NODE, and then it must return
+The $filter a CODE reference which is called for each child node.
+The only parameter is the parent $node, and then it must return
 either true or false.  In case of true, the node is selected.
-The FILTERS is applied to all childs of the NODE once, when the
+The FILTERS is applied to all children of the $node once, when the
 first child is requested by the program.
 
 =back
@@ -40,16 +44,16 @@ first child is requested by the program.
 
 =over 4
 
-=item $obj-E<gt>B<filter>
+=item $obj-E<gt>B<filter>()
 
 Returns the CODE reference which is used to select the nodes.
 
-=item $obj-E<gt>B<node>
+=item $obj-E<gt>B<node>()
 
-Returns the XML::LibXML::Node node of which the childs are walked
+Returns the XML::LibXML::Node node of which the children are walked
 through.
 
-=item $obj-E<gt>B<path>
+=item $obj-E<gt>B<path>()
 
 The path represents the location where the node is, like a symbolic
 link, how you got there.
@@ -60,33 +64,33 @@ link, how you got there.
 
 =over 4
 
-=item $obj-E<gt>B<childs>
+=item $obj-E<gt>B<childs>()
 
 Returns the child nodes which fulfil the filter requirements.  In LIST
 context as list, in SCALAR context as reference to an ARRAY.
 
-=item $obj-E<gt>B<currentChild>
+=item $obj-E<gt>B<currentChild>()
 
 Returns the current child node.
 
-=item $obj-E<gt>B<firstChild>
+=item $obj-E<gt>B<firstChild>()
 
 Returns the first child node.  Does not change the current position.
 
-=item $obj-E<gt>B<lastChild>
+=item $obj-E<gt>B<lastChild>()
 
 Returns the last child node which fulfills the requirements.
 Does not change the current position.
 
-=item $obj-E<gt>B<nextChild>
+=item $obj-E<gt>B<nextChild>()
 
 Returns the next child when available, otherwise C<undef>.
 
-=item $obj-E<gt>B<nrChildren>
+=item $obj-E<gt>B<nrChildren>()
 
 Returns the number of childnodes which fulfill the restriction.
 
-=item $obj-E<gt>B<previousChild>
+=item $obj-E<gt>B<previousChild>()
 
 Returns the previous child when available, otherwise C<undef>.
 
@@ -96,27 +100,31 @@ Returns the previous child when available, otherwise C<undef>.
 
 =over 4
 
-=item $obj-E<gt>B<currentContent>
+=item $obj-E<gt>B<currentContent>()
 
 Returns the textContent of the L<currentChild()|XML::Compile::Iterator/"Scanning"> node, or undef.
 
-=item $obj-E<gt>B<currentLocal>
+=item $obj-E<gt>B<currentLocal>()
 
 Returns the local name of the L<currentChild()|XML::Compile::Iterator/"Scanning">, or the empty string.
 
-=item $obj-E<gt>B<currentType>
+=item $obj-E<gt>B<currentType>()
 
 Returns the type of the L<currentChild()|XML::Compile::Iterator/"Scanning">, or the empty string.
 
-=item $obj-E<gt>B<nodeLocal>
+=item $obj-E<gt>B<nodeLocal>()
 
 Returns the local name of the L<node()|XML::Compile::Iterator/"Attributes">, or the empty string.
 
-=item $obj-E<gt>B<nodeType>
+=item $obj-E<gt>B<nodeNil>()
+
+Returns true if the current node has C<xsi:type="true">.
+
+=item $obj-E<gt>B<nodeType>()
 
 Returns the type of the L<node()|XML::Compile::Iterator/"Attributes">, or the empty string.
 
-=item $obj-E<gt>B<textContent>
+=item $obj-E<gt>B<textContent>()
 
 Returns the textContent of the L<node()|XML::Compile::Iterator/"Attributes">, or undef.
 
@@ -124,34 +132,17 @@ Returns the textContent of the L<node()|XML::Compile::Iterator/"Attributes">, or
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2006-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

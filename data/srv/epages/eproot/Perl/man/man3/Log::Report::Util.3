@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Log::Report::Util 3"
-.TH Log::Report::Util 3 "2011-08-23" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Log::Report::Util 3 "2016-01-18" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -139,19 +139,18 @@ Log::Report::Util \- helpful routines to Log::Report
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-This module collects a few functions and definitions which are
-shared between different components in the Log::Report
-infrastructure.
+This module collects a few functions and definitions which are shared
+between different components in the Log::Report infrastructure.
+They should not be needed for end-user applications, although this
+man-page may contain some useful background information.
 .SH "FUNCTIONS"
 .IX Header "FUNCTIONS"
-.IP "\fBescape_chars\fR(\s-1STRING\s0)" 4
-.IX Item "escape_chars(STRING)"
-Replace all escape characters into their readable counterpart.  For
-instance, a new-line is replaced by backslash-n.
-.IP "\fBexpand_reasons\fR(\s-1REASONS\s0)" 4
-.IX Item "expand_reasons(REASONS)"
+.SS "Reasons"
+.IX Subsection "Reasons"
+.IP "\fBexpand_reasons\fR($reasons)" 4
+.IX Item "expand_reasons($reasons)"
 Returns a sub-set of all existing message reason labels, based on the
-content \s-1REASONS\s0 string. The following rules apply:
+content \f(CW$reasons\fR string. The following rules apply:
  \s-1REASONS\s0 = \s-1BLOCK\s0 [ ',' \s-1BLOCKS\s0]
  \s-1BLOCK\s0   = '\-' \s-1TO\s0 | \s-1FROM\s0 '\-' \s-1TO\s0 | \s-1ONE\s0 | \s-1SOURCE\s0
  \s-1FROM\s0,TO,ONE = '\s-1TRACE\s0' | '\s-1ASSERT\s0' | ,,, | '\s-1PANIC\s0'
@@ -170,6 +169,38 @@ example: of expended \s-1REASONS\s0
 \& USER          # == MISTAKE,ERROR
 \& ALL           # == TRACE\-PANIC
 .Ve
+.IP "\fBis_fatal\fR($reason)" 4
+.IX Item "is_fatal($reason)"
+Returns true if the \f(CW$reason\fR is severe enough to cause an exception
+(or program termination).
+.IP "\fBis_reason\fR($name)" 4
+.IX Item "is_reason($name)"
+Returns true if the \s-1STRING\s0 is one of the predefined \s-1REASONS\s0.
+.IP "\fBuse_errno\fR($reason)" 4
+.IX Item "use_errno($reason)"
+.SS "Modes"
+.IX Subsection "Modes"
+Run-modes are explained in Log::Report::Dispatcher.
+.IP "\fBmode_accepts\fR($mode)" 4
+.IX Item "mode_accepts($mode)"
+Returns something acceptable by \fIexpand_reasons()\fR
+.IP "\fBmode_number\fR($name|$mode)" 4
+.IX Item "mode_number($name|$mode)"
+Returns the \f(CW$mode\fR as number.
+.ie n .IP "\fBmust_show_location\fR($mode, $reason)" 4
+.el .IP "\fBmust_show_location\fR($mode, \f(CW$reason\fR)" 4
+.IX Item "must_show_location($mode, $reason)"
+.PD 0
+.ie n .IP "\fBmust_show_stack\fR($mode, $reason)" 4
+.el .IP "\fBmust_show_stack\fR($mode, \f(CW$reason\fR)" 4
+.IX Item "must_show_stack($mode, $reason)"
+.PD
+.SS "Other"
+.IX Subsection "Other"
+.IP "\fBescape_chars\fR(\s-1STRING\s0)" 4
+.IX Item "escape_chars(STRING)"
+Replace all escape characters into their readable counterpart.  For
+instance, a new-line is replaced by backslash-n.
 .IP "\fBparse_locale\fR(\s-1STRING\s0)" 4
 .IX Item "parse_locale(STRING)"
 Decompose a locale string.
@@ -188,6 +219,17 @@ the others can be \f(CW\*(C`undef\*(C'\fR.  It may also return \f(CW\*(C`C\*(C'\
 In \s-1SCALAR\s0 context, a \s-1HASH\s0 is returned which can contain more information:
 language, script, territory, variant, codeset, and modifiers.  The
 variant (\s-1RFC3066\s0 is probably never used)
+.ie n .IP "\fBpkg2domain\fR( $package, [$domain, $filename, $line] )" 4
+.el .IP "\fBpkg2domain\fR( \f(CW$package\fR, [$domain, \f(CW$filename\fR, \f(CW$line\fR] )" 4
+.IX Item "pkg2domain( $package, [$domain, $filename, $line] )"
+With \f(CW$domain\fR, \f(CW$filename\fR and \f(CW$line\fR, this registers a location where the
+textdomain is specified.  Each \f(CW$package\fR can only belong to one \f(CW$domain\fR.
+.Sp
+Without these parameters, the registered domain for the \f(CW$package\fR is
+returned.
+.IP "\fBto_html\fR($string)" 4
+.IX Item "to_html($string)"
+[1.02] Escape \s-1HTML\s0 volatile characters.
 .IP "\fBunescape_chars\fR(\s-1STRING\s0)" 4
 .IX Item "unescape_chars(STRING)"
 Replace all backslash-something escapes by their escape character.
@@ -202,11 +244,11 @@ For instance, backslash-t is replaced by a tab character.
 .Ve
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
+This module is part of Log-Report-Optional distribution version 1.02,
+built on January 18, 2016. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2013\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::Schema::Specs - Predefined Schema Information
@@ -15,9 +17,9 @@ This package defines the various schema-specifications.
 
 =over 4
 
-=item XML::Compile::Schema::Specs-E<gt>B<builtInType>((NODE|undef), EXPANDED | (URI,LOCAL), OPTIONS)
+=item XML::Compile::Schema::Specs-E<gt>B<builtInType>( <$node|undef>, $expanded | <$uri,$local>, %options )
 
-Provide an EXPANDED (full) type name or an namespace URI and a LOCAL node
+Provide an $expanded (full) type name or an namespace $uri and a $local node
 name.  Returned is a HASH with process information or C<undef> if not
 found.
 
@@ -43,12 +45,12 @@ compliant.
 
 =back
 
-=item XML::Compile::Schema::Specs-E<gt>B<predefinedSchema>(URI)
+=item XML::Compile::Schema::Specs-E<gt>B<predefinedSchema>($uri)
 
 Return a HASH which contains the schema information for the specified
-URI (or undef if it doesn't exist).
+$uri (or undef if it doesn't exist).
 
-=item XML::Compile::Schema::Specs-E<gt>B<predefinedSchemas>
+=item XML::Compile::Schema::Specs-E<gt>B<predefinedSchemas>()
 
 Returns the uri of all predefined schemas.
 
@@ -56,34 +58,17 @@ Returns the uri of all predefined schemas.
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2006-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

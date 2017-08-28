@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Schema::BuiltInTypes 3"
-.TH XML::Compile::Schema::BuiltInTypes 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Schema::BuiltInTypes 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -149,133 +149,158 @@ Different schema specifications specify different available types,
 but there is a lot over overlap.  The XML::Compile::Schema::Specs
 module defines the availability, but here the types are implemented.
 .PP
-This implementation certainly does not try to be minimal in size: using
-the restriction rules and inheritance structure defined in the schema
-specification would be too slow.
+This implementation certainly does not try to be minimal in size:
+following the letter of the restriction rules and inheritance structure
+defined by the W3C schema specification would be too slow.
 .SH "FUNCTIONS"
 .IX Header "FUNCTIONS"
-.SS "Any"
+.SS "Real functions"
+.IX Subsection "Real functions"
+.IP "\fBbuiltin_type_info\fR($type)" 4
+.IX Item "builtin_type_info($type)"
+Returns the configuration for \f(CW$type\fR, which is a \s-1HASH\s0.  Be aware that
+the information in this \s-1HASH\s0 will change over time without too much
+notice.  Implement regression-tests in this if you use it!
+.SS "The Types"
+.IX Subsection "The Types"
+The functions named in this section are all used at compile-time
+by the translator.  At that moment, they will be placed in the
+kind-of opcode tree which will process the data at run-time.
+You \fBcannot call\fR these functions yourself.
+.PP
+XML::Compile will automatically format the value for you.  For instance,
+a float supplied to a field defined as type Integer will be converted
+to an integer. Data supplied to a field of type base64Binary will be
+encoded as Base64 for you: you shouldn't do the conversion yourself,
+you'll get double encoding!
+.PP
+\fIAny\fR
 .IX Subsection "Any"
-.IP "\fBanyAtomicType\fR" 4
-.IX Item "anyAtomicType"
+.IP "\fBanyAtomicType\fR()" 4
+.IX Item "anyAtomicType()"
 .PD 0
-.IP "\fBanySimpleType\fR" 4
-.IX Item "anySimpleType"
-.IP "\fBanyType\fR" 4
-.IX Item "anyType"
+.IP "\fBanySimpleType\fR()" 4
+.IX Item "anySimpleType()"
+.IP "\fBanyType\fR()" 4
+.IX Item "anyType()"
 .PD
 Both any*Type built-ins can contain any kind of data.  Perl decides how
 to represent the passed values.
-.IP "\fBerror\fR" 4
-.IX Item "error"
-.SS "Ungrouped types"
+.IP "\fBerror\fR()" 4
+.IX Item "error()"
+.PP
+\fIUngrouped types\fR
 .IX Subsection "Ungrouped types"
-.PD 0
-.IP "\fBboolean\fR" 4
-.IX Item "boolean"
-.PD
+.IP "\fBboolean\fR()" 4
+.IX Item "boolean()"
 Contains \f(CW\*(C`true\*(C'\fR, \f(CW\*(C`false\*(C'\fR, \f(CW1\fR (is true), or \f(CW0\fR (is false).
 When the writer sees a value equal to 'true' or 'false', those are
 used.  Otherwise, the trueth value is evaluated into '0' or '1'.
 .Sp
 The reader will return '0' (also when the \s-1XML\s0 contains the string
 \&'false', to simplify the Perl code) or '1'.
-.IP "\fBpattern\fR" 4
-.IX Item "pattern"
-.SS "Big Integers"
+.IP "\fBpattern\fR()" 4
+.IX Item "pattern()"
+.PP
+\fIBig Integers\fR
 .IX Subsection "Big Integers"
+.PP
 Schema's define integer types which are derived from the \f(CW\*(C`decimal\*(C'\fR
 type.  These values can grow enormously large, and therefore can only be
 handled correctly using Math::BigInt.  When the translator is
 built with the \f(CW\*(C`sloppy_integers\*(C'\fR option, this will simplify (speed-up)
 the produced code considerably: all integers then shall be between
 \&\-2G and +2G.
-.IP "\fBinteger\fR" 4
-.IX Item "integer"
+.IP "\fBinteger\fR()" 4
+.IX Item "integer()"
 An integer with an undertermined (but possibly large) number of
 digits.
-.IP "\fBlong\fR" 4
-.IX Item "long"
+.IP "\fBlong\fR()" 4
+.IX Item "long()"
 A little bit shorter than an integer, but still up-to 19 digits.
-.IP "\fBnegativeInteger\fR" 4
-.IX Item "negativeInteger"
+.IP "\fBnegativeInteger\fR()" 4
+.IX Item "negativeInteger()"
 .PD 0
-.IP "\fBnonNegativeInteger\fR" 4
-.IX Item "nonNegativeInteger"
-.IP "\fBnonPositiveInteger\fR" 4
-.IX Item "nonPositiveInteger"
-.IP "\fBpositiveInteger\fR" 4
-.IX Item "positiveInteger"
-.IP "\fBunsignedInt\fR" 4
-.IX Item "unsignedInt"
+.IP "\fBnonNegativeInteger\fR()" 4
+.IX Item "nonNegativeInteger()"
+.IP "\fBnonPositiveInteger\fR()" 4
+.IX Item "nonPositiveInteger()"
+.IP "\fBpositiveInteger\fR()" 4
+.IX Item "positiveInteger()"
+.IP "\fBunsignedInt\fR()" 4
+.IX Item "unsignedInt()"
 .PD
 Just too long to fit in Perl's ints.
-.IP "\fBunsignedLong\fR" 4
-.IX Item "unsignedLong"
+.IP "\fBunsignedLong\fR()" 4
+.IX Item "unsignedLong()"
 Value up-to 20 digits.
-.SS "Integers"
+.PP
+\fIIntegers\fR
 .IX Subsection "Integers"
-.IP "\fBbyte\fR" 4
-.IX Item "byte"
+.IP "\fBbyte\fR()" 4
+.IX Item "byte()"
 Signed 8\-bits value.
-.IP "\fBint\fR" 4
-.IX Item "int"
+.IP "\fBint\fR()" 4
+.IX Item "int()"
 .PD 0
-.IP "\fBshort\fR" 4
-.IX Item "short"
+.IP "\fBshort\fR()" 4
+.IX Item "short()"
 .PD
 Signed 16\-bits value.
-.IP "\fBunsignedByte\fR" 4
-.IX Item "unsignedByte"
+.IP "\fBunsignedByte\fR()" 4
+.IX Item "unsignedByte()"
 Unsigned 8\-bits value.
-.IP "\fBunsignedShort\fR" 4
-.IX Item "unsignedShort"
+.IP "\fBunsignedShort\fR()" 4
+.IX Item "unsignedShort()"
 unsigned 16\-bits value.
-.SS "Floating-point"
+.PP
+\fIFloating-point\fR
 .IX Subsection "Floating-point"
-.IP "\fBdecimal\fR" 4
-.IX Item "decimal"
+.IP "\fBdecimal\fR()" 4
+.IX Item "decimal()"
 Decimals are painful: they can be very large, much larger than Perl's
 internal floats.  Therefore, we need to use Math::BigFloat which are
 slow but nearly seamlessly invisible in the application.
-.IP "\fBdouble\fR" 4
-.IX Item "double"
+.IP "\fBdouble\fR()" 4
+.IX Item "double()"
 A floating-point value \*(L"m x 2**e\*(R", where m is an integer whose absolute
-value is less than 253, and e is an integer between a\*^XX1074 and 971, inclusive.
+value is less than 253, and e is an integer between X1074 and 971, inclusive.
 .Sp
 The implementation does not limited the double in size, but maps it onto an
-precissionDecimal (Math::BigFloat) unless \f(CW\*(C`sloppy_float\*(C'\fR is set.
-.IP "\fBfloat\fR" 4
-.IX Item "float"
+precisionDecimal (Math::BigFloat) unless \f(CW\*(C`sloppy_float\*(C'\fR is set.
+.IP "\fBfloat\fR()" 4
+.IX Item "float()"
 A small floating-point value \*(L"m x 2**e\*(R" where m is an integer whose absolute
-value is less than 224, and e is an integer between a\*^XX149 and 104, inclusive.
+value is less than 224, and e is an integer between X149 and 104, inclusive.
 .Sp
 The implementation does not limited the float in size, but maps it onto an
-precissionDecimal (Math::BigFloat) unless \f(CW\*(C`sloppy_float\*(C'\fR is set.
-.IP "\fBprecissionDecimal\fR" 4
-.IX Item "precissionDecimal"
+precisionDecimal (Math::BigFloat) unless \f(CW\*(C`sloppy_float\*(C'\fR is set.
+.IP "\fBprecisionDecimal\fR()" 4
+.IX Item "precisionDecimal()"
 Floating point value that closely corresponds to the floating-point
-decimal datatypes described by \s-1IEEE/ANSI754\s0.
-.SS "Encoding"
+decimal datatypes described by \s-1IEEE/ANSI\-754\s0.
+.PP
+\fIEncoding\fR
 .IX Subsection "Encoding"
-.IP "\fBbase64Binary\fR" 4
-.IX Item "base64Binary"
+.IP "\fBbase64Binary\fR()" 4
+.IX Item "base64Binary()"
 In the hash, it will be kept as binary data.  In \s-1XML\s0, it will be
 base64 encoded.
-.IP "\fBhexBinary\fR" 4
-.IX Item "hexBinary"
+.IP "\fBhexBinary\fR()" 4
+.IX Item "hexBinary()"
 In the hash, it will be kept as binary data.  In \s-1XML\s0, it will be
 hex encoded, two hex digits per byte.
-.SS "Dates"
+.PP
+\fIDates\fR
 .IX Subsection "Dates"
-.IP "\fBdate\fR" 4
-.IX Item "date"
+.IP "\fBdate\fR()" 4
+.IX Item "date()"
 A day, represented in localtime as \f(CW\*(C`YYYY\-MM\-DD\*(C'\fR or \f(CW\*(C`YYYY\-MM\-DD[\-+]HH:mm\*(C'\fR.
 When a decimal value is passed, it is interpreted as \f(CW\*(C`time\*(C'\fR value in \s-1UTC\s0,
 and will be formatted as required.  When reading, the date string will
 not be parsed.
-.IP "\fBdateTime\fR" 4
-.IX Item "dateTime"
+.IP "\fBdateTime\fR()" 4
+.IX Item "dateTime()"
 A moment, represented as \*(L"date T time tz?\*(R", where date is \f(CW\*(C`YYYY\-MM\-DD\*(C'\fR,
 time is \f(CW\*(C`HH:MM:SS\*(C'\fR, and the time-zone tz is either \f(CW\*(C`\-HH:mm\*(C'\fR, \f(CW\*(C`+HH:mm\*(C'\fR,
 or \f(CW\*(C`Z\*(C'\fR for \s-1UTC\s0.  The time-zone is optional, but can better be used
@@ -283,47 +308,59 @@ because the default is not defined in the standard. For that reason,
 the \f(CW\*(C`dateTimeStamp\*(C'\fR got introduced, which requires the timezone.
 .Sp
 When a decimal value is passed, it is interpreted as \f(CW\*(C`time\*(C'\fR value in \s-1UTC\s0,
-and will be formatted as required. When reading, the date string will
-not be parsed.
-.IP "\fBdateTimeStamp\fR" 4
-.IX Item "dateTimeStamp"
+and will be formatted as required.  This will not work when the dateTime
+extended type has facet \f(CW\*(C`explicitTimeZome="prohibited"\*(C'\fR.
+.Sp
+When reading, the date string will not be parsed.  Parsing timestamps
+is quite expensive, therefore not preformed automatically.   You may try
+Time::Local in combination with Date::Parse, or Time::Piece::ISO.
+Be very careful with the timezone settings in your program, which effects
+\&\f(CW\*(C`mktime\*(C'\fR which is used by these implementations.  Best to run your
+application in \s-1GMT/UTC/UCT/Z\s0.
+.IP "\fBdateTimeStamp\fR()" 4
+.IX Item "dateTimeStamp()"
 Like \f(CW\*(C`dateTime\*(C'\fR, but with required timezone which means that it is
 better defined. All other handling is the same.
-.IP "\fBgDay\fR" 4
-.IX Item "gDay"
+.IP "\fBgDay\fR()" 4
+.IX Item "gDay()"
 Format \f(CW\*(C`\-\-\-12\*(C'\fR or \f(CW\*(C`\-\-\-12+09:00\*(C'\fR (12 days, optional time-zone)
-.IP "\fBgMonth\fR" 4
-.IX Item "gMonth"
+.IP "\fBgMonth\fR()" 4
+.IX Item "gMonth()"
 Format \f(CW\*(C`\-\-09\*(C'\fR or \f(CW\*(C`\-\-09+07:00\*(C'\fR (9 months, optional time-zone)
-.IP "\fBgMonthDay\fR" 4
-.IX Item "gMonthDay"
+.IP "\fBgMonthDay\fR()" 4
+.IX Item "gMonthDay()"
 Format \f(CW\*(C`\-\-09\-12\*(C'\fR or \f(CW\*(C`\-\-09\-12+07:00\*(C'\fR (9 months 12 days, optional time-zone)
-.IP "\fBgYear\fR" 4
-.IX Item "gYear"
+.IP "\fBgYear\fR()" 4
+.IX Item "gYear()"
 Format \f(CW2006\fR or \f(CW\*(C`2006+07:00\*(C'\fR (year 2006, optional time-zone)
-.IP "\fBgYearMonth\fR" 4
-.IX Item "gYearMonth"
+.IP "\fBgYearMonth\fR()" 4
+.IX Item "gYearMonth()"
 Format \f(CW\*(C`2006\-11\*(C'\fR or \f(CW\*(C`2006\-11+07:00\*(C'\fR (november 2006, optional time-zone)
-.IP "\fBtime\fR" 4
-.IX Item "time"
+.IP "\fBtime\fR()" 4
+.IX Item "time()"
 An moment in time, as can happen every day.
-.SS "Duration"
+.PP
+\fIDuration\fR
 .IX Subsection "Duration"
-.IP "\fBdayTimeDuration\fR" 4
-.IX Item "dayTimeDuration"
+.PP
+See \fIXML::Compile::Util::duration2secs()\fR to convert duration stamps
+into seconds.
+.IP "\fBdayTimeDuration\fR()" 4
+.IX Item "dayTimeDuration()"
 Format \f(CW\*(C`\-PnDTnHnMnS\*(C'\fR, where optional starting \f(CW\*(C`\-\*(C'\fR means negative.
 The \f(CW\*(C`P\*(C'\fR is obligatory, and the \f(CW\*(C`T\*(C'\fR indicates start of a time part.
 All other \f(CW\*(C`n[DHMS]\*(C'\fR are optional.
-.IP "\fBduration\fR" 4
-.IX Item "duration"
+.IP "\fBduration\fR()" 4
+.IX Item "duration()"
 Format \f(CW\*(C`\-PnYnMnDTnHnMnS\*(C'\fR, where optional starting \f(CW\*(C`\-\*(C'\fR means negative.
 The \f(CW\*(C`P\*(C'\fR is obligatory, and the \f(CW\*(C`T\*(C'\fR indicates start of a time part.
 All other \f(CW\*(C`n[YMDHMS]\*(C'\fR are optional.
-.IP "\fByearMonthDuration\fR" 4
-.IX Item "yearMonthDuration"
+.IP "\fByearMonthDuration\fR()" 4
+.IX Item "yearMonthDuration()"
 Format \f(CW\*(C`\-PnYnMn\*(C'\fR, where optional starting \f(CW\*(C`\-\*(C'\fR means negative.
 The \f(CW\*(C`P\*(C'\fR is obligatory, the \f(CW\*(C`n[YM]\*(C'\fR are optional.
-.SS "Strings"
+.PP
+\fIStrings\fR
 .IX Subsection "Strings"
 .IP "\fB\s-1ID\s0\fR(, \s-1IDREF\s0, \s-1IDREFS\s0)" 4
 .IX Item "ID(, IDREF, IDREFS)"
@@ -333,32 +370,31 @@ A label, reference to a label, or set of references.
 .IP "\fBNCName\fR(, \s-1ENTITY\s0, \s-1ENTITIES\s0)" 4
 .IX Item "NCName(, ENTITY, ENTITIES)"
 A name which contains no colons (a non-colonized name).
-.IP "\fBName\fR" 4
-.IX Item "Name"
+.IP "\fBName\fR()" 4
+.IX Item "Name()"
 .PD 0
-.IP "\fBlanguage\fR" 4
-.IX Item "language"
+.IP "\fBlanguage\fR()" 4
+.IX Item "language()"
 .PD
 An \s-1RFC3066\s0 language indicator.
-.IP "\fBnormalizedString\fR" 4
-.IX Item "normalizedString"
+.IP "\fBnormalizedString\fR()" 4
+.IX Item "normalizedString()"
 String where all sequence of white-spaces (including new-lines) are
 interpreted as one blank.  Blanks at beginning and the end of the
 string are ignored.
-.IP "\fBstring\fR" 4
-.IX Item "string"
+.IP "\fBstring\fR()" 4
+.IX Item "string()"
 (Usually utf8) string.
 .IP "\fBtoken\fR(, \s-1NMTOKEN\s0, \s-1NMTOKENS\s0)" 4
 .IX Item "token(, NMTOKEN, NMTOKENS)"
-.SS "\s-1URI\s0"
+.PP
+\fI\s-1URI\s0\fR
 .IX Subsection "URI"
-.PD 0
-.IP "\fB\s-1NOTATION\s0\fR" 4
-.IX Item "NOTATION"
-.PD
+.IP "\fB\s-1NOTATION\s0\fR()" 4
+.IX Item "NOTATION()"
 \&\s-1NOT\s0 \s-1IMPLEMENTED\s0, so treated as string.
-.IP "\fBQName\fR" 4
-.IX Item "QName"
+.IP "\fBQName\fR()" 4
+.IX Item "QName()"
 A qualified type name: a type name with optional prefix.  The prefix notation
 \&\f(CW\*(C`prefix:type\*(C'\fR will be translated into the \f(CW\*(C`{$ns}type\*(C'\fR notation.
 .Sp
@@ -367,57 +403,36 @@ in use on some other place in the message: the name-space declaration
 can not be added at run-time.  In other cases, you will get a run-time
 error.  Play with XML::Compile::Schema::compile(prefixes),
 predefining evenything what may be used, setting the \f(CW\*(C`used\*(C'\fR count to \f(CW1\fR.
-.IP "\fBanyURI\fR" 4
-.IX Item "anyURI"
+.IP "\fBanyURI\fR()" 4
+.IX Item "anyURI()"
 You may pass a string or, for instance, an \s-1URI\s0 object which will be
 stringified into an \s-1URI\s0.  When read, the data will not automatically
 be translated into an \s-1URI\s0 object: it may not be used that way.
-.SS "only in 1999 and 2000/10 schemas"
+.PP
+\fIonly in 1999 and 2000/10 schemas\fR
 .IX Subsection "only in 1999 and 2000/10 schemas"
-.IP "\fBbinary\fR" 4
-.IX Item "binary"
+.IP "\fBbinary\fR()" 4
+.IX Item "binary()"
 Perl strings can contain any byte, also nul-strings, so can
 contain any sequence of bits.  Limited to byte length.
-.IP "\fBtimeDuration\fR" 4
-.IX Item "timeDuration"
+.IP "\fBtimeDuration\fR()" 4
+.IX Item "timeDuration()"
 \&'Old' name for \fIduration()\fR.
-.IP "\fBuriReference\fR" 4
-.IX Item "uriReference"
+.IP "\fBuriReference\fR()" 4
+.IX Item "uriReference()"
 Probably the same rules as \fIanyURI()\fR.
-.PP
-The functions named in this chapter are all used at compile-time
-by the translator.  At that moment, they will be placed in the
-kind-of opcode tree which will process the data at run-time.
-You \fBcannot call\fR these functions yourself.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

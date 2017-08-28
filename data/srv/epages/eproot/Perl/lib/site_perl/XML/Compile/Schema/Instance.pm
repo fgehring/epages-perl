@@ -1,23 +1,24 @@
-# Copyrights 2006-2011 by Mark Overmeer.
+# Copyrights 2006-2016 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 
 use warnings;
 use strict;
 
 package XML::Compile::Schema::Instance;
 use vars '$VERSION';
-$VERSION = '1.22';
+$VERSION = '1.54';
 
 
 use Log::Report 'xml-compile', syntax => 'SHORT';
 use XML::Compile::Schema::Specs;
 use XML::Compile::Util qw/pack_type unpack_type/;
+use Scalar::Util       qw/weaken/;
 
 my @defkinds = qw/element attribute simpleType complexType
                   attributeGroup group/;
-my %defkinds = map { ($_ => 1) } @defkinds;
+my %defkinds = map +($_ => 1), @defkinds;
 
 
 sub new($@)
@@ -58,7 +59,7 @@ sub sgs() { shift->{sgs} }
 sub type($) { $_[0]->{types}{$_[1]} }
 
 
-sub element($) { $_[0]->{elements}{$_[1]} }
+sub element($) { $_[0]->{element}{$_[1]} }
 
 
 sub elements()        { keys %{shift->{element}} }
@@ -72,7 +73,7 @@ sub complexTypes()    { keys %{shift->{complexType}} }
 sub types()           { ($_[0]->simpleTypes, $_[0]->complexTypes) }
 
 
-my %skip_toplevel = map { ($_ => 1) } qw/annotation notation redefine/;
+my %skip_toplevel = map +($_ => 1), qw/annotation notation redefine/;
 
 sub _collectTypes($$)
 {   my ($self, $schema, $args) = @_;
@@ -89,9 +90,16 @@ sub _collectTypes($$)
 
         $self->{xsi} = $def->{uri_xsi};
     }
-    my $tns = $self->{tns} = $args->{target_namespace}
-      || $schema->getAttribute('targetNamespace')
-      || '';
+
+    my $tns;
+    if($tns = $args->{target_namespace})
+    {   $schema->removeAttribute('targetNamespace');
+        $schema->setAttribute(targetNamespace => $tns);
+    }
+    else
+    {   $tns = $schema->getAttribute('targetNamespace') || '';
+    }
+    $self->{tns} = $tns;
 
     $self->{efd} = $args->{element_form_default}
       || $schema->getAttribute('elementFormDefault')
@@ -105,6 +113,7 @@ sub _collectTypes($$)
     $self->{types} = {};
 
     $self->{schema} = $schema;
+    weaken($self->{schema});
 
   NODE:
     foreach my $node ($schema->childNodes)
@@ -221,19 +230,18 @@ sub find($$)
      my %info = (type => $kind, node => $node, full => $full);
      @info{'ns', 'name'} = unpack_type $full;
 
-#    weaken($info->{schema});
      $self->{$kind}{$full} = \%info;
 
      my $abstract    = $node->getAttribute('abstract') || '';
-     $info{abstract} =  $abstract eq 'true' || $abstract eq '1';
+     $info{abstract} = $abstract eq 'true' || $abstract eq '1';
 
      my $final       = $node->getAttribute('final') || '';
-     $info{final}    =  $final eq 'true' || $final eq '1';
+     $info{final}    = $final eq 'true' || $final eq '1';
 
      my $local = $node->localName;
-     if($local eq 'element')      { $info{efd} = $node->getAttribute('form') }
-     elsif($local eq 'attribute') { $info{afd} = $node->getAttribute('form') }
-     $info{efd} ||= $self->{efd};
+        if($local eq 'element')  { $info{efd} = $node->getAttribute('form') }
+     elsif($local eq 'attribute'){ $info{afd} = $node->getAttribute('form') }
+     $info{efd} ||= $self->{efd};   # both needed for nsContext
      $info{afd} ||= $self->{afd};
      \%info;
 }

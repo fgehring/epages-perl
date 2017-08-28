@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::Simple 3"
-.TH XML::LibXML::Simple 3 "2011-07-11" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::Simple 3 "2016-04-12" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -139,17 +139,23 @@ XML::LibXML::Simple \- XML::LibXML clone of XML::Simple::XMLin()
 .Ve
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
+.Vb 1
+\&  my $xml  = ...;  # filename, fh, string, or XML::LibXML\-node
+.Ve
+.PP
+Imperative:
+.PP
 .Vb 2
 \&  use XML::LibXML::Simple   qw(XMLin);
-\&  my $xml = XMLin <xml file or string>, OPTIONS;
+\&  my $data = XMLin $xml, %options;
 .Ve
 .PP
 Or the Object Oriented way:
 .PP
 .Vb 3
 \&  use XML::LibXML::Simple   ();
-\&  my $xs = XML::Simple\->new(OPTIONS);
-\&  my $ref = $xs\->XMLin(<xml file or string>, OPTIONS);
+\&  my $xs   = XML::LibXML::Simple\->new(%options);
+\&  my $data = $xs\->XMLin($xml, %options);
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
@@ -160,52 +166,31 @@ uses plain Perl or \s-1SAX\s0 parsers.
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.IP "XML::LibXML::Simple\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::LibXML::Simple->new(OPTIONS)"
+.IP "XML::LibXML::Simple\->\fBnew\fR(%options)" 4
+.IX Item "XML::LibXML::Simple->new(%options)"
 Instantiate an object, which can be used to call \fIXMLin()\fR on.  You can
-provide \s-1OPTIONS\s0 to this constructor (to be reused for each call to XMLin)
+provide \f(CW%options\fR to this constructor (to be reused for each call to XMLin)
 and with each call of XMLin (to be used once)
 .Sp
-For XML-DATA and descriptions of the \s-1OPTIONS\s0 see the \*(L"\s-1DETAILS\s0\*(R"
+For descriptions of the \f(CW%options\fR see the \*(L"\s-1DETAILS\s0\*(R"
 section of this manual page.
 .SS "Translators"
 .IX Subsection "Translators"
-.ie n .IP "$obj\->\fBXMLin\fR(XML-DATA, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBXMLin\fR(XML-DATA, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->XMLin(XML-DATA, OPTIONS)"
-For XML-DATA and descriptions of the \s-1OPTIONS\s0 see the \*(L"\s-1DETAILS\s0\*(R"
+.ie n .IP "$obj\->\fBXMLin\fR($xmldata, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBXMLin\fR($xmldata, \f(CW%options\fR)" 4
+.IX Item "$obj->XMLin($xmldata, %options)"
+For \f(CW$xmldata\fR and descriptions of the \f(CW%options\fR see the \*(L"\s-1DETAILS\s0\*(R"
 section of this manual page.
 .SH "FUNCTIONS"
 .IX Header "FUNCTIONS"
 The functions \f(CW\*(C`XMLin\*(C'\fR (exported implictly) and \f(CW\*(C`xml_in\*(C'\fR
-(exported on request) simply call \f(CW\*(C`XML::Simple\->new\->XMLin()\*(C'\fR
+(exported on request) simply call \f(CW\*(C`<XML::LibXML::Simple\-\*(C'\fRnew\->\fIXMLin()\fR >>
 with the provided parameters.
 .SH "DETAILS"
 .IX Header "DETAILS"
-.SS "Differences with XML::Simple"
-.IX Subsection "Differences with XML::Simple"
-In general, the output and the options are equivalent, although this
-module has some differences with XML::Simple to be aware of.
-.IP "only \fIXMLin()\fR is supported" 4
-.IX Item "only XMLin() is supported"
-If you want to write \s-1XML\s0 then use a schema (for instance with
-XML::Compile). Do not attempt to create \s-1XML\s0 by hand!  If you still
-think you need it, then have a look at \fIXMLout()\fR as implemented by
-XML::Simple or any of a zillion template systems.
-.ie n .IP "no ""variables"" option" 4
-.el .IP "no ``variables'' option" 4
-.IX Item "no variables option"
-\&\s-1IMO\s0, you should use a templating system if you want variables filled-in
-in the input: it is not a task for this module.
-.IP "empty elements are not removed" 4
-.IX Item "empty elements are not removed"
-Being empty has a meaning which should not be ignored.
-.IP "ForceArray options" 4
-.IX Item "ForceArray options"
-There are a few small differences in the result of the \f(CW\*(C`forcearray\*(C'\fR option,
-because XML::Simple seems to behave inconsequently.
-.SS "Parameter XML-DATA"
-.IX Subsection "Parameter XML-DATA"
+.ie n .SS "Parameter $xmldata"
+.el .SS "Parameter \f(CW$xmldata\fP"
+.IX Subsection "Parameter $xmldata"
 As first parameter to \fIXMLin()\fR must provide the \s-1XML\s0 message to be
 translated into a Perl structure.  Choose one of the following:
 .IP "A filename" 4
@@ -215,38 +200,56 @@ file in each directory in the SearchPath (see \s-1OPTIONS\s0 below) and in the
 current directory.  eg:
 .Sp
 .Vb 1
-\&  $ref = XMLin(\*(Aq/etc/params.xml\*(Aq);
+\&  $data = XMLin(\*(Aq/etc/params.xml\*(Aq, %options);
 .Ve
+.IP "A dash  (\-)" 4
+.IX Item "A dash  (-)"
+Parse from \s-1STDIN\s0.
 .Sp
-Note, the filename \f(CW\*(C`\-\*(C'\fR (dash) can be used to parse from \s-1STDIN\s0.
+.Vb 1
+\&  $data = XMLin(\*(Aq\-\*(Aq, %options);
+.Ve
 .IP "undef" 4
 .IX Item "undef"
+[deprecated]
 If there is no \s-1XML\s0 specifier, \f(CW\*(C`XMLin()\*(C'\fR will check the script directory and
 each of the SearchPath directories for a file with the same name as the script
 but with the extension '.xml'.  Note: if you wish to specify options, you
 must specify the value 'undef'.  eg:
 .Sp
 .Vb 1
-\&  $ref = XMLin(undef, ForceArray => 1);
+\&  $data = XMLin(undef, ForceArray => 1);
 .Ve
+.Sp
+This feature is available for backwards compatibility with XML::Simple,
+but quite sensitive.  You can easily hit the wrong xml file as input.
+Please do not use it: always use an explicit filename.
 .IP "A string of \s-1XML\s0" 4
 .IX Item "A string of XML"
 A string containing \s-1XML\s0 (recognised by the presence of '<' and '>' characters)
 will be parsed directly.  eg:
 .Sp
 .Vb 1
-\&  $ref = XMLin(\*(Aq<opt username="bob" password="flurp" />\*(Aq);
+\&  $data = XMLin(\*(Aq<opt username="bob" password="flurp" />\*(Aq, %options);
 .Ve
 .IP "An IO::Handle object" 4
 .IX Item "An IO::Handle object"
-An IO::Handle object will be read to \s-1EOF\s0 and its contents parsed. eg:
+In this case, XML::LibXML::Parser will read the \s-1XML\s0 data directly from
+the provided file.
 .Sp
 .Vb 2
-\&  $fh = IO::File\->new(\*(Aq/etc/params.xml\*(Aq);
-\&  $ref = XMLin($fh);
+\&  # $fh = IO::File\->new(\*(Aq/etc/params.xml\*(Aq) or die;
+\&  open my $fh, \*(Aq<:encoding(utf8)\*(Aq, \*(Aq/etc/params.xml\*(Aq or die;
+\&
+\&  $data = XMLin($fh, %options);
 .Ve
-.SS "\s-1OPTIONS\s0"
-.IX Subsection "OPTIONS"
+.IP "An XML::LibXML::Document or ::Element" 4
+.IX Item "An XML::LibXML::Document or ::Element"
+[Not available in XML::Simple] When you have a pre-parsed XML::LibXML
+node, you can pass that.
+.ie n .SS "Parameter %options"
+.el .SS "Parameter \f(CW%options\fP"
+.IX Subsection "Parameter %options"
 XML::LibXML::Simple supports most options defined by XML::Simple, so
 the interface is quite compatible.  Minor changes apply.  This explanation
 is extracted from the XML::Simple manual-page.
@@ -267,19 +270,19 @@ When text content is parsed to a hash value, this option let's you specify a
 name for the hash key to override the default 'content'.  So for example:
 .Sp
 .Vb 1
-\&  XMLin(\*(Aq<opt one="1">Text</opt>\*(Aq, ContentKey => \*(Aqtext\*(Aq)
+\&  XMLin(\*(Aq<opt one="1">Two</opt>\*(Aq, ContentKey => \*(Aqtext\*(Aq)
 .Ve
 .Sp
 will parse to:
 .Sp
 .Vb 1
-\&  { \*(Aqone\*(Aq => 1, \*(Aqtext\*(Aq => \*(AqText\*(Aq }
+\&  { one => 1, text => \*(AqTwo\*(Aq }
 .Ve
 .Sp
 instead of:
 .Sp
 .Vb 1
-\&  { \*(Aqone\*(Aq => 1, \*(Aqcontent\*(Aq => \*(AqText\*(Aq }
+\&  { one => 1, content => \*(AqTwo\*(Aq }
 .Ve
 .Sp
 You can also prefix your selected key name with a '\-' character to have 
@@ -299,9 +302,9 @@ will parse to:
 .Sp
 .Vb 6
 \&  {
-\&    \*(Aqitem\*(Aq => {
-\&      \*(Aqone\*(Aq =>  \*(AqFirst\*(Aq
-\&      \*(Aqtwo\*(Aq =>  \*(AqSecond\*(Aq
+\&     item => {
+\&      one =>  \*(AqFirst\*(Aq
+\&      two =>  \*(AqSecond\*(Aq
 \&    }
 \&  }
 .Ve
@@ -310,9 +313,9 @@ rather than this (without the '\-'):
 .Sp
 .Vb 6
 \&  {
-\&    \*(Aqitem\*(Aq => {
-\&      \*(Aqone\*(Aq => { \*(Aqcontent\*(Aq => \*(AqFirst\*(Aq }
-\&      \*(Aqtwo\*(Aq => { \*(Aqcontent\*(Aq => \*(AqSecond\*(Aq }
+\&    item => {
+\&      one => { content => \*(AqFirst\*(Aq }
+\&      two => { content => \*(AqSecond\*(Aq }
 \&    }
 \&  }
 .Ve
@@ -330,20 +333,14 @@ as arrays even when there is only one.  Eg, with ForceArray enabled, this
 .Sp
 would parse to this:
 .Sp
-.Vb 5
-\&    {
-\&      \*(Aqname\*(Aq => [
-\&                  \*(Aqvalue\*(Aq
-\&                ]
-\&    }
+.Vb 1
+\&    { name => [ \*(Aqvalue\*(Aq ] }
 .Ve
 .Sp
 instead of this (the default):
 .Sp
-.Vb 3
-\&    {
-\&      \*(Aqname\*(Aq => \*(Aqvalue\*(Aq
-\&    }
+.Vb 1
+\&    { name => \*(Aqvalue\*(Aq }
 .Ve
 .Sp
 This option is especially useful if the data structure is likely to be written
@@ -385,8 +382,8 @@ will parse to:
 .Sp
 .Vb 4
 \&  {
-\&    \*(Aqx\*(Aq => {           \*(Aqcontent\*(Aq => \*(Aqtext1\*(Aq },
-\&    \*(Aqy\*(Aq => { \*(Aqa\*(Aq => 2, \*(Aqcontent\*(Aq => \*(Aqtext2\*(Aq }
+\&    x => {         content => \*(Aqtext1\*(Aq },
+\&    y => { a => 2, content => \*(Aqtext2\*(Aq }
 \&  }
 .Ve
 .Sp
@@ -394,8 +391,8 @@ instead of:
 .Sp
 .Vb 4
 \&  {
-\&    \*(Aqx\*(Aq => \*(Aqtext1\*(Aq,
-\&    \*(Aqy\*(Aq => { \*(Aqa\*(Aq => 2, \*(Aqcontent\*(Aq => \*(Aqtext2\*(Aq }
+\&    x => \*(Aqtext1\*(Aq,
+\&    y => { \*(Aqa\*(Aq => 2, \*(Aqcontent\*(Aq => \*(Aqtext2\*(Aq }
 \&  }
 .Ve
 .IP "GroupTags => { grouping tag => grouped tag } \fI# handy\fR" 4
@@ -418,8 +415,8 @@ Would normally be read into a structure like this:
 .Vb 5
 \&  {
 \&    searchpath => {
-\&                    dir => [ \*(Aq/usr/bin\*(Aq, \*(Aq/usr/local/bin\*(Aq, \*(Aq/usr/X11/bin\*(Aq ]
-\&                  }
+\&       dir => [ \*(Aq/usr/bin\*(Aq, \*(Aq/usr/local/bin\*(Aq, \*(Aq/usr/X11/bin\*(Aq ]
+\&    }
 \&  }
 .Ve
 .Sp
@@ -443,6 +440,52 @@ attributes or elements other than the grouped element.
 You can specify multiple 'grouping element' to 'grouped element' mappings in
 the same hashref.  If this option is combined with \f(CW\*(C`KeyAttr\*(C'\fR, the array
 folding will occur first and then the grouped element names will be eliminated.
+.IP "HookNodes => \s-1CODE\s0" 4
+.IX Item "HookNodes => CODE"
+Select document nodes to apply special tricks.
+Introduced in [0.96], not available in XML::Simple.
+.Sp
+When this option is provided, the \s-1CODE\s0 will be called once the \s-1XML\s0 \s-1DOM\s0
+tree is ready to get transformed into Perl.  Your \s-1CODE\s0 should return
+either \f(CW\*(C`undef\*(C'\fR (nothing to do) or a \s-1HASH\s0 which maps values of
+unique_key (see XML::LibXML::Node method \f(CW\*(C`unique_key\*(C'\fR onto \s-1CODE\s0
+references to be called.
+.Sp
+Once the translater from \s-1XML\s0 into Perl reaches a selected node, it will
+call your routine specific for that node.  That triggering node found
+is the only parameter.  When you return \f(CW\*(C`undef\*(C'\fR, the node will not be
+found in the final result.  You may return any data (even the node itself)
+which will be included in the final result as is, under the name of the
+original node.
+.Sp
+Example:
+.Sp
+.Vb 1
+\&   my $out = XMLin $file, HookNodes => \e&protect_html;
+\&
+\&   sub protect_html($$)
+\&   {   # $obj is the instantated XML::Compile::Simple object
+\&       # $xml is a XML::LibXML::Element to get transformed
+\&       my ($obj, $xml) = @_;
+\&
+\&       my %hooks;    # collects the table of hooks
+\&
+\&       # do an xpath search for HTML
+\&       my $xpc   = XML::LibXML::XPathContext\->new($xml);
+\&       my @nodes = $xpc\->findNodes(...); #XXX
+\&       @nodes or return undef;
+\&
+\&       my $as_text = sub { $_[0]\->toString(0) };  # as text
+\&       #  $as_node = sub { $_[0] };               # as node
+\&       #  $skip    = sub { undef };               # not at all
+\&
+\&       # the same behavior for all xpath nodes, in this example
+\&       $hook{$_\->unique_key} = $as_text
+\&           for @nodes;
+\& 
+\&       \e%hook;
+\&   }
+.Ve
 .IP "KeepRoot => 1 \fI# handy\fR" 4
 .IX Item "KeepRoot => 1 # handy"
 In its attempt to return a data structure free of superfluous detail and
@@ -474,34 +517,28 @@ For example, this \s-1XML:\s0
 .Sp
 would, by default, parse to this:
 .Sp
-.Vb 12
+.Vb 10
 \&    {
-\&      \*(Aquser\*(Aq => [
-\&                  {
-\&                    \*(Aqlogin\*(Aq => \*(Aqgrep\*(Aq,
-\&                    \*(Aqfullname\*(Aq => \*(AqGary R Epstein\*(Aq
-\&                  },
-\&                  {
-\&                    \*(Aqlogin\*(Aq => \*(Aqstty\*(Aq,
-\&                    \*(Aqfullname\*(Aq => \*(AqSimon T Tyson\*(Aq
-\&                  }
-\&                ]
+\&      user => [
+\&         { login    => \*(Aqgrep\*(Aq,
+\&           fullname => \*(AqGary R Epstein\*(Aq
+\&         },
+\&         { login    => \*(Aqstty\*(Aq,
+\&           fullname => \*(AqSimon T Tyson\*(Aq
+\&         }
+\&      ]
 \&    }
 .Ve
 .Sp
 If the option 'KeyAttr => \*(L"login\*(R"' were used to specify that the 'login'
 attribute is a key, the same \s-1XML\s0 would parse to:
 .Sp
-.Vb 10
+.Vb 6
 \&    {
-\&      \*(Aquser\*(Aq => {
-\&                  \*(Aqstty\*(Aq => {
-\&                              \*(Aqfullname\*(Aq => \*(AqSimon T Tyson\*(Aq
-\&                            },
-\&                  \*(Aqgrep\*(Aq => {
-\&                              \*(Aqfullname\*(Aq => \*(AqGary R Epstein\*(Aq
-\&                            }
-\&                }
+\&      user => {
+\&         stty => { fullname => \*(AqSimon T Tyson\*(Aq },
+\&         grep => { fullname => \*(AqGary R Epstein\*(Aq }
+\&      }
 \&    }
 .Ve
 .Sp
@@ -541,16 +578,16 @@ to parse to this data structure:
 .Sp
 .Vb 12
 \&    {
-\&      \*(Aquser\*(Aq => {
-\&                  \*(Aqstty\*(Aq => {
-\&                              \*(Aqfullname\*(Aq => \*(AqSimon T Tyson\*(Aq,
-\&                              \*(Aqlogin\*(Aq    => \*(Aqstty\*(Aq
-\&                            },
-\&                  \*(Aqgrep\*(Aq => {
-\&                              \*(Aqfullname\*(Aq => \*(AqGary R Epstein\*(Aq,
-\&                              \*(Aqlogin\*(Aq    => \*(Aqgrep\*(Aq
-\&                            }
-\&                }
+\&      user => {
+\&         stty => {
+\&            fullname => \*(AqSimon T Tyson\*(Aq,
+\&            login    => \*(Aqstty\*(Aq
+\&         },
+\&         grep => {
+\&            fullname => \*(AqGary R Epstein\*(Aq,
+\&            login    => \*(Aqgrep\*(Aq
+\&         }
+\&      }
 \&    }
 .Ve
 .Sp
@@ -561,16 +598,16 @@ A '\-' prefix would produce this result:
 .Sp
 .Vb 12
 \&    {
-\&      \*(Aquser\*(Aq => {
-\&                  \*(Aqstty\*(Aq => {
-\&                              \*(Aqfullname\*(Aq => \*(AqSimon T Tyson\*(Aq,
-\&                              \*(Aq\-login\*(Aq    => \*(Aqstty\*(Aq
-\&                            },
-\&                  \*(Aqgrep\*(Aq => {
-\&                              \*(Aqfullname\*(Aq => \*(AqGary R Epstein\*(Aq,
-\&                              \*(Aq\-login\*(Aq    => \*(Aqgrep\*(Aq
-\&                            }
-\&                }
+\&      user => {
+\&         stty => {
+\&            fullname => \*(AqSimon T Tyson\*(Aq,
+\&            \-login   => \*(Aqstty\*(Aq
+\&         },
+\&         grep => {
+\&            fullname => \*(AqGary R Epstein\*(Aq,
+\&            \-login    => \*(Aqgrep\*(Aq
+\&         }
+\&      }
 \&    }
 .Ve
 .IP "NoAttr => 1 \fI# handy\fR" 4
@@ -581,16 +618,20 @@ When used with \f(CW\*(C`XMLin()\*(C'\fR, any attributes in the \s-1XML\s0 will 
 This option controls how whitespace in text content is handled.  Recognised
 values for the option are:
 .RS 4
-.IP "0" 4
+.ie n .IP """0""" 4
+.el .IP "``0''" 4
+.IX Item "0"
 (default) whitespace is passed through unaltered (except of course for the
 normalisation of whitespace in attribute values which is mandated by the \s-1XML\s0
 recommendation)
-.IP "1" 4
+.ie n .IP """1""" 4
+.el .IP "``1''" 4
 .IX Item "1"
 whitespace is normalised in any value used as a hash key (normalising means
 removing leading and trailing whitespace and collapsing sequences of whitespace
 characters to a single space)
-.IP "2" 4
+.ie n .IP """2""" 4
+.el .IP "``2''" 4
 .IX Item "2"
 whitespace is normalised in all text content
 .RE
@@ -720,8 +761,8 @@ it returns the following data structure:
 .PP
 .Vb 4
 \&    {
-\&      \*(Aqusername\*(Aq => \*(Aqtestuser\*(Aq,
-\&      \*(Aqpassword\*(Aq => \*(Aqfrodo\*(Aq
+\&      username => \*(Aqtestuser\*(Aq,
+\&      password => \*(Aqfrodo\*(Aq
 \&    }
 .Ve
 .PP
@@ -754,21 +795,16 @@ Repeated nested elements are represented as anonymous arrays:
 \&    </opt>
 \&
 \&    {
-\&      \*(Aqperson\*(Aq => [
-\&                    {
-\&                      \*(Aqemail\*(Aq => [
-\&                                   \*(Aqjoe@smith.com\*(Aq,
-\&                                   \*(Aqjsmith@yahoo.com\*(Aq
-\&                                 ],
-\&                      \*(Aqfirstname\*(Aq => \*(AqJoe\*(Aq,
-\&                      \*(Aqlastname\*(Aq => \*(AqSmith\*(Aq
-\&                    },
-\&                    {
-\&                      \*(Aqemail\*(Aq => \*(Aqbob@smith.com\*(Aq,
-\&                      \*(Aqfirstname\*(Aq => \*(AqBob\*(Aq,
-\&                      \*(Aqlastname\*(Aq => \*(AqSmith\*(Aq
-\&                    }
-\&                  ]
+\&      person => [
+\&        { email     => [ \*(Aqjoe@smith.com\*(Aq, \*(Aqjsmith@yahoo.com\*(Aq ],
+\&          firstname => \*(AqJoe\*(Aq,
+\&          lastname  => \*(AqSmith\*(Aq
+\&        },
+\&        { email     => \*(Aqbob@smith.com\*(Aq,
+\&          firstname => \*(AqBob\*(Aq,
+\&          lastname  => \*(AqSmith\*(Aq
+\&        }
+\&      ]
 \&    }
 .Ve
 .PP
@@ -784,20 +820,20 @@ option):
 \&    </opt>
 \&
 \&    {
-\&      \*(Aqperson\*(Aq => {
-\&                    \*(Aqjbloggs\*(Aq => {
-\&                                   \*(Aqfirstname\*(Aq => \*(AqJoe\*(Aq,
-\&                                   \*(Aqlastname\*(Aq => \*(AqBloggs\*(Aq
-\&                                 },
-\&                    \*(Aqtsmith\*(Aq => {
-\&                                  \*(Aqfirstname\*(Aq => \*(AqTom\*(Aq,
-\&                                  \*(Aqlastname\*(Aq => \*(AqSmith\*(Aq
-\&                                },
-\&                    \*(Aqjsmith\*(Aq => {
-\&                                  \*(Aqfirstname\*(Aq => \*(AqJoe\*(Aq,
-\&                                  \*(Aqlastname\*(Aq => \*(AqSmith\*(Aq
-\&                                }
-\&                  }
+\&      person => {
+\&         jbloggs => {
+\&            firstname => \*(AqJoe\*(Aq,
+\&            lastname  => \*(AqBloggs\*(Aq
+\&         },
+\&         tsmith  => {
+\&            firstname => \*(AqTom\*(Aq,
+\&            lastname  => \*(AqSmith\*(Aq
+\&         },
+\&         jsmith => {
+\&            firstname => \*(AqJoe\*(Aq,
+\&            lastname => \*(AqSmith\*(Aq
+\&         }
+\&      }
 \&    }
 .Ve
 .PP
@@ -812,14 +848,11 @@ The <anon> tag can be used to form anonymous arrays:
 \&    </opt>
 \&
 \&    {
-\&      \*(Aqhead\*(Aq => [
-\&                  [ \*(AqCol 1\*(Aq, \*(AqCol 2\*(Aq, \*(AqCol 3\*(Aq ]
-\&                ],
-\&      \*(Aqdata\*(Aq => [
-\&                  [ \*(AqR1C1\*(Aq, \*(AqR1C2\*(Aq, \*(AqR1C3\*(Aq ],
-\&                  [ \*(AqR2C1\*(Aq, \*(AqR2C2\*(Aq, \*(AqR2C3\*(Aq ],
-\&                  [ \*(AqR3C1\*(Aq, \*(AqR3C2\*(Aq, \*(AqR3C3\*(Aq ]
-\&                ]
+\&      head => [ [ \*(AqCol 1\*(Aq, \*(AqCol 2\*(Aq, \*(AqCol 3\*(Aq ] ],
+\&      data => [ [ \*(AqR1C1\*(Aq, \*(AqR1C2\*(Aq, \*(AqR1C3\*(Aq ],
+\&                [ \*(AqR2C1\*(Aq, \*(AqR2C2\*(Aq, \*(AqR2C3\*(Aq ],
+\&                [ \*(AqR3C1\*(Aq, \*(AqR3C2\*(Aq, \*(AqR3C3\*(Aq ]
+\&              ]
 \&    }
 .Ve
 .PP
@@ -853,8 +886,8 @@ will be represented as a hashref with the text content in the 'content' key
 \&  </opt>
 \&
 \&  {
-\&    \*(Aqone\*(Aq => \*(Aqfirst\*(Aq,
-\&    \*(Aqtwo\*(Aq => { \*(Aqattr\*(Aq => \*(Aqvalue\*(Aq, \*(Aqcontent\*(Aq => \*(Aqsecond\*(Aq }
+\&    one => \*(Aqfirst\*(Aq,
+\&    two => { attr => \*(Aqvalue\*(Aq, content => \*(Aqsecond\*(Aq }
 \&  }
 .Ve
 .PP
@@ -862,16 +895,47 @@ Mixed content (elements which contain both text content and nested elements)
 will be not be represented in a useful way \- element order and significant
 whitespace will be lost.  If you need to work with mixed content, then
 XML::Simple is not the right tool for your job \- check out the next section.
+.SS "Differences to XML::Simple"
+.IX Subsection "Differences to XML::Simple"
+In general, the output and the options are equivalent, although this
+module has some differences with XML::Simple to be aware of.
+.IP "only \fIXMLin()\fR is supported" 4
+.IX Item "only XMLin() is supported"
+If you want to write \s-1XML\s0 then use a schema (for instance with
+XML::Compile). Do not attempt to create \s-1XML\s0 by hand!  If you still
+think you need it, then have a look at \fIXMLout()\fR as implemented by
+XML::Simple or any of a zillion template systems.
+.ie n .IP "no ""variables"" option" 4
+.el .IP "no ``variables'' option" 4
+.IX Item "no variables option"
+\&\s-1IMO\s0, you should use a templating system if you want variables filled-in
+in the input: it is not a task for this module.
+.IP "empty elements are not removed" 4
+.IX Item "empty elements are not removed"
+Being empty has a meaning which should not be ignored.
+.IP "ForceArray options" 4
+.IX Item "ForceArray options"
+There are a few small differences in the result of the \f(CW\*(C`forcearray\*(C'\fR option,
+because XML::Simple seems to behave inconsequently.
+.IP "hooks" 4
+.IX Item "hooks"
+XML::Simple does not support hooks.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-XML::Compile for processing \s-1XML\s0 when a schema is available
+XML::Compile for processing \s-1XML\s0 when a schema is available.  When you
+have a schema, the data and structure of your message get validated.
 .PP
-XML::Simple, the \s-1SAX\s0 and original implementation
-.SH "COPYRIGHT"
-.IX Header "COPYRIGHT"
+XML::Simple, the original implementation which interface is followed
+as closely as possible.
+.SH "COPYRIGHTS"
+.IX Header "COPYRIGHTS"
 The interface design and large parts of the documentation were taken
 from the XML::Simple module, written by
 Grant McLean <grantm@cpan.org>
 .PP
-This version was composed by Mark Overmeer \fIperl@overmeer.net\fR
-See http://perl.overmeer.net/xml\-libxml\-simple <http://perl.overmeer.net/xml-libxml-simple>
+Copyrights of the perl code and the related documentation by
+2008\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
+.PP
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+See \fIhttp://www.perl.com/perl/misc/Artistic.html\fR

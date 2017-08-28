@@ -1,13 +1,14 @@
-# Copyrights 2006-2011 by Mark Overmeer.
+# Copyrights 2006-2016 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 use warnings;
 use strict;
+no warnings 'recursion';  # trees can be quite deep
 
 package XML::Compile::Translate;
 use vars '$VERSION';
-$VERSION = '1.22';
+$VERSION = '1.54';
 
 
 # Errors are either in _class 'usage': called with request
@@ -19,7 +20,8 @@ use List::Util  qw/first max/;
 use XML::Compile::Schema::Specs;
 use XML::Compile::Schema::BuiltInFacets;
 use XML::Compile::Schema::BuiltInTypes qw/%builtin_types/;
-use XML::Compile::Util      qw/pack_type unpack_type type_of_node SCHEMA2001/;
+use XML::Compile::Util      qw/pack_type unpack_type type_of_node SCHEMA2001
+   unpack_id/;
 use XML::Compile::Iterator  ();
 
 my %translators =
@@ -71,12 +73,13 @@ sub register($)
 # may disappear, so not documented publicly (yet)
 sub actsAs($) { panic "not implemented" }
 
+#--------
 
 sub compile($@)
 {   my ($self, $item, %args) = @_;
-    @$self{keys %args} = values %args;  # dirty
+    @$self{keys %args} = values %args;  # dirty.  Always all the same fields
 
-    my $path   = $item;
+    my $path   = $self->prefixed($item, 1) || $item;
     ref $item
         and panic "expecting an item as point to start at $path";
 
@@ -101,7 +104,7 @@ sub compile($@)
     }
 
     delete $self->{_created};
-    my $produce = $self->topLevel($path, $item);
+    my $produce = $self->topLevel($path, $item, 1);
     delete $self->{_created};
 
     my $in = $self->{include_namespaces}
@@ -153,30 +156,50 @@ sub extendAttrs($@)
 
 sub isTrue($) { $_[1] eq '1' || $_[1] eq 'true' }
 
-# This sub cannot set-up the context itself, because changing the
-# context requires the use of local() on those values.
+# Find the namespace use details of a certain top-level element or
+# attribute.
 sub nsContext($)
-{   my ($self, $type) = @_;
+{   my ($self, $def) = @_;
+    $def or return {};
 
-    my $elems_qual = $type->{efd} eq 'qualified';
+    my $tns      = $def->{ns};
+
+    # top elements are to be qualified unless there is no targetNamespace
+    my %context  = (tns => $tns, qual_top => ($tns ? 1 : 0));
+
+    my $el_qual  = $def->{efd} eq 'qualified';
     if(exists $self->{elements_qualified})
     {   my $qual = $self->{elements_qualified} || 0;
-        $elems_qual = $qual eq 'ALL' ? 1 : $qual eq 'NONE' ? 0 : $qual;
+        if($qual eq 'TOP')
+        {   $tns or error __x"application requires that element `{name}' has a targetNamespace"
+              , name => $def->{full};
+        }
+        else
+        {   $el_qual = $qual eq 'ALL' ? 1 : $qual eq 'NONE' ? 0 : $qual;
+        }
+        $context{qual_top} = 0 if $qual eq 'NONE';
     }
+    $context{qual_elem}  = $el_qual;
 
-    my $attrs_qual = $type->{afd} eq 'qualified';
+    my $at_qual  = $def->{afd} eq 'qualified';
     if(exists $self->{attributes_qualified})
     {   my $qual = $self->{attributes_qualified} || 0;
-        $attrs_qual = $qual eq 'ALL' ? 1 : $qual eq 'NONE' ? 0 : $qual;
+        if($qual eq 'TOP')
+        {   $tns or error __x"application requires that attibute `{name}' has a targetNamespace", name => $def->{full};
+        }
+        else
+        {   $at_qual = $qual eq 'ALL' ? 1 : $qual eq 'NONE' ? 0 : $qual;
+        }
     }
+    $context{qual_attr}  = $at_qual;
 
-    ($elems_qual, $attrs_qual, $type->{ns});
+    \%context;
 }
 
 sub namespaces() { $_[0]->{nss} }
 
-sub topLevel($$)
-{   my ($self, $path, $fullname) = @_;
+sub topLevel($$;$)
+{   my ($self, $path, $fullname, $is_root) = @_;
 
     # built-in types have to be handled differently.
     my $internal = XML::Compile::Schema::Specs->builtInType(undef, $fullname
@@ -200,74 +223,40 @@ sub topLevel($$)
                     : N__"cannot find element or attribute `{name}' at {where}"
                     ), name => $fullname, where => $path, _class => 'usage');
 
-    my $node = $top->{node};
-
-    my $elems_qual = $top->{efd} eq 'qualified';
-    my $qual
-      = exists $self->{elements_qualified} ? ($self->{elements_qualified} || 0)
-      : $elems_qual ? 'ALL' : $top->{ns} ? 'TOP' : 'NONE';
-
-    my $remove_form_attribute;
-
-       if($qual eq 'ALL')  { $elems_qual = 1 }
-    elsif($qual eq 'NONE') { $elems_qual = 0 }
-    elsif($qual eq 'TOP')
-    {   unless($elems_qual)
-        {   # explitly overrule the name-space qualification of the
-            # top-level element, which is dirty but people shouldn't
-            # use unqualified schemas anyway!!!
-            $node->removeAttribute('form');   # when in schema
-            $node->setAttribute(form => 'qualified');
-            $elems_qual = 0;
-            $remove_form_attribute = 1;
-        }
-    }
-    else {$elems_qual = $qual}
-
-    delete $self->{elements_qualified}
-        if $self->{elements_qualified}
-        && $self->{elements_qualified} eq 'TOP';
-
-    local $self->{elems_qual} = $elems_qual;
-    local $self->{tns}        = $top->{ns};
+    # filter the nodes in the schema which are to be processed
+    my $node     = $top->{node};
     my $schemans = $node->namespaceURI;
-
-    my $tree = XML::Compile::Iterator->new
-      ( $node
-      , $path
-      , sub { my $n = shift;
-                 $n->isa('XML::LibXML::Element')
-              && $n->namespaceURI eq $schemans
-              && $n->localName !~ $ignore_elements
-            }
-      );
+    my $tree     = XML::Compile::Iterator->new($node, $path, sub
+      { my $n = shift;
+           $n->isa('XML::LibXML::Element')
+        && $n->namespaceURI eq $schemans
+        && $n->localName !~ $ignore_elements
+      });
 
     delete $self->{_nest};  # reset recursion administration
 
-    my $data;
+    local $self->{_context} = $self->nsContext($top);
     my $name = $node->localName;
+    my $data;
     if($name eq 'element')
-    {   my $make = $self->element($tree);
+    {   my ($label, $make) = $self->element($tree, $is_root);
         $data    = $self->makeElementWrapper($path, $make) if $make;
     }
     elsif($name eq 'attribute')
-    {   my $make = $self->attributeOne($tree);
+    {   my $make = $self->attribute($tree);
         $data    = $self->makeAttributeWrapper($path, $make) if $make;
     }
     else
-    {   error __x"top-level {full} is not an element or attribute but {name} at {where}"
+    {   error __x"top-level `{full}' is not an element or attribute but {name} at {where}"
           , full => $fullname, name => $name, where => $tree->path
           , _class => 'usage';
     }
 
-    $node->removeAttribute('form')
-        if $remove_form_attribute;
-
     $data;
 }
 
-sub typeByName($$)
-{   my ($self, $tree, $typename) = @_;
+sub typeByName($$$)
+{   my ($self, $where, $tree, $typename) = @_;
 
     my $node  = $tree->node;
 
@@ -281,7 +270,6 @@ sub typeByName($$)
 
     if($def)
     {   # Is built-in
-        my $where = $typename;
         my $st = $self->makeBuiltin($where, $node, $typename, $def, $self->{check_values});
 
         return +{ st => $st, is_list => $def->{is_list} };
@@ -293,14 +281,12 @@ sub typeByName($$)
     my $top = $self->namespaces->find(complexType => $typename)
            || $self->namespaces->find(simpleType  => $typename)
        or error __x"cannot find type {type} at {where}"
-            , type => $typename, where => $tree->path, _class => 'usage';
+            , type => $typename, where => $where, _class => 'usage';
 
-    local @$self{ qw/elems_qual attrs_qual tns/ }
-                 = $self->nsContext($top);
-
-    my $typedef  = $top->{type};
+    local $self->{_context} = $self->nsContext($top);
     my $typeimpl = $tree->descend($top->{node});
 
+    my $typedef  = $top->{type};
       $typedef eq 'simpleType'  ? $self->simpleType($typeimpl)
     : $typedef eq 'complexType' ? $self->complexType($typeimpl)
     : error __x"expecting simple- or complexType, not '{type}' at {where}"
@@ -350,7 +336,7 @@ sub simpleList($)
 
         my $typename = $self->rel2abs($where, $node, $type);
         $per_item    = $self->blocked($where, simpleType => $typename)
-                    || $self->typeByName($tree, $typename);
+                    || $self->typeByName($where, $tree, $typename);
     }
     else
     {   $tree->nrChildren==1
@@ -393,7 +379,7 @@ sub simpleUnion($)
     {   foreach my $union (split " ", $members)
         {   my $typename = $self->rel2abs($where, $node, $union);
             my $type = $self->blocked($where, simpleType => $typename)
-                    || $self->typeByName($tree, $typename);
+                    || $self->typeByName($where, $tree, $typename);
             my $st   = $type->{st}
                 or error __x"union only of simpleTypes, but {type} is complex at {where}"
                      , type => $typename, where => $where, _class => 'schema';
@@ -429,7 +415,7 @@ sub simpleRestriction($$)
     if(my $basename = $node->getAttribute('base'))
     {   $typename = $self->rel2abs($where, $node, $basename);
         $base     = $self->blocked($where, simpleType => $typename)
-                 || $self->typeByName($tree, $typename);
+                 || $self->typeByName($where, $tree, $typename);
     }
     else
     {   my $simple   = $tree->firstChild
@@ -540,8 +526,8 @@ sub applySimpleFacets($$$$)
     : $self->makeFacets($where, $st, \%facets_info, @early, @late);
 }
 
-sub element($)
-{   my ($self, $tree) = @_;
+sub element($;$)
+{   my ($self, $tree, $is_root) = @_;
 
     # attributes: abstract, default, fixed, form, id, maxOccurs, minOccurs
     #    , name, nillable, ref, substitutionGroup, targetNamespace, type
@@ -551,64 +537,137 @@ sub element($)
     #        , (unique | key | keyref)*
 
     my $node     = $tree->node;
+    my $parent   = $node->parentNode;
+    my $is_global= $parent
+     && $parent->isa('XML::LibXML::Element')
+     && $parent->localname eq 'schema';
+
+    my $where    = $tree->path;
+
     my $name     = $node->getAttribute('name')
         or error __x"element has no name nor ref at {where}"
-             , where => $tree->path, _class => 'schema';
-    my $ns       = $node->getAttribute('targetNamespace') || $self->{tns};
+            , where => $where, _class => 'schema';
+    $self->assertType($where, name => NCName => $name);
 
-    $self->assertType($tree->path, name => NCName => $name);
-    my $fullname = pack_type $ns, $name;
+    # Full name based on current context.  This might be a global name
+    # or a local name.
 
-    my $abstract = $node->getAttribute('abstract') || 'false';
-    $abstract = 'false' if $self->{abstract_types} eq 'ACCEPT';
+    my $context  = $self->{_context};
+
+    # Determine the context of this element.  When it is a global, we need
+    # to set-up a new context until end-of-function.
+
+    my $abstract = 0;
+    my ($qual, $ns, $fullname);
+
+    if($is_global)
+    {   $ns       = $node->getAttribute('targetNamespace')
+                 || $parent->getAttribute('targetNamespace');
+        $fullname= pack_type $ns, $name;
+        my $def   = $self->namespaces->find(element => $fullname);
+        $context  = $self->nsContext($def);
+        $qual     = $context->{qual_top};
+
+        # abstract elements are not to be used in messages.
+        $abstract = $self->{abstract_types} eq 'ACCEPT' ? 0 : $def->{abstract};
+    }
+    else
+    {   $qual     = $context->{qual_elem};
+        $ns       = $node->getAttribute('targetNamespace') || $context->{tns};
+        $fullname = pack_type $ns, $name;
+    }
+
+    if(my $form = $node->getAttribute('form'))
+    {   $qual
+          = $form eq 'qualified'   ? 1
+          : $form eq 'unqualified' ? 0
+          : error __x"form must be (un)qualified, not `{form}' at {where}"
+              , form => $form, where => $where, _class => 'schema';
+    }
+
+    local $self->{_context} = $context if $is_global;
+    my $nodetype = $qual ? $fullname : $name;
+
+    # SubstitionGroups
+    # We know the type of the message root, so do not need to look for
+    # alternative sgs (and it wouldn't work anyway)
+
+    my @sgs;
+    @sgs = $self->namespaces->findSgMembers($node->localName, $fullname)
+        unless $is_root;
 
     # Handle re-usable fragments, fight against combinatorial explosions
 
-    my $nodeid   = $node->nodePath.'#'.$fullname;
-    my $already  = $self->{_created}{$nodeid};
-    return $already if $already;
+    my $nodeid   = $node->unique_key; #$node->nodePath.'#'.$fullname;
+    if(my $already  = $self->{_created}{$nodeid})
+    {    # We cannot cache compile subst-group handlers, because sgs using
+         # elements which were already compiled into sgs does not work.
+         $already = $self->substitutionGroup($tree, $fullname, $nodetype
+           , $already, \@sgs) if @sgs;
+         return ($nodetype, $already);
+    }
 
     # Detect recursion
+    # Very complicated: recursively nested structures.  It is less of a
+    # problem when you handle in run-time what you see... but we here
+    # have to be prepared for everything.
 
     if(exists $self->{_nest}{$nodeid})
-    {   my $outer = \$self->{_nest}{$nodeid};
-        return sub { $$outer->(@_) };
+    {   my $outer  = \$self->{_nest}{$nodeid};
+        my $nested = sub { $$outer->(@_) };
+
+        # The code must be blessed in the right class, to be compiled
+        # correctly inside its parent.
+        bless $nested, 'BLOCK' if @sgs;
+
+        return ($nodetype, $nested);
     }
     $self->{_nest}{$nodeid} = undef;
 
     # Construct XML tag to use
 
-    my $where    = $tree->path;
-    my $form     = $node->getAttribute('form');
-    my $qual
-      = !defined $form         ? $self->{elems_qual}
-      : $form eq 'qualified'   ? 1
-      : $form eq 'unqualified' ? 0
-      : error __x"form must be (un)qualified, not `{form}' at {where}"
-            , form => $form, where => $tree->path, _class => 'schema';
-
-    my $trans     = $qual ? 'makeTagQualified' : 'makeTagUnqualified';
-    my $tag       = $self->$trans($where, $node, $name, $ns);
+    my $trans    = $qual ? 'makeTagQualified' : 'makeTagUnqualified';
+    my $tag      = $self->$trans($where, $node, $name, $ns);
 
     # Construct type processor
 
     my ($comptype, $comps);
     my $nr_childs = $tree->nrChildren;
     if(my $isa    = $node->getAttribute('type'))
-    {   $nr_childs==0
+    {   # explicitly names type
+        $nr_childs==0
             or error __x"no childs expected with attribute `type' at {where}"
                  , where => $where, _class => 'schema';
 
         $comptype = $self->rel2abs($where, $node, $isa);
         $comps    = $self->blocked($where, anyType => $comptype)
-                 || $self->typeByName($tree, $comptype);
+                 || $self->typeByName($where, $tree, $comptype);
     }
     elsif($nr_childs==0)
-    {   $comptype = $self->anyType($node);
-        $comps    = $self->typeByName($tree, $comptype);
+    {   # default type for substGroups is type of base-class
+        my $base_node = $node;
+        local $self->{_context};
+        while(my $subst = $base_node->getAttribute('substitutionGroup'))
+        {   my $subst_elem = $self->rel2abs($where, $base_node, $subst);
+            my $base_elem  = $self->namespaces->find(element => $subst_elem);
+            $self->{_context} = $self->nsContext($base_elem);
+            $base_node     = $base_elem->{node};
+            my $isa        = $base_node->getAttribute('type')
+                or next;
+
+            $comptype  = $self->rel2abs($where, $base_node, $isa);
+            $comps     = $self->blocked($where, complexType => $comptype)
+                      || $self->typeByName($where, $tree, $comptype);
+            last;
+        }
+        unless($comptype)
+        {   # no type found, so anyType
+            $comptype = $self->anyType($node);
+            $comps    = $self->typeByName($where, $tree, $comptype);
+        }
     }
     elsif($nr_childs!=1)
-    {   error __x"expected is only one child at {where}"
+    {   error __x"expected is only one child node at {where}"
           , where => $where, _class => 'schema';
     }
     else # nameless types
@@ -631,90 +690,69 @@ sub element($)
 
     # Construct basic element handler
 
+    my $is_simple = defined $st;
+    my $nillable  = $self->isTrue($node->getAttribute('nillable') || 'false');
+
     my $elem_handler
       = $comps->{mixed}          ? 'makeMixedElement'
-      : (! defined $st)          ? 'makeComplexElement' # other complexType
+      : ! $is_simple             ? 'makeComplexElement' # other complexType
       : (@$attrs || @$attrs_any) ? 'makeTaggedElement'  # complex/simpleContent
       :                            'makeSimpleElement';
 
     my $r = $self->$elem_handler
-      ($where, $tag, ($st||$elems), $attrs, $attrs_any, $comptype);
+      ( $where, $tag, ($st||$elems), $attrs, $attrs_any, $comptype, $nillable);
 
     # Add defaults and stuff
     my $default  = $node->getAttributeNode('default');
     my $fixed    = $node->getAttributeNode('fixed');
-    my $nillable = $node->getAttribute('nillable') || 'false';
 
     $default && $fixed
         and error __x"element can not have default and fixed at {where}"
               , where => $tree->path, _class => 'schema';
 
     my $value
-      = $default ? $default->textContent
-      : $fixed   ? $fixed->textContent
-      :            undef;
+      = $default  ? $default->textContent
+      : $fixed    ? $fixed->textContent
+      :             undef;
 
     my $generate
-      = $self->isTrue($abstract) ? 'makeElementAbstract'
-      : $self->isTrue($nillable) ? 'makeElementNillable'
-      : $default                 ? 'makeElementDefault'
-      : $fixed                   ? 'makeElementFixed'
-      :                            'makeElement';
+      = $abstract ? 'makeElementAbstract'
+      : $default  ? 'makeElementDefault'
+      : $fixed    ? 'makeElementFixed'
+      :             'makeElement';
 
-    my $nodetype = $qual ? $fullname : $name;
-    my $do1 = $self->$generate($where, $ns, $nodetype, $r, $value, $tag);
+    my $do = $self->$generate($where, $ns, $nodetype, $r, $value, $tag);
 
     # hrefs are used by SOAP-RPC
-    my $do2 = $self->{permit_href} && $self->actsAs('READER')
-      ? $self->makeElementHref($where, $ns, $nodetype, $do1) : $do1;
+    $do = $self->makeElementHref($where, $ns, $nodetype, $do)
+        if $self->{permit_href} && $self->actsAs('READER');
 
     # Implement hooks
     my ($before, $replace, $after)
       = $self->findHooks($where, $comptype, $node);
-    my $do3
-      = ($before || $replace || $after)
-      ? $self->makeHook($where, $do2, $tag, $before, $replace, $after)
-      : $do2;
 
-    my $do4 = $do3;
-    if($comptype && $self->{xsi_type}{$comptype})
-    { 
-        # Ugly xsi:type switch needed
-        my %alt = ($comptype => $do3);
-        foreach my $alttype (@{$self->{xsi_type}{$comptype}})
-        {   my ($ns, $local) = unpack_type $alttype;
-            my $prefix  = $node->lookupNamespacePrefix($ns);
-            defined $prefix
-                or $prefix = $self->_registerNSprefix(undef, $ns, 1);
+    $do = $self->makeHook($where,$do,$tag,$before,$replace,$after,$comptype)
+        if $before || $replace || $after;
 
-            my $type    = length $prefix ? "$prefix:$local" : $local;
+    $do = $self->xsiType($tree, $node, $name, $comptype, $do)
+        if $comptype && $self->{xsi_type}{$comptype};
 
-            # do not accidentally use the default namespace, when there
-            # may also be namespace-less types used.
-            my $doc     = $node->ownerDocument;
-            my $altnode = $doc->createElement('element');
-            $altnode->setNamespace(SCHEMA2001, 'temp1234', 1);
-            $altnode->setNamespace($ns, $prefix);
-            $altnode->setAttribute(name => $name);
-            $altnode->setAttribute(type => $type);
+    $do = $self->addTypeAttribute($comptype, $do)
+        if $self->{xsi_type_everywhere} && $comptype !~ /^unnamed /;
 
-            my $altnodeid = $altnode->nodePath.'#'.$fullname;
-            delete $self->{_created}{$altnodeid}; # clean nesting cache
+    $self->{_created}{$nodeid} = $do;
 
-            $alt{$alttype} = $self->element($tree->descend($altnode));
-        }
-
-        $do4 = $self->makeXsiTypeSwitch($where, $name, $comptype, \%alt);
-    }
+    $do = $self->substitutionGroup($tree, $fullname, $nodetype, $do, \@sgs)
+        if @sgs;
 
     # handle recursion
     # this must look very silly to you... however, this is resolving
     # recursive schemas: this way nested use of the same element
     # definition will catch the code reference of the outer definition.
-    $self->{_nest}{$nodeid}    = $do4;
+    $self->{_nest}{$nodeid} = $do;
     delete $self->{_nest}{$nodeid};  # clean the outer definition
 
-    $self->{_created}{$nodeid} = $do4;
+    ($nodetype, $do);
 }
 
 sub particle($)
@@ -733,9 +771,12 @@ sub particle($)
              ? 0 : 1;
     }
 
+    $min = 0 if $self->{interpret_nillable_as_optional}
+             && $self->isTrue($node->getAttribute('nillable') || 'false');
+
     # default attribute in writer means optional, but we want to see
     # them in the reader, to see the value.
- 
+
     defined $max or $max = 1;
     $max = 'unbounded'
         if $max ne 'unbounded' && $max > 1 && !$self->{check_occurs};
@@ -760,7 +801,7 @@ sub particle($)
     {   my $key   = $self->keyRewrite($label);
         my $multi = $self->blockLabel($local, $key);
         return $self->makeBlockHandler($where, $label, $min, $max
-           , $process, $local, $multi);
+          , $process, $local, $multi);
     }
 
     # only elements left
@@ -769,7 +810,28 @@ sub particle($)
     $required = $self->makeRequired($where, $key, $process) if $min!=0;
 
     ($self->actsAs('READER') ? $label : $key) =>
-       $self->makeElementHandler($where, $key, $min,$max, $required, $process);
+        $self->makeElementHandler($where, $key, $min,$max, $required, $process);
+}
+
+sub particleElement($)
+{   my ($self, $tree) = @_;
+
+    my $node   = $tree->node;
+    if(my $ref = $node->getAttribute('ref'))
+    {   my $where   = $tree->path . "/$ref";
+        my $refname = $self->rel2abs($tree, $node, $ref);
+        return () if $self->blocked($where, ref => $refname);
+
+        my $def     = $self->namespaces->find(element => $refname)
+            or error __x"cannot find ref element '{name}' at {where}"
+                   , name => $refname, where => $where, _class => 'schema';
+
+        return $self->element($tree->descend($def->{node}
+          , $self->prefixed($refname, 1)));
+    }
+
+    my $name = $node->getAttribute('name');
+    $self->element($tree->descend($node, $name));
 }
 
 # blockLabel KIND, LABEL
@@ -814,10 +876,7 @@ sub particleGroup($)
         or error __x"cannot find group `{name}' at {where}"
              , name => $typename, where => $where, _class => 'schema';
 
-    local @$self{ qw/elems_qual attrs_qual tns/ }
-       = $self->nsContext($dest);
-
-    my $group = $tree->descend($dest->{node}, $dest->{local});
+    my $group = $tree->descend($dest->{node}, $self->prefixed($typename, 1));
     return () if $group->nrChildren==0;
 
     $group->nrChildren==1
@@ -837,7 +896,7 @@ sub particleBlock($)
 {   my ($self, $tree) = @_;
 
     my $node  = $tree->node;
-    my @pairs = map { $self->particle($tree->descend($_)) } $tree->childs;
+    my @pairs = map $self->particle($tree->descend($_)), $tree->childs;
     @pairs or return ();
 
     # label is name of first component, only needed when maxOcc > 1
@@ -848,73 +907,57 @@ sub particleBlock($)
     ($label => $self->$call($tree->path, @pairs));
 }
 
-sub particleElementRef($)
-{   my ($self, $tree) = @_;
+sub xsiType($$$$$)
+{   my ($self, $tree, $node, $name, $type, $base) = @_;
 
-    my $node  = $tree->node;
-    my $name  = $node->getAttribute('name'); # toplevel always has a name
-    my $type  = pack_type $self->{tns}, $name;
-    my @sgs   = $self->namespaces->findSgMembers($node->localName, $type);
-    @sgs or return $self->particleElement($tree); # not-extended element
+    my %alt = ($type => $base);
 
-    my ($label, $do) = $self->particleElement($tree);
-    $label or return;
+    foreach my $alttype (@{$self->{xsi_type}{$type}})
+    {   next if $alttype eq $type;
+
+        my ($ns, $local) = unpack_type $alttype;
+        my $prefix  = $node->lookupNamespacePrefix($ns);
+        defined $prefix
+            or $prefix = $self->_registerNSprefix(undef, $ns, 1);
+
+        my $type    = length $prefix ? "$prefix:$local" : $local;
+
+        # do not accidentally use the default namespace, when there
+        # may also be namespace-less types used.
+        my $doc     = $node->ownerDocument;
+        my $altnode = $doc->createElement('element');
+        $altnode->setNamespace(SCHEMA2001, 'temp1234', 1);
+        $altnode->setNamespace($ns, $prefix);
+        $altnode->setAttribute(name => $name);
+        $altnode->setAttribute(type => $type);
+
+        delete $self->{_created}{$altnode->unique_key}; # clean nesting cache
+        (undef, $alt{$alttype}) = $self->element($tree->descend($altnode));
+    }
+    $self->makeXsiTypeSwitch($tree->path, $name, $type, \%alt);
+}
+
+sub substitutionGroup($$$$$)
+{   my ($self, $tree, $fullname, $label, $base, $sgs) = @_;
 
     if(Log::Report->needs('TRACE')) # dump table of substgroup alternatives
     {   my $labelrw = $self->keyRewrite($label);
-        my @full    = sort map { $_->{full} } @sgs;
+        my @full    = sort map $_->{full}, @$sgs;
         my $longest = max map length, @full;
-        my @c = map {sprintf "%-${longest}s %s",$_,$self->keyRewrite($_)} @full;
+        my @c = map sprintf("%-${longest}s %s",$_,$self->keyRewrite($_)), @full;
         local $"    = "\n  ";
-        trace "substitutionGroup $type$\"SG=$label ($labelrw)$\"@c";
+        trace "substitutionGroup $fullname$\"BASE=$label ($labelrw)$\"@c";
     }
 
     my @elems;
-    push @elems, $label => [$self->keyRewrite($label), $do] if $do;
+    push @elems, $label => [$self->keyRewrite($label), $base] if $base;
 
-    foreach my $subst (@sgs)
-    {    local @$self{ qw/elems_qual attrs_qual tns/ }
-            = $self->nsContext($subst);
-
-         my $subst_elem = $tree->descend($subst->{node});
-         my ($l, $d) = $self->particleElement($subst_elem);
-         push @elems, $l => [$self->keyRewrite($l), $d] if defined $d;
-    } 
-
-    my $where = $tree->path . '#subst';
-    ($type => $self->makeSubstgroup($where, $type, @elems));
-}
-
-sub particleElement($)
-{   my ($self, $tree) = @_;
-
-    my $node  = $tree->node;
-
-    if(my $ref =  $node->getAttribute('ref'))
-    {   my $where   = $tree->path . "/$ref";
-        my $refname = $self->rel2abs($tree, $node, $ref);
-        return () if $self->blocked($where, ref => $refname);
- 
-        my $def     = $self->namespaces->find(element => $refname)
-            or error __x"cannot find ref element '{name}' at {where}"
-                   , name => $refname, where => $where, _class => 'schema';
-
-        my $refnode = $def->{node};
-
-        local @$self{ qw/elems_qual attrs_qual tns/ }
-          = $self->nsContext($def);
-
-        return $self->particleElementRef($tree->descend($refnode));
+    foreach my $subst (@$sgs)
+    {   my ($l, $d) = $self->element($tree->descend($subst->{node}), 1);
+        push @elems, $l => [$self->keyRewrite($l), $d] if defined $d;
     }
 
-    my $name = $node->getAttribute('name')
-        or error __x"element needs name or ref at {where}"
-             , where => $tree->path, _class => 'schema';
-
-    my $fullname = pack_type $self->{tns}, $name;
-    my $nodetype = $self->{elems_qual} ? $fullname : $name;
-    my $do       = $self->element($tree->descend($node, $name));
-    $do ? ($nodetype => $do) : ();
+    $self->makeSubstgroup($tree->path.'#subst', $fullname, @elems);
 }
 
 sub keyRewrite($;$)
@@ -961,28 +1004,37 @@ sub keyRewrite($;$)
     $key;
 }
 
-sub prefixed($)
-{   my ($self, $qname) = @_;
+sub prefixed($;$)
+{   my ($self, $qname, $hide) = @_;
     my ($ns, $local) = unpack_type $qname;
     defined $ns or return $qname;
 
     my $pn = $self->{prefixes}{$ns} or return;
-    $pn->{used}++;
+    $pn->{used}++ unless $hide ;
     length $pn->{prefix} ? "$pn->{prefix}:$local" : $local;
 }
 
-sub attributeOne($)
+sub prefixForNamespace($)
+{   my ($self, $ns) = @_;
+    my $def = $self->{prefixes}{$ns} or return;
+    $def->{prefix};
+}
+
+sub attribute($)
 {   my ($self, $tree) = @_;
 
     # attributes: default, fixed, form, id, name, ref, type, use
     # content: annotation?, simpleType?
 
-    my $node = $tree->node;
-    my ($type, $tns);
+    my $node     = $tree->node;
+    my $parent   = $node->parentNode;
+    my $is_global= $parent && $parent->localname eq 'schema';
+    my $where    = $tree->path;
 
-    my($ref, $name, $form, $typeattr);
-    if(my $refattr =  $node->getAttribute('ref'))
-    {   my $where  = $tree->path;
+    my $context  = $self->{_context};
+
+    if(my $refattr = $node->getAttribute('ref'))
+    {
         my $refname = $self->rel2abs($tree, $node, $refattr);
         return () if $self->blocked($where, ref => $refname);
 
@@ -990,56 +1042,61 @@ sub attributeOne($)
             or error __x"cannot find attribute {name} at {where}"
                  , name => $refname, where => $where, _class => 'schema';
 
-        $ref        = $def->{node};
-        local $self->{tns} = $tns = $def->{ns};
-        my $attrs_qual = $def->{efd} eq 'qualified';
-        if(exists $self->{attributes_qualified})
-        {   my $qual = $self->{attributes_qualified} || 0;
-            $attrs_qual = $qual eq 'ALL' ? 1 : $qual eq 'NONE' ? 0 : $qual;
-        }
-        local $self->{attrs_qual} = $attrs_qual;
-
-        $name       = $ref->getAttribute('name')
-            or error __x"ref attribute without name at {where}"
-                 , where => $tree->path, _class => 'schema';
-
-        if($typeattr = $ref->getAttribute('type'))
-        {   # postpone interpretation
-        }
-        else
-        {   my $other = $tree->descend($ref);
-            $other->nrChildren==1 && $other->currentLocal eq 'simpleType'
-                or error __x"toplevel attribute {type} has no type attribute nor single simpleType child"
-                     , type => $refname, _class => 'schema';
-            $type   = $self->simpleType($other->descend);
-        }
-        $form = $ref->getAttribute('form');
-        $node = $ref;
+        local $self->{_context} = $def;
+        return $self->attribute($tree->descend($def->{node}));
     }
-    elsif($tree->nrChildren==1)
-    {   $tree->currentLocal eq 'simpleType'
-            or error __x"attribute child can only be `simpleType', not `{found}' at {where}"
-                 , found => $tree->currentLocal, where => $tree->path
-                 , _class => 'schema';
 
-        $name       = $node->getAttribute('name')
-            or error __x"attribute without name at {where}"
-                   , where => $tree->path;
+    # Not a ref to attribute
+    my $name     = $node->getAttribute('name')
+        or error __x"attribute without name at {where}", where => $where;
+    $where      .= '/@'.$name;
+    $self->assertType($where, name => NCName => $name);
 
-        $form       = $node->getAttribute('form');
-        $type       = $self->simpleType($tree->descend);
+    my ($qual, $ns, $fullname);
+    if($is_global)
+    {   $ns      = $node->getAttribute('targetNamespace')
+                || $parent->getAttribute('targetNamespace');
+        $fullname= pack_type $ns, $name;
+        my $def  = $self->namespaces->find(attribute => $fullname);
+        $context = $self->nsContext($def);
+        $qual    = $context->{qual_top};
     }
     else
-    {   $name       = $node->getAttribute('name')
-            or error __x"attribute without name or ref at {where}"
-                   , where => $tree->path, _class => 'schema';
+    {   $qual    = $context->{qual_attr};
+        $ns      = $context->{tns};
+        $fullname= pack_type $ns, $name;
+    }
+    local $self->{_context} = $context if $is_global;
 
-        $typeattr   = $node->getAttribute('type');
-        $form       = $node->getAttribute('form');
+    if(my $form  = $node->getAttribute('form'))
+    {   $qual
+          = $form eq 'qualified'   ? 1
+          : $form eq 'unqualified' ? 0
+          : error __x"form must be (un)qualified, not `{form}' at {where}"
+              , form => $form, where => $where, _class => 'schema';
     }
 
-    my $where = $tree->path.'/@'.$name;
-    $self->assertType($where, name => NCName => $name);
+    # no default prefixes for attributes
+    error __x"attribute namespace {ns} cannot be the default namespace"
+      , ns => $ns
+        if $qual && $ns && $self->prefixForNamespace($ns) eq '';
+
+    my ($type, $typeattr);
+    if($tree->nrChildren==1)
+    {   $tree->currentLocal eq 'simpleType'
+            or error __x"attribute child can only be `simpleType', not `{found}' at {where}"
+                 , found => $tree->currentLocal, where => $where
+                 , _class => 'schema';
+
+        $type = $self->simpleType($tree->descend);
+    }
+    else
+    {   $name = $node->getAttribute('name')
+            or error __x"attribute without name or ref at {where}"
+                   , where => $where, _class => 'schema';
+
+        $typeattr = $node->getAttribute('type');
+    }
 
     unless($type)
     {   my $typename = defined $typeattr
@@ -1047,24 +1104,16 @@ sub attributeOne($)
           : $self->anyType($node);
 
          $type  = $self->blocked($where, simpleType => $typename)
-               || $self->typeByName($tree, $typename);
+               || $self->typeByName($where, $tree, $typename);
     }
 
     my $st      = $type->{st}
         or error __x"attribute not based in simple value type at {where}"
              , where => $where, _class => 'schema';
 
-    my $qual
-      = ! defined $form        ? $self->{attrs_qual}
-      : $form eq 'qualified'   ? 1
-      : $form eq 'unqualified' ? 0
-      : error __x"form must be (un)qualified, not {form} at {where}"
-            , form => $form, where => $where, _class => 'schema';
-
-    $tns      ||= $node->getAttribute('targetNamespace') || $self->{tns};
     my $trans   = $qual ? 'makeTagQualified' : 'makeTagUnqualified';
-    my $ns      = $qual ? $tns : '';
-    my $tag     = $self->$trans($where, $node, $name, $ns);
+    my $qns     = $qual ? $context->{tns} : '';
+    my $tag     = $self->$trans($where, $node, $name, $qns);
 
     my $use     = $node->getAttribute('use') || '';
     $use =~ m/^(?:optional|required|prohibited|)$/
@@ -1082,8 +1131,8 @@ sub attributeOne($)
      :                       'makeAttribute';
 
     my $value = defined $default ? $default : $fixed;
-    my $label = $self->keyRewrite($ns, $name);
-    my $do    = $self->$generate($where, $ns, $tag, $label, $st, $value);
+    my $label = $self->keyRewrite($qns, $name);
+    my $do    = $self->$generate($where, $qns, $tag, $label, $st, $value);
     defined $do ? ($label => $do) : ();
 }
 
@@ -1174,7 +1223,7 @@ sub translateNsLimits($$)
 
     return (undef, [])     if $include eq '##any';
 
-    my $tns       = $self->{tns};
+    my $tns       = $self->{_context}{tns};
     return (undef, [$tns]) if $include eq '##other';
 
     my @return;
@@ -1215,7 +1264,7 @@ sub complexType($)
         if $self->{mixed_elements} eq 'STRUCTURAL';
 
     my $first = $tree->firstChild
-        or return {mixed => $mixed};
+        or return {elems => [], mixed => $mixed};
 
     my $name  = $first->localName;
     return $self->complexBody($tree, $mixed)
@@ -1275,7 +1324,8 @@ sub attributeList($)
     for(my $attr = $tree->currentChild; defined $attr; $attr = $tree->nextChild)
     {   my $name = $attr->localName;
         if($name eq 'attribute')
-        {   push @attrs, $self->attributeOne($tree->descend) }
+        {   push @attrs, $self->attribute($tree->descend);
+        }
         elsif($name eq 'attributeGroup')
         {   my %group = $self->attributeGroup($tree->descend);
             push @attrs, @{$group{attrs}};
@@ -1331,11 +1381,11 @@ sub simpleContentExtension($)
      : $self->anyType($node);
 
     my $basetype = $self->blocked($where, simpleType => $typename)
-                || $self->typeByName($tree, $typename);
+                || $self->typeByName($where, $tree, $typename);
     defined $basetype->{st}
         or error __x"base of simpleContent not simple at {where}"
              , where => $where, _class => 'schema';
- 
+
     $self->extendAttrs($basetype, {$self->attributeList($tree)});
 
     $tree->currentChild
@@ -1357,16 +1407,16 @@ sub simpleContentRestriction($$)
     my $node  = $tree->node;
     my $where = $tree->path . '#cres';
 
-    my $type;
+    my ($type, $typename);
     my $first = $tree->currentLocal || '';
     if($first eq 'simpleType')
     {   $type = $self->simpleType($tree->descend);
         $tree->nextChild;
     }
     elsif(my $basename  = $node->getAttribute('base'))
-    {   my $typename = $self->rel2abs($where, $node, $basename);
-        $type        = $self->blocked($where, simpleType => $type)
-                    || $self->typeByName($tree, $typename);
+    {   $typename = $self->rel2abs($where, $node, $basename);
+        $type     = $self->blocked($where, simpleType => $type)
+                 || $self->typeByName($where, $tree, $typename);
     }
     else
     {   error __x"no base in complex-restriction, so simpleType required at {where}"
@@ -1377,7 +1427,7 @@ sub simpleContentRestriction($$)
         or error __x"not a simpleType in simpleContent/restriction at {where}"
              , where => $where, _class => 'schema';
 
-    $type->{st} = $self->applySimpleFacets($tree, $st, 0, $type);
+    $type->{st} = $self->applySimpleFacets($tree, $st, 0, $typename);
 
     $self->extendAttrs($type, {$self->attributeList($tree)});
 
@@ -1411,7 +1461,7 @@ sub complexContent($$)
 
     $tree     = $tree->descend;
     $node     = $tree->node;
-    my $base  = $node->getAttribute('base');
+    my $base  = $node->getAttribute('base') || $self->anyType($node);
     my $type  = {};
     my $where = $tree->path . '#cce';
 
@@ -1425,9 +1475,7 @@ sub complexContent($$)
                or error __x"unknown base type '{type}' at {where}"
                  , type => $typename, where => $tree->path, _class => 'schema';
 
-            local @$self{ qw/elems_qual attrs_qual tns/ }
-                = $self->nsContext($typedef);
-
+            local $self->{_context} = $self->nsContext($typedef);
             $type = $self->complexType($tree->descend($typedef->{node}));
         }
     }
@@ -1477,7 +1525,7 @@ sub _registerNSprefix($$$)
         return $u->{prefix};
     }
 
-    my %prefs = map { ($_->{prefix} => 1) } values %$table;
+    my %prefs = map +($_->{prefix} => 1), values %$table;
     my $take;
     if(defined $prefix && !$prefs{$prefix}) {   $take = $prefix }
     elsif(!$prefs{''}) { $take = '' }
@@ -1500,15 +1548,13 @@ sub findHooks($$$)
 {   my ($self, $path, $type, $node) = @_;
     # where is before, replace, after
 
-#warn $type;
-#use Data::Dumper;
-#warn Dumper $self->{hooks};
     my %hooks;
     foreach my $hook (@{$self->{hooks}})
     {   my $match;
 
         $match++
-            if !$hook->{path} && !$hook->{id} && !$hook->{type};
+            if !$hook->{path} && !$hook->{id}
+            && !$hook->{type} && !$hook->{extends};
 
         if(!$match && $hook->{path})
         {   my $p = $hook->{path};
@@ -1521,7 +1567,7 @@ sub findHooks($$$)
         if($id)
         {   my $i = $hook->{id};
             $match++
-                if first {ref $_ eq 'Regexp' ? $id =~ $_ : $id eq $_} 
+                if first {ref $_ eq 'Regexp' ? $id =~ $_ : $id eq $_}
                     ref $i eq 'ARRAY' ? @$i : $i;
         }
 
@@ -1533,6 +1579,10 @@ sub findHooks($$$)
                          : substr($_,0,1) eq '{' ? $type  eq $_
                          :                         $local eq $_
                          } ref $t eq 'ARRAY' ? @$t : $t;
+        }
+
+        if(!$match && defined $type && $hook->{extends})
+        {   $match++ if $self->{nss}->doesExtend($type, $hook->{extends});
         }
 
         $match or next;
@@ -1579,9 +1629,14 @@ sub blocked($$$)
     $is_blocked or return;
 
     trace "$type of $class is blocked";
-
     $self->makeBlocked($path, $class, $type);
 }
 
+sub addTypeAttribute($$)
+{   my ($self, $type, $call) = @_;
+    $call;
+}
+
+#------------
 
 1;

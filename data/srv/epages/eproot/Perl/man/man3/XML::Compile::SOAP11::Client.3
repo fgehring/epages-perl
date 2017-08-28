@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::SOAP11::Client 3"
-.TH XML::Compile::SOAP11::Client 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::SOAP11::Client 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -141,96 +141,35 @@ XML::Compile::SOAP11::Client \- SOAP1.1 client needs
 \& XML::Compile::SOAP11::Client
 \&   is a XML::Compile::SOAP::Client
 .Ve
+.SH "SYNOPSIS"
+.IX Header "SYNOPSIS"
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 See XML::Compile::SOAP11.
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in XML::Compile::SOAP::Client.
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in XML::Compile::SOAP11.
 .SH "METHODS"
 .IX Header "METHODS"
-.SS "Constructors"
-.IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->new(OPTIONS)"
-See \*(L"Constructors\*(R" in XML::Compile::SOAP11
-.SS "Accessors"
-.IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBname\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBname\fR" 4
-.IX Item "$obj->name"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP
-.ie n .IP "$obj\->\fBschemas\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBschemas\fR" 4
-.IX Item "$obj->schemas"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP
-.ie n .IP "$obj\->\fBversion\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBversion\fR" 4
-.IX Item "$obj->version"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP
-.SS "Single message"
-.IX Subsection "Single message"
-.ie n .IP "$obj\->\fBcompileMessage\fR(('\s-1SENDER\s0'|'\s-1RECEIVER\s0'), \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileMessage\fR(('\s-1SENDER\s0'|'\s-1RECEIVER\s0'), \s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileMessage(('SENDER'|'RECEIVER'), OPTIONS)"
-See \*(L"Single message\*(R" in XML::Compile::SOAP11
-.ie n .IP "$obj\->\fBmessageStructure\fR(\s-1XML\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBmessageStructure\fR(\s-1XML\s0)" 4
-.IX Item "$obj->messageStructure(XML)"
-.PD 0
-.IP "XML::Compile::SOAP11::Client\->\fBmessageStructure\fR(\s-1XML\s0)" 4
-.IX Item "XML::Compile::SOAP11::Client->messageStructure(XML)"
-.PD
-See \*(L"Single message\*(R" in XML::Compile::SOAP
-.SS "Helpers"
-.IX Subsection "Helpers"
-.SS "Transcoding"
-.IX Subsection "Transcoding"
-.ie n .IP "$obj\->\fBreplyMustUnderstandFault\fR(\s-1TYPE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBreplyMustUnderstandFault\fR(\s-1TYPE\s0)" 4
-.IX Item "$obj->replyMustUnderstandFault(TYPE)"
-See \*(L"Transcoding\*(R" in XML::Compile::SOAP
-.ie n .IP "$obj\->\fBroleAbbreviation\fR(\s-1URI\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBroleAbbreviation\fR(\s-1URI\s0)" 4
-.IX Item "$obj->roleAbbreviation(URI)"
-See \*(L"Transcoding\*(R" in XML::Compile::SOAP
-.ie n .IP "$obj\->\fBroleURI\fR(URI|STRING)" 4
-.el .IP "\f(CW$obj\fR\->\fBroleURI\fR(URI|STRING)" 4
-.IX Item "$obj->roleURI(URI|STRING)"
-See \*(L"Transcoding\*(R" in XML::Compile::SOAP
-.SS "Handlers"
-.IX Subsection "Handlers"
-.ie n .IP "$obj\->\fBcompileClient\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileClient\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileClient(OPTIONS)"
-See \*(L"Handlers\*(R" in XML::Compile::SOAP::Client
+Extends \*(L"\s-1METHODS\s0\*(R" in XML::Compile::SOAP::Client.
+.PP
+Extends \*(L"\s-1METHODS\s0\*(R" in XML::Compile::SOAP11.
+.SH "DETAILS"
+.IX Header "DETAILS"
+Extends \*(L"\s-1DETAILS\s0\*(R" in XML::Compile::SOAP11.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

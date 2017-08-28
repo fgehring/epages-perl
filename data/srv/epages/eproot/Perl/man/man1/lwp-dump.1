@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "LWP-DUMP 1"
-.TH LWP-DUMP 1 "2012-01-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH LWP-DUMP 1 "2017-01-31" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -136,7 +136,7 @@ lwp\-dump \- See what headers and content is returned for a URL
 \&\fBlwp-dump\fR [ \fIoptions\fR ] \fI\s-1URL\s0\fR
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-The \fBlwp-dump\fR program will get the resource indentified by the \s-1URL\s0 and then
+The \fBlwp-dump\fR program will get the resource identified by the \s-1URL\s0 and then
 dump the response object to \s-1STDOUT\s0.  This will display the headers returned and
 the initial part of the content, escaped so that it's safe to display even
 binary content.  The escapes syntax used is the same as for Perl's double
@@ -144,8 +144,8 @@ quoted strings.  If there is no content the string \*(L"(no content)\*(R" is sho
 its place.
 .PP
 The following options are recognized:
-.IP "\fB\-\-agent\fR \fIstr\fR" 4
-.IX Item "--agent str"
+.IP "\fB\-\-agent\fR \fIstring\fR" 4
+.IX Item "--agent string"
 Override the user agent string passed to the server.
 .IP "\fB\-\-keep\-client\-headers\fR" 4
 .IX Item "--keep-client-headers"
@@ -160,8 +160,8 @@ to 0 for unlimited.
 If the content is longer then the string is chopped at the
 limit and the string \*(L"...\en(### more bytes not shown)\*(R"
 appended.
-.IP "\fB\-\-method\fR \fIstr\fR" 4
-.IX Item "--method str"
+.IP "\fB\-\-method\fR \fIstring\fR" 4
+.IX Item "--method string"
 Use the given method for the request instead of the default \*(L"\s-1GET\s0\*(R".
 .IP "\fB\-\-parse\-head\fR" 4
 .IX Item "--parse-head"

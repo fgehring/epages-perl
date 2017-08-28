@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::SOAP::Extension - plugins for standards
@@ -7,6 +9,10 @@ XML::Compile::SOAP::Extension - plugins for standards
  XML::Compile::SOAP::Extension is extended by
    XML::Compile::SOAP::WSA
    XML::Compile::Transport
+
+=head1 SYNOPSIS
+
+ # only as base-class
 
 =head1 DESCRIPTION
 
@@ -22,7 +28,7 @@ L<XML::Compile::SOAP::WSA|XML::Compile::SOAP::WSA>)
 
 =over 4
 
-=item XML::Compile::SOAP::Extension-E<gt>B<new>(OPTIONS)
+=item XML::Compile::SOAP::Extension-E<gt>B<new>(%options)
 
 =back
 
@@ -30,12 +36,12 @@ L<XML::Compile::SOAP::WSA|XML::Compile::SOAP::WSA>)
 
 =over 4
 
-=item $obj-E<gt>B<wsdl11Init>(WSDL, ARGS)
+=item $obj-E<gt>B<wsdl11Init>($wsdl, $args)
 
-=item XML::Compile::SOAP::Extension-E<gt>B<wsdl11Init>(WSDL, ARGS)
+=item XML::Compile::SOAP::Extension-E<gt>B<wsdl11Init>($wsdl, $args)
 
-Do not use this hook for adding WSDLs or Schemas, unless those are
-used to interpret WSDL or SOAP files.
+Do not use this hook for adding WSDLs or schemas, unless those are
+used to interpret $wsdl or SOAP files correctly.
 
 =back
 
@@ -43,55 +49,53 @@ used to interpret WSDL or SOAP files.
 
 =over 4
 
-=item $obj-E<gt>B<soap11ClientWrapper>(OPERATION, CALL, ARGS)
+=item $obj-E<gt>B<soap11ClientWrapper>($operation, $call, $args)
 
-=item $obj-E<gt>B<soap11HandlerWrapper>(OPERATION, CALLBACK, ARGS)
+=item $obj-E<gt>B<soap11HandlerWrapper>($operation, $callback, $args)
 
 Called before the handler is created, to influence the encoder and
 decoder. Returned is a wrapped callback, or the same.
 
-=item $obj-E<gt>B<soap11OperationInit>(OPERATION, ARGS)
+=item $obj-E<gt>B<soap11OperationInit>($operation, $args)
 
-=item XML::Compile::SOAP::Extension-E<gt>B<soap11OperationInit>(OPERATION, ARGS)
+=item XML::Compile::SOAP::Extension-E<gt>B<soap11OperationInit>($operation, $args)
 
-ARGS is a reference.
+$args is a reference.
 
 =back
 
-=head1 SYNOPSYS
+=head2 SOAP12
 
- # only as base-class
+=over 4
+
+=item $obj-E<gt>B<soap12ClientWrapper>($operation, $call, $args)
+
+=item $obj-E<gt>B<soap12HandlerWrapper>($operation, $callback, $args)
+
+Called before the handler is created, to influence the encoder and
+decoder. Returned is a wrapped callback, or the same.
+
+=item $obj-E<gt>B<soap12OperationInit>($operation, $args)
+
+=item XML::Compile::SOAP::Extension-E<gt>B<soap12OperationInit>($operation, $args)
+
+$args is a reference.
+
+=back
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2007-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::InputCallback 3"
-.TH XML::LibXML::InputCallback 3 "2009-10-07" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::InputCallback 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -175,7 +175,7 @@ The libxml2 input callbacks come in groups. One group contains a \s-1URI\s0 matc
 \fIThe Parser Process\fR
 .IX Subsection "The Parser Process"
 .PP
-The parser process work on a \s-1XML\s0 data stream, along which, links to other
+The parser process works on an \s-1XML\s0 data stream, along which, links to other
 resources can be embedded. This can be links to external DTDs or XIncludes for
 example. Those resources are identified by URIs. The callback implementation of
 libxml2 assumes that one callback group can handle a certain amount of URIs and
@@ -198,7 +198,7 @@ read callback, the \fIclose\fR callback will be called to close the stream.
 Callback groups are implemented as a stack (Array), each entry holds a
 reference to an array of the callbacks. For the libxml2 library, the
 XML::LibXML::InputCallback callback implementation appears as one single
-callback group. The Perl implementation however allows to manage different
+callback group. The Perl implementation however allows one to manage different
 callback stacks on a per libxml2\-parser basis.
 .SS "Using XML::LibXML::InputCallback"
 .IX Subsection "Using XML::LibXML::InputCallback"
@@ -207,11 +207,11 @@ register callback groups.
 .PP
 .Vb 7
 \&  my $input_callbacks = XML::LibXML::InputCallback\->new();
-\&  $input_callbacks\->register_callbacks([ $match_cb1, $open_cb1, 
+\&  $input_callbacks\->register_callbacks([ $match_cb1, $open_cb1,
 \&                                         $read_cb1, $close_cb1 ] );
-\&  $input_callbacks\->register_callbacks([ $match_cb2, $open_cb2, 
+\&  $input_callbacks\->register_callbacks([ $match_cb2, $open_cb2,
 \&                                         $read_cb2, $close_cb2 ] );
-\&  $input_callbacks\->register_callbacks( [ $match_cb3, $open_cb3, 
+\&  $input_callbacks\->register_callbacks( [ $match_cb3, $open_cb3,
 \&                                          $read_cb3, $close_cb3 ] );
 \&
 \&  $parser\->input_callbacks( $input_callbacks );
@@ -288,9 +288,11 @@ With no arguments given, \f(CW\*(C`unregister_callbacks()\*(C'\fR will delete th
 callbacks are passed as array reference, the callback group to unregister will
 be identified by the \fImatch\fR callback and deleted from the callback stack. Note that if several identical \fImatch\fR callbacks are defined in different callback groups, \s-1ALL\s0 of them will be deleted
 from the stack.
-.IP "\fIinit_callbacks()\fR" 4
-.IX Item "init_callbacks()"
-Initializes the callback system before a parsing process.
+.ie n .IP "init_callbacks( $parser )" 4
+.el .IP "init_callbacks( \f(CW$parser\fR )" 4
+.IX Item "init_callbacks( $parser )"
+Initializes the callback system for the provided parser before starting a
+parsing process.
 .IP "\fIcleanup_callbacks()\fR" 4
 .IX Item "cleanup_callbacks()"
 Resets global variables and the libxml2 callback stack.
@@ -327,7 +329,7 @@ MyScheme::Handler object that responds to methods similar to an IO::Handle.
 \&      return $buffer; # $buffer will be an empty string \*(Aq\*(Aq if read() is done
 \&  }
 \&
-\&  # Close the handle associated with the resource.  
+\&  # Close the handle associated with the resource.
 \&  sub close_uri {
 \&      my $handler = shift;
 \&      close($handler);
@@ -335,23 +337,23 @@ MyScheme::Handler object that responds to methods similar to an IO::Handle.
 \&
 \&  # Register them with a instance of XML::LibXML::InputCallback
 \&  my $input_callbacks = XML::LibXML::InputCallback\->new();
-\&  $input_callbacks\->register_callbacks([ \e&match_uri, \e&open_uri, 
+\&  $input_callbacks\->register_callbacks([ \e&match_uri, \e&open_uri,
 \&                                         \e&read_uri, \e&close_uri ] );
 \&
 \&  # Register the callback group at a parser instance
 \&  $parser\->input_callbacks( $input_callbacks );
 \&
-\&  # $some_xml_file will be parsed using our callbacks 
+\&  # $some_xml_file will be parsed using our callbacks
 \&  $parser\->parse_file( $some_xml_file );
 .Ve
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Matt Sergeant, 
-Christian Glahn, 
+Matt Sergeant,
+Christian Glahn,
 Petr Pajas
 .SH "VERSION"
 .IX Header "VERSION"
-1.70
+2.0129
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 2001\-2007, AxKit.com Ltd.
@@ -359,3 +361,7 @@ Petr Pajas
 2002\-2006, Christian Glahn.
 .PP
 2006\-2009, Petr Pajas.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

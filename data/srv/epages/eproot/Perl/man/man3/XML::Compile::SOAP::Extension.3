@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::SOAP::Extension 3"
-.TH XML::Compile::SOAP::Extension 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::SOAP::Extension 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -138,6 +138,11 @@ XML::Compile::SOAP::Extension \- plugins for standards
 \&   XML::Compile::SOAP::WSA
 \&   XML::Compile::Transport
 .Ve
+.SH "SYNOPSIS"
+.IX Header "SYNOPSIS"
+.Vb 1
+\& # only as base\-class
+.Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 This module defines hooks which are used to implement the \s-1SOAP\s0 and
@@ -149,73 +154,74 @@ XML::Compile::SOAP::WSA)
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.IP "XML::Compile::SOAP::Extension\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::SOAP::Extension->new(OPTIONS)"
+.IP "XML::Compile::SOAP::Extension\->\fBnew\fR(%options)" 4
+.IX Item "XML::Compile::SOAP::Extension->new(%options)"
 .SS "\s-1WSDL11\s0"
 .IX Subsection "WSDL11"
 .PD 0
-.ie n .IP "$obj\->\fBwsdl11Init\fR(\s-1WSDL\s0, \s-1ARGS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBwsdl11Init\fR(\s-1WSDL\s0, \s-1ARGS\s0)" 4
-.IX Item "$obj->wsdl11Init(WSDL, ARGS)"
-.IP "XML::Compile::SOAP::Extension\->\fBwsdl11Init\fR(\s-1WSDL\s0, \s-1ARGS\s0)" 4
-.IX Item "XML::Compile::SOAP::Extension->wsdl11Init(WSDL, ARGS)"
+.ie n .IP "$obj\->\fBwsdl11Init\fR($wsdl, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBwsdl11Init\fR($wsdl, \f(CW$args\fR)" 4
+.IX Item "$obj->wsdl11Init($wsdl, $args)"
+.ie n .IP "XML::Compile::SOAP::Extension\->\fBwsdl11Init\fR($wsdl, $args)" 4
+.el .IP "XML::Compile::SOAP::Extension\->\fBwsdl11Init\fR($wsdl, \f(CW$args\fR)" 4
+.IX Item "XML::Compile::SOAP::Extension->wsdl11Init($wsdl, $args)"
 .PD
-Do not use this hook for adding WSDLs or Schemas, unless those are
-used to interpret \s-1WSDL\s0 or \s-1SOAP\s0 files.
+Do not use this hook for adding WSDLs or schemas, unless those are
+used to interpret \f(CW$wsdl\fR or \s-1SOAP\s0 files correctly.
 .SS "\s-1SOAP11\s0"
 .IX Subsection "SOAP11"
-.ie n .IP "$obj\->\fBsoap11ClientWrapper\fR(\s-1OPERATION\s0, \s-1CALL\s0, \s-1ARGS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBsoap11ClientWrapper\fR(\s-1OPERATION\s0, \s-1CALL\s0, \s-1ARGS\s0)" 4
-.IX Item "$obj->soap11ClientWrapper(OPERATION, CALL, ARGS)"
+.ie n .IP "$obj\->\fBsoap11ClientWrapper\fR($operation, $call, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap11ClientWrapper\fR($operation, \f(CW$call\fR, \f(CW$args\fR)" 4
+.IX Item "$obj->soap11ClientWrapper($operation, $call, $args)"
 .PD 0
-.ie n .IP "$obj\->\fBsoap11HandlerWrapper\fR(\s-1OPERATION\s0, \s-1CALLBACK\s0, \s-1ARGS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBsoap11HandlerWrapper\fR(\s-1OPERATION\s0, \s-1CALLBACK\s0, \s-1ARGS\s0)" 4
-.IX Item "$obj->soap11HandlerWrapper(OPERATION, CALLBACK, ARGS)"
+.ie n .IP "$obj\->\fBsoap11HandlerWrapper\fR($operation, $callback, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap11HandlerWrapper\fR($operation, \f(CW$callback\fR, \f(CW$args\fR)" 4
+.IX Item "$obj->soap11HandlerWrapper($operation, $callback, $args)"
 .PD
 Called before the handler is created, to influence the encoder and
 decoder. Returned is a wrapped callback, or the same.
-.ie n .IP "$obj\->\fBsoap11OperationInit\fR(\s-1OPERATION\s0, \s-1ARGS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBsoap11OperationInit\fR(\s-1OPERATION\s0, \s-1ARGS\s0)" 4
-.IX Item "$obj->soap11OperationInit(OPERATION, ARGS)"
+.ie n .IP "$obj\->\fBsoap11OperationInit\fR($operation, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap11OperationInit\fR($operation, \f(CW$args\fR)" 4
+.IX Item "$obj->soap11OperationInit($operation, $args)"
 .PD 0
-.IP "XML::Compile::SOAP::Extension\->\fBsoap11OperationInit\fR(\s-1OPERATION\s0, \s-1ARGS\s0)" 4
-.IX Item "XML::Compile::SOAP::Extension->soap11OperationInit(OPERATION, ARGS)"
+.ie n .IP "XML::Compile::SOAP::Extension\->\fBsoap11OperationInit\fR($operation, $args)" 4
+.el .IP "XML::Compile::SOAP::Extension\->\fBsoap11OperationInit\fR($operation, \f(CW$args\fR)" 4
+.IX Item "XML::Compile::SOAP::Extension->soap11OperationInit($operation, $args)"
 .PD
-\&\s-1ARGS\s0 is a reference.
-.SH "SYNOPSYS"
-.IX Header "SYNOPSYS"
-.Vb 1
-\& # only as base\-class
-.Ve
+\&\f(CW$args\fR is a reference.
+.SS "\s-1SOAP12\s0"
+.IX Subsection "SOAP12"
+.ie n .IP "$obj\->\fBsoap12ClientWrapper\fR($operation, $call, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap12ClientWrapper\fR($operation, \f(CW$call\fR, \f(CW$args\fR)" 4
+.IX Item "$obj->soap12ClientWrapper($operation, $call, $args)"
+.PD 0
+.ie n .IP "$obj\->\fBsoap12HandlerWrapper\fR($operation, $callback, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap12HandlerWrapper\fR($operation, \f(CW$callback\fR, \f(CW$args\fR)" 4
+.IX Item "$obj->soap12HandlerWrapper($operation, $callback, $args)"
+.PD
+Called before the handler is created, to influence the encoder and
+decoder. Returned is a wrapped callback, or the same.
+.ie n .IP "$obj\->\fBsoap12OperationInit\fR($operation, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap12OperationInit\fR($operation, \f(CW$args\fR)" 4
+.IX Item "$obj->soap12OperationInit($operation, $args)"
+.PD 0
+.ie n .IP "XML::Compile::SOAP::Extension\->\fBsoap12OperationInit\fR($operation, $args)" 4
+.el .IP "XML::Compile::SOAP::Extension\->\fBsoap12OperationInit\fR($operation, \f(CW$args\fR)" 4
+.IX Item "XML::Compile::SOAP::Extension->soap12OperationInit($operation, $args)"
+.PD
+\&\f(CW$args\fR is a reference.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::SOAP11::Encoding 3"
-.TH XML::Compile::SOAP11::Encoding 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::SOAP11::Encoding 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -133,75 +133,48 @@
 XML::Compile::SOAP11::Encoding \- SOAP encoding
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-.Vb 2
-\& ### FOR THE MOMENT UNUSABLE
-\& # see t/13enc11.t in the distribution for complex examples
+.Vb 3
+\& ### This module may work for you... but may also
+\& ### not work.  Progress has been made, but the
+\& ### implementation is not complete and not well tested.
 \&
-\& my $client = XML::Compile::SOAP11::Client\->new();
-\& $client\->startEncoding(...);  # loads this module
+\& # Add this to load the logic
+\& use XML::Compile::SOAP11::Encoding simplify => 1;
 \&
-\& # create: <SOAP\-ENC:int>41</SOAP\-ENC:int>
-\& my $xml = $client\->enc(int => 41);
-\&
-\& # create: <SOAP\-ENC:int id="hhtg">42</SOAP\-ENC:int>
-\& my $xml = $client\->enc(int => 42, \*(Aqhhtg\*(Aq);
-\&
-\& # create: <code xsi:type="xsd:int">43</code>
-\& my $int = pack_type SCHEMA2001, \*(Aqint\*(Aq;
-\& my $xml = $client\->typed($int, code => 43);
-\&
-\& # create: <ref href="#id\-1"/>  (xyz get\*(Aqs id if it hasn\*(Aqt)
-\& my $xml = $client\->href(\*(Aqref\*(Aq, $xyz);
-\& my $xml = $client\->href(\*(Aqref\*(Aq, $xyz, \*(Aqid\-1\*(Aq);  # explicit label
-\& 
-\& # create: <number>3</number>   (gets validated as well!)
-\& my $xml = $client\->element($int, number => 3);
-\&
-\& # create one\-dimensional array of ints
-\& my $xml = $client\->array(undef, $int, \e@xml);
-\& my $xml = $client\->array(\*(Aq{myns}mylocal\*(Aq, $int, \e@xml);
-\&
-\& # create multi\-dimensional array
-\& my $xml = $client\->multidim(undef, $int, $matrix);
-\& my $xml = $client\->multidim(\*(Aq{myns}mylocal\*(Aq, $int, $matrix);
-\&
-\& # decode an incoming encoded structure (as far as possible)
-\& my $hash = $client\->dec($xml);
+\& # The internals are used by the ::SOAP11 module, and
+\& # probably should not be called by yourself.
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-This module loads extra functionality into the XML::Compile::SOAP
+This module loads extra functionality into the XML::Compile::SOAP11
 namespace: all kinds of methods which are used to SOAP-encode data.
-.PP
-The loading is triggered by calling \fIstartEncoding()\fR.  In threaded
-applications, you may wish to call that method once before the \fIfork()\fR,
-such that not each threads or forked process needs to compile the
-code again.  Of course, you can also \f(CW\*(C`use\*(C'\fR this package explicitly.
 .SH "METHODS"
 .IX Header "METHODS"
 .SS "Transcoding"
 .IX Subsection "Transcoding"
+\&\s-1SOAP\s0 defines encodings, especially for SOAP-RPC.
+.PP
 \fIEncoding\fR
 .IX Subsection "Encoding"
-.ie n .IP "$obj\->\fBarray\fR((NAME|undef), \s-1ITEM_TYPE\s0, ARRAY-of-ELEMENTS, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBarray\fR((NAME|undef), \s-1ITEM_TYPE\s0, ARRAY-of-ELEMENTS, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->array((NAME|undef), ITEM_TYPE, ARRAY-of-ELEMENTS, OPTIONS)"
+.ie n .IP "$obj\->\fBarray\fR( <$name|undef>, $item_type, $elements, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBarray\fR( <$name|undef>, \f(CW$item_type\fR, \f(CW$elements\fR, \f(CW%options\fR )" 4
+.IX Item "$obj->array( <$name|undef>, $item_type, $elements, %options )"
 Arrays can be a mess: a mixture of anything and nothing.  Therefore,
 you have to help the generation more than you may wish for.  This
 method produces an one dimensional array, \fImultidim()\fR is used for
 multi-dimensional arrays.
 .Sp
-The \s-1NAME\s0 is the packed type of the array itself.  When undef,
+The \f(CW$name\fR is the packed type of the array itself.  When undef,
 the \f(CW\*(C`{soap\-enc\-ns}Array\*(C'\fR will be used (the action soap
 encoding namespace will be used).
 .Sp
-The \s-1ITEM_TYPE\s0 specifies the type of each element within the array.
+The \f(CW$item_type\fR specifies the type of each element within the array.
 This type is used to create the \f(CW\*(C`arrayType\*(C'\fR attribute, however
 doesn't tell enough about the items themselves: they may be
 extensions to that type.
 .Sp
-Each of the \s-1ELEMENTS\s0 must be an XML::LibXML::Node, either
-self-constructed, or produced by one of the builder methods in
+Each of the \f(CW$elements\fR (passed as \s-1ARRAY\s0) must be an XML::LibXML::Node,
+either self-constructed, or produced by one of the builder methods in
 this class, like \fIenc()\fR or \fItyped()\fR.
 .Sp
 Returned is the XML::LibXML::Element which represents the
@@ -244,19 +217,19 @@ element)
 .RE
 .RS 4
 .RE
-.ie n .IP "$obj\->\fBelement\fR(\s-1TYPE\s0, \s-1NAME\s0, \s-1VALUE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBelement\fR(\s-1TYPE\s0, \s-1NAME\s0, \s-1VALUE\s0)" 4
-.IX Item "$obj->element(TYPE, NAME, VALUE)"
-Create an element.  The \s-1NAME\s0 is for node, where a namespace component
+.ie n .IP "$obj\->\fBelement\fR($type, $name, $value)" 4
+.el .IP "\f(CW$obj\fR\->\fBelement\fR($type, \f(CW$name\fR, \f(CW$value\fR)" 4
+.IX Item "$obj->element($type, $name, $value)"
+Create an element.  The \f(CW$name\fR is for node, where a namespace component
 is translated into a prefix.  When you wish for a \f(CW\*(C`type\*(C'\fR attribute,
 use \fItyped()\fR.
 .Sp
-When the \s-1TYPE\s0 does not contain a namespace indication, it is taken
-in the selected schema namespace.  If the \s-1VALUE\s0 already is a
-XML::LibXML::Element, then that one is used (and the \s-1NAME\s0 ignored).
-.ie n .IP "$obj\->\fBenc\fR(\s-1LOCAL\s0, \s-1VALUE\s0, [\s-1ID\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBenc\fR(\s-1LOCAL\s0, \s-1VALUE\s0, [\s-1ID\s0])" 4
-.IX Item "$obj->enc(LOCAL, VALUE, [ID])"
+When the \f(CW$type\fR does not contain a namespace indication, it is taken
+in the selected schema namespace.  If the \f(CW$value\fR already is a
+XML::LibXML::Element, then that one is used (and the \f(CW$name\fR ignored).
+.ie n .IP "$obj\->\fBenc\fR( $local, $value, [$id] )" 4
+.el .IP "\f(CW$obj\fR\->\fBenc\fR( \f(CW$local\fR, \f(CW$value\fR, [$id] )" 4
+.IX Item "$obj->enc( $local, $value, [$id] )"
 In the \s-1SOAP\s0 specification, encoding types are defined: elements
 which do not have a distinguishable name but use the type of the
 data as name.  Yep, ugly!
@@ -274,32 +247,22 @@ example:
 \&  print $xml\->toString;
 \&    # <SOAP\-ENC:int id="me">42</SOAP\-ENC:int>
 .Ve
-.ie n .IP "$obj\->\fBencAddNamespace\fR(\s-1PAIRS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBencAddNamespace\fR(\s-1PAIRS\s0)" 4
-.IX Item "$obj->encAddNamespace(PAIRS)"
-Convenience alternative for \fIencAddNamespaces()\fR.
-.ie n .IP "$obj\->\fBencAddNamespaces\fR(\s-1PAIRS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBencAddNamespaces\fR(\s-1PAIRS\s0)" 4
-.IX Item "$obj->encAddNamespaces(PAIRS)"
-Add prefix definitions for this one encoding cyclus.  Each time
-\&\fIstartEncoding()\fR is called, the table is reset.  The namespace
-table is returned.
-.ie n .IP "$obj\->\fBhref\fR(\s-1NAME\s0, \s-1ELEMENT\s0, [\s-1ID\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBhref\fR(\s-1NAME\s0, \s-1ELEMENT\s0, [\s-1ID\s0])" 4
-.IX Item "$obj->href(NAME, ELEMENT, [ID])"
-Create a reference element with \s-1NAME\s0 to the existing \s-1ELEMENT\s0.  When the
-\&\s-1ELEMENT\s0 does not have an \*(L"id\*(R" attribute yet, then \s-1ID\s0 will be used.  In
-case not \s-1ID\s0 was specified, then one is generated.
-.ie n .IP "$obj\->\fBmultidim\fR((NAME|undef), \s-1ITEM_TYPE\s0, ARRAY-of-ELEMENTS, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBmultidim\fR((NAME|undef), \s-1ITEM_TYPE\s0, ARRAY-of-ELEMENTS, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->multidim((NAME|undef), ITEM_TYPE, ARRAY-of-ELEMENTS, OPTIONS)"
+.ie n .IP "$obj\->\fBhref\fR( $name, $element, [$id] )" 4
+.el .IP "\f(CW$obj\fR\->\fBhref\fR( \f(CW$name\fR, \f(CW$element\fR, [$id] )" 4
+.IX Item "$obj->href( $name, $element, [$id] )"
+Create a reference element with \f(CW$name\fR to the existing \f(CW$element\fR.  When the
+\&\f(CW$element\fR does not have an \*(L"id\*(R" attribute yet, then \f(CW$id\fR will be used.  In
+case not \f(CW$id\fR was specified, then one is generated.
+.ie n .IP "$obj\->\fBmultidim\fR( <$name|undef>, $item_type, $elements, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBmultidim\fR( <$name|undef>, \f(CW$item_type\fR, \f(CW$elements\fR, \f(CW%options\fR )" 4
+.IX Item "$obj->multidim( <$name|undef>, $item_type, $elements, %options )"
 A multi-dimensional array, less flexible than a single dimensional
 array, which can be created with \fIarray()\fR.
 .Sp
-The array must be square: in each of the dimensions, the length of
-each row must be the same.  On the other hand, it may be sparse
-(contain undefs).  The size of each dimension is determined by the
-length of its first element.
+The table of \f(CW$elements\fR (\s-1ARRAY\s0 of ARRAYs) must be full: in each of the
+dimensions, the length of each row must be the same.  On the other
+hand, it may be sparse (contain undefs).  The size of each dimension is
+determined by the length of its first element.
 .Sp
 .Vb 2
 \& \-Option\-\-Default
@@ -312,83 +275,51 @@ length of its first element.
 .RS 4
 .RE
 .PD 0
-.ie n .IP "$obj\->\fBnil\fR([\s-1TYPE\s0], \s-1NAME\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBnil\fR([\s-1TYPE\s0], \s-1NAME\s0)" 4
-.IX Item "$obj->nil([TYPE], NAME)"
+.ie n .IP "$obj\->\fBnil\fR( [$type], $name )" 4
+.el .IP "\f(CW$obj\fR\->\fBnil\fR( [$type], \f(CW$name\fR )" 4
+.IX Item "$obj->nil( [$type], $name )"
 .PD
-Create an element with \s-1NAME\s0 which explicitly has the \f(CW\*(C`xsi:nil\*(C'\fR attribute.
-If the \s-1NAME\s0 is full (has a namespace to it), it will be translated into
+Create an element with \f(CW$name\fR which explicitly has the \f(CW\*(C`xsi:nil\*(C'\fR attribute.
+If the \f(CW$name\fR is full (has a namespace to it), it will be translated into
 a \s-1QNAME\s0, otherwise, it is considered not namespace qualified.
 .Sp
-If a \s-1TYPE\s0 is given, then an explicit type parameter is added.
-.ie n .IP "$obj\->\fBprefixed\fR(TYPE|(\s-1NAMESPACE\s0,LOCAL))" 4
-.el .IP "\f(CW$obj\fR\->\fBprefixed\fR(TYPE|(\s-1NAMESPACE\s0,LOCAL))" 4
-.IX Item "$obj->prefixed(TYPE|(NAMESPACE,LOCAL))"
-Translate a NAMESPACE-LOCAL combination (which may be represented as
-a packed \s-1TYPE\s0) into a prefixed notation.
-.Sp
-The complication is that the \s-1NAMESPACE\s0 may not naturally have a prefixed
-assigned to it: the produced \s-1SOAP\s0 message is the result of compilation,
-and only the namespaces which are registered to be used during compile-time
-are added to the list on the top-level.
-.ie n .IP "$obj\->\fBstartEncoding\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBstartEncoding\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->startEncoding(OPTIONS)"
-This needs to be called before any encoding routine, because it
-initializes the internals.  Each call will reset all compiled
-cached translator routines.
-.Sp
-When you use the standard RPC-encoded interface, this will be
-called for you.
-.Sp
-.Vb 4
-\& \-Option    \-\-Default
-\&  doc         <required>
-\&  namespaces  {}
-\&  prefixes    {}
+If a \f(CW$type\fR is given, then an explicit type parameter is added.
+.ie n .IP "$obj\->\fBprefixed\fR( $type|<$ns,$local> )" 4
+.el .IP "\f(CW$obj\fR\->\fBprefixed\fR( \f(CW$type\fR|<$ns,$local> )" 4
+.IX Item "$obj->prefixed( $type|<$ns,$local> )"
+Translate a \f(CW$ns\fR\-$local combination (which may be represented as
+a packed \f(CW$type\fR) into a prefixed notation.
+.ie n .IP "$obj\->\fBstartEncoding\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBstartEncoding\fR(%options)" 4
+.IX Item "$obj->startEncoding(%options)"
+.Vb 2
+\& \-Option\-\-Default
+\&  doc     <created internally with utf8>
 .Ve
 .RS 4
-.IP "doc => XML::LibXML::Document" 2
-.IX Item "doc => XML::LibXML::Document"
+.IP "doc => XML::LibXML::Document node" 2
+.IX Item "doc => XML::LibXML::Document node"
+.RE
+.RS 4
+.RE
 .PD 0
-.IP "namespaces => HASH|ARRAY" 2
-.IX Item "namespaces => HASH|ARRAY"
+.ie n .IP "$obj\->\fBstruct\fR($type, $childs)" 4
+.el .IP "\f(CW$obj\fR\->\fBstruct\fR($type, \f(CW$childs\fR)" 4
+.IX Item "$obj->struct($type, $childs)"
 .PD
-Pre release 0.74 name for option \f(CW\*(C`prefixes\*(C'\fR.
-.IP "prefixes => HASH|ARRAY" 2
-.IX Item "prefixes => HASH|ARRAY"
-Like XML::Compile::Schema::compile(prefixes), this can
-be a \s-1HASH\s0 (see example) or an \s-1ARRAY\s0 with prefix-uri pairs.
-.RE
-.RS 4
-.Sp
-example:
-.Sp
-.Vb 3
-\& my %ns;
-\& $ns{$MYNS} = {uri => $MYNS, prefix => \*(Aqm\*(Aq};
-\& $soap\->startEncoding(doc => $doc, prefixes => \e%ns);
-\&
-\& # or
-\& $soap\->startEncoding(doc => $doc, prefixes => [ m => $MYNS ]);
-.Ve
-.RE
-.ie n .IP "$obj\->\fBstruct\fR(\s-1TYPE\s0, \s-1CHILDS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBstruct\fR(\s-1TYPE\s0, \s-1CHILDS\s0)" 4
-.IX Item "$obj->struct(TYPE, CHILDS)"
-Create a structure, an element with childs.  The \s-1CHILDS\s0 must be fully
+Create a structure, an element with children.  The \f(CW$childs\fR must be fully
 prepared XML::LibXML::Element objects.
-.ie n .IP "$obj\->\fBtyped\fR(\s-1TYPE\s0, \s-1NAME\s0, \s-1VALUE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBtyped\fR(\s-1TYPE\s0, \s-1NAME\s0, \s-1VALUE\s0)" 4
-.IX Item "$obj->typed(TYPE, NAME, VALUE)"
+.ie n .IP "$obj\->\fBtyped\fR($type, $name, $value)" 4
+.el .IP "\f(CW$obj\fR\->\fBtyped\fR($type, \f(CW$name\fR, \f(CW$value\fR)" 4
+.IX Item "$obj->typed($type, $name, $value)"
 A \*(L"typed\*(R" element shows its type explicitly, via the \*(L"xsi:type\*(R" attribute.
-The \s-1VALUE\s0 will get processed via an auto-generated XML::Compile writer,
+The \f(CW$value\fR will get processed via an auto-generated XML::Compile writer,
 so validated.  The processing is cashed.
 .Sp
-When \s-1VALUE\s0 already is an XML::LibXML::Element, then no processing
-nor value checking will be performed.  The \s-1NAME\s0 will be ignored.
+When \f(CW$value\fR already is an XML::LibXML::Element, then no processing
+nor value checking will be performed.  The \f(CW$name\fR will be ignored.
 .Sp
-If the \s-1TYPE\s0 is not qualified, then it is interpreted as basic type, as
+If the \f(CW$type\fR is not qualified, then it is interpreted as basic type, as
 defined by the selected schema.  If you explicitly
 need a non-namespace typed item, then use an empty namespace.  In any
 case, the type must be defined and the value is validated.
@@ -405,85 +336,29 @@ example:
 .PP
 \fIDecoding\fR
 .IX Subsection "Decoding"
-.ie n .IP "$obj\->\fBdec\fR(\s-1XMLNODES\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBdec\fR(\s-1XMLNODES\s0)" 4
-.IX Item "$obj->dec(XMLNODES)"
-Decode the \s-1XMLNODES\s0 (list of XML::LibXML::Element objects).  Use
-Data::Dumper to figure-out what the produced output is: it is a guess,
-so may not be perfect (do not use \s-1RPC\s0 but document style soap for
-good results).
+.ie n .IP "$obj\->\fBrpcDecode\fR($xmlnodes)" 4
+.el .IP "\f(CW$obj\fR\->\fBrpcDecode\fR($xmlnodes)" 4
+.IX Item "$obj->rpcDecode($xmlnodes)"
+Decode the elements found in the \f(CW$xmlnodes\fR (list of XML::LibXML::Node
+objects).  Use Data::Dumper to figure-out what the produced output is:
+it is a guess, so may not be perfect (do not use \s-1RPC\s0 but document style
+soap for good results).
 .Sp
-The decoded data is returned.  When startDecoding(simplify) is true,
-then the returned data is compact but may be sloppy.  Otherwise,
-a \s-1HASH\s0 is returned containing as much info as could be extracted from
-the tree.
-.ie n .IP "$obj\->\fBdecSimplify\fR(\s-1TREE\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBdecSimplify\fR(\s-1TREE\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->decSimplify(TREE, OPTIONS)"
-Simplify the \s-1TREE\s0 of output produced by \fIdec()\fR to contain only
-data.  Of course, this will remove useful information.
-.Sp
-From each of the HASHes in the tree, the \f(CW\*(C`_NAME\*(C'\fR, \f(CW\*(C`_TYPE\*(C'\fR, \f(CW\*(C`id\*(C'\fR,
-and any/anyAttribute fields are removed.  If only a \f(CW\*(C`_\*(C'\fR is left over,
-that related value will replace the \s-1HASH\s0 as a whole.
-.ie n .IP "$obj\->\fBstartDecoding\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBstartDecoding\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->startDecoding(OPTIONS)"
-Each call to this method will restart the cache of the decoding
-internals.
-.Sp
-Currently \fBnot supported\fR, is the automatic decoding of elements which
-\&\fIinherit\fR from \f(CW\*(C`SOAP\-ENC:Array\*(C'\fR.  If you encounter these, you have to
-play with hooks.
-.Sp
-.Vb 3
-\& \-Option     \-\-Default
-\&  reader_opts  {}
-\&  simplify     <false>
-.Ve
-.RS 4
-.IP "reader_opts => \s-1HASH\s0" 2
-.IX Item "reader_opts => HASH"
-Extend or overrule the default reader options.  Available options
-are shown in \fIXML::Compile::Schema::compile()\fR.
-.IP "simplify => \s-1BOOLEAN\s0" 2
-.IX Item "simplify => BOOLEAN"
-Call \fIdecSimplify()\fR automatically at the end of \fIdec()\fR, so producing
-an easily accessible output tree.
-.RE
-.RS 4
-.RE
-.PP
-\&\s-1SOAP\s0 defines encodings, especially for SOAP-RPC.
+The decoded data is returned.  When \*(L"simplify\*(R" is set, then the returned
+data is compact but may be sloppy.  Otherwise, a \s-1HASH\s0 is returned
+containing as much info as could be extracted from the tree.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

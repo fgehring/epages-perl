@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Cache 3"
-.TH XML::Compile::Cache 3 "2011-05-06" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Cache 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -163,28 +163,35 @@ XML::Compile::Cache \- Cache compiled XML translators
 \& # use the base\-class uncached, the XML::Compile::Schema
 \& my $do = $cache\->compile(READER => $type, @opts);
 .Ve
+.SH "DESCRIPTION"
+.IX Header "DESCRIPTION"
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in XML::Compile::Schema.
 .SH "METHODS"
 .IX Header "METHODS"
+Extends \*(L"\s-1METHODS\s0\*(R" in XML::Compile::Schema.
 .SS "Constructors"
 .IX Subsection "Constructors"
-.IP "XML::Compile::Cache\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::Cache->new(OPTIONS)"
+Extends \*(L"Constructors\*(R" in XML::Compile::Schema.
+.ie n .IP "XML::Compile::Cache\->\fBnew\fR( [$xml], %options )" 4
+.el .IP "XML::Compile::Cache\->\fBnew\fR( [$xml], \f(CW%options\fR )" 4
+.IX Item "XML::Compile::Cache->new( [$xml], %options )"
 .Vb 10
-\& \-Option            \-\-Defined in     \-\-Default
-\&  allow_undeclared                     <false>
-\&  any_element                          \*(AqSKIP_ALL\*(Aq
+\& \-Option            \-\-Defined in          \-\-Default
+\&  allow_undeclared                          <false>
+\&  any_element                               \*(AqATTEMPT\*(Aq
 \&  block_namespace     XML::Compile::Schema  []
 \&  hook                XML::Compile::Schema  undef
 \&  hooks               XML::Compile::Schema  []
 \&  ignore_unused_tags  XML::Compile::Schema  <false>
 \&  key_rewrite         XML::Compile::Schema  []
-\&  opts_readers                         []
-\&  opts_rw                              []
-\&  opts_writers                         []
-\&  prefixes                             <smart>
-\&  schema_dirs         XML::Compile     undef
-\&  typemap                              {}
-\&  xsi_type                             {}
+\&  opts_readers                              []
+\&  opts_rw                                   []
+\&  opts_writers                              []
+\&  parser_options      XML::Compile          <many>
+\&  prefixes                                  <smart>
+\&  schema_dirs         XML::Compile          undef
+\&  typemap                                   {}
+\&  xsi_type                                  {}
 .Ve
 .RS 4
 .IP "allow_undeclared => \s-1BOOLEAN\s0" 2
@@ -196,17 +203,23 @@ they are consistent over each use of the type.
 .IP "any_element => CODE|'\s-1TAKE_ALL\s0'|'\s-1SKIP_ALL\s0'|'\s-1ATTEMPT\s0'|'\s-1SLOPPY\s0'" 2
 .IX Item "any_element => CODE|'TAKE_ALL'|'SKIP_ALL'|'ATTEMPT'|'SLOPPY'"
 See \fIanyElement()\fR.
+.Sp
+[1.02] the default is to \s-1ATTEMPT\s0 compiling any handlers automatically.
+Before version 1.02, the default was to \s-1SKIP_ALL\s0 elements which would
+match the occurs and namespace restrictions of the any specification.
+However, that fails for reperative blocks (for instance, it fails for
+an choice which may occur unbounded times)
 .IP "block_namespace => NAMESPACE|TYPE|HASH|CODE|ARRAY" 2
 .IX Item "block_namespace => NAMESPACE|TYPE|HASH|CODE|ARRAY"
 .PD 0
-.IP "hook => ARRAY-WITH-HOOKDATA | \s-1HOOK\s0" 2
-.IX Item "hook => ARRAY-WITH-HOOKDATA | HOOK"
-.IP "hooks => ARRAY-OF-HOOK" 2
-.IX Item "hooks => ARRAY-OF-HOOK"
+.IP "hook => HOOK|ARRAY" 2
+.IX Item "hook => HOOK|ARRAY"
+.IP "hooks => \s-1ARRAY\s0" 2
+.IX Item "hooks => ARRAY"
 .IP "ignore_unused_tags => BOOLEAN|REGEXP" 2
 .IX Item "ignore_unused_tags => BOOLEAN|REGEXP"
-.IP "key_rewrite => HASH|CODE|ARRAY\-of\-HASH\-and\-CODE" 2
-.IX Item "key_rewrite => HASH|CODE|ARRAY-of-HASH-and-CODE"
+.IP "key_rewrite => HASH|CODE|ARRAY" 2
+.IX Item "key_rewrite => HASH|CODE|ARRAY"
 .IP "opts_readers => HASH|ARRAY\-of\-PAIRS" 2
 .IX Item "opts_readers => HASH|ARRAY-of-PAIRS"
 .IP "opts_rw => HASH|ARRAY\-of\-PAIRS" 2
@@ -218,6 +231,8 @@ these.  See \fIaddCompileOptions()\fR.
 .IP "opts_writers => HASH|ARRAY\-of\-PAIRS" 2
 .IX Item "opts_writers => HASH|ARRAY-of-PAIRS"
 .PD 0
+.IP "parser_options => HASH|ARRAY" 2
+.IX Item "parser_options => HASH|ARRAY"
 .IP "prefixes => HASH|ARRAY\-of\-PAIRS" 2
 .IX Item "prefixes => HASH|ARRAY-of-PAIRS"
 .PD
@@ -251,46 +266,50 @@ processing, you will need to specify a \s-1HASH\s0.
 .PD
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBaddCompileOptions\fR(['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0'], \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddCompileOptions\fR(['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0'], \s-1OPTIONS\s0)" 4
-.IX Item "$obj->addCompileOptions(['READERS'|'WRITERS'|'RW'], OPTIONS)"
-[0.99] You may provide global compile options with new(opts_rw),
-\&\f(CW\*(C`opts_readers\*(C'\fR and \f(CW\*(C`opts_writers\*(C'\fR, but also later using this method.
-.ie n .IP "$obj\->\fBaddHook\fR(HOOKDATA|HOOK|undef)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddHook\fR(HOOKDATA|HOOK|undef)" 4
-.IX Item "$obj->addHook(HOOKDATA|HOOK|undef)"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBaddHooks\fR(\s-1HOOK\s0, [\s-1HOOK\s0, ...])" 4
-.el .IP "\f(CW$obj\fR\->\fBaddHooks\fR(\s-1HOOK\s0, [\s-1HOOK\s0, ...])" 4
-.IX Item "$obj->addHooks(HOOK, [HOOK, ...])"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBaddKeyRewrite\fR(PREDEF|CODE|HASH, ...)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddKeyRewrite\fR(PREDEF|CODE|HASH, ...)" 4
-.IX Item "$obj->addKeyRewrite(PREDEF|CODE|HASH, ...)"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBaddSchemaDirs\fR(DIRECTORIES|FILENAME)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddSchemaDirs\fR(DIRECTORIES|FILENAME)" 4
-.IX Item "$obj->addSchemaDirs(DIRECTORIES|FILENAME)"
+Extends \*(L"Accessors\*(R" in XML::Compile::Schema.
+.ie n .IP "$obj\->\fBaddHook\fR($hook|LIST|undef)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddHook\fR($hook|LIST|undef)" 4
+.IX Item "$obj->addHook($hook|LIST|undef)"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBaddHooks\fR( $hook, [$hook, ...] )" 4
+.el .IP "\f(CW$obj\fR\->\fBaddHooks\fR( \f(CW$hook\fR, [$hook, ...] )" 4
+.IX Item "$obj->addHooks( $hook, [$hook, ...] )"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBaddKeyRewrite\fR($predef|CODE|HASH, ...)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddKeyRewrite\fR($predef|CODE|HASH, ...)" 4
+.IX Item "$obj->addKeyRewrite($predef|CODE|HASH, ...)"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBaddSchemaDirs\fR(@directories|$filename)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddSchemaDirs\fR(@directories|$filename)" 4
+.IX Item "$obj->addSchemaDirs(@directories|$filename)"
 .PD 0
-.IP "XML::Compile::Cache\->\fBaddSchemaDirs\fR(DIRECTORIES|FILENAME)" 4
-.IX Item "XML::Compile::Cache->addSchemaDirs(DIRECTORIES|FILENAME)"
+.IP "XML::Compile::Cache\->\fBaddSchemaDirs\fR(@directories|$filename)" 4
+.IX Item "XML::Compile::Cache->addSchemaDirs(@directories|$filename)"
 .PD
-See \*(L"Accessors\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBaddSchemas\fR(\s-1XML\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddSchemas\fR(\s-1XML\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->addSchemas(XML, OPTIONS)"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
+Inherited, see \*(L"Accessors\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBaddSchemas\fR($xml, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddSchemas\fR($xml, \f(CW%options\fR)" 4
+.IX Item "$obj->addSchemas($xml, %options)"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
 .ie n .IP "$obj\->\fBaddTypemap\fR(\s-1PAIR\s0)" 4
 .el .IP "\f(CW$obj\fR\->\fBaddTypemap\fR(\s-1PAIR\s0)" 4
 .IX Item "$obj->addTypemap(PAIR)"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
 .ie n .IP "$obj\->\fBaddTypemaps\fR(\s-1PAIRS\s0)" 4
 .el .IP "\f(CW$obj\fR\->\fBaddTypemaps\fR(\s-1PAIRS\s0)" 4
 .IX Item "$obj->addTypemaps(PAIRS)"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBallowUndeclared\fR([\s-1BOOLEAN\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBallowUndeclared\fR([\s-1BOOLEAN\s0])" 4
-.IX Item "$obj->allowUndeclared([BOOLEAN])"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBaddXsiType\fR( [HASH|ARRAY|LIST] )" 4
+.el .IP "\f(CW$obj\fR\->\fBaddXsiType\fR( [HASH|ARRAY|LIST] )" 4
+.IX Item "$obj->addXsiType( [HASH|ARRAY|LIST] )"
+[1.01] add global xsi_type declarations.  Returns the xsiType set.
+The \s-1ARRAY\s0 or \s-1LIST\s0 contains pairs, just like the \s-1HASH\s0.
+.Sp
+The value component can be '\s-1AUTO\s0' to automatically detect the \f(CW\*(C`xsi:type\*(C'\fR
+extensions.  This does only work for complex types.
+.ie n .IP "$obj\->\fBallowUndeclared\fR( [\s-1BOOLEAN\s0] )" 4
+.el .IP "\f(CW$obj\fR\->\fBallowUndeclared\fR( [\s-1BOOLEAN\s0] )" 4
+.IX Item "$obj->allowUndeclared( [BOOLEAN] )"
 Whether it is permitted to create readers and writers which are not
 declared cleanly.
 .ie n .IP "$obj\->\fBanyElement\fR('\s-1ATTEMPT\s0'|'\s-1SLOPPY\s0'|'\s-1SKIP_ALL\s0'|'\s-1TAKE_ALL\s0'|CODE)" 4
@@ -304,90 +323,171 @@ each element found. When an element is not found in a schema, it will
 be included as XML::LibXML::Element node.
 .Sp
 [0.93] Reader: With \f(CW\*(C`SLOPPY\*(C'\fR, first automatic typed conversion is
-attempted. But is the type is not known, XML::LibXML::Simple subroutine XMLin
+attempted. But is the type is not known, \fIXML::LibXML::Simple::XMLin()\fR
 is called to the resque.
-.ie n .IP "$obj\->\fBblockNamespace\fR(NAMESPACE|TYPE|HASH|CODE|ARRAY)" 4
-.el .IP "\f(CW$obj\fR\->\fBblockNamespace\fR(NAMESPACE|TYPE|HASH|CODE|ARRAY)" 4
-.IX Item "$obj->blockNamespace(NAMESPACE|TYPE|HASH|CODE|ARRAY)"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBhooks\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBhooks\fR" 4
-.IX Item "$obj->hooks"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBprefix\fR(\s-1PREFIX\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBprefix\fR(\s-1PREFIX\s0)" 4
-.IX Item "$obj->prefix(PREFIX)"
-Lookup a prefix definition.  This returns a \s-1HASH\s0 with namespace info.
-.ie n .IP "$obj\->\fBprefixFor\fR(\s-1URI\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBprefixFor\fR(\s-1URI\s0)" 4
-.IX Item "$obj->prefixFor(URI)"
-Lookup the preferred prefix for the \s-1URI\s0.
-.ie n .IP "$obj\->\fBprefixed\fR(\s-1TYPE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBprefixed\fR(\s-1TYPE\s0)" 4
-.IX Item "$obj->prefixed(TYPE)"
-Translate the fully qualified \s-1TYPE\s0 into a prefixed version.  Will produce
-undef if the namespace is unknown.
+.ie n .IP "$obj\->\fBblockNamespace\fR($ns|$type|HASH|CODE|ARRAY)" 4
+.el .IP "\f(CW$obj\fR\->\fBblockNamespace\fR($ns|$type|HASH|CODE|ARRAY)" 4
+.IX Item "$obj->blockNamespace($ns|$type|HASH|CODE|ARRAY)"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBhooks\fR( [<'\s-1READER\s0'|'\s-1WRITER\s0'>] )" 4
+.el .IP "\f(CW$obj\fR\->\fBhooks\fR( [<'\s-1READER\s0'|'\s-1WRITER\s0'>] )" 4
+.IX Item "$obj->hooks( [<'READER'|'WRITER'>] )"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBtypemap\fR( [HASH|ARRAY|PAIRS] )" 4
+.el .IP "\f(CW$obj\fR\->\fBtypemap\fR( [HASH|ARRAY|PAIRS] )" 4
+.IX Item "$obj->typemap( [HASH|ARRAY|PAIRS] )"
+[0.98] Add global knowledge on typemaps.  Returns the typemap.
+.ie n .IP "$obj\->\fBuseSchema\fR( $schema, [$schema, ...] )" 4
+.el .IP "\f(CW$obj\fR\->\fBuseSchema\fR( \f(CW$schema\fR, [$schema, ...] )" 4
+.IX Item "$obj->useSchema( $schema, [$schema, ...] )"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.SS "Prefix management"
+.IX Subsection "Prefix management"
+The cache layer on top of XML::Compile::Schema adds smart use of
+prefixes.  Of course, smartness comes with a small performance cost,
+but the code gets much cleaner.
+.ie n .IP "$obj\->\fBaddNicePrefix\fR(\s-1BASE\s0, \s-1NAMESPACE\s0)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddNicePrefix\fR(\s-1BASE\s0, \s-1NAMESPACE\s0)" 4
+.IX Item "$obj->addNicePrefix(BASE, NAMESPACE)"
+[1.03] Register \s-1NAMESPACE\s0 \-if not yet defined\- with prefix name \s-1BASE\s0.  When
+that prefix name is already in use for some other namespace, \s-1BASE\s0 followed
+by a number are attempted (starting with 01).  The prefix is returned.
+.Sp
+When the \s-1BASE\s0 already ends on a number, that number will get counted.
 .Sp
 example:
 .Sp
-.Vb 1
-\&   print $schema\->prefixed($type} || $type;
+.Vb 2
+\&  my $prefix = $schema\->addNicePrefix(\*(Aqcall\*(Aq, $myns);
+\&  # $prefix now can be call, call01, call02 etc
 .Ve
-.ie n .IP "$obj\->\fBprefixes\fR([PAIRS|ARRAY|HASH])" 4
-.el .IP "\f(CW$obj\fR\->\fBprefixes\fR([PAIRS|ARRAY|HASH])" 4
-.IX Item "$obj->prefixes([PAIRS|ARRAY|HASH])"
-Returns the \s-1HASH\s0 with prefix to name-space translations.  You should not
-modify the returned \s-1HASH\s0.  New \s-1PAIRS\s0 of prefix to namespace relations
-can be passed.
+.ie n .IP "$obj\->\fBaddPrefixes\fR( [PAIRS|ARRAY|HASH] )" 4
+.el .IP "\f(CW$obj\fR\->\fBaddPrefixes\fR( [PAIRS|ARRAY|HASH] )" 4
+.IX Item "$obj->addPrefixes( [PAIRS|ARRAY|HASH] )"
+The X::C logic does auto-detect prefix/namespaces combinations from
+the \s-1XML\s0, but does not search extensively for namespace declarations.
+Also, sometimes the same namespace is used with different prefixes.
+Sometimes, the same prefix is used for different namesapces.  To complete
+the list, or control the actual prefix being used, you explicitly declare
+combinations.
 .Sp
-[0.14]
-If a name-space appears for the second time, then the new prefix will be
-recognized by \fIfindName()\fR, but not used in the output.  When the prefix
-already exists for a different namespace, then an error will be casted.
+The \fBbest way\fR to add prefixes is via new(prefixes), which will give
+your names preference over the names found in the schema's which get loaded.
+For instance, use \f(CW\*(C`::WSDL\->new(prefixes => [ $prefix => $ns ]\*(C'\fR
 .Sp
-[0.90]
-You may also provide an \s-1ARRAY\s0 of pairs or a \s-1HASH\s0.
-.ie n .IP "$obj\->\fBtypemap\fR([HASH|ARRAY|PAIRS])" 4
-.el .IP "\f(CW$obj\fR\->\fBtypemap\fR([HASH|ARRAY|PAIRS])" 4
-.IX Item "$obj->typemap([HASH|ARRAY|PAIRS])"
-[0.98] Add global knowledge on typemaps.  Returns the typemap.
-.ie n .IP "$obj\->\fBuseSchema\fR(\s-1SCHEMA\s0, [\s-1SCHEMA\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBuseSchema\fR(\s-1SCHEMA\s0, [\s-1SCHEMA\s0])" 4
-.IX Item "$obj->useSchema(SCHEMA, [SCHEMA])"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBxsiType\fR([HASH|ARRAY|LIST])" 4
-.el .IP "\f(CW$obj\fR\->\fBxsiType\fR([HASH|ARRAY|LIST])" 4
-.IX Item "$obj->xsiType([HASH|ARRAY|LIST])"
-[0.98] add global xsi_type declarations.  Returns the xsiType set.
+[0.995] Returns the \s-1HASH\s0 with prefix to name-space translations.  You should
+not modify the returned \s-1HASH:\s0 new \s-1PAIRS\s0 of prefix to namespace relations
+can be passed as arguments.
+.Sp
+[0.14] If a name-space appears for the second time, then the new
+prefix will be recognized by \fIfindName()\fR, but not used in the output.
+When the prefix already exists for a different namespace, then an error
+will be casted.
+.Sp
+[0.90] You may also provide an \s-1ARRAY\s0 of pairs or a \s-1HASH\s0.
+.ie n .IP "$obj\->\fBlearnPrefixes\fR($node)" 4
+.el .IP "\f(CW$obj\fR\->\fBlearnPrefixes\fR($node)" 4
+.IX Item "$obj->learnPrefixes($node)"
+[0.993] Take all the prefixes defined in the \f(CW$node\fR, and XML::LibXML::Element.
+This is not recursive: only on those defined at the top \f(CW$node\fR.
+.ie n .IP "$obj\->\fBprefix\fR($prefix)" 4
+.el .IP "\f(CW$obj\fR\->\fBprefix\fR($prefix)" 4
+.IX Item "$obj->prefix($prefix)"
+Lookup a prefix definition.  This returns a \s-1HASH\s0 with namespace info.
+.ie n .IP "$obj\->\fBprefixFor\fR($uri)" 4
+.el .IP "\f(CW$obj\fR\->\fBprefixFor\fR($uri)" 4
+.IX Item "$obj->prefixFor($uri)"
+Lookup the preferred prefix for the \f(CW$uri\fR.
+.ie n .IP "$obj\->\fBprefixed\fR( $type|<$ns,$local> )" 4
+.el .IP "\f(CW$obj\fR\->\fBprefixed\fR( \f(CW$type\fR|<$ns,$local> )" 4
+.IX Item "$obj->prefixed( $type|<$ns,$local> )"
+Translate the fully qualified \f(CW$type\fR into a prefixed version.  Will produce
+undef if the namespace is unknown.
+.Sp
+[0.993] When your \f(CW$type\fR is not in packed form, you can specify a namespace
+and \f(CW$local\fR type name as separate arguments.
+.Sp
+example:
+.Sp
+.Vb 2
+\&   print $schema\->prefixed($type) || $type;
+\&   print $schema\->prefixed($ns, $local);
+.Ve
+.ie n .IP "$obj\->\fBprefixes\fR( [$params] )" 4
+.el .IP "\f(CW$obj\fR\->\fBprefixes\fR( [$params] )" 4
+.IX Item "$obj->prefixes( [$params] )"
+Return prefixes table.  The \f(CW$params\fR are deprecated since [0.995], see
+\&\fIaddPrefixes()\fR.
 .SS "Compilers"
 .IX Subsection "Compilers"
-.ie n .IP "$obj\->\fBcompile\fR(('\s-1READER\s0'|'\s-1WRITER\s0'), \s-1TYPE\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompile\fR(('\s-1READER\s0'|'\s-1WRITER\s0'), \s-1TYPE\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->compile(('READER'|'WRITER'), TYPE, OPTIONS)"
-See \*(L"Compilers\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBcompileAll\fR(['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0', [\s-1NAMESPACE\s0]])" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileAll\fR(['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0', [\s-1NAMESPACE\s0]])" 4
-.IX Item "$obj->compileAll(['READERS'|'WRITERS'|'RW', [NAMESPACE]])"
+The name of this module refers to its power to administer compiled
+\&\s-1XML\s0 encoders (writers) and decoders (readers).  This means that
+your program only need to pass on a ::Cache object (for instance
+a XML::Compile::WSDL11, not a \s-1CODE\s0 reference for each compiled
+translator.
+.PP
+Extends \*(L"Compilers\*(R" in XML::Compile::Schema.
+.ie n .IP "$obj\->\fBaddCompileOptions\fR( ['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0'], %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBaddCompileOptions\fR( ['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0'], \f(CW%options\fR )" 4
+.IX Item "$obj->addCompileOptions( ['READERS'|'WRITERS'|'RW'], %options )"
+[0.99] You may provide global compile options with new(opts_rw),
+\&\f(CW\*(C`opts_readers\*(C'\fR and \f(CW\*(C`opts_writers\*(C'\fR, but also later using this method.
+.ie n .IP "$obj\->\fBcompile\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'>, $type, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBcompile\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'>, \f(CW$type\fR, \f(CW%options\fR )" 4
+.IX Item "$obj->compile( <'READER'|'WRITER'>, $type, %options )"
+Inherited, see \*(L"Compilers\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBcompileAll\fR( ['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0', [$ns]] )" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileAll\fR( ['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0', [$ns]] )" 4
+.IX Item "$obj->compileAll( ['READERS'|'WRITERS'|'RW', [$ns]] )"
 Compile all the declared readers and writers with the default '\s-1RW\s0').  You may
 also select to pre-compile only the \s-1READERS\s0 or only the \s-1WRITERS\s0.  The
-selection can be limited further by specifying a \s-1NAMESPACE\s0.
+selection can be limited further by specifying a \f(CW$ns\fR.
 .Sp
 By default, the processors are only compiled when used.  This method is
-especially useful in a daemon process, where preparations can take as
+especially useful in a \fBdaemon process\fR, where preparations can take as
 much time as they want to... and running should be as fast as possible.
-.IP "XML::Compile::Cache\->\fBdataToXML\fR(NODE|REF\-XML\-STRING|XML\-STRING|FILENAME|FILEHANDLE|KNOWN)" 4
-.IX Item "XML::Compile::Cache->dataToXML(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)"
-See \*(L"Compilers\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBreader\fR(TYPE|NAME, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBreader\fR(TYPE|NAME, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->reader(TYPE|NAME, OPTIONS)"
-Returns the reader \s-1CODE\s0 for the \s-1TYPE\s0 or \s-1NAME\s0 (see \fIfindName()\fR).
-\&\s-1OPTIONS\s0 are only permitted if new(allow_undeclared) is true, and the
+.ie n .IP "$obj\->\fBcompileType\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'>, $type, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileType\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'>, \f(CW$type\fR, \f(CW%options\fR )" 4
+.IX Item "$obj->compileType( <'READER'|'WRITER'>, $type, %options )"
+Inherited, see \*(L"Compilers\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBdataToXML\fR($node|REF\-XML|XML\-STRING|$filename|$fh|$known)" 4
+.el .IP "\f(CW$obj\fR\->\fBdataToXML\fR($node|REF\-XML|XML\-STRING|$filename|$fh|$known)" 4
+.IX Item "$obj->dataToXML($node|REF-XML|XML-STRING|$filename|$fh|$known)"
+.PD 0
+.IP "XML::Compile::Cache\->\fBdataToXML\fR($node|REF\-XML|XML\-STRING|$filename|$fh|$known)" 4
+.IX Item "XML::Compile::Cache->dataToXML($node|REF-XML|XML-STRING|$filename|$fh|$known)"
+.PD
+Inherited, see \*(L"Compilers\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBinitParser\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBinitParser\fR(%options)" 4
+.IX Item "$obj->initParser(%options)"
+.PD 0
+.IP "XML::Compile::Cache\->\fBinitParser\fR(%options)" 4
+.IX Item "XML::Compile::Cache->initParser(%options)"
+.PD
+Inherited, see \*(L"Compilers\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBreader\fR($type|$name, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBreader\fR($type|$name, \f(CW%options\fR)" 4
+.IX Item "$obj->reader($type|$name, %options)"
+Returns the reader \s-1CODE\s0 for the \f(CW$type\fR or \f(CW$name\fR (see \fIfindName()\fR).
+\&\f(CW%options\fR are only permitted if new(allow_undeclared) is true, and the
 same as the previous call to this method.
 .Sp
 The reader will be compiled the first time that it is used, and that
 same \s-1CODE\s0 reference will be returned each next request for the same
-\&\s-1TYPE\s0.  Call \fIcompileAll()\fR to have all readers compiled by force.
+\&\f(CW$type\fR.  Call \fIcompileAll()\fR to have all readers compiled by force.
+.Sp
+.Vb 2
+\& \-Option \-\-Default
+\&  is_type  <false>
+.Ve
+.RS 4
+.IP "is_type => \s-1BOOLEAN\s0" 2
+.IX Item "is_type => BOOLEAN"
+[1.03] use \fIcompileType()\fR with the given element, to replace \fIcompile()\fR
+You probably want an additional \f(CW\*(C`element\*(C'\fR parameter.
+.RE
+.RS 4
 .Sp
 example:
 .Sp
@@ -399,20 +499,33 @@ example:
 \&  my $getmem = $schema\->reader(\*(Aqgml:members\*(Aq);
 \&  my $data   = $getmem\->($xml);
 .Ve
-.ie n .IP "$obj\->\fBtemplate\fR('\s-1XML\s0'|'\s-1PERL\s0', \s-1ELEMENT\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBtemplate\fR('\s-1XML\s0'|'\s-1PERL\s0', \s-1ELEMENT\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->template('XML'|'PERL', ELEMENT, OPTIONS)"
-See \*(L"Compilers\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBwriter\fR(TYPE|NAME)" 4
-.el .IP "\f(CW$obj\fR\->\fBwriter\fR(TYPE|NAME)" 4
-.IX Item "$obj->writer(TYPE|NAME)"
-Returns the writer \s-1CODE\s0 for the \s-1TYPE\s0 or \s-1NAME\s0 (see \fIfindName()\fR).
+.RE
+.ie n .IP "$obj\->\fBtemplate\fR( <'\s-1XML\s0'|'\s-1PERL\s0'|'\s-1TREE\s0'>, $element, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBtemplate\fR( <'\s-1XML\s0'|'\s-1PERL\s0'|'\s-1TREE\s0'>, \f(CW$element\fR, \f(CW%options\fR )" 4
+.IX Item "$obj->template( <'XML'|'PERL'|'TREE'>, $element, %options )"
+Inherited, see \*(L"Compilers\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBwriter\fR($type|$name)" 4
+.el .IP "\f(CW$obj\fR\->\fBwriter\fR($type|$name)" 4
+.IX Item "$obj->writer($type|$name)"
+Returns the writer \s-1CODE\s0 for the \f(CW$type\fR or \f(CW$name\fR (see \fIfindName()\fR).
 \&\s-1OPTIONS\s0 are only permitted if new(allow_undeclared) is true, and the
 same as the previous call to this method.
 .Sp
 The writer will be compiled the first time that it is used, and that
 same \s-1CODE\s0 reference will be returned each next request for the same
 type.
+.Sp
+.Vb 2
+\& \-Option \-\-Default
+\&  is_type  <false>
+.Ve
+.RS 4
+.IP "is_type => \s-1BOOLEAN\s0" 2
+.IX Item "is_type => BOOLEAN"
+[1.03] use \fIcompileType()\fR with the given element, to replace \fIcompile()\fR
+You probably want an additional \f(CW\*(C`element\*(C'\fR parameter.
+.RE
+.RS 4
 .Sp
 example:
 .Sp
@@ -425,18 +538,20 @@ example:
 \&  $doc\->setDocumentElement($xml);
 \&  print $doc\->toString(1);
 .Ve
+.RE
 .SS "Administration"
 .IX Subsection "Administration"
-.ie n .IP "$obj\->\fBdeclare\fR('\s-1READER\s0'|'\s-1WRITER\s0'|'\s-1RW\s0', TYPE|ARRAY\-of\-TYPES, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBdeclare\fR('\s-1READER\s0'|'\s-1WRITER\s0'|'\s-1RW\s0', TYPE|ARRAY\-of\-TYPES, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->declare('READER'|'WRITER'|'RW', TYPE|ARRAY-of-TYPES, OPTIONS)"
-Register that the indicated \s-1TYPE\s0 (or \s-1TYPES\s0) may be used, and needs to
-be translated with the \s-1OPTIONS\s0 (either specified as \s-1ARRAY\s0 or \s-1LIST\s0).
+Extends \*(L"Administration\*(R" in XML::Compile::Schema.
+.ie n .IP "$obj\->\fBdeclare\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'|'\s-1RW\s0'>, <$type|ARRAY>, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBdeclare\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'|'\s-1RW\s0'>, <$type|ARRAY>, \f(CW%options\fR )" 4
+.IX Item "$obj->declare( <'READER'|'WRITER'|'RW'>, <$type|ARRAY>, %options )"
+Register that the indicated \f(CW$type\fR (or \s-1ARRAY\s0 of them) may be used, and needs to
+be translated with the \f(CW%options\fR (either specified as \s-1ARRAY\s0 or \s-1PAIRS\s0).
 Specify whether it may get used as \s-1READER\s0, \s-1WRITER\s0, or both (\s-1RW\s0).  If the
 \&\s-1READER\s0 and \s-1WRITER\s0 need different options, then you need to declare them
-seperately; in that case you cannot use \s-1RW\s0.
+separately; in that case you cannot use \s-1RW\s0.
 .Sp
-The \s-1TYPE\s0 should be understood by \fIfindName()\fR, so may be prefixed.
+The \f(CW$type\fR should be understood by \fIfindName()\fR, so may be prefixed.
 .Sp
 example:
 .Sp
@@ -446,19 +561,19 @@ example:
 \&
 \&  $cache\->declare(WRITER => [ \*(Aqxsd:int\*(Aq, \*(Aq{http://}aap\*(Aq ]);
 .Ve
-.ie n .IP "$obj\->\fBdoesExtend\fR(\s-1EXTTYPE\s0, \s-1BASETYPE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBdoesExtend\fR(\s-1EXTTYPE\s0, \s-1BASETYPE\s0)" 4
-.IX Item "$obj->doesExtend(EXTTYPE, BASETYPE)"
-See \*(L"Administration\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBelements\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBelements\fR" 4
-.IX Item "$obj->elements"
-See \*(L"Administration\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBfindName\fR(\s-1NAME\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBfindName\fR(\s-1NAME\s0)" 4
-.IX Item "$obj->findName(NAME)"
-Translate the \s-1NAME\s0 specification into a schema defined full type.
-The \s-1NAME\s0 can be a full type (like '{namespace}localname', usually
+.ie n .IP "$obj\->\fBdoesExtend\fR($exttype, $basetype)" 4
+.el .IP "\f(CW$obj\fR\->\fBdoesExtend\fR($exttype, \f(CW$basetype\fR)" 4
+.IX Item "$obj->doesExtend($exttype, $basetype)"
+Inherited, see \*(L"Administration\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBelements\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBelements\fR()" 4
+.IX Item "$obj->elements()"
+Inherited, see \*(L"Administration\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBfindName\fR($name)" 4
+.el .IP "\f(CW$obj\fR\->\fBfindName\fR($name)" 4
+.IX Item "$obj->findName($name)"
+Translate the \f(CW$name\fR specification into a schema defined full type.
+The \f(CW$name\fR can be a full type (like '{namespace}localname', usually
 created with \fIXML::Compile::Util::pack_type()\fR) or a prefixed type
 (like 'myns:localname', where \f(CW\*(C`myns\*(C'\fR is defined via new(prefixes)
 or \fIprefixes()\fR).
@@ -469,7 +584,7 @@ returned.
 example: of \fIfindName()\fR
 .Sp
 .Vb 1
-\&  $schema\->prefixes(pre => \*(Aqhttp://namespace\*(Aq);
+\&  $schema\->addPrefixes(pre => \*(Aqhttp://namespace\*(Aq);
 \&
 \&  my $type = $schema\->findName(\*(Aqpre:name\*(Aq);
 \&  print $type;   # {http://namespace}name
@@ -480,33 +595,33 @@ example: of \fIfindName()\fR
 \&  my $type = $schema\->findName(\*(Aq{somens}name\*(Aq);
 \&  print $type;   # {somens}name    [a no\-op]
 .Ve
-.ie n .IP "$obj\->\fBfindSchemaFile\fR(\s-1FILENAME\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBfindSchemaFile\fR(\s-1FILENAME\s0)" 4
-.IX Item "$obj->findSchemaFile(FILENAME)"
+.ie n .IP "$obj\->\fBfindSchemaFile\fR($filename)" 4
+.el .IP "\f(CW$obj\fR\->\fBfindSchemaFile\fR($filename)" 4
+.IX Item "$obj->findSchemaFile($filename)"
 .PD 0
-.IP "XML::Compile::Cache\->\fBfindSchemaFile\fR(\s-1FILENAME\s0)" 4
-.IX Item "XML::Compile::Cache->findSchemaFile(FILENAME)"
+.IP "XML::Compile::Cache\->\fBfindSchemaFile\fR($filename)" 4
+.IX Item "XML::Compile::Cache->findSchemaFile($filename)"
 .PD
-See \*(L"Administration\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBimportDefinitions\fR(\s-1XMLDATA\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBimportDefinitions\fR(\s-1XMLDATA\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->importDefinitions(XMLDATA, OPTIONS)"
-See \*(L"Administration\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBknownNamespace\fR(NAMESPACE|PAIRS)" 4
-.el .IP "\f(CW$obj\fR\->\fBknownNamespace\fR(NAMESPACE|PAIRS)" 4
-.IX Item "$obj->knownNamespace(NAMESPACE|PAIRS)"
+Inherited, see \*(L"Administration\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBimportDefinitions\fR($xmldata, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBimportDefinitions\fR($xmldata, \f(CW%options\fR)" 4
+.IX Item "$obj->importDefinitions($xmldata, %options)"
+Inherited, see \*(L"Administration\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBknownNamespace\fR($ns|PAIRS)" 4
+.el .IP "\f(CW$obj\fR\->\fBknownNamespace\fR($ns|PAIRS)" 4
+.IX Item "$obj->knownNamespace($ns|PAIRS)"
 .PD 0
-.IP "XML::Compile::Cache\->\fBknownNamespace\fR(NAMESPACE|PAIRS)" 4
-.IX Item "XML::Compile::Cache->knownNamespace(NAMESPACE|PAIRS)"
+.IP "XML::Compile::Cache\->\fBknownNamespace\fR($ns|PAIRS)" 4
+.IX Item "XML::Compile::Cache->knownNamespace($ns|PAIRS)"
 .PD
-See \*(L"Administration\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBnamespaces\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBnamespaces\fR" 4
-.IX Item "$obj->namespaces"
-See \*(L"Administration\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBprintIndex\fR([\s-1FILEHANDLE\s0], \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBprintIndex\fR([\s-1FILEHANDLE\s0], \s-1OPTIONS\s0)" 4
-.IX Item "$obj->printIndex([FILEHANDLE], OPTIONS)"
+Inherited, see \*(L"Administration\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBnamespaces\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBnamespaces\fR()" 4
+.IX Item "$obj->namespaces()"
+Inherited, see \*(L"Administration\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBprintIndex\fR( [$fh], %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBprintIndex\fR( [$fh], \f(CW%options\fR )" 4
+.IX Item "$obj->printIndex( [$fh], %options )"
 .Vb 2
 \& \-Option       \-\-Default
 \&  show_declared  <true>
@@ -521,14 +636,17 @@ declare for the type.  Declared readers and writers will show flags
 .RE
 .RS 4
 .RE
-.ie n .IP "$obj\->\fBtypes\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtypes\fR" 4
-.IX Item "$obj->types"
-See \*(L"Administration\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBwalkTree\fR(\s-1NODE\s0, \s-1CODE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBwalkTree\fR(\s-1NODE\s0, \s-1CODE\s0)" 4
-.IX Item "$obj->walkTree(NODE, CODE)"
-See \*(L"Administration\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBtypes\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBtypes\fR()" 4
+.IX Item "$obj->types()"
+Inherited, see \*(L"Administration\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBwalkTree\fR($node, \s-1CODE\s0)" 4
+.el .IP "\f(CW$obj\fR\->\fBwalkTree\fR($node, \s-1CODE\s0)" 4
+.IX Item "$obj->walkTree($node, CODE)"
+Inherited, see \*(L"Administration\*(R" in XML::Compile
+.SH "DETAILS"
+.IX Header "DETAILS"
+Extends \*(L"\s-1DETAILS\s0\*(R" in XML::Compile::Schema.
 .SH "DESCRIPTIONS"
 .IX Header "DESCRIPTIONS"
 \&\f(CW\*(C`XML::Compile::Cache\*(C'\fR is the smart brother of XML::Compile::Schema;
@@ -555,33 +673,16 @@ prefixed names in stead of full types, often created with
 \&\fIXML::Compile::Util::pack_type()\fR.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-Cache distribution version 0.991,
-built on May 06, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-Cache distribution version 1.05,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2008\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2008\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

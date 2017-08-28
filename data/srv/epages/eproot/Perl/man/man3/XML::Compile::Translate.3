@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Translate 3"
-.TH XML::Compile::Translate 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Translate 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -147,6 +147,16 @@ XML::Compile::Translate \- create an XML data parser
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
+This module converts a schema type definition into a code
+reference which can be used to interpret a schema.  The sole public
+function in this package is \fIcompile()\fR, and is called by
+\&\fIXML::Compile::Schema::compile()\fR, which does a lot of set-ups.
+Please do not try to use this package directly!
+.PP
+The code in this package interprets schemas; it understands, for
+instance, how complexType definitions work.  Then, when the
+schema syntax is decoded, it will knot the pieces together into
+one \s-1CODE\s0 reference which can be used in the main user program.
 .SS "Unsupported features"
 .IX Subsection "Unsupported features"
 This implementation is work in progress, but by far most structures in
@@ -174,25 +184,14 @@ A few nuts are still to crack:
 .PP
 Of course, the latter list is all fixed in next release ;\-)
 See chapter \*(L"\s-1DETAILS\s0\*(R" for more on how the tune the translator.
-.PP
-This module converts a schema type definition into a code
-reference which can be used to interpret a schema.  The sole public
-function in this package is \fIcompile()\fR, and is called by
-\&\fIXML::Compile::Schema::compile()\fR, which does a lot of set-ups.
-Please do not try to use this package directly!
-.PP
-The code in this package interprets schemas; it understands, for
-instance, how complexType definitions work.  Then, when the
-schema syntax is decoded, it will knot the pieces together into
-one \s-1CODE\s0 reference which can be used in the main user program.
 .SH "METHODS"
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBnew\fR(\s-1TRANSLATOR\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBnew\fR(\s-1TRANSLATOR\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->new(TRANSLATOR, OPTIONS)"
-The \s-1OPTIONS\s0 are described in \fIXML::Compile::Schema::compile()\fR.  Those
+.ie n .IP "$obj\->\fBnew\fR($translator, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBnew\fR($translator, \f(CW%options\fR)" 4
+.IX Item "$obj->new($translator, %options)"
+The \f(CW%options\fR are described in \fIXML::Compile::Schema::compile()\fR.  Those
 descriptions will probably move here, eventually.
 .Sp
 .Vb 2
@@ -206,11 +205,11 @@ descriptions will probably move here, eventually.
 .RS 4
 .RE
 .PD 0
-.ie n .IP "$obj\->\fBregister\fR(\s-1NAME\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBregister\fR(\s-1NAME\s0)" 4
-.IX Item "$obj->register(NAME)"
-.IP "XML::Compile::Translate\->\fBregister\fR(\s-1NAME\s0)" 4
-.IX Item "XML::Compile::Translate->register(NAME)"
+.ie n .IP "$obj\->\fBregister\fR($name)" 4
+.el .IP "\f(CW$obj\fR\->\fBregister\fR($name)" 4
+.IX Item "$obj->register($name)"
+.IP "XML::Compile::Translate\->\fBregister\fR($name)" 4
+.IX Item "XML::Compile::Translate->register($name)"
 .PD
 Register a new back-end.
 .Sp
@@ -225,8 +224,9 @@ example:
 .IX Subsection "Attributes"
 .SS "Handlers"
 .IX Subsection "Handlers"
-.IP "XML::Compile::Translate\->\fBcompile\fR(ELEMENT|ATTRIBUTE|TYPE, \s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::Translate->compile(ELEMENT|ATTRIBUTE|TYPE, OPTIONS)"
+.ie n .IP "XML::Compile::Translate\->\fBcompile\fR($element|$attribute|$type, %options)" 4
+.el .IP "XML::Compile::Translate\->\fBcompile\fR($element|$attribute|$type, \f(CW%options\fR)" 4
+.IX Item "XML::Compile::Translate->compile($element|$attribute|$type, %options)"
 Do not call this function yourself, but use
 \&\fIXML::Compile::Schema::compile()\fR (or wrappers around that).
 .Sp
@@ -282,7 +282,7 @@ not produce invalid data.
 .IX Item "check_occurs BOOLEAN"
 Checking whether the number of occurrences for an item are between
 \&\f(CW\*(C`minOccurs\*(C'\fR and \f(CW\*(C`maxOccurs\*(C'\fR (implied for \f(CW\*(C`all\*(C'\fR, \f(CW\*(C`sequence\*(C'\fR, and
-\&\f(CW\*(C`choice\*(C'\fR or explictly specified) takes time.  Of course, in cases
+\&\f(CW\*(C`choice\*(C'\fR or explicitly specified) takes time.  Of course, in cases
 errors must be handled.  When this option is set to \f(CW\*(C`false\*(C'\fR, 
 only distinction between single and array elements is made.
 .IP "ignore_facets \s-1BOOLEAN\s0" 4
@@ -319,7 +319,7 @@ the schemas is still in-tact, but name-space collission may appear.
 Per schema, it can be specified whether the elements and attributes
 defined in-there need to be used qualified (with prefix) or not.
 This can cause horrible output when within an unqualified schema
-elements are used from an other schema which is qualified.
+elements are used from another schema which is qualified.
 .PP
 The suggested solution in articles about the subject is to provide
 people with both a schema which is qualified as one which is not.
@@ -363,7 +363,7 @@ The \s-1HASH\s0 structure looks like this:
 \&    , prefixes => \e%namespaces
 \&    );
 \&
-\&  # share the same namespace defs with an other component
+\&  # share the same namespace defs with another component
 \&  my $other = $schema\->compile
 \&    ( WRITER => ...
 \&    , prefixes => \e%namespaces
@@ -436,7 +436,7 @@ you do not need.  So, with this option, you can make the compilation to
 ignore whole namespaces and specific elements or types.
 .Sp
 The \s-1NAMESPACE\s0 is a uri, which will disable use of any element or type
-defined in that space.  You may also provide a specific full \s-1TYPE\s0 (toplevel
+defined in that space.  You may also provide a specific full \f(CW$type\fR (toplevel
 element or type name).  You may also give an \s-1LIST\s0 or \s-1ARRAY\s0 of these, but
 then a \s-1HASH\s0 is much more suitable: with linear lookup time.
 .Sp
@@ -467,7 +467,7 @@ be used.
 \&  $schema\->blockNamespace(\e&want_block);
 .Ve
 .Sp
-It is very well posible that the blocking of some namespaces breaks the
+It is very well possible that the blocking of some namespaces breaks the
 validness of messages: when those elements are required but set to be
 ignored.  There is no way to detect this, on the moment.
 .PP
@@ -504,33 +504,16 @@ supported for the reader.  By default, it returns a string when the
 element does not contains sub-elements, otherwise the \s-1XML\s0 node.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

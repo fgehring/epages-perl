@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::Translate - create an XML data parser
@@ -15,6 +17,17 @@ XML::Compile::Translate - create an XML data parser
  my $code = XML::Compile::Translate->compile(...);
 
 =head1 DESCRIPTION
+
+This module converts a schema type definition into a code
+reference which can be used to interpret a schema.  The sole public
+function in this package is L<compile()|XML::Compile::Translate/"Handlers">, and is called by
+L<XML::Compile::Schema::compile()|XML::Compile::Schema/"Compilers">, which does a lot of set-ups.
+Please do not try to use this package directly!
+
+The code in this package interprets schemas; it understands, for
+instance, how complexType definitions work.  Then, when the
+schema syntax is decoded, it will knot the pieces together into
+one CODE reference which can be used in the main user program.
 
 =head2 Unsupported features
 
@@ -44,26 +57,15 @@ A few nuts are still to crack:
 Of course, the latter list is all fixed in next release ;-)
 See chapter L</DETAILS> for more on how the tune the translator.
 
-This module converts a schema type definition into a code
-reference which can be used to interpret a schema.  The sole public
-function in this package is L<compile()|XML::Compile::Translate/"Handlers">, and is called by
-L<XML::Compile::Schema::compile()|XML::Compile::Schema/"Compilers">, which does a lot of set-ups.
-Please do not try to use this package directly!
-
-The code in this package interprets schemas; it understands, for
-instance, how complexType definitions work.  Then, when the
-schema syntax is decoded, it will knot the pieces together into
-one CODE reference which can be used in the main user program.
-
 =head1 METHODS
 
 =head2 Constructors
 
 =over 4
 
-=item $obj-E<gt>B<new>(TRANSLATOR, OPTIONS)
+=item $obj-E<gt>B<new>($translator, %options)
 
-The OPTIONS are described in L<XML::Compile::Schema::compile()|XML::Compile::Schema/"Compilers">.  Those
+The %options are described in L<XML::Compile::Schema::compile()|XML::Compile::Schema/"Compilers">.  Those
 descriptions will probably move here, eventually.
 
  -Option--Default
@@ -75,9 +77,9 @@ descriptions will probably move here, eventually.
 
 =back
 
-=item $obj-E<gt>B<register>(NAME)
+=item $obj-E<gt>B<register>($name)
 
-=item XML::Compile::Translate-E<gt>B<register>(NAME)
+=item XML::Compile::Translate-E<gt>B<register>($name)
 
 Register a new back-end.
 
@@ -95,7 +97,7 @@ example:
 
 =over 4
 
-=item XML::Compile::Translate-E<gt>B<compile>(ELEMENT|ATTRIBUTE|TYPE, OPTIONS)
+=item XML::Compile::Translate-E<gt>B<compile>($element|$attribute|$type, %options)
 
 Do not call this function yourself, but use
 L<XML::Compile::Schema::compile()|XML::Compile::Schema/"Compilers"> (or wrappers around that).
@@ -160,7 +162,7 @@ not produce invalid data.
 
 Checking whether the number of occurrences for an item are between
 C<minOccurs> and C<maxOccurs> (implied for C<all>, C<sequence>, and
-C<choice> or explictly specified) takes time.  Of course, in cases
+C<choice> or explicitly specified) takes time.  Of course, in cases
 errors must be handled.  When this option is set to C<false>, 
 only distinction between single and array elements is made.
 
@@ -200,7 +202,7 @@ the schemas is still in-tact, but name-space collission may appear.
 Per schema, it can be specified whether the elements and attributes
 defined in-there need to be used qualified (with prefix) or not.
 This can cause horrible output when within an unqualified schema
-elements are used from an other schema which is qualified.
+elements are used from another schema which is qualified.
 
 The suggested solution in articles about the subject is to provide
 people with both a schema which is qualified as one which is not.
@@ -245,7 +247,7 @@ The HASH structure looks like this:
     , prefixes => \%namespaces
     );
 
-  # share the same namespace defs with an other component
+  # share the same namespace defs with another component
   my $other = $schema->compile
     ( WRITER => ...
     , prefixes => \%namespaces
@@ -319,7 +321,7 @@ you do not need.  So, with this option, you can make the compilation to
 ignore whole namespaces and specific elements or types.
 
 The NAMESPACE is a uri, which will disable use of any element or type
-defined in that space.  You may also provide a specific full TYPE (toplevel
+defined in that space.  You may also provide a specific full $type (toplevel
 element or type name).  You may also give an LIST or ARRAY of these, but
 then a HASH is much more suitable: with linear lookup time.
 
@@ -348,7 +350,7 @@ be used.
   sub want_block($$$$) ( my ($type,$ns,$local,$path) = @_; undef}
   $schema->blockNamespace(\&want_block);
 
-It is very well posible that the blocking of some namespaces breaks the
+It is very well possible that the blocking of some namespaces breaks the
 validness of messages: when those elements are required but set to be
 ignored.  There is no way to detect this, on the moment.
 
@@ -394,34 +396,17 @@ element does not contains sub-elements, otherwise the XML node.
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2006-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

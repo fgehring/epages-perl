@@ -1,13 +1,13 @@
-# Copyrights 2007-2011 by Mark Overmeer.
+# Copyrights 2007-2017 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 use warnings;
 use strict;
 
 package XML::Compile::SOAP11::Operation;
 use vars '$VERSION';
-$VERSION = '2.24';
+$VERSION = '3.21';
 
 use base 'XML::Compile::SOAP::Operation';
 
@@ -20,11 +20,8 @@ use XML::Compile::SOAP11::Client;
 use XML::Compile::SOAP11::Server;
 use XML::Compile::SOAP::Extension;
 
-our $VERSION;         # OODoc adds $VERSION to the script
-$VERSION ||= 'undef';
-
-XML::Compile->knownNamespace(&WSDL11SOAP => 'wsdl-soap.xsd');
-__PACKAGE__->register(WSDL11SOAP, SOAP11ENV);
+use vars '$VERSION';         # OODoc adds $VERSION to the script
+$VERSION ||= '(devel)';
 
 # client/server object per schema class, because initiation options
 # can be different.  Class reference is key.
@@ -43,19 +40,6 @@ sub init($)
 
     XML::Compile::SOAP::Extension->soap11OperationInit($self, $args);
     $self;
-}
-
-sub _initWSDL11($)
-{   my ($class, $wsdl) = @_;
-
-    trace "initialize SOAP11 operations for WSDL11";
-
-    $wsdl->importDefinitions(WSDL11SOAP, element_form_default => 'qualified');
-    $wsdl->prefixes(soap => WSDL11SOAP);
-
-    $wsdl->declare(READER =>
-      [ "soap:address", "soap:operation", "soap:binding"
-      , "soap:body",    "soap:header",    "soap:fault" ]);
 }
 
 sub _fromWSDL11(@)
@@ -100,13 +84,20 @@ sub _msg_parts($$$$$)
         my @parts     = $class->_select_parts($wsdl, $msgname, $body->{parts});
 
         my ($ns, $local) = unpack_type $msgname;
-        my $procedure
-            = $style eq 'rpc' ? pack_type($body->{namespace}, $opname)
-            : @parts==1 && $parts[0]{type} ? $msgname
-            : $local; 
+        my $rpc_ns    = $body->{namespace} // '';
+        $wsdl->addNicePrefix(call => $rpc_ns) if $rpc_ns;
 
-        $parts{body}  = {procedure => $procedure, %$port_op, use => 'literal',
-           %$body, parts => \@parts};
+        my $procedure
+           = $style eq 'rpc' ? pack_type($rpc_ns, $opname)
+           : @parts==1 && $parts[0]{type} ? $msgname
+           : $local;
+
+        $parts{body}  = {procedure => $procedure, %$port_op, use => 'literal'
+           , %$body, parts => \@parts};
+    }
+    elsif($port_op->{message})
+    {   # missing <soap:body use="literal"> in <wsdl:input> or :output
+        error __x"operation {opname} has a message in its portType but no encoding in the binding", opname => $opname;
     }
 
     my $bsh = $bind_op->{soap_header} || [];
@@ -138,7 +129,7 @@ sub _select_parts($$$)
     @need or return @$parts;
 
     my @sel;
-    my %parts = map { ($_->{name} => $_) } @$parts;
+    my %parts = map +($_->{name} => $_), @$parts;
     foreach my $name (@need)
     {   my $part = $parts{$name}
             or error __x"message {msg} does not have a part named {part}"
@@ -194,22 +185,38 @@ sub clientClass { 'XML::Compile::SOAP11::Client' }
 #-------------------------------------------
 
 
-sub addHeader($$$)
-{   my ($self, $dir, $label, $elem) = @_;
+sub addHeader($$$%)
+{   my ($self, $dir, $label, $el, %opts) = @_;
+    my $elem = $self->schemas->findName($el);
     my $defs
       = $dir eq 'INPUT'  ? 'input_def'
       : $dir eq 'OUTPUT' ? 'output_def'
       : $dir eq 'FAULT'  ? 'fault_def'
       : panic "addHeader $dir";
+    my $headers = $self->{$defs}{header} ||= [];
 
-    my %part = (part => $label, use => 'literal'
-      , parts => [{name => $label, element => $elem}]);
-    push @{$self->{$defs}{header}}, \%part;
+    if(my $already = first {$_->{part} eq $label} @$headers)
+    {   # the header is already defined, ignore second declaration
+        my $other_type = $already->{parts}[0]{element};
+        $other_type eq $elem
+            or error __x"header {label} already defined with type {type}"
+                 , label => $label, type => $other_type;
+        return $already;
+    }
+
+    my %part =
+      ( part  => $label, use => 'literal'
+      , parts => [
+         { name => $label, element => $elem
+         , mustUnderstand => $opts{mustUnderstand}
+         , destination    => $opts{destination}
+         } ]);
+
+    push @$headers, \%part;
     \%part;
 }
 
 #-------------------------------------------
-
 
 
 sub compileHandler(@)
@@ -238,21 +245,22 @@ sub compileHandler(@)
 sub compileClient(@)
 {   my ($self, %args) = @_;
 
-    my $soap = $soap11_client{$self->{schemas}}
+    my $client = $soap11_client{$self->{schemas}}
       ||= XML::Compile::SOAP11::Client->new(schemas => $self->{schemas});
-    my $style = $args{style} ||= $self->style;
-    my $kind  = $args{kind}  ||= $self->kind;
+    my $style  = $args{style} ||= $self->style;
+    my $kind   = $args{kind}  ||= $self->kind;
 
-    my @so   = (%{$self->{input_def}},  %{$self->{fault_def}});
-    my @ro   = (%{$self->{output_def}}, %{$self->{fault_def}});
+    my @so     = (%{$self->{input_def}},  %{$self->{fault_def}});
+    my @ro     = (%{$self->{output_def}}, %{$self->{fault_def}});
 
-    my $call = $soap->compileClient
-      ( name         => $self->name
-      , kind         => $kind
-      , encode       => $soap->_sender(@so, %args)
-      , decode       => $soap->_receiver(@ro, %args)
-      , transport    => $self->compileTransporter(%args)
-      , async        => $args{async}
+    my $call   = $client->compileClient
+      ( name      => $self->name
+      , kind      => $kind
+      , encode    => $client->_sender(@so, %args)
+      , decode    => $client->_receiver(@ro, %args)
+      , transport => $self->compileTransporter(%args)
+      , async     => $args{async}
+      , soap      => $args{soap}
       );
 
     XML::Compile::SOAP::Extension->soap11ClientWrapper($self, $call, \%args);
@@ -295,23 +303,23 @@ sub explain($$$@)
         {   my $name = $part->{name};
             my ($kind, $value) = $part->{type} ? (type => $part->{type})
               : (element => $part->{element});
-    
+
             my $type = $schema->prefixed($value) || $value;
             push @main, ''
               , "# Header part '$name' is $kind $type"
               , ($kind eq 'type' && $recurse ? "# See fake element '$name'" : ())
               , "my \$$name = {};";
             push @struct, "    $name => \$$name,";
-    
+
             $recurse or next HEAD_PART;
-    
+
             my $elem = $value;
             if($kind eq 'type')
             {   # generate element with part name, because template requires elem
                 $schema->compileType(READER => $value, element => $name);
                 $elem = $name;
             }
-    
+
             push @attach, '', $sep, "\$$name ="
               , $schema->template(PERL => $elem, skip_header => 1, %args), ';';
         }
@@ -348,7 +356,8 @@ sub explain($$$@)
         my ($kind, $value) = $part->{type} ? (type => $part->{type})
           : (element => $part->{element});
 
-        my $type = $schema->prefixed($value) || $value;
+        my $type = $schema->prefixFor($value)
+          ? $schema->prefixed($value) : $value;
 
         if($dir eq 'OUTPUT')
         {   push @main, ''
@@ -363,9 +372,10 @@ sub explain($$$@)
             push @struct, "    $fault => \$fault,";
         }
         else
-        {   push @postproc
+        {   my $nice = $schema->prefixed($type) || $type;
+            push @postproc
               , "    elsif(\$errname eq '$fault')"
-              , "    {   # \$details is a $type"
+              , "    {   # \$details is a $nice"
               , "    }";
         }
 
@@ -401,7 +411,7 @@ sub explain($$$@)
           , '    if(not $details)'
           , '    {   # system error, no $details'
           , '    }';
-    
+
         push @postproc
           , '    exit 1;'
           , '}';
@@ -416,7 +426,7 @@ sub explain($$$@)
 
         push @main, ''
          , '   # This will end-up as $answer at client-side'
-         , "   return    # optional keyword"
+         , '   return    # optional keyword'
          , "   +{", @struct, "    };", "}";
     }
     else
@@ -425,9 +435,16 @@ sub explain($$$@)
     }
 
     my @header;
-    push @header
-      , "# Operation $def->{body}{procedure}"
-      , "#           $dir, $style $def->{body}{use}";
+    if(my $how = $def->{body})
+    {   my $use  = $how->{use} || 'literal';
+        push @header
+          , "# Operation $how->{procedure}"
+          , "#           $dir, $style $use";
+    }
+    else
+    {   push @header,
+          , "# Operation $opname has no $dir";
+    }
 
     foreach my $fault (sort keys %$faults)
     {   my $usage = $faults->{$fault};
@@ -447,14 +464,16 @@ sub explain($$$@)
     if($dir eq 'INPUT')
     {   push @header
           , '# Compile only once in your code, usually during initiation:'
-          , "my \$call = \$wsdl->compileClient('$opname');"
-          , '# ... then call it as often as you need.';
+          , "#   my \$call = \$wsdl->compileClient('$opname');"
+          , '# then call it as often as you need.  Alternatively'
+          , '#   $wsdl->compileCalls();   # once'
+          , "#   \$response = \$wsdl->call('$opname', \$request);";
     }
     else #OUTPUT
     {   push @header
           , '# As part of the initiation phase of your server:'
           , 'my $daemon = XML::Compile::SOAP::HTTPDaemon->new;'
-          , '$deamon->operationsFromWSDL'
+          , '$daemon->operationsFromWSDL'
           , '  ( $wsdl'
           , '  , callbacks =>'
           , "     { $opname => \\&handle_$opname}"
@@ -462,6 +481,15 @@ sub explain($$$@)
     }
 
     join "\n", @header, @main, @postproc, @attach, '';
+}
+
+sub parsedWSDL()
+{   my $self = shift;
+      +{ input  => $self->{input_def}{body}
+       , output => $self->{output_def}{body}
+       , faults => $self->{fault_def}{faults}
+       , style  => $self->style
+       };
 }
 
 1;

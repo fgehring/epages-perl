@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::Util - Utility routines for XML::Compile components
@@ -30,7 +32,7 @@ SCHEMA2000, SCHEMA2001, and SCHEMA2001i.
 
 =over 4
 
-=item B<pack_id>(NAMESPACE, ID)
+=item B<pack_id>($ns, $id)
 
 Translates the two arguments into one compact string representation of
 the node id.
@@ -40,10 +42,10 @@ example:
  print pack_id 'http://my-ns', 'my-id';
  # shows:  http://my-ns#my-id
 
-=item B<pack_type>([NAMESPACE], LOCALNAME)
+=item B<pack_type>( [$ns], $localname )
 
 Translates the arguments into one compact string representation of
-the node type.  When the NAMESPACE is not present, C<undef>, or an
+the node type.  When the $ns is not present, C<undef>, or an
 empty string, then no namespace is presumed, and no curly braces
 part made.
 
@@ -57,17 +59,41 @@ example:
  print pack_type '', 'my-type';
  # all three show:   my-type
 
-=item B<unpack_type>(STRING)
+=item B<unpack_id>($string)
 
 Returns a LIST of two elements: the name-space and the id, as
-included in the STRING.  That STRING must be compatible with the
+included in the $string.  That $string must be compatible with the
 result of L<pack_id()|XML::Compile::Util/"Packing">.
+
+=item B<unpack_type>($string)
+
+Returns a LIST of two elements: the name-space and the localname, as
+included in the $string.  That $string must be compatible with the
+result of L<pack_type()|XML::Compile::Util/"Packing">.  When no name-space is present, an empty
+string is used.
 
 =back
 
 =head2 Other
 
 =over 4
+
+=item B<add_duration>( $duration, [$time] )
+
+[1.44] Add the $duration to the $time (defaults to 'now')  This is an
+expensive operation: in many cases the L<duration2secs()|XML::Compile::Util/"Other"> produces
+useful results as well.
+
+example: 
+
+   my $now      = time;
+   my $deadline = add_duration 'P1M', $now;  # deadline in 1 month
+
+=item B<duration2secs>($duration)
+
+[1.44] Translate any format into seconds.  This is an example of
+a valid duration: C<-PT1M30.5S>  Average month and year lengths
+are used.  If you need more precise calculations, then use L<add_duration()|XML::Compile::Util/"Other">.
 
 =item B<even_elements>(LIST)
 
@@ -77,7 +103,7 @@ Returns the even-numbered elements from the LIST.
 
 Returns the odd-numbered elements from the LIST.
 
-=item B<type_of_node>(NODE)
+=item B<type_of_node>($node)
 
 Translate an XML::LibXML::Node into a packed type.
 
@@ -85,34 +111,17 @@ Translate an XML::LibXML::Node into a packed type.
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2006-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

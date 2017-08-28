@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::SOAP::Util 3"
-.TH XML::Compile::SOAP::Util 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::SOAP::Util 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -137,10 +137,15 @@ XML::Compile::SOAP::Util \- general purpose routines for XML::Compile::SOAP
 \& XML::Compile::SOAP::Util
 \&   is a Exporter
 .Ve
+.SH "SYNOPSIS"
+.IX Header "SYNOPSIS"
+.Vb 1
+\& use XML::Compile::SOAP::Util qw/:soap11 WSDL11/;
+.Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 This module collects functions which are useful on many places in the
-\&\s-1SOAP\s0 implemention, just as XML::Compile::Util does for general \s-1XML\s0
+\&\s-1SOAP\s0 implementation, just as XML::Compile::Util does for general \s-1XML\s0
 implementations (often you will needs things from both).
 .PP
 On the moment, only a long list of constant URIs are exported.
@@ -159,41 +164,22 @@ constants \f(CW\*(C`WSDL11\*(C'\fR, \f(CW\*(C`WSDL11SOAP\*(C'\fR, \f(CW\*(C`WSDL
 The export \s-1TAG\s0 \f(CW\*(C`:daemon\*(C'\fR refers currently only to the constant \f(CW\*(C`MSEXT\*(C'\fR,
 which refers to the MicroSoft Extension Framework namespace.
 .PP
+Besides, this tag also defines namespaces for server implementations:
+\&\f(CW\*(C`XC_DAEMON_NS\*(C'\fR refers to the XML::Compile::SOAP::Daemon server.
+.PP
 The export \s-1TAG\s0 \f(CW\*(C`:xop10\*(C'\fR refers to \f(CW\*(C`XOP10\*(C'\fR, \f(CW\*(C`XMIME10\*(C'\fR and \f(CW\*(C`XMIME11\*(C'\fR
-.SH "SYNOPSYS"
-.IX Header "SYNOPSYS"
-.Vb 1
-\& use XML::Compile::SOAP::Util qw/:soap11 WSDL11/;
-.Ve
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

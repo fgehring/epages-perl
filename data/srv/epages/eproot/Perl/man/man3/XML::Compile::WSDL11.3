@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::WSDL11 3"
-.TH XML::Compile::WSDL11 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::WSDL11 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -147,11 +147,17 @@ XML::Compile::WSDL11 \- create SOAP messages defined by WSDL 1.1
 \& use XML::Compile::SOAP11;      # use SOAP version 1.1
 \& use XML::Compile::Transport::SOAPHTTP;
 \&
-\& my $wsdl = XML::Compile::WSDL11\->new($wsdlfile);
+\& # you want some trace?
+\& use Log::Report mode => \*(AqDEBUG\*(Aq;   # or \*(AqVERBOSE\*(Aq
+\&
+\& # collect one or more wsdls and xsds in one object
+\& my $wsdl = XML::Compile::WSDL11\->new($wsdlfile
+\&   , server_type => \*(AqBEA\*(Aq
+\&   );
 \& $wsdl\->addWSDL(...more WSDL files...);
 \& $wsdl\->importDefinitions(...more schemas...);
 \&
-\& # during initiation, for each used call (slow)
+\& # during initiation, for each used call
 \& my $call = $wsdl\->compileClient(\*(AqGetStockPrice\*(Aq, ...);
 \&
 \& # at "run\-time", call as often as you want (fast)
@@ -159,6 +165,9 @@ XML::Compile::WSDL11 \- create SOAP messages defined by WSDL 1.1
 \&
 \& # capture useful trace information
 \& my ($answer, $trace) = $call\->(%request);
+\& if($trace\->errors)
+\& {   $trace\->printError;
+\& }
 \&
 \& # no need to administer the operations by hand: alternative
 \& $wsdl\->compileCalls;  # at initiation
@@ -183,9 +192,10 @@ XML::Compile::WSDL11 \- create SOAP messages defined by WSDL 1.1
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-This module implements \s-1WSDL\s0 version 1.1.
-An \s-1WSDL\s0 file defines a set of messages to be send and received over
-(\s-1SOAP\s0) connections.
+This module understands \s-1WSDL\s0 version 1.1.  An \s-1WSDL\s0 file defines a set of
+messages to be send and received over (\s-1SOAP\s0) connections. This involves
+encoding of the message to be send into \s-1XML\s0, sending the message to the
+server, collect the answer, and finally decoding the \s-1XML\s0 to Perl.
 .PP
 As end-user, you do not have to worry about the complex details of the
 messages and the way to exchange them: it's all simple Perl for you.
@@ -199,33 +209,39 @@ explicitly. Usually, interreferences between those files are broken.
 Often they reference over networks (you should never trust). So, on
 purpose you \fBmust explicitly load\fR the files you need from local disk!
 (of course, it is simple to find one-liners as work-arounds, but I will
-to tell you how!)
+not tell you how!  See XML::Compile::SOAP::FAQ)
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in XML::Compile::Cache.
 .SH "METHODS"
 .IX Header "METHODS"
+Extends \*(L"\s-1METHODS\s0\*(R" in XML::Compile::Cache.
 .SS "Constructors"
 .IX Subsection "Constructors"
-.IP "XML::Compile::WSDL11\->\fBnew\fR(\s-1XML\s0, \s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::WSDL11->new(XML, OPTIONS)"
-The \s-1XML\s0 is the \s-1WSDL\s0 file, which is anything accepted by
+Extends \*(L"Constructors\*(R" in XML::Compile::Cache.
+.ie n .IP "XML::Compile::WSDL11\->\fBnew\fR( [$xml], %options )" 4
+.el .IP "XML::Compile::WSDL11\->\fBnew\fR( [$xml], \f(CW%options\fR )" 4
+.IX Item "XML::Compile::WSDL11->new( [$xml], %options )"
+The \f(CW$xml\fR is the \s-1WSDL\s0 file, which is anything accepted by
 \&\fIXML::Compile::dataToXML()\fR.
 .Sp
 .Vb 10
-\& \-Option            \-\-Defined in     \-\-Default
-\&  allow_undeclared    XML::Compile::Cache  <false>
-\&  any_element         XML::Compile::Cache  \*(AqSKIP_ALL\*(Aq
+\& \-Option            \-\-Defined in          \-\-Default
+\&  allow_undeclared    XML::Compile::Cache   <false>
+\&  any_element         XML::Compile::Cache   \*(AqATTEMPT\*(Aq
 \&  block_namespace     XML::Compile::Schema  []
 \&  hook                XML::Compile::Schema  undef
 \&  hooks               XML::Compile::Schema  []
 \&  ignore_unused_tags  XML::Compile::Schema  <false>
 \&  key_rewrite         XML::Compile::Schema  []
-\&  opts_readers        XML::Compile::Cache  []
-\&  opts_rw             XML::Compile::Cache  []
-\&  opts_writers        XML::Compile::Cache  []
-\&  parser_options      XML::Compile     <many>
-\&  prefixes            XML::Compile::Cache  <smart>
-\&  schema_dirs         XML::Compile     undef
-\&  typemap             XML::Compile::Cache  {}
-\&  xsi_type            XML::Compile::Cache  {}
+\&  opts_readers        XML::Compile::Cache   []
+\&  opts_rw             XML::Compile::Cache   []
+\&  opts_writers        XML::Compile::Cache   []
+\&  parser_options      XML::Compile          <many>
+\&  prefixes            XML::Compile::Cache   <smart>
+\&  schema_dirs         XML::Compile          undef
+\&  server_type                               undef
+\&  typemap             XML::Compile::Cache   {}
+\&  xsi_type            XML::Compile::Cache   {}
 .Ve
 .RS 4
 .IP "allow_undeclared => \s-1BOOLEAN\s0" 2
@@ -235,14 +251,14 @@ The \s-1XML\s0 is the \s-1WSDL\s0 file, which is anything accepted by
 .IX Item "any_element => CODE|'TAKE_ALL'|'SKIP_ALL'|'ATTEMPT'|'SLOPPY'"
 .IP "block_namespace => NAMESPACE|TYPE|HASH|CODE|ARRAY" 2
 .IX Item "block_namespace => NAMESPACE|TYPE|HASH|CODE|ARRAY"
-.IP "hook => ARRAY-WITH-HOOKDATA | \s-1HOOK\s0" 2
-.IX Item "hook => ARRAY-WITH-HOOKDATA | HOOK"
-.IP "hooks => ARRAY-OF-HOOK" 2
-.IX Item "hooks => ARRAY-OF-HOOK"
+.IP "hook => HOOK|ARRAY" 2
+.IX Item "hook => HOOK|ARRAY"
+.IP "hooks => \s-1ARRAY\s0" 2
+.IX Item "hooks => ARRAY"
 .IP "ignore_unused_tags => BOOLEAN|REGEXP" 2
 .IX Item "ignore_unused_tags => BOOLEAN|REGEXP"
-.IP "key_rewrite => HASH|CODE|ARRAY\-of\-HASH\-and\-CODE" 2
-.IX Item "key_rewrite => HASH|CODE|ARRAY-of-HASH-and-CODE"
+.IP "key_rewrite => HASH|CODE|ARRAY" 2
+.IX Item "key_rewrite => HASH|CODE|ARRAY"
 .IP "opts_readers => HASH|ARRAY\-of\-PAIRS" 2
 .IX Item "opts_readers => HASH|ARRAY-of-PAIRS"
 .IP "opts_rw => HASH|ARRAY\-of\-PAIRS" 2
@@ -255,8 +271,16 @@ The \s-1XML\s0 is the \s-1WSDL\s0 file, which is anything accepted by
 .IX Item "prefixes => HASH|ARRAY-of-PAIRS"
 .IP "schema_dirs => DIRECTORY|ARRAY\-OF\-DIRECTORIES" 2
 .IX Item "schema_dirs => DIRECTORY|ARRAY-OF-DIRECTORIES"
+.IP "server_type => \s-1NAME\s0" 2
+.IX Item "server_type => NAME"
+.PD
+[3.01] When you specify the implementation of the server, we can work
+around some of the known bugs and limitation.
+Read XML::Compile::SOAP section \*(L"Supported servers\*(R" for supported
+servers.
 .IP "typemap => HASH|ARRAY" 2
 .IX Item "typemap => HASH|ARRAY"
+.PD 0
 .IP "xsi_type => HASH|ARRAY" 2
 .IX Item "xsi_type => HASH|ARRAY"
 .RE
@@ -265,92 +289,109 @@ The \s-1XML\s0 is the \s-1WSDL\s0 file, which is anything accepted by
 .PD
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBaddCompileOptions\fR(['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0'], \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddCompileOptions\fR(['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0'], \s-1OPTIONS\s0)" 4
-.IX Item "$obj->addCompileOptions(['READERS'|'WRITERS'|'RW'], OPTIONS)"
-See \*(L"Accessors\*(R" in XML::Compile::Cache
-.ie n .IP "$obj\->\fBaddHook\fR(HOOKDATA|HOOK|undef)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddHook\fR(HOOKDATA|HOOK|undef)" 4
-.IX Item "$obj->addHook(HOOKDATA|HOOK|undef)"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBaddHooks\fR(\s-1HOOK\s0, [\s-1HOOK\s0, ...])" 4
-.el .IP "\f(CW$obj\fR\->\fBaddHooks\fR(\s-1HOOK\s0, [\s-1HOOK\s0, ...])" 4
-.IX Item "$obj->addHooks(HOOK, [HOOK, ...])"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBaddKeyRewrite\fR(PREDEF|CODE|HASH, ...)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddKeyRewrite\fR(PREDEF|CODE|HASH, ...)" 4
-.IX Item "$obj->addKeyRewrite(PREDEF|CODE|HASH, ...)"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBaddSchemaDirs\fR(DIRECTORIES|FILENAME)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddSchemaDirs\fR(DIRECTORIES|FILENAME)" 4
-.IX Item "$obj->addSchemaDirs(DIRECTORIES|FILENAME)"
+Extends \*(L"Accessors\*(R" in XML::Compile::Cache.
+.ie n .IP "$obj\->\fBaddHook\fR($hook|LIST|undef)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddHook\fR($hook|LIST|undef)" 4
+.IX Item "$obj->addHook($hook|LIST|undef)"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBaddHooks\fR( $hook, [$hook, ...] )" 4
+.el .IP "\f(CW$obj\fR\->\fBaddHooks\fR( \f(CW$hook\fR, [$hook, ...] )" 4
+.IX Item "$obj->addHooks( $hook, [$hook, ...] )"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBaddKeyRewrite\fR($predef|CODE|HASH, ...)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddKeyRewrite\fR($predef|CODE|HASH, ...)" 4
+.IX Item "$obj->addKeyRewrite($predef|CODE|HASH, ...)"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBaddSchemaDirs\fR(@directories|$filename)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddSchemaDirs\fR(@directories|$filename)" 4
+.IX Item "$obj->addSchemaDirs(@directories|$filename)"
 .PD 0
-.IP "XML::Compile::WSDL11\->\fBaddSchemaDirs\fR(DIRECTORIES|FILENAME)" 4
-.IX Item "XML::Compile::WSDL11->addSchemaDirs(DIRECTORIES|FILENAME)"
+.IP "XML::Compile::WSDL11\->\fBaddSchemaDirs\fR(@directories|$filename)" 4
+.IX Item "XML::Compile::WSDL11->addSchemaDirs(@directories|$filename)"
 .PD
-See \*(L"Accessors\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBaddSchemas\fR(\s-1XML\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddSchemas\fR(\s-1XML\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->addSchemas(XML, OPTIONS)"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
+Inherited, see \*(L"Accessors\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBaddSchemas\fR($xml, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddSchemas\fR($xml, \f(CW%options\fR)" 4
+.IX Item "$obj->addSchemas($xml, %options)"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
 .ie n .IP "$obj\->\fBaddTypemap\fR(\s-1PAIR\s0)" 4
 .el .IP "\f(CW$obj\fR\->\fBaddTypemap\fR(\s-1PAIR\s0)" 4
 .IX Item "$obj->addTypemap(PAIR)"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
 .ie n .IP "$obj\->\fBaddTypemaps\fR(\s-1PAIRS\s0)" 4
 .el .IP "\f(CW$obj\fR\->\fBaddTypemaps\fR(\s-1PAIRS\s0)" 4
 .IX Item "$obj->addTypemaps(PAIRS)"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBallowUndeclared\fR([\s-1BOOLEAN\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBallowUndeclared\fR([\s-1BOOLEAN\s0])" 4
-.IX Item "$obj->allowUndeclared([BOOLEAN])"
-See \*(L"Accessors\*(R" in XML::Compile::Cache
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBaddXsiType\fR( [HASH|ARRAY|LIST] )" 4
+.el .IP "\f(CW$obj\fR\->\fBaddXsiType\fR( [HASH|ARRAY|LIST] )" 4
+.IX Item "$obj->addXsiType( [HASH|ARRAY|LIST] )"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Cache
+.ie n .IP "$obj\->\fBallowUndeclared\fR( [\s-1BOOLEAN\s0] )" 4
+.el .IP "\f(CW$obj\fR\->\fBallowUndeclared\fR( [\s-1BOOLEAN\s0] )" 4
+.IX Item "$obj->allowUndeclared( [BOOLEAN] )"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Cache
 .ie n .IP "$obj\->\fBanyElement\fR('\s-1ATTEMPT\s0'|'\s-1SLOPPY\s0'|'\s-1SKIP_ALL\s0'|'\s-1TAKE_ALL\s0'|CODE)" 4
 .el .IP "\f(CW$obj\fR\->\fBanyElement\fR('\s-1ATTEMPT\s0'|'\s-1SLOPPY\s0'|'\s-1SKIP_ALL\s0'|'\s-1TAKE_ALL\s0'|CODE)" 4
 .IX Item "$obj->anyElement('ATTEMPT'|'SLOPPY'|'SKIP_ALL'|'TAKE_ALL'|CODE)"
-See \*(L"Accessors\*(R" in XML::Compile::Cache
-.ie n .IP "$obj\->\fBblockNamespace\fR(NAMESPACE|TYPE|HASH|CODE|ARRAY)" 4
-.el .IP "\f(CW$obj\fR\->\fBblockNamespace\fR(NAMESPACE|TYPE|HASH|CODE|ARRAY)" 4
-.IX Item "$obj->blockNamespace(NAMESPACE|TYPE|HASH|CODE|ARRAY)"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBhooks\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBhooks\fR" 4
-.IX Item "$obj->hooks"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBprefix\fR(\s-1PREFIX\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBprefix\fR(\s-1PREFIX\s0)" 4
-.IX Item "$obj->prefix(PREFIX)"
-See \*(L"Accessors\*(R" in XML::Compile::Cache
-.ie n .IP "$obj\->\fBprefixFor\fR(\s-1URI\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBprefixFor\fR(\s-1URI\s0)" 4
-.IX Item "$obj->prefixFor(URI)"
-See \*(L"Accessors\*(R" in XML::Compile::Cache
-.ie n .IP "$obj\->\fBprefixed\fR(\s-1TYPE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBprefixed\fR(\s-1TYPE\s0)" 4
-.IX Item "$obj->prefixed(TYPE)"
-See \*(L"Accessors\*(R" in XML::Compile::Cache
-.ie n .IP "$obj\->\fBprefixes\fR([PAIRS|ARRAY|HASH])" 4
-.el .IP "\f(CW$obj\fR\->\fBprefixes\fR([PAIRS|ARRAY|HASH])" 4
-.IX Item "$obj->prefixes([PAIRS|ARRAY|HASH])"
-See \*(L"Accessors\*(R" in XML::Compile::Cache
-.ie n .IP "$obj\->\fBtypemap\fR([HASH|ARRAY|PAIRS])" 4
-.el .IP "\f(CW$obj\fR\->\fBtypemap\fR([HASH|ARRAY|PAIRS])" 4
-.IX Item "$obj->typemap([HASH|ARRAY|PAIRS])"
-See \*(L"Accessors\*(R" in XML::Compile::Cache
-.ie n .IP "$obj\->\fBuseSchema\fR(\s-1SCHEMA\s0, [\s-1SCHEMA\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBuseSchema\fR(\s-1SCHEMA\s0, [\s-1SCHEMA\s0])" 4
-.IX Item "$obj->useSchema(SCHEMA, [SCHEMA])"
-See \*(L"Accessors\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBxsiType\fR([HASH|ARRAY|LIST])" 4
-.el .IP "\f(CW$obj\fR\->\fBxsiType\fR([HASH|ARRAY|LIST])" 4
-.IX Item "$obj->xsiType([HASH|ARRAY|LIST])"
-See \*(L"Accessors\*(R" in XML::Compile::Cache
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Cache
+.ie n .IP "$obj\->\fBblockNamespace\fR($ns|$type|HASH|CODE|ARRAY)" 4
+.el .IP "\f(CW$obj\fR\->\fBblockNamespace\fR($ns|$type|HASH|CODE|ARRAY)" 4
+.IX Item "$obj->blockNamespace($ns|$type|HASH|CODE|ARRAY)"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBhooks\fR( [<'\s-1READER\s0'|'\s-1WRITER\s0'>] )" 4
+.el .IP "\f(CW$obj\fR\->\fBhooks\fR( [<'\s-1READER\s0'|'\s-1WRITER\s0'>] )" 4
+.IX Item "$obj->hooks( [<'READER'|'WRITER'>] )"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBtypemap\fR( [HASH|ARRAY|PAIRS] )" 4
+.el .IP "\f(CW$obj\fR\->\fBtypemap\fR( [HASH|ARRAY|PAIRS] )" 4
+.IX Item "$obj->typemap( [HASH|ARRAY|PAIRS] )"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Cache
+.ie n .IP "$obj\->\fBuseSchema\fR( $schema, [$schema, ...] )" 4
+.el .IP "\f(CW$obj\fR\->\fBuseSchema\fR( \f(CW$schema\fR, [$schema, ...] )" 4
+.IX Item "$obj->useSchema( $schema, [$schema, ...] )"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::Schema
+.SS "Prefix management"
+.IX Subsection "Prefix management"
+Extends \*(L"Prefix management\*(R" in XML::Compile::Cache.
+.ie n .IP "$obj\->\fBaddNicePrefix\fR(\s-1BASE\s0, \s-1NAMESPACE\s0)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddNicePrefix\fR(\s-1BASE\s0, \s-1NAMESPACE\s0)" 4
+.IX Item "$obj->addNicePrefix(BASE, NAMESPACE)"
+Inherited, see \*(L"Prefix management\*(R" in XML::Compile::Cache
+.ie n .IP "$obj\->\fBaddPrefixes\fR( [PAIRS|ARRAY|HASH] )" 4
+.el .IP "\f(CW$obj\fR\->\fBaddPrefixes\fR( [PAIRS|ARRAY|HASH] )" 4
+.IX Item "$obj->addPrefixes( [PAIRS|ARRAY|HASH] )"
+Inherited, see \*(L"Prefix management\*(R" in XML::Compile::Cache
+.ie n .IP "$obj\->\fBlearnPrefixes\fR($node)" 4
+.el .IP "\f(CW$obj\fR\->\fBlearnPrefixes\fR($node)" 4
+.IX Item "$obj->learnPrefixes($node)"
+Inherited, see \*(L"Prefix management\*(R" in XML::Compile::Cache
+.ie n .IP "$obj\->\fBprefix\fR($prefix)" 4
+.el .IP "\f(CW$obj\fR\->\fBprefix\fR($prefix)" 4
+.IX Item "$obj->prefix($prefix)"
+Inherited, see \*(L"Prefix management\*(R" in XML::Compile::Cache
+.ie n .IP "$obj\->\fBprefixFor\fR($uri)" 4
+.el .IP "\f(CW$obj\fR\->\fBprefixFor\fR($uri)" 4
+.IX Item "$obj->prefixFor($uri)"
+Inherited, see \*(L"Prefix management\*(R" in XML::Compile::Cache
+.ie n .IP "$obj\->\fBprefixed\fR( $type|<$ns,$local> )" 4
+.el .IP "\f(CW$obj\fR\->\fBprefixed\fR( \f(CW$type\fR|<$ns,$local> )" 4
+.IX Item "$obj->prefixed( $type|<$ns,$local> )"
+Inherited, see \*(L"Prefix management\*(R" in XML::Compile::Cache
+.ie n .IP "$obj\->\fBprefixes\fR( [$params] )" 4
+.el .IP "\f(CW$obj\fR\->\fBprefixes\fR( [$params] )" 4
+.IX Item "$obj->prefixes( [$params] )"
+Inherited, see \*(L"Prefix management\*(R" in XML::Compile::Cache
 .SS "Compilers"
 .IX Subsection "Compilers"
-.ie n .IP "$obj\->\fBcall\fR(\s-1OPERATION\s0, \s-1DATA\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcall\fR(\s-1OPERATION\s0, \s-1DATA\s0)" 4
-.IX Item "$obj->call(OPERATION, DATA)"
-[2.20] Call the \s-1OPERATION\s0 (by name) with \s-1DATA\s0 (\s-1HASH\s0 or \s-1LIST\s0 of parameters).
+Extends \*(L"Compilers\*(R" in XML::Compile::Cache.
+.ie n .IP "$obj\->\fBaddCompileOptions\fR( ['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0'], %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBaddCompileOptions\fR( ['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0'], \f(CW%options\fR )" 4
+.IX Item "$obj->addCompileOptions( ['READERS'|'WRITERS'|'RW'], %options )"
+Inherited, see \*(L"Compilers\*(R" in XML::Compile::Cache
+.ie n .IP "$obj\->\fBcall\fR($opname, $data)" 4
+.el .IP "\f(CW$obj\fR\->\fBcall\fR($opname, \f(CW$data\fR)" 4
+.IX Item "$obj->call($opname, $data)"
+[2.20] Call the \f(CW$opname\fR (operation name) with \f(CW$data\fR (\s-1HASH\s0 or \s-1LIST\s0 of parameters).
 This only works when you have called \fIcompileCalls()\fR beforehand,
 always during the initiation phase of the program.
 .Sp
@@ -363,28 +404,77 @@ example:
 \&   # at runtime (run often)
 \&   my $answer = $wsdl\->call($operation, $request);
 .Ve
-.ie n .IP "$obj\->\fBcompile\fR(('\s-1READER\s0'|'\s-1WRITER\s0'), \s-1TYPE\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompile\fR(('\s-1READER\s0'|'\s-1WRITER\s0'), \s-1TYPE\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->compile(('READER'|'WRITER'), TYPE, OPTIONS)"
-See \*(L"Compilers\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBcompileAll\fR(['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0'|'\s-1CALLS\s0', [\s-1NAMESPACE\s0]])" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileAll\fR(['\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0'|'\s-1CALLS\s0', [\s-1NAMESPACE\s0]])" 4
-.IX Item "$obj->compileAll(['READERS'|'WRITERS'|'RW'|'CALLS', [NAMESPACE]])"
+.ie n .IP "$obj\->\fBcompile\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'>, $type, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBcompile\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'>, \f(CW$type\fR, \f(CW%options\fR )" 4
+.IX Item "$obj->compile( <'READER'|'WRITER'>, $type, %options )"
+Inherited, see \*(L"Compilers\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBcompileAll\fR( [ <'\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0'|'\s-1CALLS\s0'>, [$ns] ] )" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileAll\fR( [ <'\s-1READERS\s0'|'\s-1WRITERS\s0'|'\s-1RW\s0'|'\s-1CALLS\s0'>, [$ns] ] )" 4
+.IX Item "$obj->compileAll( [ <'READERS'|'WRITERS'|'RW'|'CALLS'>, [$ns] ] )"
 [2.20] With explicit \f(CW\*(C`CALLS\*(C'\fR or without any parameter, it will call
 \&\fIcompileCalls()\fR. Otherwise, see \fIXML::Compile::Cache::compileAll()\fR.
-.ie n .IP "$obj\->\fBcompileCalls\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileCalls\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileCalls(OPTIONS)"
-[2.20] Compile a handler for each of the available operations. The \s-1OPTIONS\s0 are
+.ie n .IP "$obj\->\fBcompileCall\fR($operation|$opname, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileCall\fR($operation|$opname, \f(CW%options\fR)" 4
+.IX Item "$obj->compileCall($operation|$opname, %options)"
+[2.37] The call to the \f(CW$operation\fR object (which extends
+XML::Compile::SOAP::Operation) gets compiled and cached so it can
+be used with \fIcall()\fR.
+.Sp
+[2.38] Alteratively to an \f(CW$operation\fR object, you may also specify an
+operation by name.
+.Sp
+.Vb 2
+\& \-Option\-\-Default
+\&  alias   undef
+.Ve
+.RS 4
+.IP "alias => \s-1NAME\s0" 2
+.IX Item "alias => NAME"
+[3.03] When defined, the compiled operation will be stored with the
+alias name in stead of the operation name.  This may make your code
+more readible or solve naming conflicts.
+.RE
+.RS 4
+.Sp
+example:
+.Sp
+.Vb 2
+\&  my $op = $wsdl\->operation(name => \*(AqgetInfo\*(Aq);
+\&  $wsdl\->compileCall($op);
+\&
+\&  # as often as you need it
+\&  my ($answer, $trace) = $wsdl\->call(\*(AqgetInfo\*(Aq)\->(%request);
+.Ve
+.RE
+.ie n .IP "$obj\->\fBcompileCalls\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileCalls\fR(%options)" 4
+.IX Item "$obj->compileCalls(%options)"
+[2.20] Compile a handler for each of the available operations. The \f(CW%options\fR are
 passed to each call of \fIcompileClient()\fR, but will be overruled by more
 specific declared options.
 .Sp
-Additionally, \s-1OPTIONS\s0 can contain \f(CW\*(C`service\*(C'\fR, \f(CW\*(C`port\*(C'\fR, and \f(CW\*(C`binding\*(C'\fR
+Additionally, \f(CW%options\fR can contain \f(CW\*(C`service\*(C'\fR, \f(CW\*(C`port\*(C'\fR, and \f(CW\*(C`binding\*(C'\fR
 to limit the set of involved calls. See \fIoperations()\fR for details on
 these options.
 .Sp
 You may declare additional specific compilation options with the
 \&\fIdeclare()\fR method.
+.Sp
+.Vb 2
+\& \-Option    \-\-Default
+\&  long_names  false
+.Ve
+.RS 4
+.IP "long_names => \s-1BOOLEAN\s0" 2
+.IX Item "long_names => BOOLEAN"
+[3.03] Prepend the service name to the operation name to produce an alias
+(see compileCall(alias)) for the compiled call.  If the service name is
+\&'X' and the operation name is 'Y', then the alias becomes 'X#Y'.
+.Sp
+You will need this if you have multiple operations with the same name
+in your \s-1WSDL\s0 (\-collection).
+.RE
+.RS 4
 .Sp
 example:
 .Sp
@@ -399,54 +489,61 @@ example:
 \&   
 \&   my $answer = $wsdl\->call($myop, $request);
 .Ve
-.ie n .IP "$obj\->\fBdataToXML\fR(NODE|REF\-XML\-STRING|XML\-STRING|FILENAME|FILEHANDLE|KNOWN)" 4
-.el .IP "\f(CW$obj\fR\->\fBdataToXML\fR(NODE|REF\-XML\-STRING|XML\-STRING|FILENAME|FILEHANDLE|KNOWN)" 4
-.IX Item "$obj->dataToXML(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)"
+.RE
+.ie n .IP "$obj\->\fBcompileType\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'>, $type, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileType\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'>, \f(CW$type\fR, \f(CW%options\fR )" 4
+.IX Item "$obj->compileType( <'READER'|'WRITER'>, $type, %options )"
+Inherited, see \*(L"Compilers\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBdataToXML\fR($node|REF\-XML|XML\-STRING|$filename|$fh|$known)" 4
+.el .IP "\f(CW$obj\fR\->\fBdataToXML\fR($node|REF\-XML|XML\-STRING|$filename|$fh|$known)" 4
+.IX Item "$obj->dataToXML($node|REF-XML|XML-STRING|$filename|$fh|$known)"
 .PD 0
-.IP "XML::Compile::WSDL11\->\fBdataToXML\fR(NODE|REF\-XML\-STRING|XML\-STRING|FILENAME|FILEHANDLE|KNOWN)" 4
-.IX Item "XML::Compile::WSDL11->dataToXML(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)"
+.IP "XML::Compile::WSDL11\->\fBdataToXML\fR($node|REF\-XML|XML\-STRING|$filename|$fh|$known)" 4
+.IX Item "XML::Compile::WSDL11->dataToXML($node|REF-XML|XML-STRING|$filename|$fh|$known)"
 .PD
-See \*(L"Compilers\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBinitParser\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBinitParser\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->initParser(OPTIONS)"
+Inherited, see \*(L"Compilers\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBinitParser\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBinitParser\fR(%options)" 4
+.IX Item "$obj->initParser(%options)"
 .PD 0
-.IP "XML::Compile::WSDL11\->\fBinitParser\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::WSDL11->initParser(OPTIONS)"
+.IP "XML::Compile::WSDL11\->\fBinitParser\fR(%options)" 4
+.IX Item "XML::Compile::WSDL11->initParser(%options)"
 .PD
-See \*(L"Compilers\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBreader\fR(TYPE|NAME, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBreader\fR(TYPE|NAME, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->reader(TYPE|NAME, OPTIONS)"
-See \*(L"Compilers\*(R" in XML::Compile::Cache
-.ie n .IP "$obj\->\fBtemplate\fR('\s-1XML\s0'|'\s-1PERL\s0', \s-1ELEMENT\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBtemplate\fR('\s-1XML\s0'|'\s-1PERL\s0', \s-1ELEMENT\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->template('XML'|'PERL', ELEMENT, OPTIONS)"
-See \*(L"Compilers\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBwriter\fR(TYPE|NAME)" 4
-.el .IP "\f(CW$obj\fR\->\fBwriter\fR(TYPE|NAME)" 4
-.IX Item "$obj->writer(TYPE|NAME)"
-See \*(L"Compilers\*(R" in XML::Compile::Cache
+Inherited, see \*(L"Compilers\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBreader\fR($type|$name, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBreader\fR($type|$name, \f(CW%options\fR)" 4
+.IX Item "$obj->reader($type|$name, %options)"
+Inherited, see \*(L"Compilers\*(R" in XML::Compile::Cache
+.ie n .IP "$obj\->\fBtemplate\fR( <'\s-1XML\s0'|'\s-1PERL\s0'|'\s-1TREE\s0'>, $element, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBtemplate\fR( <'\s-1XML\s0'|'\s-1PERL\s0'|'\s-1TREE\s0'>, \f(CW$element\fR, \f(CW%options\fR )" 4
+.IX Item "$obj->template( <'XML'|'PERL'|'TREE'>, $element, %options )"
+Inherited, see \*(L"Compilers\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBwriter\fR($type|$name)" 4
+.el .IP "\f(CW$obj\fR\->\fBwriter\fR($type|$name)" 4
+.IX Item "$obj->writer($type|$name)"
+Inherited, see \*(L"Compilers\*(R" in XML::Compile::Cache
 .SS "Extension"
 .IX Subsection "Extension"
-.ie n .IP "$obj\->\fBaddWSDL\fR(\s-1XMLDATA\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddWSDL\fR(\s-1XMLDATA\s0)" 4
-.IX Item "$obj->addWSDL(XMLDATA)"
-The \s-1XMLDATA\s0 must be acceptable to \fIXML::Compile::dataToXML()\fR and 
+.ie n .IP "$obj\->\fBaddWSDL\fR($xmldata|\e@xmldata, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddWSDL\fR($xmldata|\e@xmldata, \f(CW%options\fR)" 4
+.IX Item "$obj->addWSDL($xmldata|@xmldata, %options)"
+The \f(CW$xmldata\fR must be acceptable to \fIXML::Compile::dataToXML()\fR and 
 should represent the top-level of a (partial) \s-1WSDL\s0 document.
 The specification can be spread over multiple files, each of
 which must have a \f(CW\*(C`definition\*(C'\fR root element.
-.ie n .IP "$obj\->\fBcompileClient\fR([\s-1NAME\s0], \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileClient\fR([\s-1NAME\s0], \s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileClient([NAME], OPTIONS)"
+.ie n .IP "$obj\->\fBcompileClient\fR( [$name], %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileClient\fR( [$name], \f(CW%options\fR )" 4
+.IX Item "$obj->compileClient( [$name], %options )"
 Creates an XML::Compile::SOAP::Operation temporary object using
-\&\fIoperation()\fR, and then calls \f(CW\*(C`compileClient()\*(C'\fR on that.
+\&\fIoperation()\fR, and then calls \f(CW\*(C`compileClient()\*(C'\fR on that.  This
+results in a code reference which will handle all client-server
+\&\s-1SOAP\s0 exchange.
 .Sp
-The \s-1OPTIONS\s0 available include all of the options for:
+The \f(CW%options\fR available include all of the options for:
 .RS 4
-.IP "." 4
+.IP "\(bu" 4
 \&\fIoperation()\fR (i.e. \f(CW\*(C`service\*(C'\fR and \f(CW\*(C`port\*(C'\fR), and all of
-.IP "." 4
+.IP "\(bu" 4
 \&\fIXML::Compile::SOAP::Operation::compileClient()\fR (there are many of
 these, for instance \f(CW\*(C`transport_hook\*(C'\fR and \f(CW\*(C`server\*(C'\fR)
 .RE
@@ -456,24 +553,31 @@ You \fBcannot\fR pass options for \fIXML::Compile::Schema::compile()\fR, like
 \&\f(CW\*(C`<sloppy_integers =\*(C'\fR 0>>, hooks or typemaps this way. Use new(opts_rw)
 and friends to declare those.
 .Sp
+When you use \fIcompileCall()\fR, the compiled code references get cached
+for you.  In that case, you can use \fIcall()\fR to use them.
+.Sp
 example:
 .Sp
-.Vb 4
-\&  $wsdl\->compileClient
+.Vb 5
+\&  my $call = $wsdl\->compileClient
 \&    ( operation => \*(AqHelloWorld\*(Aq
-\&    , port      => \*(AqPrefillSoap\*(Aq # only needed when multiple ports
+\&    , port      => \*(AqPrefillSoap\*(Aq # only required when multiple ports
 \&    );
+\&  my ($answer, $trace) = $call\->($request);
+\&
+\&  # \*(Aqoperation\*(Aq keyword optional
+\&  my $call = $wsdl\->compileClient(\*(AqHelloWorld\*(Aq);
 .Ve
 .RE
-.ie n .IP "$obj\->\fBnamesFor\fR(\s-1CLASS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBnamesFor\fR(\s-1CLASS\s0)" 4
-.IX Item "$obj->namesFor(CLASS)"
-Returns the list of names available for a certain definition \s-1CLASS\s0 in
-the \s-1WSDL\s0. See \fIindex()\fR for a way to determine the available \s-1CLASS\s0
+.ie n .IP "$obj\->\fBnamesFor\fR($class)" 4
+.el .IP "\f(CW$obj\fR\->\fBnamesFor\fR($class)" 4
+.IX Item "$obj->namesFor($class)"
+Returns the list of names available for a certain definition \f(CW$class\fR in
+the \s-1WSDL\s0. See \fIindex()\fR for a way to determine the available \f(CW$class\fR
 information.
-.ie n .IP "$obj\->\fBoperation\fR([\s-1NAME\s0], \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBoperation\fR([\s-1NAME\s0], \s-1OPTIONS\s0)" 4
-.IX Item "$obj->operation([NAME], OPTIONS)"
+.ie n .IP "$obj\->\fBoperation\fR( [$name], %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBoperation\fR( [$name], \f(CW%options\fR )" 4
+.IX Item "$obj->operation( [$name], %options )"
 Collect all information for a certain operation.  Returned is an
 XML::Compile::SOAP::Operation object.
 .Sp
@@ -483,12 +587,13 @@ left-out: in the many configurations where there are no alternative
 choices. In case there are alternatives, you will be requested to
 pick an option.
 .Sp
-.Vb 5
-\& \-Option   \-\-Default
-\&  action     <undef>
-\&  operation  <required>
-\&  port       <only when just one port in WSDL>
-\&  service    <only when just one service in WSDL>
+.Vb 6
+\& \-Option     \-\-Default
+\&  action       <undef>
+\&  operation    <required>
+\&  port         <only when just one port in WSDL>
+\&  server_type  undef
+\&  service      <only when just one service in WSDL>
 .Ve
 .RS 4
 .IP "action => \s-1STRING\s0" 2
@@ -496,12 +601,15 @@ pick an option.
 Overrule the soapAction from the \s-1WSDL\s0.
 .IP "operation => \s-1NAME\s0" 2
 .IX Item "operation => NAME"
-Ignored when the parameter list starts with a \s-1NAME\s0 (which is an
+Ignored when the parameter list starts with a \f(CW$name\fR (which is an
 alternative for this option).  Optional when there is only
 one operation defined within the portType.
 .IP "port => \s-1NAME\s0" 2
 .IX Item "port => NAME"
 Required when more than one port is defined.
+.IP "server_type => \s-1NAME\s0" 2
+.IX Item "server_type => NAME"
+Overrules new(server_type).
 .IP "service => QNAME|PREFIXED" 2
 .IX Item "service => QNAME|PREFIXED"
 Required when more than one service is defined.
@@ -510,14 +618,15 @@ Required when more than one service is defined.
 .RE
 .SS "Administration"
 .IX Subsection "Administration"
-.ie n .IP "$obj\->\fBdeclare\fR(\s-1GROUP\s0, COMPONENT|ARRAY, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBdeclare\fR(\s-1GROUP\s0, COMPONENT|ARRAY, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->declare(GROUP, COMPONENT|ARRAY, OPTIONS)"
-Register specific compile \s-1OPTIONS\s0 for the specific \s-1COMPONENT\s0. See also
-\&\fIXML::Compile::Cache::declare()\fR. The \s-1GROUP\s0 is either \f(CW\*(C`READER\*(C'\fR,
-\&\f(CW\*(C`WRITER\*(C'\fR, \f(CW\*(C`RW\*(C'\fR (both reader and writer), or \f(CW\*(C`OPERATION\*(C'\fR.  As \s-1COMPONENT\s0,
+Extends \*(L"Administration\*(R" in XML::Compile::Cache.
+.ie n .IP "$obj\->\fBdeclare\fR($group, $component|ARRAY, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBdeclare\fR($group, \f(CW$component\fR|ARRAY, \f(CW%options\fR)" 4
+.IX Item "$obj->declare($group, $component|ARRAY, %options)"
+Register specific compile \f(CW%options\fR for the specific \f(CW$component\fR. See also
+\&\fIXML::Compile::Cache::declare()\fR. The \f(CW$group\fR is either \f(CW\*(C`READER\*(C'\fR,
+\&\f(CW\*(C`WRITER\*(C'\fR, \f(CW\*(C`RW\*(C'\fR (both reader and writer), or \f(CW\*(C`OPERATION\*(C'\fR.  As \f(CW$component\fR,
 you specify the element name (for readers and writers) or operation name
-(for operations). \s-1OPTIONS\s0 are specified as \s-1LIST\s0, \s-1ARRAY\s0 or \s-1HASH\s0.
+(for operations). \f(CW%options\fR are specified as \s-1LIST\s0, \s-1ARRAY\s0 or \s-1HASH\s0.
 .Sp
 example:
 .Sp
@@ -526,60 +635,65 @@ example:
 \&   $wsdl\->compileCalls;
 \&   my $answer = $wsdl\->call(GetStockPrice => %request);
 .Ve
-.ie n .IP "$obj\->\fBdoesExtend\fR(\s-1EXTTYPE\s0, \s-1BASETYPE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBdoesExtend\fR(\s-1EXTTYPE\s0, \s-1BASETYPE\s0)" 4
-.IX Item "$obj->doesExtend(EXTTYPE, BASETYPE)"
-See \*(L"Administration\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBelements\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBelements\fR" 4
-.IX Item "$obj->elements"
-See \*(L"Administration\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBfindName\fR(\s-1NAME\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBfindName\fR(\s-1NAME\s0)" 4
-.IX Item "$obj->findName(NAME)"
-See \*(L"Administration\*(R" in XML::Compile::Cache
-.ie n .IP "$obj\->\fBfindSchemaFile\fR(\s-1FILENAME\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBfindSchemaFile\fR(\s-1FILENAME\s0)" 4
-.IX Item "$obj->findSchemaFile(FILENAME)"
+.ie n .IP "$obj\->\fBdoesExtend\fR($exttype, $basetype)" 4
+.el .IP "\f(CW$obj\fR\->\fBdoesExtend\fR($exttype, \f(CW$basetype\fR)" 4
+.IX Item "$obj->doesExtend($exttype, $basetype)"
+Inherited, see \*(L"Administration\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBelements\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBelements\fR()" 4
+.IX Item "$obj->elements()"
+Inherited, see \*(L"Administration\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBfindName\fR($name)" 4
+.el .IP "\f(CW$obj\fR\->\fBfindName\fR($name)" 4
+.IX Item "$obj->findName($name)"
+Inherited, see \*(L"Administration\*(R" in XML::Compile::Cache
+.ie n .IP "$obj\->\fBfindSchemaFile\fR($filename)" 4
+.el .IP "\f(CW$obj\fR\->\fBfindSchemaFile\fR($filename)" 4
+.IX Item "$obj->findSchemaFile($filename)"
 .PD 0
-.IP "XML::Compile::WSDL11\->\fBfindSchemaFile\fR(\s-1FILENAME\s0)" 4
-.IX Item "XML::Compile::WSDL11->findSchemaFile(FILENAME)"
+.IP "XML::Compile::WSDL11\->\fBfindSchemaFile\fR($filename)" 4
+.IX Item "XML::Compile::WSDL11->findSchemaFile($filename)"
 .PD
-See \*(L"Administration\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBimportDefinitions\fR(\s-1XMLDATA\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBimportDefinitions\fR(\s-1XMLDATA\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->importDefinitions(XMLDATA, OPTIONS)"
-See \*(L"Administration\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBknownNamespace\fR(NAMESPACE|PAIRS)" 4
-.el .IP "\f(CW$obj\fR\->\fBknownNamespace\fR(NAMESPACE|PAIRS)" 4
-.IX Item "$obj->knownNamespace(NAMESPACE|PAIRS)"
+Inherited, see \*(L"Administration\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBimportDefinitions\fR($xmldata, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBimportDefinitions\fR($xmldata, \f(CW%options\fR)" 4
+.IX Item "$obj->importDefinitions($xmldata, %options)"
+Inherited, see \*(L"Administration\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBknownNamespace\fR($ns|PAIRS)" 4
+.el .IP "\f(CW$obj\fR\->\fBknownNamespace\fR($ns|PAIRS)" 4
+.IX Item "$obj->knownNamespace($ns|PAIRS)"
 .PD 0
-.IP "XML::Compile::WSDL11\->\fBknownNamespace\fR(NAMESPACE|PAIRS)" 4
-.IX Item "XML::Compile::WSDL11->knownNamespace(NAMESPACE|PAIRS)"
+.IP "XML::Compile::WSDL11\->\fBknownNamespace\fR($ns|PAIRS)" 4
+.IX Item "XML::Compile::WSDL11->knownNamespace($ns|PAIRS)"
 .PD
-See \*(L"Administration\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBnamespaces\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBnamespaces\fR" 4
-.IX Item "$obj->namespaces"
-See \*(L"Administration\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBtypes\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtypes\fR" 4
-.IX Item "$obj->types"
-See \*(L"Administration\*(R" in XML::Compile::Schema
-.ie n .IP "$obj\->\fBwalkTree\fR(\s-1NODE\s0, \s-1CODE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBwalkTree\fR(\s-1NODE\s0, \s-1CODE\s0)" 4
-.IX Item "$obj->walkTree(NODE, CODE)"
-See \*(L"Administration\*(R" in XML::Compile
+Inherited, see \*(L"Administration\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBnamespaces\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBnamespaces\fR()" 4
+.IX Item "$obj->namespaces()"
+Inherited, see \*(L"Administration\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBtypes\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBtypes\fR()" 4
+.IX Item "$obj->types()"
+Inherited, see \*(L"Administration\*(R" in XML::Compile::Schema
+.ie n .IP "$obj\->\fBwalkTree\fR($node, \s-1CODE\s0)" 4
+.el .IP "\f(CW$obj\fR\->\fBwalkTree\fR($node, \s-1CODE\s0)" 4
+.IX Item "$obj->walkTree($node, CODE)"
+Inherited, see \*(L"Administration\*(R" in XML::Compile
 .SS "Introspection"
 .IX Subsection "Introspection"
 All of the following methods are usually \s-1NOT\s0 meant for end-users. End-users
 should stick to the \fIoperation()\fR and \fIcompileClient()\fR methods.
-.ie n .IP "$obj\->\fBendPoint\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBendPoint\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->endPoint(OPTIONS)"
+.ie n .IP "$obj\->\fBendPoint\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBendPoint\fR(%options)" 4
+.IX Item "$obj->endPoint(%options)"
 [2.20] Returns the address of the server, as specified by the \s-1WSDL\s0. When
 there are no alternatives for service or port, you not not need to
-specify those paramters.
+specify those parameters.
+.Sp
+The endpoint in the \s-1WSDL\s0 is often wrong.  All compile functions accept
+the \f(CW\*(C`server\*(C'\fR and \f(CW\*(C`endpoint\*(C'\fR parameters to overrule the value.  With
+\&\f(CW\*(C`server\*(C'\fR, only the hostname:port is being replaced.  With \f(CW\*(C`endpoint\*(C'\fR,
+everything is replaced.
 .Sp
 .Vb 3
 \& \-Option \-\-Default
@@ -594,22 +708,30 @@ specify those paramters.
 .IX Item "service => QNAME|PREFIXED"
 .RE
 .RS 4
-.RE
-.ie n .IP "$obj\->\fBexplain\fR(\s-1OPERATION\s0, \s-1FORMAT\s0, \s-1DIRECTION\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBexplain\fR(\s-1OPERATION\s0, \s-1FORMAT\s0, \s-1DIRECTION\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->explain(OPERATION, FORMAT, DIRECTION, OPTIONS)"
 .PD
+.Sp
+example:
+.Sp
+.Vb 3
+\& my $devel = URI\->new($wsdl\->endPoint);
+\& $devel\->path(\*(Aq/sdk\*(Aq);
+\& my $call = $wsdl\->compileCall($opname, endpoint => $devel);
+.Ve
+.RE
+.ie n .IP "$obj\->\fBexplain\fR($operation, $format, $direction, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBexplain\fR($operation, \f(CW$format\fR, \f(CW$direction\fR, \f(CW%options\fR)" 4
+.IX Item "$obj->explain($operation, $format, $direction, %options)"
 [2.13]
 Produce templates (see \fIXML::Compile::Schema::template()\fR which detail
-the use of the \s-1OPERATION\s0. Currently, only the \f(CW\*(C`PERL\*(C'\fR template \s-1FORMAT\s0
+the use of the \f(CW$operation\fR. Currently, only the \f(CW\*(C`PERL\*(C'\fR template \f(CW$format\fR
 is available.
 .Sp
-The \s-1DIRECTION\s0 of operation is either \f(CW\*(C`INPUT\*(C'\fR (input for the server,
+The \f(CW$direction\fR of operation is either \f(CW\*(C`INPUT\*(C'\fR (input for the server,
 hence to be produced by the client), or \f(CW\*(C`OUTPUT\*(C'\fR (from the server,
 received by the client).
 .Sp
 The actual work is done by \fIXML::Compile::SOAP::Operation::explain()\fR. The
-\&\s-1OPTIONS\s0 passed to that method include \f(CW\*(C`recurse\*(C'\fR and \f(CW\*(C`skip_header\*(C'\fR.
+\&\f(CW%options\fR passed to that method include \f(CW\*(C`recurse\*(C'\fR and \f(CW\*(C`skip_header\*(C'\fR.
 .Sp
 example:
 .Sp
@@ -620,19 +742,23 @@ example:
 \&     , recurse => 1                 # explain options
 \&     , port    => \*(AqSoap12PortName\*(Aq  # operation options
 \&     );
+\&
+\&  foreach my $op ($wsdl\->operations)
+\&  {  print $op\->explain($wsdl, PERL => \*(AqINPUT\*(Aq);
+\&  }
 .Ve
-.ie n .IP "$obj\->\fBfindDef\fR(\s-1CLASS\s0, [QNAME|PREFIXED|NAME])" 4
-.el .IP "\f(CW$obj\fR\->\fBfindDef\fR(\s-1CLASS\s0, [QNAME|PREFIXED|NAME])" 4
-.IX Item "$obj->findDef(CLASS, [QNAME|PREFIXED|NAME])"
-With a \s-1QNAME\s0, the \s-1HASH\s0 which contains the parsed \s-1XML\s0 information
-from the \s-1WSDL\s0 template for that CLASS-NAME combination is returned.
-You may also have a \s-1PREFIXED\s0 name, using one of the predefined namespace
-abbreviations.  Otherwise, \s-1NAME\s0 is considered to be the localName in
-that class.  When the \s-1NAME\s0 is not found, an error is produced.
+.ie n .IP "$obj\->\fBfindDef\fR( $class, <$qname|$prefixed|$name> )" 4
+.el .IP "\f(CW$obj\fR\->\fBfindDef\fR( \f(CW$class\fR, <$qname|$prefixed|$name> )" 4
+.IX Item "$obj->findDef( $class, <$qname|$prefixed|$name> )"
+With a \f(CW$qname\fR, the \s-1HASH\s0 which contains the parsed \s-1XML\s0 information
+from the \s-1WSDL\s0 template for that \f(CW$class\fR\-$name combination is returned.
+You may also have a \f(CW$prefixed\fR name, using one of the predefined namespace
+abbreviations.  Otherwise, \f(CW$name\fR is considered to be the localName in
+that class.  When the \f(CW$name\fR is not found, an error is produced.
 .Sp
-Without \s-1QNAME\s0 in \s-1SCALAR\s0 context, there may only be one such name
+Without \f(CW$qname\fR in \s-1SCALAR\s0 context, there may only be one such name
 defined otherwise an error is produced.  In \s-1LIST\s0 context, all definitions
-in \s-1CLASS\s0 are returned.
+in \f(CW$class\fR are returned.
 .Sp
 example:
 .Sp
@@ -640,24 +766,25 @@ example:
 \& $service  = $obj\->findDef(service => \*(Aqhttp://xyz\*(Aq);
 \& @services = $obj\->findDef(\*(Aqservice\*(Aq);
 .Ve
-.ie n .IP "$obj\->\fBindex\fR([\s-1CLASS\s0, [\s-1QNAME\s0]])" 4
-.el .IP "\f(CW$obj\fR\->\fBindex\fR([\s-1CLASS\s0, [\s-1QNAME\s0]])" 4
-.IX Item "$obj->index([CLASS, [QNAME]])"
-With a \s-1CLASS\s0 and \s-1QNAME\s0, it returns one \s-1WSDL\s0 definition \s-1HASH\s0 or undef.
-Returns the index for the \s-1CLASS\s0 group of names as \s-1HASH\s0.  When no \s-1CLASS\s0 is
+.ie n .IP "$obj\->\fBindex\fR( [$class, [$qname]] )" 4
+.el .IP "\f(CW$obj\fR\->\fBindex\fR( [$class, [$qname]] )" 4
+.IX Item "$obj->index( [$class, [$qname]] )"
+With a \f(CW$class\fR and \f(CW$qname\fR, it returns one \s-1WSDL\s0 definition \s-1HASH\s0 or undef.
+Returns the index for the \f(CW$class\fR group of names as \s-1HASH\s0.  When no \f(CW$class\fR is
 specified, a \s-1HASH\s0 of HASHes is returned with the CLASSes on the top-level.
 .Sp
-\&\s-1CLASS\s0 includes \f(CW\*(C`service\*(C'\fR, \f(CW\*(C`binding\*(C'\fR, \f(CW\*(C`portType\*(C'\fR, and \f(CW\*(C`message\*(C'\fR.
-.ie n .IP "$obj\->\fBoperations\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBoperations\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->operations(OPTIONS)"
+\&\f(CW$class\fR includes \f(CW\*(C`service\*(C'\fR, \f(CW\*(C`binding\*(C'\fR, \f(CW\*(C`portType\*(C'\fR, and \f(CW\*(C`message\*(C'\fR.
+.ie n .IP "$obj\->\fBoperations\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBoperations\fR(%options)" 4
+.IX Item "$obj->operations(%options)"
 Return a list with all operations defined in the \s-1WSDL\s0.
 .Sp
-.Vb 4
-\& \-Option \-\-Default
-\&  binding  <undef>
-\&  port     <undef>
-\&  service  <undef>
+.Vb 5
+\& \-Option     \-\-Default
+\&  binding      <undef>
+\&  port         <undef>
+\&  server_type  undef
+\&  service      <undef>
 .Ve
 .RS 4
 .IP "binding => \s-1NAME\s0" 2
@@ -668,16 +795,19 @@ By default, all bindings are accepted.
 .IX Item "port => NAME"
 Return only operations related to the specified port \s-1NAME\s0.
 By default operations from all ports.
+.IP "server_type => \s-1STRING\s0" 2
+.IX Item "server_type => STRING"
+[3.06]
 .IP "service => \s-1NAME\s0" 2
 .IX Item "service => NAME"
 Only return operations related to the NAMEd service, by default all services.
 .RE
 .RS 4
 .RE
-.ie n .IP "$obj\->\fBprintIndex\fR([\s-1FILEHANDLE\s0], \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBprintIndex\fR([\s-1FILEHANDLE\s0], \s-1OPTIONS\s0)" 4
-.IX Item "$obj->printIndex([FILEHANDLE], OPTIONS)"
-For available \s-1OPTIONS\s0, see \fIoperations()\fR.  This method is useful to
+.ie n .IP "$obj\->\fBprintIndex\fR( [$fh], %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBprintIndex\fR( [$fh], \f(CW%options\fR )" 4
+.IX Item "$obj->printIndex( [$fh], %options )"
+For available \f(CW%options\fR, see \fIoperations()\fR.  This method is useful to
 understand the structure of your \s-1WSDL:\s0 it shows a nested list of
 services, bindings, ports and portTypes.
 .Sp
@@ -693,101 +823,34 @@ services, bindings, ports and portTypes.
 .RE
 .SH "DETAILS"
 .IX Header "DETAILS"
+Extends \*(L"\s-1DETAILS\s0\*(R" in XML::Compile::Cache.
+.SS "Distribution collection overview"
+.IX Subsection "Distribution collection overview"
+Extends \*(L"Distribution collection overview\*(R" in XML::Compile::Cache.
 .SS "Comparison"
 .IX Subsection "Comparison"
+Extends \*(L"Comparison\*(R" in XML::Compile::Cache.
 .SS "Collecting definitions"
 .IX Subsection "Collecting definitions"
-\fIOrganizing your definitions\fR
-.IX Subsection "Organizing your definitions"
+Extends \*(L"Collecting definitions\*(R" in XML::Compile::Cache.
 .SS "Addressing components"
 .IX Subsection "Addressing components"
+Extends \*(L"Addressing components\*(R" in XML::Compile::Cache.
 .SS "Representing data-structures"
 .IX Subsection "Representing data-structures"
-\fIsimpleType\fR
-.IX Subsection "simpleType"
-.PP
-\fIcomplexType/simpleContent\fR
-.IX Subsection "complexType/simpleContent"
-.PP
-\fIcomplexType and complexType/complexContent\fR
-.IX Subsection "complexType and complexType/complexContent"
-.PP
-\fIManually produced \s-1XML\s0 \s-1NODE\s0\fR
-.IX Subsection "Manually produced XML NODE"
-.PP
-\fIOccurence\fR
-.IX Subsection "Occurence"
-.PP
-\fIDefault Values\fR
-.IX Subsection "Default Values"
-.PP
-\fIRepetative blocks\fR
-.IX Subsection "Repetative blocks"
-.PP
-repetative sequence, choice, all
-.IX Subsection "repetative sequence, choice, all"
-.PP
-repetative groups
-.IX Subsection "repetative groups"
-.PP
-repetative substitutionGroups
-.IX Subsection "repetative substitutionGroups"
-.PP
-\fIList type\fR
-.IX Subsection "List type"
-.PP
-\fIUsing substitutionGroup constructs\fR
-.IX Subsection "Using substitutionGroup constructs"
-.PP
-\fIWildcards any and anyAttribute\fR
-.IX Subsection "Wildcards any and anyAttribute"
-.PP
-\fIComplexType with \*(L"mixed\*(R" attribute\fR
-.IX Subsection "ComplexType with mixed attribute"
-.PP
-\fIhexBinary and base64Binary\fR
-.IX Subsection "hexBinary and base64Binary"
+Extends \*(L"Representing data-structures\*(R" in XML::Compile::Cache.
 .SS "Schema hooks"
 .IX Subsection "Schema hooks"
-\fIdefining hooks\fR
-.IX Subsection "defining hooks"
-.PP
-\fIgeneral syntax\fR
-.IX Subsection "general syntax"
-.PP
-\fIhooks on matching types\fR
-.IX Subsection "hooks on matching types"
-.PP
-\fIhooks on matching ids\fR
-.IX Subsection "hooks on matching ids"
-.PP
-\fIhooks on matching paths\fR
-.IX Subsection "hooks on matching paths"
+Extends \*(L"Schema hooks\*(R" in XML::Compile::Cache.
 .SS "Typemaps"
 .IX Subsection "Typemaps"
-\fIPrivate variables in objects\fR
-.IX Subsection "Private variables in objects"
-.PP
-\fITypemap limitations\fR
-.IX Subsection "Typemap limitations"
+Extends \*(L"Typemaps\*(R" in XML::Compile::Cache.
 .SS "Handling xsi:type"
 .IX Subsection "Handling xsi:type"
+Extends \*(L"Handling xsi:type\*(R" in XML::Compile::Cache.
 .SS "Key rewrite"
 .IX Subsection "Key rewrite"
-\fIkey_rewrite via table\fR
-.IX Subsection "key_rewrite via table"
-.PP
-\fIrewrite via function\fR
-.IX Subsection "rewrite via function"
-.PP
-\fIkey_rewrite when localNames collide\fR
-.IX Subsection "key_rewrite when localNames collide"
-.PP
-\fIrewrite for convenience\fR
-.IX Subsection "rewrite for convenience"
-.PP
-\fIpre-defined key_rewrite rules\fR
-.IX Subsection "pre-defined key_rewrite rules"
+Extends \*(L"Key rewrite\*(R" in XML::Compile::Cache.
 .SS "Initializing \s-1SOAP\s0 operations via \s-1WSDL\s0"
 .IX Subsection "Initializing SOAP operations via WSDL"
 When you have a \s-1WSDL\s0 file, then \s-1SOAP\s0 is simple.  If there is no such file
@@ -817,35 +880,21 @@ a choice, then you must explicitly select one.
 \& # see XML::Compile::SOAP chapter DETAILS about call params
 \& my $answer = $call\->(%request);
 .Ve
+.SH "DESCRIPTIONS"
+.IX Header "DESCRIPTIONS"
+Extends \*(L"\s-1DESCRIPTIONS\s0\*(R" in XML::Compile::Cache.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML\-Compile\-WSDL11 distribution version 3.06,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2014\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

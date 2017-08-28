@@ -1,14 +1,14 @@
-# Copyrights 2008-2010 by Mark Overmeer.
+# Copyrights 2008-2012 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 1.06.
+# Pod stripped from pm file by OODoc 2.00.
 
 use warnings;
 use strict;
 
 package XML::Compile::Tester;
 use vars '$VERSION';
-$VERSION = '0.06';
+$VERSION = '0.90';
 
 use base 'Exporter';
 
@@ -22,6 +22,7 @@ our @EXPORT = qw/
  writer_error
  templ_xml
  templ_perl
+ templ_tree
  compare_xml
  /;
 
@@ -160,6 +161,18 @@ sub templ_perl($$@)
      , @opts
      );
 }
+
+
+sub templ_tree($$@)
+{   my ($schema, $test, @opts) = @_;
+    my $abs = _reltype_to_abs($test);
+
+    $schema->template
+     ( TREE               => $abs
+     , @opts
+     );
+}
+
 
 
 sub set_compile_defaults(@) { @compile_defaults = @_ }

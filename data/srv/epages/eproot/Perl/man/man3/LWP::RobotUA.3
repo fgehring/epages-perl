@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "LWP::RobotUA 3"
-.TH LWP::RobotUA 3 "2012-02-11" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH LWP::RobotUA 3 "2017-01-31" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -153,7 +153,7 @@ and they should not make requests too frequently.
 But before you consider writing a robot, take a look at
 <URL:http://www.robotstxt.org/>.
 .PP
-When you use a \fILWP::RobotUA\fR object as your user agent, then you do not
+When you use an \fILWP::RobotUA\fR object as your user agent, then you do not
 really have to think about these things yourself; \f(CW\*(C`robots.txt\*(C'\fR files
 are automatically consulted and obeyed, the server isn't queried
 too rapidly, and so on.  Just send requests
@@ -211,7 +211,7 @@ Get/set a value indicating whether the \s-1UA\s0 should \fIsleep()\fR if request
 arrive too fast, defined as \f(CW$ua\fR\->delay minutes not passed since
 last request to the given server.  The default is \s-1TRUE\s0.  If this value is
 \&\s-1FALSE\s0 then an internal \s-1SERVICE_UNAVAILABLE\s0 response will be generated.
-It will have an Retry-After header that indicates when it is \s-1OK\s0 to
+It will have a Retry-After header that indicates when it is \s-1OK\s0 to
 send another request to this server.
 .ie n .IP "$ua\->rules" 4
 .el .IP "\f(CW$ua\fR\->rules" 4

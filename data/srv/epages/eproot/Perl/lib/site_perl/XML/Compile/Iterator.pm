@@ -1,16 +1,16 @@
-# Copyrights 2006-2011 by Mark Overmeer.
+# Copyrights 2006-2016 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 use warnings;
 use strict;
 
 package XML::Compile::Iterator;
 use vars '$VERSION';
-$VERSION = '1.22';
+$VERSION = '1.54';
 
 
-use XML::Compile::Util  qw/pack_type type_of_node/;
+use XML::Compile::Util  qw/pack_type type_of_node SCHEMA2001i/;
 use Log::Report 'xml-compile', syntax => 'SHORT';
 
 
@@ -48,15 +48,13 @@ sub descend(;$$$)
       ($node, $path, ($filter || $self->{filter}));
 }
 
+#----------------
 
 sub node()   {shift->{node}}
-
-
 sub filter() {shift->{filter}}
+sub path()   {shift->{path}}
 
-
-sub path() {shift->{path}}
-
+#----------------
 
 sub childs()
 {   my $self = shift;
@@ -101,6 +99,7 @@ sub nrChildren()
     scalar @$list;
 }
 
+#---------
 
 sub nodeType() { type_of_node(shift->node) || '' }
 
@@ -108,6 +107,13 @@ sub nodeType() { type_of_node(shift->node) || '' }
 sub nodeLocal()
 {   my $node = shift->node or return '';
     $node->localName;
+}
+
+
+sub nodeNil()
+{   my $node = shift->node or return 0;
+    my $nil  = $node->getAttributeNS(SCHEMA2001i, 'nil') || '';
+    $nil eq 'true' || $nil eq '1';
 }
 
 

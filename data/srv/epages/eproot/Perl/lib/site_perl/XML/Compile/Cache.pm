@@ -1,13 +1,13 @@
-# Copyrights 2008-2011 by Mark Overmeer.
+# Copyrights 2008-2016 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 use warnings;
 use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.991';
+$VERSION = '1.05';
 
 use base 'XML::Compile::Schema';
 
@@ -21,6 +21,8 @@ use XML::LibXML::Simple  qw/XMLin/;
 
 sub init($)
 {   my ($self, $args) = @_;
+    $self->addPrefixes($args->{prefixes});
+
     $self->SUPER::init($args);
 
     $self->{XCC_opts}   = delete $args->{opts_rw}      || [];
@@ -28,80 +30,22 @@ sub init($)
     $self->{XCC_wopts}  = delete $args->{opts_writers} || [];
     $self->{XCC_undecl} = delete $args->{allow_undeclared} || 0;
 
-    $self->{XCC_rcode}  = {};  # compiled code refs
-    $self->{XCC_wcode}  = {};
     $self->{XCC_dropts} = {};  # declared opts
     $self->{XCC_dwopts} = {};
     $self->{XCC_uropts} = {};  # undeclared opts
     $self->{XCC_uwopts} = {};
 
-    $self->{XCC_readers} = {};
+    $self->{XCC_readers} = {}; # compiled code refs;
     $self->{XCC_writers} = {};
 
-    $self->prefixes($args->{prefixes});
     $self->typemap($args->{typemap});
     $self->xsiType($args->{xsi_type});
-    $self->anyElement($args->{any_element} || 'SKIP_ALL');
+    $self->anyElement($args->{any_element} || 'ATTEMPT');
 
     $self;
 }
 
 #----------------------
-
-
-sub prefixes(@)
-{   my $self  = shift;
-    my $p     = $self->{XCC_namespaces} ||= {};
-    my $first = shift;
-    @_ or defined $first
-        or return $p;
-
-    my @pairs
-      = @_                    ? ($first, @_)
-      : ref $first eq 'ARRAY' ? @$first
-      : ref $first eq 'HASH'  ? %$first
-      : error __x"prefixes() expects list of PAIRS, an ARRAY or a HASH";
-
-    my $a    = $self->{XCC_prefixes}   ||= {};
-    while(@pairs)
-    {   my ($prefix, $ns) = (shift @pairs, shift @pairs);
-        $p->{$ns} ||= { uri => $ns, prefix => $prefix, used => 0 };
-
-        if(my $def = $a->{$prefix})
-        {   if($def->{uri} ne $ns)
-            {   error __x"prefix {prefix} already refers to {uri}, cannot use it for {ns}"
-                  , prefix => $prefix, uri => $def->{uri}, ns => $ns;
-            }
-        }
-        else
-        {   $a->{$prefix} = $p->{$ns};
-            trace "register prefix $prefix for '$ns'";
-        }
-    }
-    $p;
-}
-
-
-sub prefix($) { $_[0]->{XCC_prefixes}{$_[1]} }
-
-
-sub prefixFor($)
-{   my $def = $_[0]->{XCC_namespaces}{$_[1]} or return ();
-    $def->{used}++;
-    $def->{prefix};
-}
-
-
-sub prefixed($)
-{   my ($self, $type) = @_;
-    my ($ns, $local) = unpack_type $type;
-    $ns or return $local;
-    my $prefix = $self->prefixFor($ns);
-    defined $prefix
-        or error __x"no prefix known for namespace {ns}", ns => $ns;
-
-    length $prefix ? "$prefix:$local" : $local;
-}
 
 
 sub typemap(@)
@@ -114,27 +58,292 @@ sub typemap(@)
 }
 
 
-sub xsiType(@)
+sub addXsiType(@)
 {   my $self = shift;
     my $x    = $self->{XCC_xsi_type} ||= {};
-
     my @d    = @_ > 1 ? @_ : !defined $_[0] ? ()
              : ref $_[0] eq 'HASH' ? %{$_[0]} : @{$_[0]};
 
     while(@d)
     {   my $k = $self->findName(shift @d);
         my $a = shift @d;
-        push @{$x->{$k}}, ref $a eq 'ARRAY' ? map ($self->findName($_), @$a)
-          : $self->findName($a);
+        $a = $self->namespaces->autoexpand_xsi_type($k) || []
+            if $a eq 'AUTO';
+
+        push @{$x->{$k}}
+          , ref $a eq 'ARRAY' ? (map $self->findName($_), @$a)
+          :                     $self->findName($a);
     }
 
     $x;
 }
+*xsiType = \&addXsiType;
 
 
 sub allowUndeclared(;$)
 {   my $self = shift;
     @_ ? ($self->{XCC_undecl} = shift) : $self->{XCC_undecl};
+}
+
+
+sub anyElement($)
+{   my ($self, $anyelem) = @_;
+
+    # the "$self" in XCC_ropts would create a ref-cycle, causing a
+    # memory leak.
+    my $s = $self; weaken $s;
+
+    my $code
+      = $anyelem eq 'ATTEMPT' ? sub {$s->_convertAnyTyped(@_)}
+      : $anyelem eq 'SLOPPY'  ? sub {$s->_convertAnySloppy(@_)}
+      :                         $anyelem;
+
+    $self->addCompileOptions(READERS => any_element => $code);
+    $code;
+}
+
+#----------------------
+
+
+sub addPrefixes(@)
+{   my $self  = shift;
+    my $p     = $self->{XCC_namespaces} ||= {};
+    my $first = shift;
+    @_ or defined $first
+        or return $p;
+
+    my @pairs
+      = @_                    ? ($first, @_)
+      : ref $first eq 'ARRAY' ? @$first
+      : ref $first eq 'HASH'  ? %$first
+      : error __x"prefixes() expects list of PAIRS, an ARRAY or a HASH";
+
+    my $a    = $self->{XCC_prefixes} ||= {};
+    while(@pairs)
+    {   my ($prefix, $ns) = (shift @pairs, shift @pairs);
+        $p->{$ns} ||= { uri => $ns, prefix => $prefix, used => 0 };
+
+        if(my $def = $a->{$prefix})
+        {   if($def->{uri} ne $ns)
+            {   error __x"prefix `{prefix}' already refers to {uri}, cannot use it for {ns}"
+                  , prefix => $prefix, uri => $def->{uri}, ns => $ns;
+            }
+        }
+        else
+        {   $a->{$prefix} = $p->{$ns};
+            trace "register prefix $prefix for '$ns'";
+        }
+    }
+    $p;
+}
+
+
+
+sub prefixes(@)
+{   my $self = shift;
+    return $self->addPrefixes(@_) if @_;
+    $self->{XCC_namespaces} || {};
+}
+
+
+sub prefix($) { $_[0]->{XCC_prefixes}{$_[1]} }
+
+# [0.995] should this be public?
+sub byPrefixTable() { shift->{XCC_prefixes} }
+
+
+sub prefixFor($)
+{   my $def = $_[0]->{XCC_namespaces}{$_[1]} or return ();
+    $def->{used}++;
+    $def->{prefix};
+}
+
+
+sub addNicePrefix($$)
+{   my ($self, $base, $ns) = @_;
+    if(my $def = $self->prefix($base))
+    {   return $base if $def->{uri} eq $ns;
+    }
+    else
+    {   $self->addPrefixes($base => $ns);
+        return $base;
+    }
+
+    $base .= '01' if $base !~ m/[0-9]$/;
+    while(my $def = $self->prefix($base))
+    {   return $base if $def->{uri} eq $ns;
+        $base++;
+    }
+    $self->addPrefixes($base => $ns);
+    $base;
+}
+
+
+sub learnPrefixes($)
+{   my ($self, $node) = @_;
+    my $namespaces = $self->prefixes;
+
+  PREFIX:
+    foreach my $ns ($node->getNamespaces)  # learn preferred ns
+    {   my ($prefix, $uri) = ($ns->getLocalName, $ns->getData);
+        next if !defined $prefix || $namespaces->{$uri};
+
+        if(my $def = $self->prefix($prefix))
+        {   next PREFIX if $def->{uri} eq $uri;
+        }
+        else
+        {   $self->addPrefixes($prefix => $uri);
+            next PREFIX;
+        }
+
+        $prefix =~ s/0?$/0/;
+        while(my $def = $self->prefix($prefix))
+        {   next PREFIX if $def->{uri} eq $uri;
+            $prefix++;
+        }
+        $self->addPrefixes($prefix => $uri);
+    }
+}
+
+sub addSchemas($@)
+{   my ($self, $xml) = (shift, shift);
+    $self->learnPrefixes($xml);
+    $self->SUPER::addSchemas($xml, @_);
+}
+
+
+sub prefixed($;$)
+{   my $self = shift;
+    my ($ns, $local) = @_==2 ? @_ : unpack_type(shift);
+    $ns or return $local;
+    my $prefix = $self->prefixFor($ns);
+    defined $prefix
+        or error __x"no prefix known for namespace `{ns}', use addPrefixes()"
+            , ns => $ns;
+
+    length $prefix ? "$prefix:$local" : $local;
+}
+
+#----------------------
+
+
+sub compileAll(;$$)
+{   my ($self, $need, $usens) = @_;
+    my ($need_r, $need_w) = $self->_need($need || 'RW');
+
+    if($need_r)
+    {   foreach my $type (keys %{$self->{XCC_dropts}})
+        {   if(defined $usens)
+            {   my ($myns, $local) = unpack_type $type;
+                next if $usens eq $myns;
+            }
+            $self->reader($type);
+        }
+    }
+
+    if($need_w)
+    {   foreach my $type (keys %{$self->{XCC_dwopts}})
+        {   if(defined $usens)
+            {   my ($myns, $local) = unpack_type $type;
+                next if $usens eq $myns;
+            }
+            $self->writer($type);
+        }
+    }
+}
+
+
+sub _same_params($$)
+{   my ($f, $s) = @_;
+    @$f==@$s or return 0;
+    for(my $i=0; $i<@$f; $i++)
+    {   return 0 if !defined $f->[$i] ? defined $s->[$i]
+                  : !defined $s->[$i] ? 1 : $f->[$i] ne $s->[$i];
+    }
+    1;
+}
+
+sub reader($@)
+{   my ($self, $name) = (shift, shift);
+    my %args    = @_;
+    my $type    = $self->findName($name);
+    my $readers = $self->{XCC_readers};
+
+    if(exists $self->{XCC_dropts}{$type})
+    {   trace __x"ignoring options to pre-declared reader {name}"
+          , name => $name if @_;
+
+        return $readers->{$type}
+            if $readers->{$type};
+    }
+    elsif($self->allowUndeclared)
+    {   if(my $ur = $self->{XCC_uropts}{$type})
+        {   # do not use cached version when options differ
+            _same_params $ur, \@_
+                or return $args{is_type}
+                  ? $self->compileType(READER => $type, @_)
+                  : $self->compile(READER => $type, @_);
+        }
+        else
+        {   $self->{XCC_uropts}{$type} = \@_;
+        }
+    }
+    elsif(exists $self->{XCC_dwopts}{$type})
+         { error __x"type {name} is only declared as writer", name => $name }
+    else { error __x"type {name} is not declared", name => $name }
+
+    $readers->{$type} ||= $args{is_type}
+       ? $self->compileType(READER => $type, @_)
+       : $self->compile(READER => $type, @_);
+}
+
+
+sub writer($%)
+{   my ($self, $name) = (shift, shift);
+    my %args    = @_;
+    my $type    = $self->findName($name);
+    my $writers = $self->{XCC_writers};
+
+    if(exists $self->{XCC_dwopts}{$type})
+    {   trace __x"ignoring options to pre-declared writer {name}"
+          , name => $name if @_;
+
+        return $writers->{$type}
+            if $writers->{$type};
+    }
+    elsif($self->{XCC_undecl})
+    {   if(my $ur = $self->{XCC_uwopts}{$type})
+        {   # do not use cached version when options differ
+            _same_params $ur, \@_
+                or return $args{is_type}
+                  ? $self->compileType(WRITER => $type, @_)
+                  : $self->compile(WRITER => $type, @_);
+        }
+        else
+        {   $self->{XCC_uwopts}{$type} = \@_;
+        }
+    }
+    elsif(exists $self->{XCC_dropts}{$type})
+    {   error __x"type {name} is only declared as reader", name => $name;
+    }
+    else
+    {   error __x"type {name} is not declared", name => $name;
+    }
+
+    $writers->{$type} ||= $args{is_type}
+       ? $self->compileType(WRITER => $type, @_)
+       : $self->compile(WRITER => $type, @_);
+
+}
+
+sub template($$@)
+{   my ($self, $action, $name) = (shift, shift, shift);
+    $action =~ m/^[A-Z]*$/
+        or error __x"missing or illegal action parameter to template()";
+
+    my $type  = $self->findName($name);
+    my @opts = $self->mergeCompileOptions($action, $type, \@_);
+    $self->SUPER::template($action, $type, @opts);
 }
 
 
@@ -153,134 +362,6 @@ sub addCompileOptions(@)
          { while(@_) { my $k = shift; $set->{$k} = shift } }
     else { push @$set, @_ }
     $set;
-}
-
-
-sub anyElement($)
-{   my ($self, $anyelem) = @_;
-
-    # the "$self" in XCC_ropts would create a ref-cycle, causing a
-    # memory leak.
-    my $s = $self; weaken $s;
-
-    my $code
-      = $anyelem eq 'ATTEMPT' ? sub {$s->_convertAnyTyped(@_)}
-      : $anyelem eq 'SLOPPY'  ? sub {$s->_convertAnySloppy(@_)}
-      :                         $anyelem;
-     
-    $self->addCompileOptions(READERS => any_element => $code);
-    $code;
-}
-
-#----------------------
-
-
-sub compileAll(;$$)
-{   my ($self, $need, $usens) = @_;
-    my ($need_r, $need_w) = $self->_need($need || 'RW');
-
-    if($need_r)
-    {   while(my($type, $opts) = each %{$self->{XCC_dropts}})
-        {   if(defined $usens)
-            {   my ($myns, $local) = unpack_type $type;
-                next if $usens eq $myns;
-            }
-            $self->{XCC_rcode}{$type} ||= $self->compile(READER=>$type,@$opts);
-        }
-    }
-
-    if($need_w)
-    {   while(my($type, $opts) = each %{$self->{XCC_dwopts}})
-        {   if(defined $usens)
-            {   my ($myns, $local) = unpack_type $type;
-                next if $usens eq $myns;
-            }
-            $self->{XCC_wcode}{$type} ||= $self->compile(WRITER=>$type,@$opts);
-        }
-    }
-}
-
-
-sub _same_params($$)
-{   my ($f, $s) = @_;
-    @$f==@$s or return 0;
-    for(my $i=0; $i<@$f; $i++)
-    {   return 0 if !defined $f->[$i] ? defined $s->[$i]
-                  : !defined $s->[$i] ? 1 : $f->[$i] ne $s->[$i];
-    }
-    1;
-}
-
-sub reader($@)
-{   my ($self, $name) = (shift, shift);
-    my $type    = $self->findName($name);
-    my $readers = $self->{XCC_readers};
-
-    if(exists $self->{XCC_dropts}{$type})
-    {   trace __x"ignoring options to pre-declared reader {name}"
-          , name => $name if @_;
-
-        return $readers->{$type}
-            if $readers->{$type};
-    }
-    elsif($self->allowUndeclared)
-    {   if(my $ur = $self->{XCC_uropts}{$type})
-        {   # do not use cached version when options differ
-            _same_params $ur, \@_
-                or return $self->compile(READER => $type, @_);
-        }
-        else
-        {   $self->{XCC_uropts}{$type} = \@_;
-        }
-    }
-    elsif(exists $self->{XCC_dwopts}{$type})
-         { error __x"type {name} is only declared as writer", name => $name }
-    else { error __x"type {name} is not declared", name => $name }
-
-    $readers->{$type} ||= $self->compile(READER => $type, @_);
-}
-
-
-sub writer($)
-{   my ($self, $name) = (shift, shift);
-    my $type = $self->findName($name);
-    my $writers = $self->{XCC_writers};
-
-    if(exists $self->{XCC_dwopts}{$type})
-    {   trace __x"ignoring options to pre-declared writer {name}"
-          , name => $name if @_;
-
-        return $writers->{$type}
-            if $writers->{$type};
-    }
-    elsif($self->{XCC_undecl})
-    {   if(my $ur = $self->{XCC_uwopts}{$type})
-        {   # do not use cached version when options differ
-            _same_params $ur, \@_
-                or return $self->compile(WRITER => $type, @_)
-        }
-        else
-        {   $self->{XCC_uwopts}{$type} = \@_;
-        }
-    }
-    elsif(exists $self->{XCC_dropts}{$type})
-    {   error __x"type {name} is only declared as reader", name => $name;
-    }
-    else
-    {   error __x"type {name} is not declared", name => $name;
-    }
-
-    $writers->{$type} ||= $self->compile(WRITER => $type, @_);
-}
-
-sub template($$@)
-{   my ($self, $action, $name) = (shift, shift, shift);
-    $action =~ m/^[A-Z]*$/
-        or error __x"missing or illegal action parameter to template()";
-
-    my $type  = $self->findName($name);
-    my @opts = $self->mergeCompileOptions($action, $type, \@_);
-    $self->SUPER::template($action, $type, @opts);
 }
 
 # Create a list with options for X::C::Schema::compile(), from a list of ARRAYs
@@ -322,7 +403,7 @@ sub mergeCompileOptions($$$)
         {   $val ||= {};
             if(ref $val eq 'ARRAY')
             {   while(@$val)
-                {   my $k = $self->findName(shift @$val); 
+                {   my $k = $self->findName(shift @$val);
                     $t{$k} = shift @$val;
                 }
             }
@@ -342,6 +423,9 @@ sub mergeCompileOptions($$$)
                 push @{$x{$self->findName($t)}},  @a;
             }
         }
+        elsif($opt eq 'ignore_unused_tags')
+        {   $opts{$opt} = defined $opts{$opt} ? qr/$opts{$opt}|$val/ : $val;
+        }
         else
         {   $opts{$opt} = $val;
         }
@@ -355,11 +439,16 @@ sub _cleanup_hooks($)
 {   my ($self, $hooks) = @_;
     $hooks or return;
 
+    # translate prefixed type names into full names
     foreach my $hook (ref $hooks eq 'ARRAY' ? @$hooks : $hooks)
-    {   my $types = $hook->{type} or next;
-        $hook->{type} =
-           [ map {ref $_ eq 'Regexp' ? $_ : $self->findName($_)}
+    {   if(my $types = $hook->{type})
+        {   $hook->{type} =
+              [ map {ref $_ eq 'Regexp' ? $_ : $self->findName($_)}
                        ref $types eq 'ARRAY' ? @$types : $types ];
+        }
+        elsif(my $ext = $hook->{extends})
+        {   $hook->{extends} = $self->findName($ext);
+        }
     }
     $hooks;
 }
@@ -440,7 +529,8 @@ sub findName($)
     defined $name
         or panic "findName called without name";
 
-    return $name if $name =~ m/^\{/;
+    return $name
+        if substr($name, 0, 1) eq '{';
 
     my ($prefix,$local) = $name =~ m/^([\w-]*)\:(\S*)$/ ? ($1,$2) : ('',$name);
     my $def = $self->{XCC_prefixes}{$prefix};
@@ -448,7 +538,8 @@ sub findName($)
     {   return $name if $prefix eq '';   # namespace-less
         trace __x"known prefixes: {prefixes}"
           , prefixes => [ sort keys %{$self->{XCC_prefixes}} ];
-        error __x"unknown name prefix for `{name}'", name => $name;
+        error __x"unknown name prefix `{prefix}' for `{name}'"
+           , prefix => $prefix, name => $name;
     }
 
     length $local ? pack_type($def->{uri}, $local) : $def->{uri};
@@ -500,12 +591,11 @@ sub _convertAnyTyped(@)
     {   trace "cannot auto-convert 'any': ".$@->wasFatal->message;
         return ($key => $nodes);
     }
-    trace "auto-convert known type 'any' $type";
+    trace "auto-convert known type for 'any': $type";
 
     my @nodes   = ref $nodes eq 'ARRAY' ? @$nodes : $nodes;
-    my @convert = map {$reader->($_)} @nodes;
-
-    ($key => @convert==1 ? $convert[0] : \@convert);
+    my @convert = map $reader->($_), @nodes;
+    ($key => (@convert==1 ? $convert[0] : \@convert) );
 }
 
 sub _convertAnySloppy(@)
@@ -515,13 +605,13 @@ sub _convertAnySloppy(@)
     my $reader  = try { $self->reader($type) };
     if($@)
     {   # unknown type or untyped...
-        my @convert = map {XMLin $_} @$nodes;
+        my @convert = map XMLin($_), @$nodes;
         return ($key => @convert==1 ? $convert[0] : \@convert);
     }
     else
     {   trace "auto-convert known 'any' $type";
         my @nodes   = ref $nodes eq 'ARRAY' ? @$nodes : $nodes;
-        my @convert = map {$reader->($_)} @nodes;
+        my @convert = map $reader->($_), @nodes;
 
         ($key => @convert==1 ? $convert[0] : \@convert);
     }

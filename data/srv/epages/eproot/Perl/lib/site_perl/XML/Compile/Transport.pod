@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::Transport - base class for XML transporters
@@ -26,7 +28,7 @@ This module defines the exchange of (XML) messages. The module does not
 known how to parse or compose XML, but only worries about the transport
 aspects.
 
-On the moment, there are two transporter implementations:
+On the moment, there are three transporter implementations:
 
 =over 4
 
@@ -39,19 +41,30 @@ transport protocol over HTTP without encapsulation)
 
 =item L<XML::Compile::Transport::SOAPHTTP_AnyEvent|XML::Compile::Transport::SOAPHTTP_AnyEvent>
 
-This requires the installation of an additional module. The user
-provides a callback to handle responses. Many queries can be spawned
-in parallel.
+Event-driven implementation, based on AnyEvent.  The user provides a
+callback to handle responses. Many queries can be spawned in parallel,
+in a single process.  Find this in a separate distribution.
+
+=item XML::Compile::Transport::SOAPHTTP_MojoUA
+
+Event-driven implementation,  which fits in the Mojolicious infrastructure.
+Find this in a separate distribution.
 
 =back
 
+Extends L<"DESCRIPTION" in XML::Compile::SOAP::Extension|XML::Compile::SOAP::Extension/"DESCRIPTION">.
+ 
 =head1 METHODS
 
+Extends L<"METHODS" in XML::Compile::SOAP::Extension|XML::Compile::SOAP::Extension/"METHODS">.
+ 
 =head2 Constructors
 
+Extends L<"Constructors" in XML::Compile::SOAP::Extension|XML::Compile::SOAP::Extension/"Constructors">.
+ 
 =over 4
 
-=item XML::Compile::Transport-E<gt>B<new>(OPTIONS)
+=item XML::Compile::Transport-E<gt>B<new>(%options)
 
  -Option --Default
   address  'http://localhost'
@@ -71,33 +84,59 @@ One or more URI which represents the servers.
 
 =head2 WSDL11
 
+Extends L<"WSDL11" in XML::Compile::SOAP::Extension|XML::Compile::SOAP::Extension/"WSDL11">.
+ 
 =over 4
 
-=item $obj-E<gt>B<wsdl11Init>(WSDL, ARGS)
+=item $obj-E<gt>B<wsdl11Init>($wsdl, $args)
 
-=item XML::Compile::Transport-E<gt>B<wsdl11Init>(WSDL, ARGS)
+=item XML::Compile::Transport-E<gt>B<wsdl11Init>($wsdl, $args)
 
-See L<XML::Compile::SOAP::Extension/"WSDL11">
+Inherited, see L<XML::Compile::SOAP::Extension/"WSDL11">
 
 =back
 
 =head2 SOAP11
 
+Extends L<"SOAP11" in XML::Compile::SOAP::Extension|XML::Compile::SOAP::Extension/"SOAP11">.
+ 
 =over 4
 
-=item $obj-E<gt>B<soap11ClientWrapper>(OPERATION, CALL, ARGS)
+=item $obj-E<gt>B<soap11ClientWrapper>($operation, $call, $args)
 
-See L<XML::Compile::SOAP::Extension/"SOAP11">
+Inherited, see L<XML::Compile::SOAP::Extension/"SOAP11">
 
-=item $obj-E<gt>B<soap11HandlerWrapper>(OPERATION, CALLBACK, ARGS)
+=item $obj-E<gt>B<soap11HandlerWrapper>($operation, $callback, $args)
 
-See L<XML::Compile::SOAP::Extension/"SOAP11">
+Inherited, see L<XML::Compile::SOAP::Extension/"SOAP11">
 
-=item $obj-E<gt>B<soap11OperationInit>(OPERATION, ARGS)
+=item $obj-E<gt>B<soap11OperationInit>($operation, $args)
 
-=item XML::Compile::Transport-E<gt>B<soap11OperationInit>(OPERATION, ARGS)
+=item XML::Compile::Transport-E<gt>B<soap11OperationInit>($operation, $args)
 
-See L<XML::Compile::SOAP::Extension/"SOAP11">
+Inherited, see L<XML::Compile::SOAP::Extension/"SOAP11">
+
+=back
+
+=head2 SOAP12
+
+Extends L<"SOAP12" in XML::Compile::SOAP::Extension|XML::Compile::SOAP::Extension/"SOAP12">.
+ 
+=over 4
+
+=item $obj-E<gt>B<soap12ClientWrapper>($operation, $call, $args)
+
+Inherited, see L<XML::Compile::SOAP::Extension/"SOAP12">
+
+=item $obj-E<gt>B<soap12HandlerWrapper>($operation, $callback, $args)
+
+Inherited, see L<XML::Compile::SOAP::Extension/"SOAP12">
+
+=item $obj-E<gt>B<soap12OperationInit>($operation, $args)
+
+=item XML::Compile::Transport-E<gt>B<soap12OperationInit>($operation, $args)
+
+Inherited, see L<XML::Compile::SOAP::Extension/"SOAP12">
 
 =back
 
@@ -105,16 +144,16 @@ See L<XML::Compile::SOAP::Extension/"SOAP11">
 
 =over 4
 
-=item $obj-E<gt>B<address>
+=item $obj-E<gt>B<address>()
 
 Get a server address to contact. If multiple addresses were specified,
 than one is chosen at random.
 
-=item $obj-E<gt>B<addresses>
+=item $obj-E<gt>B<addresses>()
 
 Returns a list of all server contact addresses (URIs)
 
-=item $obj-E<gt>B<charset>
+=item $obj-E<gt>B<charset>()
 
 Returns the charset to be used when sending,
 
@@ -124,7 +163,7 @@ Returns the charset to be used when sending,
 
 =over 4
 
-=item $obj-E<gt>B<compileClient>(OPTIONS)
+=item $obj-E<gt>B<compileClient>(%options)
 
 Compile a client handler.  Returned is a subroutine which is called
 with a text represenation of the XML request, or an XML::LibXML tree.
@@ -132,20 +171,21 @@ In SCALAR context, an XML::LibXML parsed tree of the answer message
 is returned.  In LIST context, that answer is followed by a HASH which
 contains trace information.
 
- -Option--Default
-  hook    <undef>
-  kind    'request-response'
+ -Option    --Default
+  hook        <undef>
+  kind        'request-response'
+  xml_format  0
 
 =over 2
 
 =item hook => CODE
 
-See section L<DETAILS/Use of the transport hook>.
+See section L</Use of the transport hook>.
 When defined, the hook will be called, in stead of transmitting the
-message.  The hook will get a two parameters passed in: the textual
-representation of the XML message to be transmitted, and the trace
-HASH with all values collected so far.  The trace HASH will have a
-massive amount of additional information added as well.
+message.  The hook will gets three parameters passed in: the textual
+representation of the XML message to be transmitted, the trace HASH with
+all values collected so far, and the transporter object.  The trace HASH
+will have a massive amount of additional information added as well.
 
 You may add information to the trace.  You have to return a textual
 representation of the XML answer, or C<undef> to indicate that the
@@ -155,6 +195,11 @@ message was totally unacceptable.
 
 Kind of communication, as defined by WSDL.
 
+=item xml_format => 0|1|2
+
+[2.26] See XML::LibXML::Document subroutine toString.  With '1', you will get
+beautified output.
+
 =back
 
 =back
@@ -162,6 +207,69 @@ Kind of communication, as defined by WSDL.
 =head1 DETAILS
 
 =head2 Use of the transport hook
+
+A I<transport hook> can be used to follow the process of creating a
+message to its furthest extend: it will be called with the data as
+used by the actual protocol, but will not connect to the internet.
+Within the transport hook routine, you have to simulate the remote
+server's activities.
+
+There are two reasons to use a hook:
+
+=over 4
+
+=item .
+
+You want to fake a server, to produce a test environment.
+
+=item .
+
+You may need to modify the request or answer messages outside the
+reach of L<XML::Compile::SOAP|XML::Compile::SOAP>, because something is wrong in either
+your WSDL of L<XML::Compile|XML::Compile> message processing.
+
+=back
+
+=head3 XML and Header Modifications
+
+Some servers require special extensions, which do not follow any standard
+(or logic). But even those features can be tricked, although it requires
+quite some programming skills.
+
+The C<transport_hook> routine is called with a C<$trace> hash, one of
+whose entries is the UserAgent which was set up for the data transfer. You
+can modify the outgoing message XML body and headers, carry out the data
+exchange using the UserAgent, and then examine the returned Response for
+content and headers using methods similar to the following:
+
+ sub transport_hook($$$)
+ {   my ($request, $trace, $transporter) = @_;
+     my $content = $request->content;
+
+     # ... modify content if you need
+     my $new_content = encode "utf-8", $anything;
+     $request->content($new_content);
+     $request->header(Content_Length => length $new_content);
+     $request->header(Content_Type => 'text/plain; charset=utf-8');
+
+     # ... update the headers
+     $request->header(Name => "value");
+
+     # sent the request myself
+     my $ua = $trace->{user_agent};
+     my $response = $ua->request($request);
+
+     # ... check the response headers
+     my $name = $response->header('Name');
+
+     # ... use the response content
+     my $received = $response->decoded_content || $response->content;
+
+     $response;
+ }
+
+You should be aware that if you change the size or length of the content
+you MUST update the C<Content-Length> header value, as demonstrated above.
 
 =head3 Transport hook for debugging
 
@@ -203,33 +311,44 @@ or
   $wsdl->compileClient('GetLastTracePrice',
       transport_hook => \&fake_server);
 
-A transport hook can be used to follow the process of creating a
-message to its furthest extend: it will be called with the data
-as used by the actual protocol, but will not actually connect to
-the internet.  Within the transport hook routine, you have to
-simulate the remote server's activities.
+=head3 Transport hook for basic authentication
 
-There are two reasons to use a hook:
+[Adapted from an example contributed by Kieron Johnson]
+This example shows a transport_hook for compileClient() to add to http
+headers for the basic http authentication.  The parameter can also be
+used for compileAll() and many other related functions.
 
-=over 4
+  my $call = $wsdl->compileClient($operation
+     , transport_hook => \&basic_auth );
 
-=item .
+  # HTTP basic authentication encodes the username and password with
+  # Base64. The encoded source string has format: "username:password"
+  # With the below HTTP header being required:
+  #        "Authorization: Basic [encoded password]"
 
-You may need to modify the request or answer messages outside the
-reach of L<XML::Compile::SOAP|XML::Compile::SOAP>, because something is wrong in either
-your WSDL of L<XML::Compile|XML::Compile> message processing.
+  use MIME::Base64 'encode_base64';
 
-=item .
+  my $user     = 'myuserid' ;
+  my $password = 'mypassword';
 
-You want to fake a server, to produce a test environment.
+  sub basic_auth($$)
+  {   my ($request, $trace) = @_;
 
-=back
+      # Encode userid and password
+      my $authorization = 'Basic '. encode_base64 "$user:$password";
+
+      # Modify http header to include basic authorisation
+      $request->header(Authorization => $authorization );
+
+      my $ua = $trace->{user_agent};
+      $ua->request($request);
+  }
 
 =head1 Helpers
 
 =over 4
 
-=item XML::Compile::Transport-E<gt>B<register>(URI)
+=item XML::Compile::Transport-E<gt>B<register>($uri)
 
 Declare an transporter type.
 
@@ -237,34 +356,17 @@ Declare an transporter type.
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2007-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

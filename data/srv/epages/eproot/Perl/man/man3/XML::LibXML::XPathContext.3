@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::XPathContext 3"
-.TH XML::LibXML::XPathContext 3 "2009-10-07" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::XPathContext 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -163,7 +163,7 @@ XML::LibXML::XPathContext \- XPath Evaluation
 \&  my $size = $xpc\->getContextSize;
 \&  $xpc\->setContextNode($node)
 \&The XML::LibXML::XPathContext class provides an almost complete interface to
-\&libxml2\*(Aqs XPath implementation. With XML::LibXML::XPathContext is is possible
+\&libxml2\*(Aqs XPath implementation. With XML::LibXML::XPathContext, it is possible
 \&to evaluate XPath expressions in the context of arbitrary node, context size,
 \&and context position, with a user\-defined namespace\-prefix mapping, custom
 \&XPath functions written in Perl, and even a custom XPath variable resolver.
@@ -185,7 +185,7 @@ This example demonstrates \f(CW\*(C`registerFunction()\*(C'\fR method by definin
 expression:
 .PP
 .Vb 8
-\&  sub grep_nodes { 
+\&  sub grep_nodes {
 \&    my ($nodelist,$regexp) =  @_;
 \&    my $result = XML::LibXML::NodeList\->new;
 \&    for my $node ($nodelist\->get_nodelist()) {
@@ -213,9 +213,9 @@ This example demonstrates \f(CW\*(C`registerVarLookup()\*(C'\fR method. We use X
 \&
 \&  my $xc = XML::LibXML::XPathContext\->new($empl);
 \&
-\&  my %variables = ( 
+\&  my %variables = (
 \&    A => $xc\->find(\*(Aq/employees/employee[@salary>10000]\*(Aq),
-\&    B => $areas\->find(\*(Aq/areas/area[district=\*(AqBrooklyn\*(Aq]/street\*(Aq), 
+\&    B => $areas\->find(\*(Aq/areas/area[district=\*(AqBrooklyn\*(Aq]/street\*(Aq),
 \&  );
 \&
 \&  # get names of employees from $A working in an area listed in $B
@@ -268,7 +268,7 @@ Registers variable lookup function \f(CW$prefix\fR. The registered function is e
 variable is evaluated. It takes three arguments: \f(CW$data\fR, variable name, and variable ns-URI and must return one value: a number or
 string or any \f(CW\*(C`XML::LibXML::\*(C'\fR object that can be a result of findnodes: Boolean, Literal, Number, Node (e.g.
 Document, Element, etc.), or NodeList. For convenience, simple (non-blessed)
-array references containing only XML::LibXML::Node objects can be used instead of a XML::LibXML::NodeList.
+array references containing only XML::LibXML::Node objects can be used instead of an XML::LibXML::NodeList.
 .IP "getVarLookupData" 4
 .IX Item "getVarLookupData"
 .Vb 1
@@ -336,10 +336,10 @@ Same as \f(CW\*(C`unregisterFunctionNS\*(C'\fR but without a namespace.
 .Ve
 .Sp
 Performs the xpath statement on the current node and returns the result as an
-array. In scalar context returns a XML::LibXML::NodeList object. Optionally, a node may be passed as a second argument to set the
+array. In scalar context, returns an XML::LibXML::NodeList object. Optionally, a node may be passed as a second argument to set the
 context node for the query.
 .Sp
-The xpath expression can be passed either as a string or or as a XML::LibXML::XPathExpression object.
+The xpath expression can be passed either as a string, or as a XML::LibXML::XPathExpression object.
 .IP "find" 4
 .IX Item "find"
 .Vb 1
@@ -350,11 +350,11 @@ The xpath expression can be passed either as a string or or as a XML::LibXML::XP
 .Sp
 Performs the xpath expression using the current node as the context of the
 expression, and returns the result depending on what type of result the XPath
-expression had. For example, the XPath \f(CW\*(C`1 * 3 + 	      52\*(C'\fR results in a XML::LibXML::Number object being returned. Other expressions might return a XML::LibXML::Boolean object, or a XML::LibXML::Literal object (a string). Each of those objects uses Perl's overload feature to ``do
+expression had. For example, the XPath \f(CW\*(C`1 * 3 + 	      52\*(C'\fR results in an XML::LibXML::Number object being returned. Other expressions might return a XML::LibXML::Boolean object, or a XML::LibXML::Literal object (a string). Each of those objects uses Perl's overload feature to ``do
 the right thing'' in different contexts. Optionally, a node may be passed as a
 second argument to set the context node for the query.
 .Sp
-The xpath expression can be passed either as a string or or as a XML::LibXML::XPathExpression object.
+The xpath expression can be passed either as a string, or as a XML::LibXML::XPathExpression object.
 .IP "findvalue" 4
 .IX Item "findvalue"
 .Vb 1
@@ -375,7 +375,7 @@ This could be used as the equivalent of <xsl:value\-of select=``some_xpath''/>.
 Optionally, a node may be passed in the second argument to set the context node
 for the query.
 .Sp
-The xpath expression can be passed either as a string or or as a XML::LibXML::XPathExpression object.
+The xpath expression can be passed either as a string, or as a XML::LibXML::XPathExpression object.
 .IP "exists" 4
 .IX Item "exists"
 .Vb 1
@@ -465,12 +465,12 @@ Prior to XML::LibXML 1.61 this module was distributed separately for
 maintenance reasons.
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Matt Sergeant, 
-Christian Glahn, 
+Matt Sergeant,
+Christian Glahn,
 Petr Pajas
 .SH "VERSION"
 .IX Header "VERSION"
-1.70
+2.0129
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 2001\-2007, AxKit.com Ltd.
@@ -478,3 +478,7 @@ Petr Pajas
 2002\-2006, Christian Glahn.
 .PP
 2006\-2009, Petr Pajas.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

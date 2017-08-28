@@ -1,4 +1,4 @@
-# $Id: Parser.pm 785 2009-07-16 14:17:46Z pajas $
+# $Id$
 #
 # This is free software, you may use it and distribute it under the same terms as
 # Perl itself.
@@ -10,6 +10,7 @@
 package XML::LibXML::SAX::Parser;
 
 use strict;
+use warnings;
 use vars qw($VERSION @ISA);
 
 use XML::LibXML;
@@ -17,7 +18,7 @@ use XML::LibXML::Common qw(:libxml);
 use XML::SAX::Base;
 use XML::SAX::DocumentLocator;
 
-$VERSION = "1.70"; # VERSION TEMPLATE: DO NOT CHANGE
+$VERSION = "2.0129"; # VERSION TEMPLATE: DO NOT CHANGE
 @ISA = ('XML::SAX::Base');
 
 sub CLONE_SKIP {
@@ -58,29 +59,29 @@ sub generate {
     {
       # precompute some DocumentLocator values
       my %locator = (
-	PublicId => undef,
-	SystemId => undef,
-	Encoding => undef,
-	XMLVersion => undef,
+        PublicId => undef,
+        SystemId => undef,
+        Encoding => undef,
+        XMLVersion => undef,
        );
       my $dtd = defined $doc ? $doc->externalSubset() : undef;
       if (defined $dtd) {
-	$locator{PublicId} = $dtd->publicId();
-	$locator{SystemId} = $dtd->systemId();
+        $locator{PublicId} = $dtd->publicId();
+        $locator{SystemId} = $dtd->systemId();
       }
       if (defined $doc) {
-	$locator{Encoding} = $doc->encoding();
-	$locator{XMLVersion} = $doc->version();
+        $locator{Encoding} = $doc->encoding();
+        $locator{XMLVersion} = $doc->version();
       }
       $self->set_document_locator(
-	XML::SAX::DocumentLocator->new(
-	  sub { $locator{PublicId} },
-	  sub { $locator{SystemId} },
-	  sub { defined($self->{current_node}) ? $self->{current_node}->line_number() : undef },
-	  sub { 1 },
-	  sub { $locator{Encoding} },
-	  sub { $locator{XMLVersion} },
-	 ),
+        XML::SAX::DocumentLocator->new(
+          sub { $locator{PublicId} },
+          sub { $locator{SystemId} },
+          sub { defined($self->{current_node}) ? $self->{current_node}->line_number() : undef },
+          sub { 1 },
+          sub { $locator{Encoding} },
+          sub { $locator{XMLVersion} },
+         ),
        );
     }
 
@@ -121,7 +122,7 @@ sub process_node {
     elsif ($node_type == XML_DOCUMENT_NODE
            || $node_type == XML_HTML_DOCUMENT_NODE
            || $node_type == XML_DOCUMENT_FRAG_NODE) {
-        # some times it is just usefull to generate SAX events from
+        # sometimes it is just useful to generate SAX events from
         # a document fragment (very good with filters).
         foreach my $kid ($node->childNodes) {
             $self->process_node($kid);
@@ -173,10 +174,10 @@ sub process_element {
             unless ( defined $attr->name ) {
                 ## It's an atter like "xmlns='foo'"
                 $attribs->{"{}xmlns"} =
-                  {     
+                  {
                    Name         => "xmlns",
                    LocalName    => "xmlns",
-                   Prefix       => "",     
+                   Prefix       => "",
                    Value        => $attr->href,
                    NamespaceURI => "",
                   };

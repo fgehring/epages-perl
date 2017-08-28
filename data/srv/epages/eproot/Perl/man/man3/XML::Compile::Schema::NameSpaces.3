@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Schema::NameSpaces 3"
-.TH XML::Compile::Schema::NameSpaces 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Schema::NameSpaces 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -150,32 +150,32 @@ older definitions).
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->new(OPTIONS)"
+.ie n .IP "$obj\->\fBnew\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBnew\fR(%options)" 4
+.IX Item "$obj->new(%options)"
 .SS "Accessors"
 .IX Subsection "Accessors"
 .PD 0
-.ie n .IP "$obj\->\fBadd\fR(\s-1SCHEMA\s0, [\s-1SCHEMAS\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBadd\fR(\s-1SCHEMA\s0, [\s-1SCHEMAS\s0])" 4
-.IX Item "$obj->add(SCHEMA, [SCHEMAS])"
+.ie n .IP "$obj\->\fBadd\fR( $schema, [$schemas] )" 4
+.el .IP "\f(CW$obj\fR\->\fBadd\fR( \f(CW$schema\fR, [$schemas] )" 4
+.IX Item "$obj->add( $schema, [$schemas] )"
 .PD
 Add XML::Compile::Schema::Instance objects to the internal
 knowledge of this object.
-.ie n .IP "$obj\->\fBallSchemas\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBallSchemas\fR" 4
-.IX Item "$obj->allSchemas"
+.ie n .IP "$obj\->\fBallSchemas\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBallSchemas\fR()" 4
+.IX Item "$obj->allSchemas()"
 Returns a list of all known schema instances.
-.ie n .IP "$obj\->\fBdoesExtend\fR(\s-1EXTTYPE\s0, \s-1BASETYPE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBdoesExtend\fR(\s-1EXTTYPE\s0, \s-1BASETYPE\s0)" 4
-.IX Item "$obj->doesExtend(EXTTYPE, BASETYPE)"
-Returns true when \s-1EXTTYPE\s0 extends \s-1BASETYPE\s0.
-.ie n .IP "$obj\->\fBfind\fR(\s-1KIND\s0, ADDRESS|(\s-1URI\s0,NAME), \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBfind\fR(\s-1KIND\s0, ADDRESS|(\s-1URI\s0,NAME), \s-1OPTIONS\s0)" 4
-.IX Item "$obj->find(KIND, ADDRESS|(URI,NAME), OPTIONS)"
-Lookup the definition for the specified \s-1KIND\s0 of definition: the name
+.ie n .IP "$obj\->\fBdoesExtend\fR($exttype, $basetype)" 4
+.el .IP "\f(CW$obj\fR\->\fBdoesExtend\fR($exttype, \f(CW$basetype\fR)" 4
+.IX Item "$obj->doesExtend($exttype, $basetype)"
+Returns true when \f(CW$exttype\fR extends \f(CW$basetype\fR.
+.ie n .IP "$obj\->\fBfind\fR($kind, $address|<$uri,$name>, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBfind\fR($kind, \f(CW$address\fR|<$uri,$name>, \f(CW%options\fR)" 4
+.IX Item "$obj->find($kind, $address|<$uri,$name>, %options)"
+Lookup the definition for the specified \f(CW$kind\fR of definition: the name
 of a global element, global attribute, attributeGroup or model group.
-The \s-1ADDRESS\s0 is constructed as \f(CW\*(C` {uri}name \*(C'\fR or as seperate \s-1URI\s0 and \s-1NAME\s0.
+The \f(CW$address\fR is constructed as \f(CW\*(C` {uri}name \*(C'\fR or as separate \f(CW$uri\fR and \f(CW$name\fR.
 .Sp
 .Vb 2
 \& \-Option      \-\-Default
@@ -188,33 +188,48 @@ The \s-1ADDRESS\s0 is constructed as \f(CW\*(C` {uri}name \*(C'\fR or as seperat
 .RS 4
 .RE
 .PD 0
-.ie n .IP "$obj\->\fBfindID\fR(ADDRESS|(\s-1URI\s0,ID))" 4
-.el .IP "\f(CW$obj\fR\->\fBfindID\fR(ADDRESS|(\s-1URI\s0,ID))" 4
-.IX Item "$obj->findID(ADDRESS|(URI,ID))"
+.ie n .IP "$obj\->\fBfindID\fR( $address|<$uri,$id> )" 4
+.el .IP "\f(CW$obj\fR\->\fBfindID\fR( \f(CW$address\fR|<$uri,$id> )" 4
+.IX Item "$obj->findID( $address|<$uri,$id> )"
 .PD
 Lookup the definition for the specified id, which is constructed as
-\&\f(CW\*(C` uri#id \*(C'\fR or as seperate \s-1URI\s0 and \s-1ID\s0.
-.ie n .IP "$obj\->\fBfindSgMembers\fR(\s-1CLASS\s0, \s-1TYPE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBfindSgMembers\fR(\s-1CLASS\s0, \s-1TYPE\s0)" 4
-.IX Item "$obj->findSgMembers(CLASS, TYPE)"
+\&\f(CW\*(C` uri#id \*(C'\fR or as separate \f(CW$uri\fR and \f(CW$id\fR.
+.ie n .IP "$obj\->\fBfindSgMembers\fR($class, $type)" 4
+.el .IP "\f(CW$obj\fR\->\fBfindSgMembers\fR($class, \f(CW$type\fR)" 4
+.IX Item "$obj->findSgMembers($class, $type)"
 Lookup the substitutionGroup alternatives for a specific element, which
-is an \s-1TYPE\s0 (element full name) of form \f(CW\*(C` {uri}name \*(C'\fR or as seperate
+is an \f(CW$type\fR (element full name) of form \f(CW\*(C` {uri}name \*(C'\fR or as separate
 \&\s-1URI\s0 and \s-1NAME\s0.  Returned is an \s-1ARRAY\s0 of HASHes, each describing one type
 (as returned by \fIfind()\fR)
-.ie n .IP "$obj\->\fBlist\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBlist\fR" 4
-.IX Item "$obj->list"
+.ie n .IP "$obj\->\fBfindTypeExtensions\fR($type)" 4
+.el .IP "\f(CW$obj\fR\->\fBfindTypeExtensions\fR($type)" 4
+.IX Item "$obj->findTypeExtensions($type)"
+This method can be quite expensive, with large and nested schemas.
+.ie n .IP "$obj\->\fBimportIndex\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBimportIndex\fR(%options)" 4
+.IX Item "$obj->importIndex(%options)"
+[1.41] Returns a \s-1HASH\s0 with namespaces which are declared in all currently
+known schema's, pointing to ARRAYs of the locations where the import should
+come from.
+.Sp
+In reality, the locations mentioned are often wrong. But when you think
+you want to load all schema's dynamically at start-up (no, you do not
+want it but it is a \s-1SOAP\s0 paradigma) then you get that info easily with
+this method.
+.ie n .IP "$obj\->\fBlist\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBlist\fR()" 4
+.IX Item "$obj->list()"
 Returns the list of name-space URIs defined.
-.ie n .IP "$obj\->\fBnamespace\fR(\s-1URI\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBnamespace\fR(\s-1URI\s0)" 4
-.IX Item "$obj->namespace(URI)"
+.ie n .IP "$obj\->\fBnamespace\fR($uri)" 4
+.el .IP "\f(CW$obj\fR\->\fBnamespace\fR($uri)" 4
+.IX Item "$obj->namespace($uri)"
 Returns a list of XML::Compile::Schema::Instance objects which have
-the \s-1URI\s0 as target namespace.
-.ie n .IP "$obj\->\fBprintIndex\fR([\s-1FILEHANDLE\s0], \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBprintIndex\fR([\s-1FILEHANDLE\s0], \s-1OPTIONS\s0)" 4
-.IX Item "$obj->printIndex([FILEHANDLE], OPTIONS)"
+the \f(CW$uri\fR as target namespace.
+.ie n .IP "$obj\->\fBprintIndex\fR( [$fh], %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBprintIndex\fR( [$fh], \f(CW%options\fR )" 4
+.IX Item "$obj->printIndex( [$fh], %options )"
 Show all definitions from all namespaces, for debugging purposes, by
-default the selected.  Additional \s-1OPTIONS\s0 are passed to 
+default the selected.  Additional \f(CW%options\fR are passed to 
 \&\fIXML::Compile::Schema::Instance::printIndex()\fR.
 .Sp
 .Vb 3
@@ -245,14 +260,14 @@ example:
 \& $nss\->printIndex(\e*STDERR, namespace => WSDL11);
 .Ve
 .RE
-.ie n .IP "$obj\->\fBschemas\fR(\s-1URI\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBschemas\fR(\s-1URI\s0)" 4
-.IX Item "$obj->schemas(URI)"
+.ie n .IP "$obj\->\fBschemas\fR($uri)" 4
+.el .IP "\f(CW$obj\fR\->\fBschemas\fR($uri)" 4
+.IX Item "$obj->schemas($uri)"
 We need the name-space; when it is lacking then import must help, but that
-must be called explictly.
-.ie n .IP "$obj\->\fBuse\fR(\s-1OBJECT\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBuse\fR(\s-1OBJECT\s0)" 4
-.IX Item "$obj->use(OBJECT)"
+must be called explicitly.
+.ie n .IP "$obj\->\fBuse\fR($object)" 4
+.el .IP "\f(CW$obj\fR\->\fBuse\fR($object)" 4
+.IX Item "$obj->use($object)"
 Use any other XML::Compile::Schema extension as fallback, if the
 \&\fIfind()\fR does not succeed for the current object.  Searches for
 definitions do not recurse into the used object.
@@ -261,33 +276,16 @@ Returns the list of all used \s-1OBJECTS\s0.
 This method implements \fIXML::Compile::Schema::useSchema()\fR.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

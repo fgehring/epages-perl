@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Schema::Specs 3"
-.TH XML::Compile::Schema::Specs 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Schema::Specs 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -142,9 +142,10 @@ XML::Compile::Schema::Specs \- Predefined Schema Information
 This package defines the various schema-specifications.
 .SH "METHODS"
 .IX Header "METHODS"
-.IP "XML::Compile::Schema::Specs\->\fBbuiltInType\fR((NODE|undef), \s-1EXPANDED\s0 | (\s-1URI\s0,LOCAL), \s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::Schema::Specs->builtInType((NODE|undef), EXPANDED | (URI,LOCAL), OPTIONS)"
-Provide an \s-1EXPANDED\s0 (full) type name or an namespace \s-1URI\s0 and a \s-1LOCAL\s0 node
+.ie n .IP "XML::Compile::Schema::Specs\->\fBbuiltInType\fR( <$node|undef>, $expanded | <$uri,$local>, %options )" 4
+.el .IP "XML::Compile::Schema::Specs\->\fBbuiltInType\fR( <$node|undef>, \f(CW$expanded\fR | <$uri,$local>, \f(CW%options\fR )" 4
+.IX Item "XML::Compile::Schema::Specs->builtInType( <$node|undef>, $expanded | <$uri,$local>, %options )"
+Provide an \f(CW$expanded\fR (full) type name or an namespace \f(CW$uri\fR and a \f(CW$local\fR node
 name.  Returned is a \s-1HASH\s0 with process information or \f(CW\*(C`undef\*(C'\fR if not
 found.
 .Sp
@@ -169,42 +170,25 @@ compliant.
 .RE
 .RS 4
 .RE
-.IP "XML::Compile::Schema::Specs\->\fBpredefinedSchema\fR(\s-1URI\s0)" 4
-.IX Item "XML::Compile::Schema::Specs->predefinedSchema(URI)"
+.IP "XML::Compile::Schema::Specs\->\fBpredefinedSchema\fR($uri)" 4
+.IX Item "XML::Compile::Schema::Specs->predefinedSchema($uri)"
 Return a \s-1HASH\s0 which contains the schema information for the specified
-\&\s-1URI\s0 (or undef if it doesn't exist).
-.IP "XML::Compile::Schema::Specs\->\fBpredefinedSchemas\fR" 4
-.IX Item "XML::Compile::Schema::Specs->predefinedSchemas"
+\&\f(CW$uri\fR (or undef if it doesn't exist).
+.IP "XML::Compile::Schema::Specs\->\fBpredefinedSchemas\fR()" 4
+.IX Item "XML::Compile::Schema::Specs->predefinedSchemas()"
 Returns the uri of all predefined schemas.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -44,9 +44,9 @@ which simplify writing tests for XML::Compile related distributions.
 
 =head2 Reader checks
 
-B<reader_create>(SCHEMA, COMMENT, TYPE, OPTIONS)
-
 =over 4
+
+=item B<reader_create>(SCHEMA, COMMENT, TYPE, OPTIONS)
 
 Create a reader for TYPE.  One test is created, reporting
 success or failure of the creation.
@@ -71,11 +71,7 @@ example: reader_create
  my $reader = reader_create($schema, 'my test', 'localName'
    , check_occurs => 0, @other_options);
 
-=back
-
-B<reader_error>(SCHEMA, TYPE, XML)
-
-=over 4
+=item B<reader_error>(SCHEMA, TYPE, XML)
 
 Parsing the XML to interpret the TYPE should return an error.  The
 error text is returned.
@@ -93,9 +89,9 @@ example: reader_error
 
 =head2 Writer checks
 
-B<writer_create>(SCHEMA, COMMENT, TYPE, OPTIONS)
-
 =over 4
+
+=item B<writer_create>(SCHEMA, COMMENT, TYPE, OPTIONS)
 
 Create a writer for TYPE.  One test (in the Test::More sense) is created,
 reporting success or failure of the creation.
@@ -119,11 +115,7 @@ example: writer_create
  # implicit creation of $doc
  my $xml    = writer_test($writer, $data);
 
-=back
-
-B<writer_error>(SCHEMA, TYPE, DATA)
-
-=over 4
+=item B<writer_error>(SCHEMA, TYPE, DATA)
 
 Translating the Perl DATA into the XML type should return a validation
 error, which is returned.
@@ -135,11 +127,7 @@ example: writer_error
  is($error, 'error text', 'my test');
  like($error, qr/error pattern/, 'my test');
 
-=back
-
-B<writer_test>(WRITER, DATA, [DOC])
-
-=over 4
+=item B<writer_test>(WRITER, DATA, [DOC])
 
 Run the test with a compiled WRITER, which was created with L<writer_create()|XML::Compile::Tester/"Writer checks">.
 When no DOC (XML::LibXML::Document object) was specified, then one will
@@ -149,24 +137,11 @@ be created for you.
 
 =head2 Check templates
 
-B<templ_perl>(SCHEMA, TYPE, OPTIONS)
-
 =over 4
 
-Create an example template for TYPE, as Perl data
-structure (like Data::Dumper) The OPTIONS are passed to
-XML::Compile::Schema subroutine template.
+=item B<templ_perl>(SCHEMA, TYPE, OPTIONS)
 
-example: templ_perl
-
- my $out = templ_perl($schema, $type, show => 'ALL');
- is($out, $expected);
-
-=back
-
-B<templ_xml>(SCHEMA, TYPE, OPTIONS)
-
-=over 4
+=item B<templ_xml>(SCHEMA, TYPE, OPTIONS)
 
 Create an example template for TYPE, as XML message.
 The OPTIONS are passed to XML::Compile::Schema subroutine template.
@@ -180,9 +155,9 @@ example: templ_xml
 
 =head2 Helpers
 
-B<compare_xml>(XML, EXPECTED, [COMMENT])
-
 =over 4
+
+=item B<compare_xml>(XML, EXPECTED, [COMMENT])
 
 Compare the XML (either a string or an XML::LibXML::Element) with
 the EXPECTED string.  Both sources are stripped from layout before
@@ -197,11 +172,7 @@ example: compare_xml
    <test1>...</test1>
  _XML
 
-=back
-
-B<set_compile_defaults>(OPTIONS)
-
-=over 4
+=item B<set_compile_defaults>(OPTIONS)
 
 Each call to create a reader or writer (also indirectly) with
 XML::Compile::Schema subroutine compile will get these OPTIONS passed, on top
@@ -215,11 +186,7 @@ example:
 
  set_compile_defaults();   # reset
 
-=back
-
-B<set_default_namespace>(TESTNS)
-
-=over 4
+=item B<set_default_namespace>(TESTNS)
 
 Defined which namespace to use when a relative (only localName) type
 is provided.  By default, this is C<undef> (an error when used)
@@ -228,31 +195,34 @@ is provided.  By default, this is C<undef> (an error when used)
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Tester distribution version 0.06,
-built on June 15, 2010. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Tester distribution version 0.90,
+built on August 16, 2012. Website: F<http://perl.overmeer.net/xml-compile/>
 
-All modules in this suite:
+Other distributions in this suite:
 L<XML::Compile>,
 L<XML::Compile::SOAP>,
 L<XML::Compile::SOAP12>,
 L<XML::Compile::SOAP::Daemon>,
+L<XML::Compile::SOAP::WSA>,
+L<XML::Compile::C14N>,
+L<XML::Compile::WSS>,
 L<XML::Compile::Tester>,
 L<XML::Compile::Cache>,
 L<XML::Compile::Dumper>,
 L<XML::Compile::RPC>,
-and
 L<XML::Rewrite>,
-L<XML::ExistDB>,
+L<XML::eXistDB>,
+and
 L<XML::LibXML::Simple>.
 
 Please post questions or ideas to the mailinglist at
 F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
-For life contact with other developers, visit the C<#xml-compile> channel
+For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2008-2010 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2008-2012 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

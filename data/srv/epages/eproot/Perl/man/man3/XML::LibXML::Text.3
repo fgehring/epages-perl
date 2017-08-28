@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::Text 3"
-.TH XML::LibXML::Text 3 "2009-10-07" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::Text 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -136,9 +136,9 @@ XML::LibXML::Text \- XML::LibXML Class for Text Nodes
 .Vb 3
 \&  use XML::LibXML;
 \&  # Only methods specific to Text nodes are listed here,
-\&  # see XML::LibXML::Node manpage for other methods
+\&  # see the XML::LibXML::Node manpage for other methods
 \&
-\&  $text = XML::LibXML::Text\->new( $content ); 
+\&  $text = XML::LibXML::Text\->new( $content );
 \&  $nodedata = $text\->data;
 \&  $text\->setData( $text_content );
 \&  $text\->substringData($offset, $length);
@@ -153,8 +153,8 @@ XML::LibXML::Text \- XML::LibXML Class for Text Nodes
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 Unlike the \s-1DOM\s0 specification, XML::LibXML implements the text node as the base
-class of all character data node. Therefor there exists no CharacterData class.
-This allows one to apply methods of text nodes also to Comments and
+class of all character data node. Therefore there exists no CharacterData
+class. This allows one to apply methods of text nodes also to Comments and
 CDATA-sections.
 .SH "METHODS"
 .IX Header "METHODS"
@@ -264,7 +264,7 @@ The \s-1DOM\s0 style version to replace node data.
 .Sp
 The more programmer friendly version of \fIreplaceData()\fR :)
 .Sp
-Instead of giving offsets and length one can specify the exact string (\fI\f(CI$oldstring\fI\fR) to be replaced. Additionally the \fI\f(CI$all\fI\fR flag allows to replace all occurrences of \fI\f(CI$oldstring\fI\fR.
+Instead of giving offsets and length one can specify the exact string (\fI\f(CI$oldstring\fI\fR) to be replaced. Additionally the \fI\f(CI$all\fI\fR flag allows one to replace all occurrences of \fI\f(CI$oldstring\fI\fR.
 .ie n .IP "replaceDataRegEx( $search_cond, $replace_cond, $reflags )" 4
 .el .IP "replaceDataRegEx( \f(CW$search_cond\fR, \f(CW$replace_cond\fR, \f(CW$reflags\fR )" 4
 .IX Item "replaceDataRegEx( $search_cond, $replace_cond, $reflags )"
@@ -272,8 +272,8 @@ Instead of giving offsets and length one can specify the exact string (\fI\f(CI$
 \&  $text\->replaceDataRegEx( $search_cond, $replace_cond, $reflags );
 .Ve
 .Sp
-This method replaces the node's data by a \f(CW\*(C`simple\*(C'\fR regular expression. Optional, this function allows to pass some flags that will
-be added as flag to the replace statement.
+This method replaces the node's data by a \f(CW\*(C`simple\*(C'\fR regular expression. Optional, this function allows one to pass some flags that
+will be added as flag to the replace statement.
 .Sp
 \&\fI\s-1NOTE:\s0\fR This is a shortcut for
 .Sp
@@ -287,12 +287,12 @@ This function can make things easier to read for simple replacements. For more
 complex variants it is recommended to use the code snippet above.
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Matt Sergeant, 
-Christian Glahn, 
+Matt Sergeant,
+Christian Glahn,
 Petr Pajas
 .SH "VERSION"
 .IX Header "VERSION"
-1.70
+2.0129
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 2001\-2007, AxKit.com Ltd.
@@ -300,3 +300,7 @@ Petr Pajas
 2002\-2006, Christian Glahn.
 .PP
 2006\-2009, Petr Pajas.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::Pattern 3"
-.TH XML::LibXML::Pattern 3 "2009-10-07" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::Pattern 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -135,12 +135,12 @@ XML::LibXML::Pattern \- XML::LibXML::Pattern \- interface to libxml2 XPath patte
 .IX Header "SYNOPSIS"
 .Vb 3
 \&  use XML::LibXML;
-\&  my $pattern = new XML::LibXML::Pattern(\*(Aq/x:html/x:body//x:div\*(Aq, { \*(Aqx\*(Aq => \*(Aqhttp://www.w3.org/1999/xhtml\*(Aq });
-\&  # test a match on a XML::LibXML::Node $node
+\&  my $pattern = XML::LibXML::Pattern\->new(\*(Aq/x:html/x:body//x:div\*(Aq, { \*(Aqx\*(Aq => \*(Aqhttp://www.w3.org/1999/xhtml\*(Aq });
+\&  # test a match on an XML::LibXML::Node $node
 \&
 \&  if ($pattern\->matchesNode($node)) { ... }
 \&
-\&  # or on a XML::LibXML::Reader
+\&  # or on an XML::LibXML::Reader
 \&
 \&  if ($reader\->matchesPattern($pattern)) { ... }
 \&
@@ -155,7 +155,7 @@ XML::LibXML::Pattern \- XML::LibXML::Pattern \- interface to libxml2 XPath patte
 .IX Header "DESCRIPTION"
 This is a perl interface to libxml2's pattern matching support \fIhttp://xmlsoft.org/html/libxml\-pattern.html\fR. This feature requires recent versions of libxml2.
 .PP
-Patterns are a small subset of XPath language, which is limitted to
+Patterns are a small subset of XPath language, which is limited to
 (disjunctions of) location paths involving the child and descendant axes in
 abbreviated form as described by the extended \s-1BNF\s0 given below:
 .PP
@@ -200,19 +200,19 @@ example, to match an element \f(CW\*(C`<a xmlns="http://foo.bar"</a>\*(C'\fR, on
 \&  $bool = $pattern\->matchesNode($node);
 .Ve
 .Sp
-Given a XML::LibXML::Node object, returns a true value if the node is matched
+Given an XML::LibXML::Node object, returns a true value if the node is matched
 by the compiled pattern expression.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 XML::LibXML::Reader for other methods involving compiled patterns.
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Matt Sergeant, 
-Christian Glahn, 
+Matt Sergeant,
+Christian Glahn,
 Petr Pajas
 .SH "VERSION"
 .IX Header "VERSION"
-1.70
+2.0129
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 2001\-2007, AxKit.com Ltd.
@@ -220,3 +220,7 @@ Petr Pajas
 2002\-2006, Christian Glahn.
 .PP
 2006\-2009, Petr Pajas.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

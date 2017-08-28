@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::Translate::Reader - translate XML to HASH
@@ -14,55 +16,30 @@ XML::Compile::Translate::Reader - translate XML to HASH
 
 =head1 DESCRIPTION
 
-=head2 Unsupported features
-
 The translator understands schemas, but does not encode that into
 actions.  This module implements those actions to translate from XML
 into a (nested) Perl HASH structure.
 
+Extends L<"DESCRIPTION" in XML::Compile::Translate|XML::Compile::Translate/"DESCRIPTION">.
+ 
 =head1 METHODS
 
-=head2 Constructors
-
-=over 4
-
-=item $obj-E<gt>B<new>(TRANSLATOR, OPTIONS)
-
-See L<XML::Compile::Translate/"Constructors">
-
-=item $obj-E<gt>B<register>(NAME)
-
-=item XML::Compile::Translate::Reader-E<gt>B<register>(NAME)
-
-See L<XML::Compile::Translate/"Constructors">
-
-=back
-
-=head2 Attributes
-
-=head2 Handlers
-
-=over 4
-
-=item XML::Compile::Translate::Reader-E<gt>B<compile>(ELEMENT|ATTRIBUTE|TYPE, OPTIONS)
-
-See L<XML::Compile::Translate/"Handlers">
-
-=back
-
+Extends L<"METHODS" in XML::Compile::Translate|XML::Compile::Translate/"METHODS">.
+ 
 =head1 DETAILS
 
+Extends L<"DETAILS" in XML::Compile::Translate|XML::Compile::Translate/"DETAILS">.
+ 
 =head2 Translator options
 
-=head3 performance optimization
-
-=head3 qualified XML
-
-=head3 Name-spaces
-
-=head3 Wildcards handlers
-
+Extends L<"Translator options" in XML::Compile::Translate|XML::Compile::Translate/"Translator options">.
+ 
 =head2 Processing Wildcards
+
+If you want to collect information from the XML structure, which is
+permitted by C<any> and C<anyAttribute> specifications in the schema,
+you have to implement that yourself.  The problem is C<XML::Compile>
+has less knowledge than you about the possible data.
 
 =head3 option any_attribute
 
@@ -89,10 +66,6 @@ from the container which are not used.  Also in this case C<TAKE_ALL>
 is required to produce C<any> results.  C<SKIP_ALL> will ignore all
 results, although this are being processed for validation needs.
 
-The C<minOccurs> and C<maxOccurs> of C<any> are ignored: the amount of
-elements is always unbounded.  Therefore, you will get an array of
-elements back per type. 
-
 =head3 option any_type CODE
 
 By default, the elements which have type "xsd:anyType" will return
@@ -104,16 +77,11 @@ will get called with the path, the node, and the default handler.  Be
 awayre the $node may actually be a string already.
 
    $schema->compile(READER => ..., any_type => \&handle_any_type);
-   sub handle_any_type
+   sub handle_any_type($$$)
    { my ($path, $node, $handler) = @_;
      ref $node or return $node;
      $node;
    }
-
-If you want to collect information from the XML structure, which is
-permitted by C<any> and C<anyAttribute> specifications in the schema,
-you have to implement that yourself.  The problem is C<XML::Compile>
-has less knowledge than you about the possible data.
 
 =head2 Mixed elements
 
@@ -207,6 +175,10 @@ This hook has a predefined C<SKIP>, which will not process the
 found element, but simply return the string "SKIPPED" as value.
 This way, a whole tree of unneeded translations can be avoided.
 
+[1.51] The predefined hook C<XML_NODE> will not attempt to parse the
+selected element, but returns the XML::LibXML::Element node instead.
+This may break on some schema-contained validations.
+
 Sometimes, the Schema spec is such a mess, that XML::Compile cannot
 automatically translate it.  I have seen cases where confusion
 over name-spaces is created: a choice between three elements with
@@ -215,7 +187,9 @@ L<XML::LibXML::Simple|XML::LibXML::Simple> to translate a part of your tree.  Si
 
  use XML::LibXML::Simple  qw/XMLin/;
  $schema->addHook
-   ( type    => ...type-definition...
+   ( action  => 'READER'
+   , type    => 'tns:xyz'     # or pack_type($tns,'xyz')
+  #  path    => qr!/company$! # by element name
    , replace =>
        sub { my ($xml, $args, $path, $type, $r) = @_;
              ($type => XMLin($xml, ...));
@@ -224,26 +198,30 @@ L<XML::LibXML::Simple|XML::LibXML::Simple> to translate a part of your tree.  Si
 
 =head3 hooks for post-processing, after the data is collected
 
-The data is collect, and passed as second argument after the XML node.
-The third argument is the path.  Be careful that the collected data
+Your code reference gets called with three parameters: the XML node,
+the data collected and the path.  Be careful that the collected data
 might be a SCALAR (for simpleType).  Return a HASH or a SCALAR.  C<undef>
 may work, unless it is the value of a required element you throw awy.
 
-This hook also offers a predefined C<PRINT_PATH>.  Besides, it has
-C<XML_NODE>, C<NODE_TYPE>, C<ELEMENT_ORDER>, and C<ATTRIBUTE_ORDER>, which
-will result in additional fields in the HASH, respectively containing the
-NODE which was processed (an XML::LibXML::Element), the type_of_node,
-the element names, and the attribute names.  The keys start with an
-underscore C<_>.
+This hook also offers a predefined C<PRINT_PATH>.  Besides, it
+has C<INCLUDE_PATH>, C<XML_NODE>, C<NODE_TYPE>, C<ELEMENT_ORDER>,
+and C<ATTRIBUTE_ORDER>, which will result in additional fields in
+the HASH, respectively containing the NODE which was processed (an
+XML::LibXML::Element), the type_of_node, the element names, and the
+attribute names.  The keys start with an underscore C<_>.
 
 =head2 Typemaps
+
+In a typemap, a relation between an XML element type and a Perl class (or
+object) is made.  Each translator back-end will implement this a little
+differently.  This section is about how the reader handles typemaps.
 
 =head3 Typemap to Class
 
 Usually, an XML type will be mapped on a Perl class.  The Perl class
 implements the C<fromXML> method as constructor.
 
- $schema->typemap($sometype => 'My::Perl::Class');
+ $schema->addTypemaps($sometype => 'My::Perl::Class');
 
  package My::Perl::Class;
  ...
@@ -273,7 +251,7 @@ the XML structure:
 
 =head3 Typemap to Object
 
-An other option is to implement an object factory: one object which creates
+Another option is to implement an object factory: one object which creates
 other objects.  In this case, the C<$xmltype> parameter can come of use,
 to have one object spawning many different other objects.
 
@@ -325,40 +303,19 @@ is comparible to
 
 with some extra checks.
 
-In a typemap, a relation between an XML element type and a Perl class (or
-object) is made.  Each translator back-end will implement this a little
-differently.  This section is about how the reader handles typemaps.
-
 =head1 SEE ALSO
 
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2006-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

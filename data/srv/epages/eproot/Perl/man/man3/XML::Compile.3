@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile 3"
-.TH XML::Compile 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -140,7 +140,7 @@ XML::Compile \- Compilation based XML processing
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 .Vb 1
-\& # See XML::Compile::Schema / ::WSDL / ::SOAP
+\& # See XML::Compile::Schema / ::WSDL / ::SOAP11 etc
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
@@ -151,61 +151,34 @@ only handles a tree of nested HASHes and ARRAYs, and does not need to
 understand namespaces and other general \s-1XML\s0 and schema nastiness.
 .PP
 Three serious \s-1WARNINGS:\s0
-.IP "." 4
+.IP "\(bu" 4
 The focus is on \fBdata-centric \s-1XML\s0\fR, which means that mixed elements
 are not handler automatically: you need to work with XML::LibXML nodes
 yourself, on these spots.
-.IP "." 4
-The \fBschema itself is not strictly validated\fR, still a large number of
-compile-time errors can be reported.  On the other hand, the processed
-\&\fBdata is strictly validated\fR against the schema: both input and output
-will follow the specs closely (unless disabled).
-.IP "." 4
+.IP "\(bu" 4
+The \fBdata is not strictly validated\fR, still a large number of
+compile-time errors can be reported.  Values are checked quite thoroughly.
+Structure as well.
+.IP "\(bu" 4
 Imports and includes, as used in the schemas, are \s-1NOT\s0 performed
-automaticly.  Schema's and such are \s-1NOT\s0 collected from internet
+automatically.  Schema's and such are \s-1NOT\s0 collected from internet
 dynamically; you have to call \fIXML::Compile::Schema::importDefinitions()\fR
-explictly with filenames of locally stored copies. Includes do only
+explicitly with filenames of locally stored copies. Includes do only
 work if they have a targetNamespace defined, which is the same as that
 of the schema it is included into.
-.PP
-For end-users, the following packages are of interest (the other
-are support packages):
-.IP "XML::Compile::Schema" 4
-.IX Item "XML::Compile::Schema"
-Interpret schema elements and types: create processors for \s-1XML\s0 messages.
-.IP "XML::Compile::SOAP" 4
-.IX Item "XML::Compile::SOAP"
-Use the \s-1SOAP\s0 protocol, client side.
-.IP "XML::Compile::WSDL11" 4
-.IX Item "XML::Compile::WSDL11"
-Use \s-1SOAP\s0 with a \s-1WSDL\s0 version 1.1 communication specification file.
-.IP "XML::Compile::SOAP::Daemon" 4
-.IX Item "XML::Compile::SOAP::Daemon"
-Create a \s-1SOAP\s0 daemon, directly from a \s-1WSDL\s0 file.
-.IP "XML::Compile::Tester" 4
-.IX Item "XML::Compile::Tester"
-Helps you write regression tests.
-.IP "XML::Compile::Cache" 4
-.IX Item "XML::Compile::Cache"
-Helps you administer compiled readers and writers, especially useful it
-there are a lot of them.  Extends XML::Compile::Schema.
-.IP "XML::Rewrite" 4
-.IX Item "XML::Rewrite"
-Clean-up \s-1XML\s0 structures: beautify, simplify, extract.
-.IP "XML::Compile::Dumper" 4
-.IX Item "XML::Compile::Dumper"
-Enables you to save pre-compiled \s-1XML\s0 handlers, the results of any
-\&\f(CW\*(C`compileClient\*(C'\fR.  However, this results in huge files, so this may
-not be worth the effort.
 .SH "METHODS"
 .IX Header "METHODS"
+Methods found in this manual page are shared by the end-user modules,
+and should not be used directly: objects of type \f(CW\*(C`XML::Compile\*(C'\fR do not
+exist!
 .SS "Constructors"
 .IX Subsection "Constructors"
 These constructors are base class methods to be extended,
 and therefore should not be accessed directly.
-.IP "XML::Compile\->\fBnew\fR([\s-1XMLDATA\s0], \s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile->new([XMLDATA], OPTIONS)"
-The \s-1XMLDATA\s0 is a source of \s-1XML\s0. See \fIdataToXML()\fR for valid ways,
+.ie n .IP "XML::Compile\->\fBnew\fR( [$xmldata], %options )" 4
+.el .IP "XML::Compile\->\fBnew\fR( [$xmldata], \f(CW%options\fR )" 4
+.IX Item "XML::Compile->new( [$xmldata], %options )"
+The \f(CW$xmldata\fR is a source of \s-1XML\s0. See \fIdataToXML()\fR for valid ways,
 for example as filename, string or \f(CW\*(C`undef\*(C'\fR.
 .Sp
 If you have compiled all readers and writers you need, you may simply
@@ -233,14 +206,14 @@ See \fIaddSchemaDirs()\fR for a detailed explanation.
 .RE
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBaddSchemaDirs\fR(DIRECTORIES|FILENAME)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddSchemaDirs\fR(DIRECTORIES|FILENAME)" 4
-.IX Item "$obj->addSchemaDirs(DIRECTORIES|FILENAME)"
+.ie n .IP "$obj\->\fBaddSchemaDirs\fR(@directories|$filename)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddSchemaDirs\fR(@directories|$filename)" 4
+.IX Item "$obj->addSchemaDirs(@directories|$filename)"
 .PD 0
-.IP "XML::Compile\->\fBaddSchemaDirs\fR(DIRECTORIES|FILENAME)" 4
-.IX Item "XML::Compile->addSchemaDirs(DIRECTORIES|FILENAME)"
+.IP "XML::Compile\->\fBaddSchemaDirs\fR(@directories|$filename)" 4
+.IX Item "XML::Compile->addSchemaDirs(@directories|$filename)"
 .PD
-Each time this method is called, the specified \s-1DIRECTORIES\s0 will be added
+Each time this method is called, the specified \f(CW@directories\fR will be added
 in front of the list of already known schema directories.  Initially,
 the value of the environment variable \f(CW\*(C`SCHEMA_DIRECTORIES\*(C'\fR is added
 (therefore tried as last resort). The constructor option \f(CW\*(C`schema_dirs\*(C'\fR
@@ -250,7 +223,7 @@ Values which are \f(CW\*(C`undef\*(C'\fR are skipped.  ARRAYs are flattened.  Ar
 are split at colons (on \s-1UNIX\s0) or semi-colons (windows) after flattening.
 The list of directories is returned, in all but \s-1VOID\s0 context.
 .Sp
-When a \f(CW\*(C`.pm\*(C'\fR package \s-1FILENAME\s0 is given, then the directory
+When a \f(CW\*(C`.pm\*(C'\fR package \f(CW$filename\fR is given, then the directory
 to be used is calculated from it (platform independently).  So,
 \&\f(CW\*(C`something/XML/Compile.pm\*(C'\fR becomes \f(CW\*(C`something/XML/Compile/xsd/\*(C'\fR.
 This way, modules can simply add their definitions via \f(CW\*(C`XML::Compile\->addSchemaDirs(_\|_FILE_\|_)\*(C'\fR in a \s-1BEGIN\s0 block or in main.
@@ -274,23 +247,23 @@ example: adding xsd's from your own distribution
 .Ve
 .SS "Compilers"
 .IX Subsection "Compilers"
-.ie n .IP "$obj\->\fBdataToXML\fR(NODE|REF\-XML\-STRING|XML\-STRING|FILENAME|FILEHANDLE|KNOWN)" 4
-.el .IP "\f(CW$obj\fR\->\fBdataToXML\fR(NODE|REF\-XML\-STRING|XML\-STRING|FILENAME|FILEHANDLE|KNOWN)" 4
-.IX Item "$obj->dataToXML(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)"
+.ie n .IP "$obj\->\fBdataToXML\fR($node|REF\-XML|XML\-STRING|$filename|$fh|$known)" 4
+.el .IP "\f(CW$obj\fR\->\fBdataToXML\fR($node|REF\-XML|XML\-STRING|$filename|$fh|$known)" 4
+.IX Item "$obj->dataToXML($node|REF-XML|XML-STRING|$filename|$fh|$known)"
 .PD 0
-.IP "XML::Compile\->\fBdataToXML\fR(NODE|REF\-XML\-STRING|XML\-STRING|FILENAME|FILEHANDLE|KNOWN)" 4
-.IX Item "XML::Compile->dataToXML(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)"
+.IP "XML::Compile\->\fBdataToXML\fR($node|REF\-XML|XML\-STRING|$filename|$fh|$known)" 4
+.IX Item "XML::Compile->dataToXML($node|REF-XML|XML-STRING|$filename|$fh|$known)"
 .PD
-Collect \s-1XML\s0 data, from a wide variety of sources.  In \s-1SCALAR\s0 context,
+Collect \f(CW$xml\fR data, from a wide variety of sources.  In \s-1SCALAR\s0 context,
 an XML::LibXML::Element or XML::LibXML::Document is returned.
 In \s-1LIST\s0 context, pairs of additional information follow the scalar result.
 .Sp
-When a ready XML::LibXML::Node (::Element or ::Document) \s-1NODE\s0 is
+When a ready XML::LibXML::Node (::Element or ::Document) \f(CW$node\fR is
 provided, it is returned immediately and unchanged.  A \s-1SCALAR\s0 reference is
-interpreted as reference to \s-1XML\s0 as plain text (\s-1XML\s0 texts can be large,
+interpreted as reference to \f(CW$xml\fR as plain text ($xml texts can be large,
 and you can improve performance by passing it around by reference
 instead of copy).  Any value which starts with blanks followed by a
-\&'<' is interpreted as \s-1XML\s0 text.
+\&'<' is interpreted as \f(CW$xml\fR text.
 .Sp
 You may also specify a pre-defined \fIknown\fR name-space \s-1URI\s0.  A set of
 definition files is included in the distribution, and installed somewhere
@@ -298,8 +271,8 @@ when this all gets installed.  Either define an environment variable
 named \s-1SCHEMA_LOCATION\s0 or use new(schema_dirs) (option available to
 all end-user objects) to inform the library where to find these files.
 .Sp
-According the XML::LibXML::Parser manual page, passing a \s-1FILEHANDLE\s0
-is much slower than pasing a \s-1FILENAME\s0.  However, it may be needed to
+According the XML::LibXML::Parser manual page, passing a \f(CW$fh\fR
+is much slower than pasing a \f(CW$filename\fR.  However, it may be needed to
 open a file with an explicit character-set.
 .Sp
 example:
@@ -310,65 +283,104 @@ example:
 \&
 \&  my $xml = XML::Compile\->dataToXML(\*(Aq/etc/config.xml\*(Aq);
 .Ve
-.ie n .IP "$obj\->\fBinitParser\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBinitParser\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->initParser(OPTIONS)"
+.ie n .IP "$obj\->\fBinitParser\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBinitParser\fR(%options)" 4
+.IX Item "$obj->initParser(%options)"
 .PD 0
-.IP "XML::Compile\->\fBinitParser\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile->initParser(OPTIONS)"
+.IP "XML::Compile\->\fBinitParser\fR(%options)" 4
+.IX Item "XML::Compile->initParser(%options)"
 .PD
 Create a new parser, an XML::LibXML::Parser object. By default, the
 parsing is set in a safe mode, avoiding exploits. You may explicitly
 overrule it, especially if you need to process entities.
 .SS "Administration"
 .IX Subsection "Administration"
-.ie n .IP "$obj\->\fBfindSchemaFile\fR(\s-1FILENAME\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBfindSchemaFile\fR(\s-1FILENAME\s0)" 4
-.IX Item "$obj->findSchemaFile(FILENAME)"
+.ie n .IP "$obj\->\fBfindSchemaFile\fR($filename)" 4
+.el .IP "\f(CW$obj\fR\->\fBfindSchemaFile\fR($filename)" 4
+.IX Item "$obj->findSchemaFile($filename)"
 .PD 0
-.IP "XML::Compile\->\fBfindSchemaFile\fR(\s-1FILENAME\s0)" 4
-.IX Item "XML::Compile->findSchemaFile(FILENAME)"
+.IP "XML::Compile\->\fBfindSchemaFile\fR($filename)" 4
+.IX Item "XML::Compile->findSchemaFile($filename)"
 .PD
 Runs through all defined schema directories (see \fIaddSchemaDirs()\fR)
-in search of the specified \s-1FILENAME\s0.  When the \s-1FILENAME\s0 is absolute,
+in search of the specified \f(CW$filename\fR.  When the \f(CW$filename\fR is absolute,
 that will be used, and no search is needed.  An \f(CW\*(C`undef\*(C'\fR is returned when
 the file is not found, otherwise a full path to the file is returned to
 the caller.
 .Sp
 Although the file may be found, it still could be unreadible.
-.ie n .IP "$obj\->\fBknownNamespace\fR(NAMESPACE|PAIRS)" 4
-.el .IP "\f(CW$obj\fR\->\fBknownNamespace\fR(NAMESPACE|PAIRS)" 4
-.IX Item "$obj->knownNamespace(NAMESPACE|PAIRS)"
+.ie n .IP "$obj\->\fBknownNamespace\fR($ns|PAIRS)" 4
+.el .IP "\f(CW$obj\fR\->\fBknownNamespace\fR($ns|PAIRS)" 4
+.IX Item "$obj->knownNamespace($ns|PAIRS)"
 .PD 0
-.IP "XML::Compile\->\fBknownNamespace\fR(NAMESPACE|PAIRS)" 4
-.IX Item "XML::Compile->knownNamespace(NAMESPACE|PAIRS)"
+.IP "XML::Compile\->\fBknownNamespace\fR($ns|PAIRS)" 4
+.IX Item "XML::Compile->knownNamespace($ns|PAIRS)"
 .PD
-If used with only one \s-1NAMESPACE\s0, it returns the filename in the
+If used with only one \f(CW$ns\fR, it returns the filename in the
 distribution (not the full path) which contains the definition.
 .Sp
-When \s-1PAIRS\s0 of NAMESPACE-FILENAME are given, then those get defined.
+When \s-1PAIRS\s0 of \f(CW$ns\fR\-FILENAME are given, then those get defined.
 This is typically called during the initiation of modules, like
 XML::Compile::WSDL11 and XML::Compile::SOAP.  The definitions
 are global: not related to specific instances.
 .Sp
 The \s-1FILENAMES\s0 are relative to the directories as specified with some
 \&\fIaddSchemaDirs()\fR call.
-.ie n .IP "$obj\->\fBwalkTree\fR(\s-1NODE\s0, \s-1CODE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBwalkTree\fR(\s-1NODE\s0, \s-1CODE\s0)" 4
-.IX Item "$obj->walkTree(NODE, CODE)"
-Walks the whole tree from \s-1NODE\s0 downwards, calling the \s-1CODE\s0 reference
-for each \s-1NODE\s0 found.  When that routine returns false, the child
+.ie n .IP "$obj\->\fBwalkTree\fR($node, \s-1CODE\s0)" 4
+.el .IP "\f(CW$obj\fR\->\fBwalkTree\fR($node, \s-1CODE\s0)" 4
+.IX Item "$obj->walkTree($node, CODE)"
+Walks the whole tree from \f(CW$node\fR downwards, calling the \s-1CODE\s0 reference
+for each \f(CW$node\fR found.  When that routine returns false, the child
 nodes will be skipped.
-.PP
-Methods found in this manual page are shared by the end-user modules,
-and should not be used directly: objects of type \f(CW\*(C`XML::Compile\*(C'\fR do not
-exist!
 .SH "DETAILS"
 .IX Header "DETAILS"
+.SS "Distribution collection overview"
+.IX Subsection "Distribution collection overview"
+For end-users, the following packages are of interest (the other
+are support packages):
+.IP "\(bu" 4
+XML::Compile::Schema
+.Sp
+Interpret schema elements and types: create processors for \s-1XML\s0 messages.
+.IP "\(bu" 4
+XML::Compile::Cache
+.Sp
+Helps you administer compiled readers and writers, especially useful it
+there are a lot of them.  Extends XML::Compile::Schema.
+.IP "\(bu" 4
+XML::Compile::SOAP
+.Sp
+Implements the \s-1SOAP\s0 1.1 protocol. client side.
+.IP "\(bu" 4
+XML::Compile::SOAP12
+.Sp
+Implements the \s-1SOAP\s0 1.2 protocol.
+.IP "\(bu" 4
+XML::Compile::WSDL11
+.Sp
+Use \s-1SOAP\s0 with a \s-1WSDL\s0 version 1.1 communication specification file.
+.IP "\(bu" 4
+XML::Compile::SOAP::Daemon
+.Sp
+Create a \s-1SOAP\s0 daemon, directly from a \s-1WSDL\s0 file.
+.IP "\(bu" 4
+XML::Compile::Tester
+.Sp
+Helps you write regression tests.
+.IP "\(bu" 4
+XML::Rewrite
+.Sp
+Clean-up \s-1XML\s0 structures: beautify, simplify, extract.
+.IP "\(bu" 4
+XML::Compile::Dumper
+.Sp
+Enables you to save pre-compiled \s-1XML\s0 handlers, the results of any
+\&\f(CW\*(C`compileClient\*(C'\fR.  However, this results in huge files, so this may
+not be worth the effort.
 .SS "Comparison"
 .IX Subsection "Comparison"
 Where other Perl modules (like \s-1SOAP::WSDL\s0) help you using these schemas
-(often with a lot of run-time [XPath] searches), XML::Compile takes a
+(often with a lot of run-time XPath searches), XML::Compile takes a
 different approach: instead of run-time processing of the specification,
 it will first compile the expected structure into a pure Perl \s-1CODE\s0
 reference, and then use that to process the data as often as needed.
@@ -381,41 +393,25 @@ quite a number of modules simply ignore that.
 .PP
 Next to this, data-types are formatted and processed correctly; for
 instance, the specification prescribes that the \f(CW\*(C`Integer\*(C'\fR data-type
-must accept values of at least 18 digits... not just Perl's idea of longs.
+must accept values of at least 18 digits... not fitting in Perl's idea
+of longs.
 .PP
-XML::Compile supports the more complex data-types like \f(CW\*(C`list\*(C'\fR, \f(CW\*(C`union\*(C'\fR,
-\&\f(CW\*(C`substitutionGroup\*(C'\fR (unions on complex type level), and even the
-nasty \f(CW\*(C`any\*(C'\fR and \f(CW\*(C`anyAttribute\*(C'\fR, which is rarely the case for the
+XML::Compile also supports all more complex data-types like \f(CW\*(C`list\*(C'\fR,
+\&\f(CW\*(C`union\*(C'\fR, \f(CW\*(C`substitutionGroup\*(C'\fR (unions on complex type level), and even
+the nasty \f(CW\*(C`any\*(C'\fR and \f(CW\*(C`anyAttribute\*(C'\fR, which is rarely the case for the
 other modules.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

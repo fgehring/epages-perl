@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Schema::Instance 3"
-.TH XML::Compile::Schema::Instance 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Schema::Instance 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -145,9 +145,9 @@ process it.
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBnew\fR(\s-1TOP\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBnew\fR(\s-1TOP\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->new(TOP, OPTIONS)"
+.ie n .IP "$obj\->\fBnew\fR($top, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBnew\fR($top, \f(CW%options\fR)" 4
+.IX Item "$obj->new($top, %options)"
 Get's the top of an XML::LibXML tree, which must be a schema element.
 The tree is parsed: the information collected.
 .Sp
@@ -183,107 +183,107 @@ Overrule or set the target namespace.
 .RE
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBattributeGroups\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBattributeGroups\fR" 4
-.IX Item "$obj->attributeGroups"
+.ie n .IP "$obj\->\fBattributeGroups\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBattributeGroups\fR()" 4
+.IX Item "$obj->attributeGroups()"
 Returns a list of all defined attribute groups.
-.ie n .IP "$obj\->\fBattributes\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBattributes\fR" 4
-.IX Item "$obj->attributes"
+.ie n .IP "$obj\->\fBattributes\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBattributes\fR()" 4
+.IX Item "$obj->attributes()"
 Returns a lost of all globally defined attribute names.
-.ie n .IP "$obj\->\fBcomplexTypes\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcomplexTypes\fR" 4
-.IX Item "$obj->complexTypes"
+.ie n .IP "$obj\->\fBcomplexTypes\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcomplexTypes\fR()" 4
+.IX Item "$obj->complexTypes()"
 Returns a list with all complexType names.
-.ie n .IP "$obj\->\fBelement\fR(\s-1URI\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBelement\fR(\s-1URI\s0)" 4
-.IX Item "$obj->element(URI)"
+.ie n .IP "$obj\->\fBelement\fR($uri)" 4
+.el .IP "\f(CW$obj\fR\->\fBelement\fR($uri)" 4
+.IX Item "$obj->element($uri)"
 Returns one global element definition.
-.ie n .IP "$obj\->\fBelements\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBelements\fR" 4
-.IX Item "$obj->elements"
+.ie n .IP "$obj\->\fBelements\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBelements\fR()" 4
+.IX Item "$obj->elements()"
 Returns a list of all globally defined element names.
-.ie n .IP "$obj\->\fBfilename\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBfilename\fR" 4
-.IX Item "$obj->filename"
+.ie n .IP "$obj\->\fBfilename\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBfilename\fR()" 4
+.IX Item "$obj->filename()"
 .PD 0
-.ie n .IP "$obj\->\fBgroups\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBgroups\fR" 4
-.IX Item "$obj->groups"
+.ie n .IP "$obj\->\fBgroups\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBgroups\fR()" 4
+.IX Item "$obj->groups()"
 .PD
 Returns a list of all defined model groups.
-.ie n .IP "$obj\->\fBschema\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBschema\fR" 4
-.IX Item "$obj->schema"
+.ie n .IP "$obj\->\fBschema\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBschema\fR()" 4
+.IX Item "$obj->schema()"
 .PD 0
-.ie n .IP "$obj\->\fBschemaInstance\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBschemaInstance\fR" 4
-.IX Item "$obj->schemaInstance"
-.ie n .IP "$obj\->\fBschemaNamespace\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBschemaNamespace\fR" 4
-.IX Item "$obj->schemaNamespace"
-.ie n .IP "$obj\->\fBsgs\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBsgs\fR" 4
-.IX Item "$obj->sgs"
+.ie n .IP "$obj\->\fBschemaInstance\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBschemaInstance\fR()" 4
+.IX Item "$obj->schemaInstance()"
+.ie n .IP "$obj\->\fBschemaNamespace\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBschemaNamespace\fR()" 4
+.IX Item "$obj->schemaNamespace()"
+.ie n .IP "$obj\->\fBsgs\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBsgs\fR()" 4
+.IX Item "$obj->sgs()"
 .PD
 Returns a \s-1HASH\s0 with the base-type as key and an \s-1ARRAY\s0 of types
 which extend it.
-.ie n .IP "$obj\->\fBsimpleTypes\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBsimpleTypes\fR" 4
-.IX Item "$obj->simpleTypes"
+.ie n .IP "$obj\->\fBsimpleTypes\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBsimpleTypes\fR()" 4
+.IX Item "$obj->simpleTypes()"
 Returns a list with all simpleType names.
-.ie n .IP "$obj\->\fBsource\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBsource\fR" 4
-.IX Item "$obj->source"
+.ie n .IP "$obj\->\fBsource\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBsource\fR()" 4
+.IX Item "$obj->source()"
 .PD 0
-.ie n .IP "$obj\->\fBtargetNamespace\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtargetNamespace\fR" 4
-.IX Item "$obj->targetNamespace"
-.ie n .IP "$obj\->\fBtnses\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtnses\fR" 4
-.IX Item "$obj->tnses"
+.ie n .IP "$obj\->\fBtargetNamespace\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBtargetNamespace\fR()" 4
+.IX Item "$obj->targetNamespace()"
+.ie n .IP "$obj\->\fBtnses\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBtnses\fR()" 4
+.IX Item "$obj->tnses()"
 .PD
 A schema can defined more than one target namespace, where recent
 schema spec changes provide a targetNamespace attribute.
-.ie n .IP "$obj\->\fBtype\fR(\s-1URI\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBtype\fR(\s-1URI\s0)" 4
-.IX Item "$obj->type(URI)"
+.ie n .IP "$obj\->\fBtype\fR($uri)" 4
+.el .IP "\f(CW$obj\fR\->\fBtype\fR($uri)" 4
+.IX Item "$obj->type($uri)"
 Returns the type definition with the specified name.
-.ie n .IP "$obj\->\fBtypes\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtypes\fR" 4
-.IX Item "$obj->types"
+.ie n .IP "$obj\->\fBtypes\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBtypes\fR()" 4
+.IX Item "$obj->types()"
 Returns a list of all simpleTypes and complexTypes
 .SS "Index"
 .IX Subsection "Index"
-.ie n .IP "$obj\->\fBfind\fR(\s-1KIND\s0, \s-1FULLNAME\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBfind\fR(\s-1KIND\s0, \s-1FULLNAME\s0)" 4
-.IX Item "$obj->find(KIND, FULLNAME)"
-Returns the definition for the object of \s-1KIND\s0, with \s-1FULLNAME\s0.
+.ie n .IP "$obj\->\fBfind\fR($kind, $fullname)" 4
+.el .IP "\f(CW$obj\fR\->\fBfind\fR($kind, \f(CW$fullname\fR)" 4
+.IX Item "$obj->find($kind, $fullname)"
+Returns the definition for the object of \f(CW$kind\fR, with \f(CW$fullname\fR.
 .Sp
 example: of find
 .Sp
 .Vb 1
 \&  my $attr = $instance\->find(attribute => \*(Aq{myns}my_global_attr\*(Aq);
 .Ve
-.ie n .IP "$obj\->\fBimportLocations\fR(\s-1NAMESPACE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBimportLocations\fR(\s-1NAMESPACE\s0)" 4
-.IX Item "$obj->importLocations(NAMESPACE)"
-Returns a list of all schemaLocations specified with the import \s-1NAMESPACE\s0
+.ie n .IP "$obj\->\fBimportLocations\fR($ns)" 4
+.el .IP "\f(CW$obj\fR\->\fBimportLocations\fR($ns)" 4
+.IX Item "$obj->importLocations($ns)"
+Returns a list of all schemaLocations specified with the import \f(CW$ns\fR
 (one of the values returned by \fIimports()\fR).
-.ie n .IP "$obj\->\fBimports\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBimports\fR" 4
-.IX Item "$obj->imports"
+.ie n .IP "$obj\->\fBimports\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBimports\fR()" 4
+.IX Item "$obj->imports()"
 Returns a list with all namespaces which need to be imported.
-.ie n .IP "$obj\->\fBincludeLocations\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBincludeLocations\fR" 4
-.IX Item "$obj->includeLocations"
+.ie n .IP "$obj\->\fBincludeLocations\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBincludeLocations\fR()" 4
+.IX Item "$obj->includeLocations()"
 Returns a list of all schemaLocations which where specified with include
 statements.
-.ie n .IP "$obj\->\fBprintIndex\fR([\s-1FILEHANDLE\s0], \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBprintIndex\fR([\s-1FILEHANDLE\s0], \s-1OPTIONS\s0)" 4
-.IX Item "$obj->printIndex([FILEHANDLE], OPTIONS)"
+.ie n .IP "$obj\->\fBprintIndex\fR( [$fh], %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBprintIndex\fR( [$fh], \f(CW%options\fR )" 4
+.IX Item "$obj->printIndex( [$fh], %options )"
 Prints an overview over the defined objects within this schema to the
-selected \s-1FILEHANDLE\s0.
+selected \f(CW$fh\fR.
 .Sp
 .Vb 3
 \& \-Option       \-\-Default
@@ -305,33 +305,16 @@ anyway).
 .RE
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

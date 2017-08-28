@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Schema 3"
-.TH XML::Compile::Schema 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Schema 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -151,13 +151,19 @@ XML::Compile::Schema \- Compile a schema into CODE
 \& # get schema from string
 \& my $schema = XML::Compile::Schema\->new($xml_string);
 \&
-\& # get schema from file
+\& # get schema from file (most used)
 \& my $schema = XML::Compile::Schema\->new($filename);
+\& my $schema = XML::Compile::Schema\->new([glob "*.xsd"]);
 \&
-\& # adding schemas
+\& # the "::Cache" extension has more power
+\& my $schema = XML::Compile::Cache\->new(\e@xsdfiles);
+\&
+\& # adding more schemas, from parsed XML
 \& $schema\->addSchemas($tree);
 \&
+\& # adding more schemas from files
 \& # three times the same: well\-known url, filename in schemadir, url
+\& # Just as example: usually not needed.
 \& $schema\->importDefinitions(\*(Aqhttp://www.w3.org/2001/XMLSchema\*(Aq);
 \& $schema\->importDefinitions(\*(Aq2001\-XMLSchema.xsd\*(Aq);
 \& $schema\->importDefinitions(SCHEMA2001);  # from ::Util
@@ -191,7 +197,7 @@ XML::Compile::Schema \- Compile a schema into CODE
 \& $doc\->setDocumentElement($xml);
 \&
 \& # show result
-\& print $doc\->toString;
+\& print $doc\->toString(1);
 \&
 \& # to create the type nicely
 \& use XML::Compile::Util qw/pack_type/;
@@ -199,8 +205,11 @@ XML::Compile::Schema \- Compile a schema into CODE
 \& print $type;  # shows  {myns}mytype
 \&
 \& # using a compiled routines cache
-\& use XML::Compile::Cache;   # seperate distribution
+\& use XML::Compile::Cache;   # separate distribution
 \& my $schema = XML::Compile::Cache\->new(...);
+\&
+\& # Show which data\-structure is expected
+\& print $schema\->template(PERL => $type);
 \&
 \& # Error handling tricks with Log::Report
 \& use Log::Report mode => \*(AqDEBUG\*(Aq;  # enable debugging
@@ -243,6 +252,13 @@ or
 \& my $hash   = $msgin\->($xml_string);
 \& my $hash   = $msgin\->($xml_node);
 .Ve
+.Sp
+with XML::Compile::Cache as schema object:
+.Sp
+.Vb 2
+\& $rules\->addPrefix(m => \*(Aqmyns\*(Aq);
+\& my $hash   = $rules\->reader(\*(Aqm:mytype\*(Aq)\->($xml);
+.Ve
 .ie n .IP """$schema\->compile(\*(AqWRITER\*(Aq, ...)"" translates \s-1HASH\s0 to \s-1XML\s0" 4
 .el .IP "\f(CW$schema\->compile(\*(AqWRITER\*(Aq, ...)\fR translates \s-1HASH\s0 to \s-1XML\s0" 4
 .IX Item "$schema->compile(WRITER, ...) translates HASH to XML"
@@ -264,6 +280,13 @@ alternative
 .Vb 1
 \& my $write  = $schema\->compile(WRITER => \*(Aqmyns#myid\*(Aq);
 .Ve
+.Sp
+with XML::Compile::Cache as schema object:
+.Sp
+.Vb 2
+\& $rules\->addPrefix(m => \*(Aqmyns\*(Aq);
+\& my $xml    = $rules\->writer(\*(Aqm:mytype\*(Aq)\->($doc, $hash);
+.Ve
 .ie n .IP """$schema\->template(\*(AqXML\*(Aq, ...)"" creates an \s-1XML\s0 example" 4
 .el .IP "\f(CW$schema\->template(\*(AqXML\*(Aq, ...)\fR creates an \s-1XML\s0 example" 4
 .IX Item "$schema->template(XML, ...) creates an XML example"
@@ -278,26 +301,38 @@ Based on the schema, this produces an Perl \s-1HASH\s0 structure (a bit
 like the output by Data::Dumper), which can be used as template
 for creating messages.  The output contains documentation, and is
 usually much clearer than the schema itself.
+.ie n .IP """$schema\->template(\*(AqTREE\*(Aq, ...)"" creates a parse tree" 4
+.el .IP "\f(CW$schema\->template(\*(AqTREE\*(Aq, ...)\fR creates a parse tree" 4
+.IX Item "$schema->template(TREE, ...) creates a parse tree"
+To be able to produce Perl-text and \s-1XML\s0 examples, the templater
+generates an abstract tree from the schema.  That tree is returned
+here.  Be warned that the structure is not fixed over releases:
+add regression tests for this to your project.
 .PP
 Be warned that the \fBschema is not validated\fR; you can develop schemas
 which do work well with this module, but are not valid according to W3C.
 In many cases, however, the translater will refuse to accept mistakes:
 mainly because it cannot produce valid code.
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in XML::Compile.
 .SH "METHODS"
 .IX Header "METHODS"
+Extends \*(L"\s-1METHODS\s0\*(R" in XML::Compile.
 .SS "Constructors"
 .IX Subsection "Constructors"
-.IP "XML::Compile::Schema\->\fBnew\fR([\s-1XMLDATA\s0], \s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::Schema->new([XMLDATA], OPTIONS)"
+Extends \*(L"Constructors\*(R" in XML::Compile.
+.ie n .IP "XML::Compile::Schema\->\fBnew\fR( [$xmldata], %options )" 4
+.el .IP "XML::Compile::Schema\->\fBnew\fR( [$xmldata], \f(CW%options\fR )" 4
+.IX Item "XML::Compile::Schema->new( [$xmldata], %options )"
 Details about many name-spaces can be organized with only a single
 schema object (actually, the data is administered in an internal
 XML::Compile::Schema::NameSpaces object)
 .Sp
-The initial information is extracted from the \s-1XMLDATA\s0 source.  The \s-1XMLDATA\s0
+The initial information is extracted from the \f(CW$xmldata\fR source.  The \f(CW$xmldata\fR
 can be anything what is acceptable by \fIimportDefinitions()\fR, which
 is everything accepted by \fIdataToXML()\fR or an \s-1ARRAY\s0 of those things.
 You may also add any \s-1OPTION\s0 accepted by \fIaddSchemas()\fR to guide the
-understanding of the schema.  When no \s-1XMLDATA\s0 is provided, you can add
+understanding of the schema.  When no \f(CW$xmldata\fR is provided, you can add
 it later with \fIimportDefinitions()\fR
 .Sp
 You can specify the hooks before you define the schemas the hooks
@@ -319,12 +354,12 @@ the readers and writers get compiled.
 .IP "block_namespace => NAMESPACE|TYPE|HASH|CODE|ARRAY" 2
 .IX Item "block_namespace => NAMESPACE|TYPE|HASH|CODE|ARRAY"
 See \fIblockNamespace()\fR
-.IP "hook => ARRAY-WITH-HOOKDATA | \s-1HOOK\s0" 2
-.IX Item "hook => ARRAY-WITH-HOOKDATA | HOOK"
-See \fIaddHook()\fR.  Adds one \s-1HOOK\s0 (\s-1HASH\s0).
-.IP "hooks => ARRAY-OF-HOOK" 2
-.IX Item "hooks => ARRAY-OF-HOOK"
-See \fIaddHooks()\fR.
+.IP "hook => HOOK|ARRAY" 2
+.IX Item "hook => HOOK|ARRAY"
+See \fIaddHook()\fR.  Adds one \s-1HOOK\s0 (\s-1HASH\s0) or more at once.
+.IP "hooks => \s-1ARRAY\s0" 2
+.IX Item "hooks => ARRAY"
+Add one or more hooks.  See \fIaddHooks()\fR.
 .IP "ignore_unused_tags => BOOLEAN|REGEXP" 2
 .IX Item "ignore_unused_tags => BOOLEAN|REGEXP"
 (\s-1WRITER\s0) Usually, a \f(CW\*(C`mistake\*(C'\fR warning is produced when a user provides
@@ -336,8 +371,8 @@ therefore disable this precausion.
 With a \s-1REGEXP\s0, you can have more control.  Only keys which do match
 the expression will be ignored silently.  Other keys (usually typos
 and other mistakes) will get reported.  See \*(L"Typemaps\*(R"
-.IP "key_rewrite => HASH|CODE|ARRAY\-of\-HASH\-and\-CODE" 2
-.IX Item "key_rewrite => HASH|CODE|ARRAY-of-HASH-and-CODE"
+.IP "key_rewrite => HASH|CODE|ARRAY" 2
+.IX Item "key_rewrite => HASH|CODE|ARRAY"
 Translate \s-1XML\s0 element local-names into different Perl keys.
 See \*(L"Key rewrite\*(R".
 .IP "parser_options => HASH|ARRAY" 2
@@ -355,41 +390,44 @@ serialization of objects.
 .RE
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBaddHook\fR(HOOKDATA|HOOK|undef)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddHook\fR(HOOKDATA|HOOK|undef)" 4
-.IX Item "$obj->addHook(HOOKDATA|HOOK|undef)"
-\&\s-1HOOKDATA\s0 is a \s-1LIST\s0 of options as key-value pairs, \s-1HOOK\s0 is a \s-1HASH\s0 with
-the same data.  \f(CW\*(C`undef\*(C'\fR is ignored. See \fIaddHooks()\fR and
-\&\*(L"Schema hooks\*(R" below.
-.ie n .IP "$obj\->\fBaddHooks\fR(\s-1HOOK\s0, [\s-1HOOK\s0, ...])" 4
-.el .IP "\f(CW$obj\fR\->\fBaddHooks\fR(\s-1HOOK\s0, [\s-1HOOK\s0, ...])" 4
-.IX Item "$obj->addHooks(HOOK, [HOOK, ...])"
+Extends \*(L"Accessors\*(R" in XML::Compile.
+.ie n .IP "$obj\->\fBaddHook\fR($hook|LIST|undef)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddHook\fR($hook|LIST|undef)" 4
+.IX Item "$obj->addHook($hook|LIST|undef)"
+A \f(CW$hook\fR is specified as \s-1HASH\s0 or a \s-1LIST\s0 of \s-1PAIRS\s0.  When \f(CW\*(C`undef\*(C'\fR, this call
+is ignored. See \fIaddHooks()\fR and \*(L"Schema hooks\*(R" below.
+.ie n .IP "$obj\->\fBaddHooks\fR( $hook, [$hook, ...] )" 4
+.el .IP "\f(CW$obj\fR\->\fBaddHooks\fR( \f(CW$hook\fR, [$hook, ...] )" 4
+.IX Item "$obj->addHooks( $hook, [$hook, ...] )"
 Add multiple hooks at once.  These must all be HASHes. See \*(L"Schema hooks\*(R"
 and \fIaddHook()\fR. \f(CW\*(C`undef\*(C'\fR values are ignored.
-.ie n .IP "$obj\->\fBaddKeyRewrite\fR(PREDEF|CODE|HASH, ...)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddKeyRewrite\fR(PREDEF|CODE|HASH, ...)" 4
-.IX Item "$obj->addKeyRewrite(PREDEF|CODE|HASH, ...)"
+.ie n .IP "$obj\->\fBaddKeyRewrite\fR($predef|CODE|HASH, ...)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddKeyRewrite\fR($predef|CODE|HASH, ...)" 4
+.IX Item "$obj->addKeyRewrite($predef|CODE|HASH, ...)"
 Add new rewrite rules to the existing list (initially provided with
 new(key_rewrite)).  The whole list of rewrite rules is returned.
 .Sp
 \&\f(CW\*(C`PREFIXED\*(C'\fR rules will be applied first.  Special care is taken that the
 prefix will not be called twice.  The last added set of rewrite rules
 will be applied first.  See \*(L"Key rewrite\*(R".
-.ie n .IP "$obj\->\fBaddSchemaDirs\fR(DIRECTORIES|FILENAME)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddSchemaDirs\fR(DIRECTORIES|FILENAME)" 4
-.IX Item "$obj->addSchemaDirs(DIRECTORIES|FILENAME)"
+.ie n .IP "$obj\->\fBaddSchemaDirs\fR(@directories|$filename)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddSchemaDirs\fR(@directories|$filename)" 4
+.IX Item "$obj->addSchemaDirs(@directories|$filename)"
 .PD 0
-.IP "XML::Compile::Schema\->\fBaddSchemaDirs\fR(DIRECTORIES|FILENAME)" 4
-.IX Item "XML::Compile::Schema->addSchemaDirs(DIRECTORIES|FILENAME)"
+.IP "XML::Compile::Schema\->\fBaddSchemaDirs\fR(@directories|$filename)" 4
+.IX Item "XML::Compile::Schema->addSchemaDirs(@directories|$filename)"
 .PD
-See \*(L"Accessors\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBaddSchemas\fR(\s-1XML\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddSchemas\fR(\s-1XML\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->addSchemas(XML, OPTIONS)"
-Collect all the schemas defined in the \s-1XML\s0 data.  The \s-1XML\s0 parameter
-must be a XML::LibXML node, therefore it is adviced to use
+Inherited, see \*(L"Accessors\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBaddSchemas\fR($xml, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddSchemas\fR($xml, \f(CW%options\fR)" 4
+.IX Item "$obj->addSchemas($xml, %options)"
+Collect all the schemas defined in the \f(CW$xml\fR data.  The \f(CW$xml\fR parameter
+must be a XML::LibXML node, therefore it is advised to use
 \&\fIimportDefinitions()\fR, which has a much more flexible way to
 specify the data.
+.Sp
+When the object extends XML::Compile::Cache, the prefixes declared
+on the schema element will be taken as default prefixes.
 .Sp
 .Vb 6
 \& \-Option                \-\-Default
@@ -430,10 +468,10 @@ Synonym for \fIaddTypemap()\fR.
 .el .IP "\f(CW$obj\fR\->\fBaddTypemaps\fR(\s-1PAIRS\s0)" 4
 .IX Item "$obj->addTypemaps(PAIRS)"
 Add new XML-Perl type relations.  See \*(L"Typemaps\*(R".
-.ie n .IP "$obj\->\fBblockNamespace\fR(NAMESPACE|TYPE|HASH|CODE|ARRAY)" 4
-.el .IP "\f(CW$obj\fR\->\fBblockNamespace\fR(NAMESPACE|TYPE|HASH|CODE|ARRAY)" 4
-.IX Item "$obj->blockNamespace(NAMESPACE|TYPE|HASH|CODE|ARRAY)"
-Block all references to a \s-1NAMESPACE\s0 or full \s-1TYPE\s0, as if they do not appear
+.ie n .IP "$obj\->\fBblockNamespace\fR($ns|$type|HASH|CODE|ARRAY)" 4
+.el .IP "\f(CW$obj\fR\->\fBblockNamespace\fR($ns|$type|HASH|CODE|ARRAY)" 4
+.IX Item "$obj->blockNamespace($ns|$type|HASH|CODE|ARRAY)"
+Block all references to a \f(CW$ns\fR or full \f(CW$type\fR, as if they do not appear
 in the schema.  Specially useful if the schema includes references to
 old (deprecated) versions of itself which are not being used.  It can
 also be used to block inclusion of huge structures which are not used,
@@ -441,17 +479,19 @@ for increased compile performance, or to avoid buggy constructs.
 .Sp
 These values can also be passed with new(block_namespace) and
 compile(block_namespace).
-.ie n .IP "$obj\->\fBhooks\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBhooks\fR" 4
-.IX Item "$obj->hooks"
+.ie n .IP "$obj\->\fBhooks\fR( [<'\s-1READER\s0'|'\s-1WRITER\s0'>] )" 4
+.el .IP "\f(CW$obj\fR\->\fBhooks\fR( [<'\s-1READER\s0'|'\s-1WRITER\s0'>] )" 4
+.IX Item "$obj->hooks( [<'READER'|'WRITER'>] )"
 Returns the \s-1LIST\s0 of defined hooks (as HASHes).
-.ie n .IP "$obj\->\fBuseSchema\fR(\s-1SCHEMA\s0, [\s-1SCHEMA\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBuseSchema\fR(\s-1SCHEMA\s0, [\s-1SCHEMA\s0])" 4
-.IX Item "$obj->useSchema(SCHEMA, [SCHEMA])"
+[1.36] When an action parameter is provided, it will only return a list
+with hooks added with that action value or no action at all.
+.ie n .IP "$obj\->\fBuseSchema\fR( $schema, [$schema, ...] )" 4
+.el .IP "\f(CW$obj\fR\->\fBuseSchema\fR( \f(CW$schema\fR, [$schema, ...] )" 4
+.IX Item "$obj->useSchema( $schema, [$schema, ...] )"
 Pass a XML::Compile::Schema object, or extensions like
 XML::Compile::Cache, to be used as definitions as well.  First,
 elements are looked-up in the current schema definition object.  If not
-found the other provided \s-1SCHEMA\s0 objects are checked in the order as
+found the other provided \f(CW$schema\fR objects are checked in the order as
 they were added.
 .Sp
 Searches for definitions do not recurse into schemas which are used
@@ -468,14 +508,15 @@ example: use other Schema
 .Ve
 .SS "Compilers"
 .IX Subsection "Compilers"
-.ie n .IP "$obj\->\fBcompile\fR(('\s-1READER\s0'|'\s-1WRITER\s0'), \s-1TYPE\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompile\fR(('\s-1READER\s0'|'\s-1WRITER\s0'), \s-1TYPE\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->compile(('READER'|'WRITER'), TYPE, OPTIONS)"
+Extends \*(L"Compilers\*(R" in XML::Compile.
+.ie n .IP "$obj\->\fBcompile\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'>, $type, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBcompile\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'>, \f(CW$type\fR, \f(CW%options\fR )" 4
+.IX Item "$obj->compile( <'READER'|'WRITER'>, $type, %options )"
 Translate the specified \s-1ELEMENT\s0 (found in one of the read schemas) into
 a \s-1CODE\s0 reference which is able to translate between XML-text and a \s-1HASH\s0.
-When the \s-1TYPE\s0 is \f(CW\*(C`undef\*(C'\fR, an empty \s-1LIST\s0 is returned.
+When the \f(CW$type\fR is \f(CW\*(C`undef\*(C'\fR, an empty \s-1LIST\s0 is returned.
 .Sp
-The indicated \s-1TYPE\s0 is the starting-point for processing in the
+The indicated \f(CW$type\fR is the starting-point for processing in the
 data-structure, a toplevel element or attribute name.  The name must
 be specified in \f(CW\*(C`{url}name\*(C'\fR format, there the url is the name-space.
 An alternative is the \f(CW\*(C`url#id\*(C'\fR which refers to an element or type with
@@ -490,7 +531,7 @@ When a \s-1WRITER\s0 is created, a \s-1CODE\s0 reference is returned which needs
 to be called with an XML::LibXML::Document object and a \s-1HASH\s0, and
 returns a XML::LibXML::Node.
 .Sp
-Many \s-1OPTIONS\s0 below are \fBexplained in more detailed\fR in the manual-page
+Many \f(CW%options\fR below are \fBexplained in more detailed\fR in the manual-page
 XML::Compile::Translate, which implements the compilation.
 .Sp
 .Vb 10
@@ -524,6 +565,7 @@ XML::Compile::Translate, which implements the compilation.
 \&  use_default_namespace           <false>
 \&  validation                      <true>
 \&  xsi_type                        {}
+\&  xsi_type_everywhere             <false>
 .Ve
 .RS 4
 .IP "abstract_types => '\s-1ERROR\s0'|'\s-1ACCEPT\s0'" 2
@@ -535,29 +577,29 @@ will be produced whenever an abstract type is encountered.
 them as non-abstract types.
 .IP "any_attribute => CODE|'\s-1TAKE_ALL\s0'|'\s-1SKIP_ALL\s0'" 2
 .IX Item "any_attribute => CODE|'TAKE_ALL'|'SKIP_ALL'"
-[0.89] In general, \f(CW\*(C`anyAttribute\*(C'\fR schema components cannot be handled
+[0.89, reader] In general, \f(CW\*(C`anyAttribute\*(C'\fR schema components cannot be handled
 automatically.  If  you need to create or process anyAttribute
 information, then read about wildcards in the \s-1DETAILS\s0 chapter of the
 manual-page for the specific back-end.
 [pre\-0.89] this option was named \f(CW\*(C`anyElement\*(C'\fR, which will still work.
 .IP "any_element => CODE|'\s-1TAKE_ALL\s0'|'\s-1SKIP_ALL\s0'" 2
 .IX Item "any_element => CODE|'TAKE_ALL'|'SKIP_ALL'"
-[0.89] In general, \f(CW\*(C`any\*(C'\fR schema components cannot be handled automatically.
-If  you need to create or process any information, then read about
-wildcards in the \s-1DETAILS\s0 chapter of the manual-page for the specific
-back-end.
+[0.89, reader] In general, \f(CW\*(C`any\*(C'\fR schema components cannot be handled
+automatically.  If  you need to create or process any information, then
+read about wildcards in the \s-1DETAILS\s0 chapter of the manual-page for the
+specific back-end.
 [pre\-0.89] this option was named \f(CW\*(C`anyElement\*(C'\fR, which will still work.
 .IP "any_type => \s-1CODE\s0" 2
 .IX Item "any_type => CODE"
-[1.07] how to handle \*(L"anyType\*(R" type elements.  Depends on the backend.
-.IP "attributes_qualified => \s-1BOOLEAN\s0" 2
-.IX Item "attributes_qualified => BOOLEAN"
-When defined, this will overrule the \f(CW\*(C`attributeFormDefault\*(C'\fR flags in
-all schemas.  When not qualified, the xml will not produce nor
-process prefixes on attributes.
+[1.07] how to handle \*(L"anyType\*(R" type elements.  Supported values depends
+on the backend, specializations of XML::Compile::Translate.
+.ie n .IP "attributes_qualified => ""ALL""|""NONE""|BOOLEAN" 2
+.el .IP "attributes_qualified => \f(CWALL\fR|\f(CWNONE\fR|BOOLEAN" 2
+.IX Item "attributes_qualified => ALL|NONE|BOOLEAN"
+[1.44] Like option \f(CW\*(C`elements_qualified\*(C'\fR, but then for attributes.
 .IP "block_namespace => NAMESPACE|TYPE|HASH|CODE|ARRAY" 2
 .IX Item "block_namespace => NAMESPACE|TYPE|HASH|CODE|ARRAY"
-See \fIblockNamespace()\fR.
+[reader] See \fIblockNamespace()\fR.
 .IP "check_occurs => \s-1BOOLEAN\s0" 2
 .IX Item "check_occurs => BOOLEAN"
 Whether code will be produced to do bounds checking on elements and blocks
@@ -575,7 +617,7 @@ Turning this off will improve the processing speed significantly, but is
 external sources: validation is a crucial requirement for \s-1XML\s0.
 .IP "default_values => '\s-1MINIMAL\s0'|'\s-1IGNORE\s0'|'\s-1EXTEND\s0'" 2
 .IX Item "default_values => 'MINIMAL'|'IGNORE'|'EXTEND'"
-How to treat default values as provided by the schema.
+[reader] How to treat default values as provided by the schema.
 With \f(CW\*(C`IGNORE\*(C'\fR (the writer default), you will see exactly what is
 specified in the \s-1XML\s0 or \s-1HASH\s0.  With \f(CW\*(C`EXTEND\*(C'\fR (the reader default) will
 show the default and fixed values in the result.  \f(CW\*(C`MINIMAL\*(C'\fR does remove
@@ -584,18 +626,27 @@ See \*(L"Default Values\*(R".
 .ie n .IP "elements_qualified => ""TOP""|""ALL""|""NONE""|BOOLEAN" 2
 .el .IP "elements_qualified => \f(CWTOP\fR|\f(CWALL\fR|\f(CWNONE\fR|BOOLEAN" 2
 .IX Item "elements_qualified => TOP|ALL|NONE|BOOLEAN"
-When defined, this will overrule the namespace use on elements in
-all schemas.  When \f(CW\*(C`TOP\*(C'\fR is specified, at least the top-element will
-be name-space qualified.  When \f(CW\*(C`ALL\*(C'\fR or a true value is given, then all
+When defined, this will overrule the use of namespaces (as prefix) on
+elements in all schemas.  When \f(CW\*(C`ALL\*(C'\fR or a true value is given, then all
 elements will be used qualified.  When \f(CW\*(C`NONE\*(C'\fR or a false value is given,
-the \s-1XML\s0 will not produce or process prefixes on the elements.
+the \s-1XML\s0 will not produce or process prefixes on any element.
 .Sp
-The \f(CW\*(C`form\*(C'\fR attributes will be respected, except on the top element when
-\&\f(CW\*(C`TOP\*(C'\fR is specified.  Use hooks when you need to fix name-space use in
-more subtile ways.
+All top-level elements (and attributes) will be used in a name-space
+qualified way, if they have a targetNamespace.  Some applications require
+some global element with qualification, so refuse global elements which
+have no qualification.  Using the \f(CW\*(C`TOP\*(C'\fR setting, the compiler checks
+that the targetNamespace exists.
+.Sp
+The \f(CW\*(C`form\*(C'\fR attributes in the schema will be respected; overrule the
+effects of this option.  Use hooks when you need to fix name-space use
+in more subtile ways.
 .Sp
 With \f(CW\*(C`element_form_default\*(C'\fR, you can correct whole
 schema's about their name-space behavior.
+.Sp
+Change in [1.44]: \f(CW\*(C`TOP\*(C'\fR before enforced a name-space on the top-level.
+There should always be a name-space on the top element.  It got changed
+into that \f(CW\*(C`TOP\*(C'\fR checks that the globals have a targetNamespace.
 .IP "hook => HOOK|ARRAY\-OF\-HOOKS" 2
 .IX Item "hook => HOOK|ARRAY-OF-HOOKS"
 Define one or more processing hooks.  See \*(L"Schema hooks\*(R" below.
@@ -615,14 +666,14 @@ is a crucial requirement for \s-1XML:\s0 please do not turn this off when the
 data comes from external sources.
 .IP "ignore_unused_tags => BOOLEAN|REGEXP" 2
 .IX Item "ignore_unused_tags => BOOLEAN|REGEXP"
-Overrules what is set with new(ignore_unused_tags).
+[writer] Overrules what is set with new(ignore_unused_tags).
 .IP "include_namespaces => BOOLEAN|CODE" 2
 .IX Item "include_namespaces => BOOLEAN|CODE"
-Indicates whether the \s-1WRITER\s0 should include the prefix to namespace
-translation on the top-level element of the returned tree.  If not,
-you may continue with the same name-space table to combine various
-\&\s-1XML\s0 components into one, and add the namespaces later.  No namespace
-definition can be added the production rule produces an attribute.
+[writer] Indicates whether the namespace declaration should be included
+on the top-level element.  If not, you may continue with the same
+name-space table to combine various \s-1XML\s0 components into one, and add the
+namespaces later.  No namespace definition can be added the production
+rule produces an attribute.
 .Sp
 When a \s-1CODE\s0 reference is passed, it will be called for each namespace
 to decide whether it should be included or not. When true, it will
@@ -634,17 +685,17 @@ Found in the schema wild-life: people who think that nillable means
 optional.  Not too hard to fix.  For the \s-1WRITER\s0, you still have to state
 \&\s-1NIL\s0 explicitly, but the elements are not constructed.  The \s-1READER\s0 will
 output \s-1NIL\s0 when the nillable elements are missing.
-.IP "key_rewrite => HASH|CODE|ARRAY\-of\-HASH\-and\-CODE" 2
-.IX Item "key_rewrite => HASH|CODE|ARRAY-of-HASH-and-CODE"
+.IP "key_rewrite => HASH|CODE|ARRAY" 2
+.IX Item "key_rewrite => HASH|CODE|ARRAY"
 Add key rewrite rules to the front of the list of rules, as set by
 new(key_rewrite) and \fIaddKeyRewrite()\fR.  See \*(L"Key rewrite\*(R"
 .IP "mixed_elements => CODE|PREDEFINED" 2
 .IX Item "mixed_elements => CODE|PREDEFINED"
-What to do when mixed schema elements are to be processed.  Read
+[reader] What to do when mixed schema elements are to be processed.  Read
 more in the \*(L"\s-1DETAILS\s0\*(R" section below.
 .IP "namespace_reset => \s-1BOOLEAN\s0" 2
 .IX Item "namespace_reset => BOOLEAN"
-Use the same prefixes in \f(CW\*(C`prefixes\*(C'\fR as with some other compiled
+[writer] Use the same prefixes in \f(CW\*(C`prefixes\*(C'\fR as with some other compiled
 piece, but reset the counts to zero first.
 .IP "output_namespaces => HASH|ARRAY\-of\-PAIRS" 2
 .IX Item "output_namespaces => HASH|ARRAY-of-PAIRS"
@@ -655,10 +706,10 @@ Prepended to each error report, to indicate the location of the
 error in the XML-Scheme tree.
 .IP "permit_href => \s-1BOOLEAN\s0" 2
 .IX Item "permit_href => BOOLEAN"
-When parsing SOAP-RPC encoded messages, the elements may have a \f(CW\*(C`href\*(C'\fR
-attribute, pointing to an object with \f(CW\*(C`id\*(C'\fR.  The \s-1READER\s0 will return the
-unparsed, unresolved node when the attribute is detected, and the SOAP-RPC
-decoder will have to discover and resolve it.
+[reader] When parsing SOAP-RPC encoded messages, the elements may have
+a \f(CW\*(C`href\*(C'\fR attribute pointing to an object with \f(CW\*(C`id\*(C'\fR.  The \s-1READER\s0 will
+return the unparsed, unresolved node when the attribute is detected,
+and the SOAP-RPC decoder will have to discover and resolve it.
 .IP "prefixes => HASH|ARRAY\-of\-PAIRS" 2
 .IX Item "prefixes => HASH|ARRAY-of-PAIRS"
 Can be used to pre-define prefixes for namespaces (for '\s-1WRITER\s0' or
@@ -673,19 +724,19 @@ prefix, uri \s-1PAIRS\s0 is simpler.
 \& prefixes => { $myns => \*(Aqmine\*(Aq, $twons => \*(Aqtwo\*(Aq }
 \&
 \& # the previous is short for:
-\& prefixes => { $myns => [ uri => $myns, prefix => \*(Aqmine\*(Aq, used => 0 ]
+\& prefixes => { $myns  => [ uri => $myns, prefix => \*(Aqmine\*(Aq, used => 0 ]
 \&             , $twons => [ uri => $twons, prefix => \*(Aqtwo\*(Aq, ...] };
 .Ve
 .IP "sloppy_floats => \s-1BOOLEAN\s0" 2
 .IX Item "sloppy_floats => BOOLEAN"
-The float types of \s-1XML\s0 are all quite big, and support NaN, \s-1INF\s0, and \-INF.
-Perl's normal floats do not, and therefore Math::BigFloat is used.  This,
-however, is slow.  When true, you will crash on any value which is not
-understood by Perl's default float... but run much faster.  See also
-\&\f(CW\*(C`sloppy_integers\*(C'\fR.
+[reader] The float types of \s-1XML\s0 are all quite big, and support NaN, \s-1INF\s0,
+and \-INF.  Perl's normal floats do not, and therefore Math::BigFloat
+is used.  This, however, is slow.  When true, you will crash on any value
+which is not understood by Perl's default float... but run much faster.
+See also \f(CW\*(C`sloppy_integers\*(C'\fR.
 .IP "sloppy_integers => \s-1BOOLEAN\s0" 2
 .IX Item "sloppy_integers => BOOLEAN"
-The \s-1XML\s0 \f(CW\*(C`integer\*(C'\fR data-types must support at least 18 digits,
+[reader] The \s-1XML\s0 \f(CW\*(C`integer\*(C'\fR data-types must support at least 18 digits,
 which is larger than Perl's 32 bit internal integers.  Therefore, the
 implementation will use Math::BigInt objects to handle them.  However,
 often an simple \f(CW\*(C`int\*(C'\fR type whould have sufficed, but the \s-1XML\s0 designer
@@ -693,7 +744,7 @@ was lazy.  A long is much faster to handle.  Set this flag to use \f(CW\*(C`int\
 as fast (but inprecise) replacements.
 .Sp
 Be aware that \f(CW\*(C`Math::BigInt\*(C'\fR and \f(CW\*(C`Math::BigFloat\*(C'\fR objects are nearly
-but not fully transparently mimicing the behavior of Perl's ints and
+but not fully transparently mimicking the behavior of Perl's ints and
 floats.  See their respective manual-pages.  Especially when you wish
 for some performance, you should optimize access to these objects to
 avoid expensive copying which is exactly the spot where the differences
@@ -708,7 +759,7 @@ Add this typemap to the relations defined by new(typemap) or
 \&\fIaddTypemaps()\fR
 .IP "use_default_namespace => \s-1BOOLEAN\s0" 2
 .IX Item "use_default_namespace => BOOLEAN"
-[0.91] When mixing qualified and unqualified namespaces, then the use of
+[0.91, writer] When mixing qualified and unqualified namespaces, then the use of
 a default namespace can be quite confusing: a name-space without prefix.
 Therefore, by default, all qualified elements will have an explicit prefix.
 .IP "validation => \s-1BOOLEAN\s0" 2
@@ -719,38 +770,64 @@ fewer checks in your code.  This flag overrules the \f(CW\*(C`check_values\*(C'\
 \&\f(CW\*(C`check_occurs\*(C'\fR, and \f(CW\*(C`ignore_facets\*(C'\fR.
 .IP "xsi_type => \s-1HASH\s0" 2
 .IX Item "xsi_type => HASH"
-See \*(L"Handling xsi:type\*(R"
+See \*(L"Handling xsi:type\*(R".  The \s-1HASH\s0 maps types as mentioned in the schema,
+to extensions of those types which are addressed via the horrible \f(CW\*(C`xsi:type\*(C'\fR
+construct.  When you specify \f(CW\*(C`AUTO\*(C'\fR as value for some type, the translator
+tries collect possible xsi:type values from the loaded schemas. This may be
+slow and may produce imperfect results.
+.IP "xsi_type_everywhere => \s-1BOOLEAN\s0" 2
+.IX Item "xsi_type_everywhere => BOOLEAN"
+[1.48, writer] Add an \f(CW\*(C`xsi:type\*(C'\fR attribute to all elements, for instance as
+used in \s-1SOAP\s0 RPC/encoded.  The type added is the type according to the
+schema, unless the \f(CW\*(C`xsi:type\*(C'\fR is already present on an element for
+some other reason.
+.Sp
+Be aware that this option has a different purpose from \f(CW\*(C`xsi_type\*(C'\fR.
+In this case, we do add exactly the type specified in the xsd to each
+element which does not have an \f(CW\*(C`xsi:type\*(C'\fR attribute yet.  The \f(CW\*(C`xsi_type\*(C'\fR
+on the other hand, implements the (mis\-)feature that the element's
+content may get replaced by any extended type with this dynamic flag.
 .RE
 .RS 4
 .RE
-.ie n .IP "$obj\->\fBdataToXML\fR(NODE|REF\-XML\-STRING|XML\-STRING|FILENAME|FILEHANDLE|KNOWN)" 4
-.el .IP "\f(CW$obj\fR\->\fBdataToXML\fR(NODE|REF\-XML\-STRING|XML\-STRING|FILENAME|FILEHANDLE|KNOWN)" 4
-.IX Item "$obj->dataToXML(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)"
+.ie n .IP "$obj\->\fBcompileType\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'>, $type, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileType\fR( <'\s-1READER\s0'|'\s-1WRITER\s0'>, \f(CW$type\fR, \f(CW%options\fR )" 4
+.IX Item "$obj->compileType( <'READER'|'WRITER'>, $type, %options )"
+This is a hack to be able to process components of \s-1SOAP\s0 messages, which
+are only specified by type.  Probably (hopefully) you do no need it.
+All \f(CW%options\fR are the same as for \fIcompile()\fR.
+.ie n .IP "$obj\->\fBdataToXML\fR($node|REF\-XML|XML\-STRING|$filename|$fh|$known)" 4
+.el .IP "\f(CW$obj\fR\->\fBdataToXML\fR($node|REF\-XML|XML\-STRING|$filename|$fh|$known)" 4
+.IX Item "$obj->dataToXML($node|REF-XML|XML-STRING|$filename|$fh|$known)"
 .PD 0
-.IP "XML::Compile::Schema\->\fBdataToXML\fR(NODE|REF\-XML\-STRING|XML\-STRING|FILENAME|FILEHANDLE|KNOWN)" 4
-.IX Item "XML::Compile::Schema->dataToXML(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)"
+.IP "XML::Compile::Schema\->\fBdataToXML\fR($node|REF\-XML|XML\-STRING|$filename|$fh|$known)" 4
+.IX Item "XML::Compile::Schema->dataToXML($node|REF-XML|XML-STRING|$filename|$fh|$known)"
 .PD
-See \*(L"Compilers\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBinitParser\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBinitParser\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->initParser(OPTIONS)"
+Inherited, see \*(L"Compilers\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBinitParser\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBinitParser\fR(%options)" 4
+.IX Item "$obj->initParser(%options)"
 .PD 0
-.IP "XML::Compile::Schema\->\fBinitParser\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::Schema->initParser(OPTIONS)"
+.IP "XML::Compile::Schema\->\fBinitParser\fR(%options)" 4
+.IX Item "XML::Compile::Schema->initParser(%options)"
 .PD
-See \*(L"Compilers\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBtemplate\fR('\s-1XML\s0'|'\s-1PERL\s0', \s-1ELEMENT\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBtemplate\fR('\s-1XML\s0'|'\s-1PERL\s0', \s-1ELEMENT\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->template('XML'|'PERL', ELEMENT, OPTIONS)"
+Inherited, see \*(L"Compilers\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBtemplate\fR( <'\s-1XML\s0'|'\s-1PERL\s0'|'\s-1TREE\s0'>, $element, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBtemplate\fR( <'\s-1XML\s0'|'\s-1PERL\s0'|'\s-1TREE\s0'>, \f(CW$element\fR, \f(CW%options\fR )" 4
+.IX Item "$obj->template( <'XML'|'PERL'|'TREE'>, $element, %options )"
 Schema's can be horribly complex and unreadible.  Therefore, this template
-method can be called to create an example which demonstrates how data of
-the specified \s-1ELEMENT\s0 as \s-1XML\s0 or Perl is organized in practice.
+method can be called to create an example which demonstrates how data
+of the specified \f(CW$element\fR shown as \s-1XML\s0 or Perl is organized in practice.
 .Sp
-Some \s-1OPTIONS\s0 are explained in XML::Compile::Translate.
-There are some extra \s-1OPTIONS\s0 defined for the final output process.
+The '\s-1TREE\s0' template returns the intermediate parse tree, which gets
+formatted into the \s-1XML\s0 or Perl example.  This is not a very stable
+interface: it may change without much notice.
+.Sp
+Some \f(CW%options\fR are explained in XML::Compile::Translate.  There are
+some extra \f(CW%options\fR defined for the final output process.
 .Sp
 The templates produced are \fBnot always correct\fR.  Please contribute
-improvements.
+improvements: read and understand the comments in the text.
 .Sp
 .Vb 9
 \& \-Option              \-\-Default
@@ -779,13 +856,13 @@ By default, do not show abstract types in the output.
 .PD
 The leading indentation string per nesting.  Must start with at least one
 blank.
-.IP "key_rewrite => HASH|CODE|ARRAY\-of\-HASH\-and\-CODE" 2
-.IX Item "key_rewrite => HASH|CODE|ARRAY-of-HASH-and-CODE"
+.IP "key_rewrite => HASH|CODE|ARRAY" 2
+.IX Item "key_rewrite => HASH|CODE|ARRAY"
 .PD 0
 .IP "show_comments => STRING|'\s-1ALL\s0'|'\s-1NONE\s0'" 2
 .IX Item "show_comments => STRING|'ALL'|'NONE'"
 .PD
-A comma seperated list of tokens, which explain what kind of comments need
+A comma separated list of tokens, which explain what kind of comments need
 to be included in the output.  The available tokens are: \f(CW\*(C`struct\*(C'\fR, \f(CW\*(C`type\*(C'\fR,
 \&\f(CW\*(C`occur\*(C'\fR, \f(CW\*(C`facets\*(C'\fR.  A value of \f(CW\*(C`ALL\*(C'\fR will select all available comments.
 The \f(CW\*(C`NONE\*(C'\fR or empty string will exclude all comments.
@@ -797,29 +874,30 @@ Skip the comment header from the output.
 .RE
 .SS "Administration"
 .IX Subsection "Administration"
-.ie n .IP "$obj\->\fBdoesExtend\fR(\s-1EXTTYPE\s0, \s-1BASETYPE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBdoesExtend\fR(\s-1EXTTYPE\s0, \s-1BASETYPE\s0)" 4
-.IX Item "$obj->doesExtend(EXTTYPE, BASETYPE)"
-Returns true when the \s-1EXTTYPE\s0 extends the \s-1BASETYPE\s0. See
+Extends \*(L"Administration\*(R" in XML::Compile.
+.ie n .IP "$obj\->\fBdoesExtend\fR($exttype, $basetype)" 4
+.el .IP "\f(CW$obj\fR\->\fBdoesExtend\fR($exttype, \f(CW$basetype\fR)" 4
+.IX Item "$obj->doesExtend($exttype, $basetype)"
+Returns true when the \f(CW$exttype\fR extends the \f(CW$basetype\fR. See
 \&\fIXML::Compile::Schema::NameSpaces::doesExtend()\fR
-.ie n .IP "$obj\->\fBelements\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBelements\fR" 4
-.IX Item "$obj->elements"
+.ie n .IP "$obj\->\fBelements\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBelements\fR()" 4
+.IX Item "$obj->elements()"
 List all elements, defined by all schemas sorted alphabetically.
-.ie n .IP "$obj\->\fBfindSchemaFile\fR(\s-1FILENAME\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBfindSchemaFile\fR(\s-1FILENAME\s0)" 4
-.IX Item "$obj->findSchemaFile(FILENAME)"
+.ie n .IP "$obj\->\fBfindSchemaFile\fR($filename)" 4
+.el .IP "\f(CW$obj\fR\->\fBfindSchemaFile\fR($filename)" 4
+.IX Item "$obj->findSchemaFile($filename)"
 .PD 0
-.IP "XML::Compile::Schema\->\fBfindSchemaFile\fR(\s-1FILENAME\s0)" 4
-.IX Item "XML::Compile::Schema->findSchemaFile(FILENAME)"
+.IP "XML::Compile::Schema\->\fBfindSchemaFile\fR($filename)" 4
+.IX Item "XML::Compile::Schema->findSchemaFile($filename)"
 .PD
-See \*(L"Administration\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBimportDefinitions\fR(\s-1XMLDATA\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBimportDefinitions\fR(\s-1XMLDATA\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->importDefinitions(XMLDATA, OPTIONS)"
-Import (include) the schema information included in the \s-1XMLDATA\s0.  The
-\&\s-1XMLDATA\s0 must be acceptable for \fIdataToXML()\fR.  The resulting node
-and all the \s-1OPTIONS\s0 are passed to \fIaddSchemas()\fR. The schema node does
+Inherited, see \*(L"Administration\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBimportDefinitions\fR($xmldata, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBimportDefinitions\fR($xmldata, \f(CW%options\fR)" 4
+.IX Item "$obj->importDefinitions($xmldata, %options)"
+Import (include) the schema information included in the \f(CW$xmldata\fR.  The
+\&\f(CW$xmldata\fR must be acceptable for \fIdataToXML()\fR.  The resulting node
+and all the \f(CW%options\fR are passed to \fIaddSchemas()\fR. The schema node does
 not need to be the top element: any schema node found in the data
 will be decoded.
 .Sp
@@ -834,7 +912,7 @@ This removal of dupplications will not work for open files or pre-parsed
 As an extension to the handling \fIdataToXML()\fR provides, you can specify an
 \&\s-1ARRAY\s0 of things which are acceptable to \f(CW\*(C`dataToXML\*(C'\fR.  This way, you can
 specify multiple resources at once, each of which will be processed with
-the same \s-1OPTIONS\s0.
+the same \f(CW%options\fR.
 .Sp
 .Vb 2
 \& \-Option \-\-Default
@@ -858,40 +936,73 @@ example: of use of importDefinitions
 \&  $schema\->importDefinitions(\e@specs, @options);
 .Ve
 .RE
-.ie n .IP "$obj\->\fBknownNamespace\fR(NAMESPACE|PAIRS)" 4
-.el .IP "\f(CW$obj\fR\->\fBknownNamespace\fR(NAMESPACE|PAIRS)" 4
-.IX Item "$obj->knownNamespace(NAMESPACE|PAIRS)"
+.ie n .IP "$obj\->\fBknownNamespace\fR($ns|PAIRS)" 4
+.el .IP "\f(CW$obj\fR\->\fBknownNamespace\fR($ns|PAIRS)" 4
+.IX Item "$obj->knownNamespace($ns|PAIRS)"
 .PD 0
-.IP "XML::Compile::Schema\->\fBknownNamespace\fR(NAMESPACE|PAIRS)" 4
-.IX Item "XML::Compile::Schema->knownNamespace(NAMESPACE|PAIRS)"
+.IP "XML::Compile::Schema\->\fBknownNamespace\fR($ns|PAIRS)" 4
+.IX Item "XML::Compile::Schema->knownNamespace($ns|PAIRS)"
 .PD
-See \*(L"Administration\*(R" in XML::Compile
-.ie n .IP "$obj\->\fBnamespaces\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBnamespaces\fR" 4
-.IX Item "$obj->namespaces"
+Inherited, see \*(L"Administration\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBnamespaces\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBnamespaces\fR()" 4
+.IX Item "$obj->namespaces()"
 Returns the XML::Compile::Schema::NameSpaces object which is used
 to collect schemas.
-.ie n .IP "$obj\->\fBprintIndex\fR([\s-1FILEHANDLE\s0], \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBprintIndex\fR([\s-1FILEHANDLE\s0], \s-1OPTIONS\s0)" 4
-.IX Item "$obj->printIndex([FILEHANDLE], OPTIONS)"
-Print all the elements which are defined in the schemas to the \s-1FILEHANDLE\s0
-(by default the selected handle).  \s-1OPTIONS\s0 are passed to
+.ie n .IP "$obj\->\fBprintIndex\fR( [$fh], %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBprintIndex\fR( [$fh], \f(CW%options\fR )" 4
+.IX Item "$obj->printIndex( [$fh], %options )"
+Print all the elements which are defined in the schemas to the \f(CW$fh\fR
+(by default the selected handle).  \f(CW%options\fR are passed to
 \&\fIXML::Compile::Schema::NameSpaces::printIndex()\fR and
 \&\fIXML::Compile::Schema::Instance::printIndex()\fR.
-.ie n .IP "$obj\->\fBtypes\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtypes\fR" 4
-.IX Item "$obj->types"
+.ie n .IP "$obj\->\fBtypes\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBtypes\fR()" 4
+.IX Item "$obj->types()"
 List all types, defined by all schemas sorted alphabetically.
-.ie n .IP "$obj\->\fBwalkTree\fR(\s-1NODE\s0, \s-1CODE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBwalkTree\fR(\s-1NODE\s0, \s-1CODE\s0)" 4
-.IX Item "$obj->walkTree(NODE, CODE)"
-See \*(L"Administration\*(R" in XML::Compile
+.ie n .IP "$obj\->\fBwalkTree\fR($node, \s-1CODE\s0)" 4
+.el .IP "\f(CW$obj\fR\->\fBwalkTree\fR($node, \s-1CODE\s0)" 4
+.IX Item "$obj->walkTree($node, CODE)"
+Inherited, see \*(L"Administration\*(R" in XML::Compile
 .SH "DETAILS"
 .IX Header "DETAILS"
+Extends \*(L"\s-1DETAILS\s0\*(R" in XML::Compile.
+.SS "Distribution collection overview"
+.IX Subsection "Distribution collection overview"
+Extends \*(L"Distribution collection overview\*(R" in XML::Compile.
 .SS "Comparison"
 .IX Subsection "Comparison"
+Extends \*(L"Comparison\*(R" in XML::Compile.
 .SS "Collecting definitions"
 .IX Subsection "Collecting definitions"
+When starting an application, you will need to read the schema
+definitions.  This is done by instantiating an object via
+\&\fIXML::Compile::Schema::new()\fR or \fIXML::Compile::WSDL11::new()\fR.
+The \s-1WSDL11\s0 object has a schema object internally.
+.PP
+Schemas may contains \f(CW\*(C`import\*(C'\fR and \f(CW\*(C`include\*(C'\fR statements, which
+specify other resources for definitions.  In the idea of the \s-1XML\s0 design
+team, those files should be retrieved automatically via an internet
+connection from the \f(CW\*(C`schemaLocation\*(C'\fR.  However, this is a bad concept; in
+XML::Compile modules you will have to explicitly provide filenames on local
+disk using \fIimportDefinitions()\fR or \fIXML::Compile::WSDL11::addWSDL()\fR.
+.PP
+There are various reasons why I, the author of this module, think the
+dynamic automatic internet imports are a bad idea.  First: you do not
+always have a working internet connection (travelling with a laptop in
+a train).  Your implementation should work the same way under all
+environmental circumstances!  Besides, I do not trust remote files on
+my system, without inspecting them.  Most important: I want to run my
+regression tests before using a new version of the definitions, so I do
+not want to have a remote server change the agreements without my
+knowledge.
+.PP
+So: before you start, you will need to scan (recursively) the initial
+schema or wsdl file for \f(CW\*(C`import\*(C'\fR and \f(CW\*(C`include\*(C'\fR statements, and
+collect all these files from their \f(CW\*(C`schemaLocation\*(C'\fR into files on
+local disk.  In your program, call \fIimportDefinitions()\fR on all of
+them \-in any order\- before you call \fIcompile()\fR.
+.PP
 \fIOrganizing your definitions\fR
 .IX Subsection "Organizing your definitions"
 .PP
@@ -933,34 +1044,6 @@ Very probably, the namespace is already in some variable:
 \&  my $mytype = pack_type $myns, $myelement;
 \&  my $reader = $schema\->compileClient(READER => $mytype);
 .Ve
-.PP
-When starting an application, you will need to read the schema
-definitions.  This is done by instantiating an object via
-\&\fIXML::Compile::Schema::new()\fR or \fIXML::Compile::WSDL11::new()\fR.
-The \s-1WSDL11\s0 object has a schema object internally.
-.PP
-Schemas may contains \f(CW\*(C`import\*(C'\fR and \f(CW\*(C`include\*(C'\fR statements, which
-specify other resources for definitions.  In the idea of the \s-1XML\s0 design
-team, those files should be retrieved automatically via an internet
-connection from the \f(CW\*(C`schemaLocation\*(C'\fR.  However, this is a bad concept; in
-XML::Compile modules you will have to explictly provide filenames on local
-disk using \fIimportDefinitions()\fR or \fIXML::Compile::WSDL11::addWSDL()\fR.
-.PP
-There are various reasons why I, the author of this module, think the
-dynamic automatic internet imports are a bad idea.  First: you do not
-always have a working internet connection (travelling with a laptop in
-a train).  Your implementation should work the same way under all
-environmental circumstances!  Besides, I do not trust remote files on
-my system, without inspecting them.  Most important: I want to run my
-regression tests before using a new version of the definitions, so I do
-not want to have a remote server change the agreements without my
-knowledge.
-.PP
-So: before you start, you will need to scan (recursively) the initial
-schema or wsdl file for \f(CW\*(C`import\*(C'\fR and \f(CW\*(C`include\*(C'\fR statements, and
-collect all these files from their \f(CW\*(C`schemaLocation\*(C'\fR into files on
-local disk.  In your program, call \fIimportDefinitions()\fR on all of
-them \-in any order\- before you call \fIcompile()\fR.
 .SS "Addressing components"
 .IX Subsection "Addressing components"
 Normally, external users can only address elements within a schema,
@@ -990,6 +1073,24 @@ the use of namespaces) then the elements can be addressed as \f(CW\*(C`{}name\*(
 or simple \f(CW\*(C`name\*(C'\fR.
 .SS "Representing data-structures"
 .IX Subsection "Representing data-structures"
+The code will do its best to produce a correct translation. For
+instance, an accidental \f(CW1.9999\fR will be converted into \f(CW2\fR
+when the schema says that the field is an \f(CW\*(C`int\*(C'\fR.  It will also
+strip superfluous blanks when the data-type permits.  Especially
+watch-out for the \f(CW\*(C`Integer\*(C'\fR types, which produce Math::BigInt
+objects unless compile(sloppy_integers) is used.
+.PP
+Elements can be complex, and themselve contain elements which
+are complex.  In the Perl representation of the data, this will
+be shown as nested hashes with the same structure as the \s-1XML\s0.
+.PP
+You should not take tare of character encodings, whereas XML::LibXML is
+doing that for us: you shall not escape characters like \*(L"<\*(R" yourself.
+.PP
+The schemas define kinds of data types.  There are various ways to define
+them (with restrictions and extensions), but for the resulting data
+structure is that knowledge not important.
+.PP
 \fIsimpleType\fR
 .IX Subsection "simpleType"
 .PP
@@ -1005,12 +1106,61 @@ Note that some of the reader hooks will alter the single value of these
 elements into a \s-1HASH\s0 like used for the complexType/simpleContent (next
 paragraph), to be able to return some extra collected information.
 .PP
+\&\fB. Example: typical simpleType\fR
+.PP
+In \s-1XML\s0, it looks like this:
+.PP
+.Vb 1
+\& <test1>42</test1>
+.Ve
+.PP
+In the \s-1HASH\s0 structure, the data will be represented as
+.PP
+.Vb 1
+\& test1 => 42
+.Ve
+.PP
+With reader hook \f(CW\*(C`after => \*(AqXML_NODE\*(Aq\*(C'\fR hook applied, it will become
+.PP
+.Vb 3
+\& test1 => { _ => 42
+\&          , _XML_NODE => $obj
+\&          }
+.Ve
+.PP
 \fIcomplexType/simpleContent\fR
 .IX Subsection "complexType/simpleContent"
 .PP
 In this case, the single value container may have attributes.  The number
 of attributes can be endless, and the value is only one.  This value
 has no name, and therefore gets a predefined name \f(CW\*(C`_\*(C'\fR.
+.PP
+When passed to the writer, you may specify a single value (not the whole
+\&\s-1HASH\s0) when no attributes are used.
+.PP
+\&\fB. typical simpleContent example\fR
+.PP
+In \s-1XML\s0, this looks like this:
+.PP
+.Vb 1
+\& <test2 question="everything">42</test2>
+.Ve
+.PP
+As a \s-1HASH\s0, this shows as
+.PP
+.Vb 3
+\& test2 => { _ => 42
+\&          , question => \*(Aqeverything\*(Aq
+\&          }
+.Ve
+.PP
+When specified in the writer, when no attributes are need, you can use
+either form:
+.PP
+.Vb 2
+\&  test3 => { _ => 7 }
+\&  test3 => 7
+.Ve
 .PP
 \fIcomplexType and complexType/complexContent\fR
 .IX Subsection "complexType and complexType/complexContent"
@@ -1019,6 +1169,27 @@ These containers not only have attributes, but also multiple values
 as content.  The \f(CW\*(C`complexContent\*(C'\fR is used to create inheritance
 structures in the data-type definition.  This does not affect the
 \&\s-1XML\s0 data package itself.
+.PP
+\&\fB. Example: typical complexType element\fR
+.PP
+The \s-1XML\s0 could look like:
+.PP
+.Vb 4
+\& <test3 question="everything" by="mouse">
+\&   <answer>42</answer>
+\&   <when>5 billion BC</when>
+\& </test3>
+.Ve
+.PP
+Represented as \s-1HASH\s0, this looks like
+.PP
+.Vb 5
+\& test3 => { question => \*(Aqeverything\*(Aq
+\&          , by       => \*(Aqmouse\*(Aq
+\&          , answer   => 42
+\&          , when     => \*(Aq5 billion BC\*(Aq
+\&          }
+.Ve
 .PP
 \fIManually produced \s-1XML\s0 \s-1NODE\s0\fR
 .IX Subsection "Manually produced XML NODE"
@@ -1134,8 +1305,75 @@ constant values as defaults as well.
 Only produce the values which differ from the defaults.  This choice is
 useful when producing \s-1XML\s0, to reduce the size of the output.
 .PP
+\&\fB. Example: use of default_values \s-1EXTEND\s0\fR
+.PP
+Let us process a schema using the schema schema.  A schema file can
+contain lines like this:
+.PP
+.Vb 1
+\& <element minOccurs="0" ref="myelem"/>
+.Ve
+.PP
+In mode \f(CW\*(C`EXTEND\*(C'\fR (the \s-1READER\s0 default), this gets translated into:
+.PP
+.Vb 2
+\& element => { ref => \*(Aqmyelem\*(Aq, maxOccurs => 1
+\&            , minOccurs => 0, nillable => 0 };
+.Ve
+.PP
+With \f(CW\*(C`EXTEND\*(C'\fR in the \s-1READER\s0, all schema information is used to provide
+a complete overview of available information.  Your code does not need
+to check whether the attributes were available or not: attributes with
+defaults or fixed values are automatically added.
+.PP
+Again mode \f(CW\*(C`EXTEND\*(C'\fR, now for the writer:
+.PP
+.Vb 2
+\& element => { ref => \*(Aqmyelem\*(Aq, minOccurs => 0 };
+\& <element minOccurs="0" maxOccurs="1" ref="myelem" nillable="0"/>
+.Ve
+.PP
+\&\fB. Example: use of default_values \s-1IGNORE\s0\fR
+.PP
+With option \f(CW\*(C`default_values\*(C'\fR set to \f(CW\*(C`IGNORE\*(C'\fR (the \s-1WRITER\s0 default), you
+would get
+.PP
+.Vb 2
+\& element => { ref => \*(Aqmyelem\*(Aq, maxOccurs => 1, minOccurs => 0 }
+\& <element minOccurs="0" maxOccurs="1" ref="myelem"/>
+.Ve
+.PP
+The same in both translation directions.
+The nillable attribute is not used, so will not be shown by the \s-1READER\s0.  The
+writer does not try to be smart, so does not add the nillable default.
+.PP
+\&\fB. Example: use of default_values \s-1MINIMAL\s0\fR
+.PP
+With option \f(CW\*(C`default_values\*(C'\fR set to \f(CW\*(C`MINIMAL\*(C'\fR, the \s-1READER\s0 would do this:
+.PP
+.Vb 2
+\& <element minOccurs="0" maxOccurs="1" ref="myelem"/>
+\& element => { ref => \*(Aqmyelem\*(Aq, minOccurs => 0 }
+.Ve
+.PP
+The maxOccurs default is \*(L"1\*(R", so will not be included, minimalizing the
+size of the \s-1HASH\s0.
+.PP
+For the \s-1WRITER:\s0
+.PP
+.Vb 2
+\& element => { ref => \*(Aqmyelem\*(Aq, minOccurs => 0, nillable => 0 }
+\& <element minOccurs="0" ref="myelem"/>
+.Ve
+.PP
+because the default value for nillable is '0', it will not show as attribute
+value.
+.PP
 \fIRepetative blocks\fR
 .IX Subsection "Repetative blocks"
+.PP
+Particle blocks come in four shapes: \f(CW\*(C`sequence\*(C'\fR, \f(CW\*(C`choice\*(C'\fR, \f(CW\*(C`all\*(C'\fR,
+and \f(CW\*(C`group\*(C'\fR (an indirect block).  This also affects \f(CW\*(C`substitutionGroups\*(C'\fR.
 .PP
 repetative sequence, choice, all
 .IX Subsection "repetative sequence, choice, all"
@@ -1218,6 +1456,30 @@ assigned the prefix \f(CW\*(C`xs\*(C'\fR to the schema namespace (See compile(pr
 then those names will respectively be \f(CW\*(C`seq_xs_xyz\*(C'\fR, \f(CW\*(C`cho_xs_xyz\*(C'\fR,
 \&\f(CW\*(C`all_xs_xyz\*(C'\fR.
 .PP
+\&\fB. Example: always an array with maxOccurs larger than 1\fR
+.PP
+Even when there is only one element found, it will be returned as
+\&\s-1ARRAY\s0 (of one element).  Therefore, you can write
+.PP
+.Vb 2
+\& my $data = $reader\->($xml);
+\& foreach my $a ( @{$data\->{a}} ) {...}
+.Ve
+.PP
+\&\fB. Example: blocks with maxOccurs larger than 1\fR
+.PP
+In the schema:
+ <sequence maxOccurs=\*(L"5\*(R">
+   <element name=\*(L"a\*(R" type=\*(L"int\*(R" />
+   <element name=\*(L"b\*(R" type=\*(L"int\*(R" />
+ </sequence>
+.PP
+In the \s-1XML\s0 message:
+ <a>15</a><b>16</b><a>17</a><b>18</b>
+.PP
+In Perl representation:
+ seq_a => [ {a => 15, b => 16}, {a => 17, b => 18} ]
+.PP
 repetative groups
 .IX Subsection "repetative groups"
 .PP
@@ -1228,6 +1490,31 @@ the first element, but can use the group name.  It will still have \f(CW\*(C`gr_
 appended, because groups can have the same name as an element or a type(!)
 .PP
 Blocks within the group definition cannot be repeated.
+.PP
+\&\fB. Example: groups with maxOccurs larger than 1\fR
+.PP
+.Vb 7
+\& <element name="top">
+\&   <complexType>
+\&     <sequence>
+\&       <group ref="ns:xyz" maxOccurs="unbounded">
+\&     </sequence>
+\&   </complexType>
+\& </element>
+\&
+\& <group name="xyz">
+\&   <sequence>
+\&     <element name="a" type="int" />
+\&     <element name="b" type="int" />
+\&   </sequence>
+\& </group>
+.Ve
+.PP
+translates into
+.PP
+.Vb 1
+\&  gr_xyz => [ {a => 42, b => 43}, {a => 44, b => 45} ]
+.Ve
 .PP
 repetative substitutionGroups
 .IX Subsection "repetative substitutionGroups"
@@ -1250,8 +1537,313 @@ something like this:
 .PP
 Each \s-1HASH\s0 has only one key.
 .PP
-Particle blocks come in four shapes: \f(CW\*(C`sequence\*(C'\fR, \f(CW\*(C`choice\*(C'\fR, \f(CW\*(C`all\*(C'\fR,
-and \f(CW\*(C`group\*(C'\fR (an indirect block).  This also affects \f(CW\*(C`substitutionGroups\*(C'\fR.
+\&\fB. Example: with a list of ints\fR
+.PP
+.Vb 1
+\&  <test5>3 8 12</test5>
+.Ve
+.PP
+as Perl structure:
+.PP
+.Vb 1
+\&  test5 => [3, 8, 12]
+.Ve
+.PP
+\&\fB. Example: substitutionGroup\fR
+.PP
+.Vb 3
+\& <xs:element name="price"  type="xs:int" abstract="true" />
+\& <xs:element name="euro"   type="xs:int" substitutionGroup="price" />
+\& <xs:element name="dollar" type="xs:int" substitutionGroup="price" />
+\&
+\& <xs:element name="product">
+\&   <xs:complexType>
+\&      <xs:element name="name" type="xs:string" />
+\&      <xs:element ref="price" />
+\&   </xs:complexType>
+\& </xs:element>
+.Ve
+.PP
+Now, valid \s-1XML\s0 data is
+.PP
+.Vb 4
+\& <product>
+\&   <name>Ball</name>
+\&   <euro>12</euro>
+\& </product>
+.Ve
+.PP
+and
+.PP
+.Vb 4
+\& <product>
+\&   <name>Ball</name>
+\&   <dollar>6</dollar>
+\& </product>
+.Ve
+.PP
+The \s-1HASH\s0 repesentation is respectively
+.PP
+.Vb 2
+\& product => {name => \*(AqBall\*(Aq, euro  => 12}
+\& product => {name => \*(AqBall\*(Aq, dollar => 6}
+.Ve
+.PP
+\&\fB. Example: of HOOKs:\fR
+.PP
+.Vb 4
+\& my $hook = { type    => \*(Aq{my_ns}my_type\*(Aq
+\&            , before  => sub { ... }
+\&            , action  => \*(AqWRITER\*(Aq
+\&            };
+\&
+\& my $hook = { path    => qr/\e(volume\e)/
+\&            , replace => \*(AqSKIP\*(Aq
+\&            , action  => \*(AqREADER\*(Aq
+\&            };
+\&
+\& # path contains "volume" or id is \*(Aqaap\*(Aq or id is \*(Aqnoot\*(Aq
+\& my $hook = { path    => qr/\ebvolume\eb/
+\&            , id      => [ \*(Aqaap\*(Aq, \*(Aqnoot\*(Aq ]
+\&            , before  => [ sub {...}, sub { ... } ]
+\&            , after   => sub { ... }
+\&            };
+.Ve
+.PP
+\&\fB. Example: use of the type selector\fR
+.PP
+.Vb 4
+\& type => \*(Aqint\*(Aq
+\& type => \*(Aq{http://www.w3.org/2000/10/XMLSchema}int\*(Aq
+\& type => qr/\e}xml_/   # type start with xml_
+\& type => [ qw/int float/ ];
+\&
+\& use XML::Compile::Util qw/pack_type SCHEMA2000/;
+\& type => pack_type(SCHEMA2000, \*(Aqint\*(Aq)
+\&
+\& # with XML::Compile::Cache
+\& $schema\->addPrefixes(xsd => SCHEMA2000);
+\& type => \*(Aqxsd:int\*(Aq
+.Ve
+.PP
+\&\fB. Example: type hook with XML::Compile::Cache\fR
+.PP
+.Vb 5
+\& use XML::Compile::Util qw/SCHEMA2001/;
+\& my $schemas = XML::Compile::Cache\->new(...);
+\& $schemas\->addPrefixes(xsd => SCHEMA2001, mine => \*(Aqhttp://somens\*(Aq);
+\& $schemas\->addHook(type => \*(Aqxsd:int\*(Aq, ...);
+\& $schemas\->addHook(type => \*(Aqmine:sometype\*(Aq, ...);
+.Ve
+.PP
+\&\fB. Example: use of the \s-1ID\s0 selector\fR
+.PP
+.Vb 5
+\& # default schema types have id\*(Aqs with same name
+\& id => \*(AqABC\*(Aq
+\& id => \*(Aqhttp://www.w3.org/2001/XMLSchema#int\*(Aq
+\& id => qr/\e#xml_/   # id which start with xml_
+\& id => [ qw/ABC fgh/ ];
+\&
+\& use XML::Compile::Util qw/pack_id SCHEMA2001/;
+\& id => pack_id(SCHEMA2001, \*(AqABC\*(Aq)
+.Ve
+.PP
+\&\fB. Example: anyAttribute in a \s-1READER\s0\fR
+.PP
+Say your schema looks like this:
+.PP
+.Vb 10
+\& <schema targetNamespace="http://mine"
+\&    xmlns:me="http://mine" ...>
+\&   <element name="el">
+\&     <complexType>
+\&       <attribute name="a" type="xs:int" />
+\&       <anyAttribute namespace="##targetNamespace"
+\&          processContents="lax">
+\&     </complexType>
+\&   </element>
+\&   <simpleType name="non\-empty">
+\&     <restriction base="NCName" />
+\&   </simpleType>
+\& </schema>
+.Ve
+.PP
+Then, in an application, you write:
+.PP
+.Vb 5
+\& my $r = $schema\->compile
+\&  ( READER => pack_type(\*(Aqhttp://mine\*(Aq, \*(Aqel\*(Aq)
+\&  , anyAttribute => \*(AqALL\*(Aq
+\&  );
+\& # or lazy: READER => \*(Aq{http://mine}el\*(Aq
+\&
+\& my $h = $r\->( <<\*(Aq_\|_XML\*(Aq );
+\&   <el xmlns:me="http://mine">
+\&     <a>42</a>
+\&     <b type="me:non\-empty">
+\&        everything
+\&     </b>
+\&   </el>
+\& _\|_XML
+\&
+\& use Data::Dumper \*(AqDumper\*(Aq;
+\& print Dumper $h;
+\& _\|_XML_\|_
+.Ve
+.PP
+The output is something like
+.PP
+.Vb 5
+\& $VAR1 =
+\&  { a => 42
+\&  , \*(Aq{http://mine}a\*(Aq => ... # XML::LibXML::Node with <a>42</a>
+\&  , \*(Aq{http://mine}b\*(Aq => ... # XML::LibXML::Node with <b>everything</b>
+\&  };
+.Ve
+.PP
+You can improve the reader with a callback.  When you know that the
+extra attribute is always of type \f(CW\*(C`non\-empty\*(C'\fR, then you can do
+.PP
+.Vb 4
+\& my $read = $schema\->compile
+\&  ( READER => \*(Aq{http://mine}el\*(Aq
+\&  , anyAttribute => \e&filter
+\&  );
+\&
+\& my $anyAttRead = $schema\->compile
+\&  ( READER => \*(Aq{http://mine}non\-empty\*(Aq
+\&  );
+\&
+\& sub filter($$$$)
+\& {   my ($fqn, $xml, $path, $translator) = @_;
+\&     return () if $fqn ne \*(Aq{http://mine}b\*(Aq;
+\&     (b => $anyAttRead\->($xml));
+\& }
+\&
+\& my $h = $r\->( see above );
+\& print Dumper $h;
+.Ve
+.PP
+Which will result in
+.PP
+.Vb 4
+\& $VAR1 =
+\&  { a => 42
+\&  , b => \*(Aqeverything\*(Aq
+\&  };
+.Ve
+.PP
+The filter will be called twice, but return nothing in the first
+case.  You can implement any kind of complex processing in the filter.
+.PP
+\&\fB. Example: to trace the paths\fR
+.PP
+.Vb 5
+\& $schema\->addHook
+\&   ( action => \*(AqREADER\*(Aq
+\&   , path   => qr/./
+\&   , before => \*(AqPRINT_PATH\*(Aq
+\&   );
+.Ve
+.PP
+\&\fB. Example: specify anyAttribute\fR
+.PP
+.Vb 1
+\& use XML::Compile::Util qw/pack_type/;
+\&
+\& my $attr = $doc\->createAttributeNS($somens, $sometype, 42);
+\& my $h = { a => 12     # normal element or attribute
+\&         , "{$somens}$sometype"        => $attr # anyAttribute
+\&         , pack_type($somens, $mytype) => $attr # nicer
+\&         , "$prefix:$sometype"         => $attr # [1.28]
+\&         };
+.Ve
+.PP
+\&\fB. Example: before hook on user-provided \s-1HASH\s0.\fR
+.PP
+.Vb 2
+\& sub beforeOnComplex($$$$)
+\& {   my ($doc, $values, $path, $fulltype) = @_;
+\&
+\&     my %copy = %$values;
+\&     $copy{extra} = 42;
+\&     delete $copy{superfluous};
+\&     $copy{count} =~ s/\eD//g;    # only digits
+\&     \e%copy;
+\& }
+.Ve
+.PP
+\&\fB. Example: before hook on simpleType data\fR
+.PP
+.Vb 4
+\& sub beforeOnSimple($$$$)
+\& {   my ($doc, $value, $path, $fulltype) = @_;
+\&     $value * 100;    # convert euro to euro\-cents
+\& }
+.Ve
+.PP
+\&\fB. Example: before hook with object for complexType\fR
+.PP
+.Vb 2
+\& sub beforeOnObject($$$$)
+\& {   my ($doc, $obj, $path, $fulltype) = @_;
+\&
+\&     +{ name     => $obj\->name
+\&      , price    => $obj\->euro
+\&      , currency => \*(AqEUR\*(Aq
+\&      };
+\& }
+.Ve
+.PP
+\&\fB. Example: replace hook\fR
+.PP
+.Vb 6
+\& sub replace($$$$$)
+\& {  my ($doc, $values, $path, $tag, $r, $fulltype) = @_
+\&    my $node = $doc\->createElement($tag);
+\&    $node\->appendText($values\->{text});
+\&    $node;
+\& }
+.Ve
+.PP
+\&\fB. Example: add an extra sibbling after the usual process\fR
+.PP
+.Vb 6
+\& sub after($$$$)
+\& {   my ($doc, $node, $path, $values, $fulltype) = @_;
+\&     my $child = $doc\->createAttributeNS($myns, earth => 42);
+\&     $node\->addChild($child);
+\&     $node;
+\& }
+.Ve
+.PP
+\&\fB. Example: creating nodes with text\fR
+.PP
+.Vb 1
+\& {  my $text;
+\&
+\&    sub before($$$)
+\&    {   my ($doc, $values, $path) = @_;
+\&        my %copy = %$values;
+\&        $text = delete $copy{text};
+\&        \e%copy;
+\&    }
+\&
+\&    sub after($$$)
+\&    {   my ($doc, $node, $path) = @_;
+\&        $node\->addChild($doc\->createTextNode($text));
+\&        $node;
+\&    }
+\&
+\&    $schema\->addHook
+\&     ( action => \*(AqWRITER\*(Aq
+\&     , type   => \*(Aqmixed\*(Aq
+\&     , before => \e&before
+\&     , after  => \e&after
+\&     );
+\& }
+.Ve
 .PP
 \fIList type\fR
 .IX Subsection "List type"
@@ -1269,27 +1861,27 @@ themselves as valid for an abstract (\fIhead\fR) element.  All alternatives
 should be extensions of the head element's type, but there is no way to
 check that.
 .PP
-\fIWildcards any and anyAttribute\fR
-.IX Subsection "Wildcards any and anyAttribute"
+\fIWildcards via any and anyAttribute\fR
+.IX Subsection "Wildcards via any and anyAttribute"
 .PP
 The \f(CW\*(C`any\*(C'\fR and \f(CW\*(C`anyAttribute\*(C'\fR elements are referred to as \f(CW\*(C`wildcards\*(C'\fR:
-they specify groups of elements and attributes which can be used, in
-stead of being explicit.
+they specify (huge, generic) groups of elements and attributes which
+are accepted, instead of being explicit.
 .PP
 The author of this module advices \fBagainst the use of wildcards\fR in
-schemas, because the purpose of schemas is to be explicit about the
-structure of the message, and that basic idea is simply thrown away by
+schemas: the purpose of schemas is to be \fIexplicit\fR about the
+message in the interface, and that basic idea is simply thrown away by
 these wildcards.  Let people cleanly extend the schema with inheritance!
-If you use a standard schema which facilitates these wildcards, then
-please do not use them!
+There is always a substitutionGroup alternative possible.
 .PP
 Because wildcards are not explicit about the types to expect, the
-\&\f(CW\*(C`XML::Compile\*(C'\fR module can not prepare for them automatically.
-However, as user of the schema you probably know better about the possible
-contents of these fields.  Therefore, you can translate that
-knowledge into code explicitly.  Read about the processing of wildcards
-in the manual page for each of the back-ends, because it is different
-in each case.
+\&\f(CW\*(C`XML::Compile\*(C'\fR module can not prepare for them at run-time.  You need
+to go read the documentation and do some tricky manual work to get it
+to work.
+.PP
+Read about the processing of wildcards in the manual page for each of
+the back-ends (XML::Compile::Translate::Reader,
+XML::Compile::Translate::Writer, ...).
 .PP
 \fIComplexType with \*(L"mixed\*(R" attribute\fR
 .IX Subsection "ComplexType with mixed attribute"
@@ -1333,28 +1925,14 @@ to be written as \f(CW\*(C`ffc0c0c0\*(C'\fR and abused \f(CW\*(C`hexBinary\*(C'\
 The \f(CW\*(C`colorType\*(C'\fR fields in \s-1KML\s0 are treated as binary, but just represent
 an int. Have a look in that Geo::KML code if your schema has some of
 those tricks.
-.PP
-The code will do its best to produce a correct translation. For
-instance, an accidental \f(CW1.9999\fR will be converted into \f(CW2\fR
-when the schema says that the field is an \f(CW\*(C`int\*(C'\fR.  It will also
-strip superfluous blanks when the data-type permits.  Especially
-watch-out for the \f(CW\*(C`Integer\*(C'\fR types, which produce Math::BigInt
-objects unless compile(sloppy_integers) is used.
-.PP
-Elements can be complex, and themselve contain elements which
-are complex.  In the Perl representation of the data, this will
-be shown as nested hashes with the same structure as the \s-1XML\s0.
-.PP
-You should not take tare of character encodings, whereas XML::LibXML is
-doing that for us: you shall not escape characters like \*(L"<\*(R" yourself.
-.PP
-The schemas define kinds of data types.  There are various ways to define
-them (with restrictions and extensions), but for the resulting data
-structure is that knowledge not important.
 .SS "Schema hooks"
 .IX Subsection "Schema hooks"
-\fIdefining hooks\fR
-.IX Subsection "defining hooks"
+You can use hooks, for instance, to block processing parts of the message,
+to create work-arounds for schema bugs, or to extract more information
+during the process than done by default.
+.PP
+\fIDefining hooks\fR
+.IX Subsection "Defining hooks"
 .PP
 Multiple hooks can active during the compilation process of a type,
 when \f(CW\*(C`compile()\*(C'\fR is called.  During Schema translation, each of the
@@ -1376,7 +1954,7 @@ hook parameters, and \s-1HOOK\s0 a \s-1HASH\s0 with such \s-1HOOKDATA\s0):
 \& $schema\->addHooks(HOOK, HOOK, ...);
 \&
 \& my $wsdl   = XML::Compile::WSDL\->new(...);
-\& $wsdl\->schemas\->addHook(HOOKDATA | HOOK);
+\& $wsdl\->addHook(HOOKDATA | HOOK);
 .Ve
 .PP
 \&\fBlocal\fR hooks are only used for one reader or writer.  They are
@@ -1387,10 +1965,19 @@ evaluated before the global hooks.
 \&  , hook => HOOK, hooks => [ HOOK, HOOK, ...]);
 .Ve
 .PP
-\fIgeneral syntax\fR
-.IX Subsection "general syntax"
+\fIGeneral syntax\fR
+.IX Subsection "General syntax"
 .PP
-Each hook has two kinds of parameters: selectors and processors.
+Each hook has three kinds of parameters:
+.IP ". selectors" 4
+.IX Item ". selectors"
+.PD 0
+.IP ". processors" 4
+.IX Item ". processors"
+.IP ". action ('\s-1READER\s0' or '\s-1WRITER\s0', defaults to both)" 4
+.IX Item ". action ('READER' or 'WRITER', defaults to both)"
+.PD
+.PP
 Selectors define the schema component of which the processing is modified.
 When one of the selectors matches, the processing information for the hook
 is used.  When no selector is specified, then the hook will be used on all
@@ -1400,6 +1987,8 @@ Available selectors (see below for details on each of them):
 .IP ". type" 4
 .IX Item ". type"
 .PD 0
+.IP ". extends" 4
+.IX Item ". extends"
 .IP ". id" 4
 .IX Item ". id"
 .IP ". path" 4
@@ -1420,13 +2009,13 @@ are major differences.  Each of those manual-pages lists the specifics.
 The label tells us when the processing is initiated.  Available labels are
 \&\f(CW\*(C`before\*(C'\fR, \f(CW\*(C`replace\*(C'\fR, and \f(CW\*(C`after\*(C'\fR.
 .PP
-\fIhooks on matching types\fR
-.IX Subsection "hooks on matching types"
+\fIHooks on matching types\fR
+.IX Subsection "Hooks on matching types"
 .PP
 The \f(CW\*(C`type\*(C'\fR selector specifies a complexType of simpleType by name.
 Best is to base the selection on the full name, like \f(CW\*(C`{ns}type\*(C'\fR,
 which will avoid all kinds of name-space conflicts in the future.
-However, you may also specify only the \f(CW\*(C`type\*(C'\fR (in any name-space).
+However, you may also specify only the \f(CW\*(C`local type\*(C'\fR (in any name-space).
 Any \s-1REGEX\s0 will be matched to the full type name. Be careful with the
 pattern archors.
 .PP
@@ -1434,28 +2023,83 @@ If you use XML::Compile::Cache [release 0.90], then you can use
 \&\f(CW\*(C`prefix:type\*(C'\fR as type specification as well.  You have to explicitly
 define prefix to namespace beforehand.
 .PP
-\fIhooks on matching ids\fR
-.IX Subsection "hooks on matching ids"
+\fIHooks on extended type\fR
+.IX Subsection "Hooks on extended type"
+.PP
+[1.48] This hook will match all elements which use a type which is equal or
+based on the given type.  In the schema, you will find extension and
+restriction constructs.  You may only pass a single full type (no arrays
+of types or local names) per 'extend' hook.
+.PP
+Using a hooks on extended types is quite expensive for the compiler.
+.PP
+example:
+.PP
+.Vb 2
+\& $schemas\->addHook(extends => "{ns}local", ...);
+\& $schemas\->addHook(extends => \*(Aqmine:sometype\*(Aq, ...);  # need ::Cache
+.Ve
+.PP
+\fIHooks on matching ids\fR
+.IX Subsection "Hooks on matching ids"
 .PP
 Matching based on IDs can reach more schema elements: some types are
 anonymous but still have an \s-1ID\s0.  Best is to base selection on the full
 \&\s-1ID\s0 name, like \f(CW\*(C`ns#id\*(C'\fR, to avoid all kinds of name-space conflicts in
 the future.
 .PP
-\fIhooks on matching paths\fR
-.IX Subsection "hooks on matching paths"
+\fIHooks on matching paths\fR
+.IX Subsection "Hooks on matching paths"
 .PP
 When you see error messages, you always see some representation of
 the path where the problem was discovered.  You can use this path
 as selector, when you know what it is... \s-1BE\s0 \s-1WARNED\s0, that the current
 structure of the path is not really consequent hence will be 
 improved in one of the future releases, breaking backwards compatibility.
-.PP
-You can use hooks, for instance, to block processing parts of the message,
-to create work-arounds for schema bugs, or to extract more information
-during the process than done by default.
 .SS "Typemaps"
 .IX Subsection "Typemaps"
+Often, \s-1XML\s0 will be used in object oriented programs, where the facts
+which are transported in the \s-1XML\s0 message are attributes of Perl objects.
+Of course, you can always collect the data from each of the Objects into
+the required (huge) \s-1HASH\s0 manually, before triggering the reader or writer.
+As alternative, you can connect types in the \s-1XML\s0 schema with Perl objects
+and classes, which results in cleaner code.
+.PP
+You can also specify typemaps with new(typemap), \fIaddTypemaps()\fR, and
+compile(typemap). Each type will only refer to the last map for that
+type.  When an \f(CW\*(C`undef\*(C'\fR is given for a type, then the older definition
+will be cancelled.  Examples of the three ways to specify typemaps:
+.PP
+.Vb 2
+\&  my %map = ($x1 => $p1, $x2 => $p2);
+\&  my $schema = XML::Compile::Schema\->new(...., typemap => \e%map);
+\&
+\&  $schema\->addTypemaps($x3 => $p3, $x4 => $p4, $x1 => undef);
+\&
+\&  my $call = $schema\->compile(READER => $type, typemap => \e%map);
+.Ve
+.PP
+The latter only has effect for the type being compiled.  The definitions
+are cumulative.  In the second example, the \f(CW$x1\fR gets disabled.
+.PP
+Objects can come in two shapes: either they do support the connection
+with XML::Compile (implementing two methods with predefined names), or
+they don't, in which case you will need to write a little wrapper.
+.PP
+.Vb 5
+\&  use XML::Compile::Util qw/pack_type/;
+\&  my $t1 = pack_type $myns, $mylocal;
+\&  $schema\->typemap($t1 => \*(AqMy::Perl::Class\*(Aq);
+\&  $schema\->typemap($t1 => $some_object);
+\&  $schema\->typemap($t1 => sub { ... });
+.Ve
+.PP
+The implementation of the \s-1READER\s0 and \s-1WRITER\s0 differs.  In the \s-1READER\s0 case,
+the typemap is implemented as an 'after' hook which calls a \f(CW\*(C`fromXML\*(C'\fR
+method.  The \s-1WRITER\s0 is a 'before' hook which calls a \f(CW\*(C`toXML\*(C'\fR method.
+See respectively the XML::Compile::Translate::Reader and
+XML::Compile::Translate::Writer.
+.PP
 \fIPrivate variables in objects\fR
 .IX Subsection "Private variables in objects"
 .PP
@@ -1499,52 +2143,9 @@ some parent type.  The \s-1CODE\s0 reference may be very useful in this case.
 .IP "." 4
 A same kind of problem appears when you have a list in your object,
 which often is not named in the schema.
-.PP
-Often, \s-1XML\s0 will be used in object oriented programs, where the facts
-which are transported in the \s-1XML\s0 message are attributes of Perl objects.
-Of course, you can always collect the data from each of the Objects into
-the required (huge) \s-1HASH\s0 manually, before triggering the reader or writer.
-As alternative, you can connect types in the \s-1XML\s0 schema with Perl objects
-and classes, which results in cleaner code.
-.PP
-You can also specify typemaps with new(typemap), \fIaddTypemaps()\fR, and
-compile(typemap). Each type will only refer to the last map for that
-type.  When an \f(CW\*(C`undef\*(C'\fR is given for a type, then the older definition
-will be cancelled.  Examples of the three ways to specify typemaps:
-.PP
-.Vb 2
-\&  my %map = ($x1 => $p1, $x2 => $p2);
-\&  my $schema = XML::Compile::Schema\->new(...., typemap => \e%map);
-\&
-\&  $schema\->addTypemaps($x3 => $p3, $x4 => $p4, $x1 => undef);
-\&
-\&  my $call = $schema\->compile(READER => $type, typemap => \e%map);
-.Ve
-.PP
-The latter only has effect for the type being compiled.  The definitions
-are cumulative.  In the second example, the \f(CW$x1\fR gets disabled.
-.PP
-Objects can come in two shapes: either they do support the connection
-with XML::Compile (implementing two methods with predefined names), or
-they don't, in which case you will need to write a little wrapper.
-.PP
-.Vb 5
-\&  use XML::Compile::Util qw/pack_type/;
-\&  my $t1 = pack_type $myns, $mylocal;
-\&  $schema\->typemap($t1 => \*(AqMy::Perl::Class\*(Aq);
-\&  $schema\->typemap($t1 => $some_object);
-\&  $schema\->typemap($t1 => sub { ... });
-.Ve
-.PP
-The implementation of the \s-1READER\s0 and \s-1WRITER\s0 differs.  In the \s-1READER\s0 case,
-the typemap is implemented as an 'after' hook which calls a \f(CW\*(C`fromXML\*(C'\fR
-method.  The \s-1WRITER\s0 is a 'before' hook which calls a \f(CW\*(C`toXML\*(C'\fR method.
-See respectively the XML::Compile::Translate::Reader and
-XML::Compile::Translate::Writer.
 .SS "Handling xsi:type"
 .IX Subsection "Handling xsi:type"
-[new in release 1.10]
-The \f(CW\*(C`xsi:type\*(C'\fR is an old-fashioned mechanism, and should be avoided!
+[1.10] The \f(CW\*(C`xsi:type\*(C'\fR is an old-fashioned mechanism, and should be avoided!
 In this case, the schema does tell you that a certain element has
 a certrain type, but at run\-time(!) that is changed. When an \s-1XML\s0
 element has a \f(CW\*(C`xsi:type\*(C'\fR attribute, it tells you simply to have an
@@ -1556,27 +2157,80 @@ To make \f(CW\*(C`xsi:type\*(C'\fR work at run-time, you have to pass a table of
 which types you expect at compile-time.  Example:
 .PP
 .Vb 4
-\&   my %xsi_type_table =
-\&     ( $base_type1 => [ $ext1_of_type1, $ext2_of_type2 ]
-\&     , $base_type2 => [ $ext1_of_type2 ]
-\&     );
+\&  my %xsi_type_table =
+\&    ( $base_type1 => [ $ext1_of_type1, $ext2_of_type2 ]
+\&    , $base_type2 => [ $ext1_of_type2 ]
+\&    );
 \&
-\&   my $r = $schema\->compile(READER => $type
-\&     , xsi_type => \e%xsi_type_table
-\&     );
+\&  my $r = $schema\->compile(READER => $type
+\&    , xsi_type => \e%xsi_type_table
+\&    );
 .Ve
 .PP
-When your schema is an XML::Compile::Cache (requires version 0.93),
+When your schema is an XML::Compile::Cache (version at least 0.93),
 your types look like \f(CW\*(C`prefix:local\*(C'\fR.  With a plain XML::Compile::Schema,
 they will look like \f(CW\*(C`{namespace}local\*(C'\fR, typically produced with
 \&\fIXML::Compile::Util::pack_type()\fR.
 .PP
 When used in a reader, the resulting data-set will contain a \f(CW\*(C`XSI_TYPE\*(C'\fR
-key inbetween the facts which were taken from the element. With the
-writer, you have to provide such an \f(CW\*(C`XSI_TYPE\*(C'\fR value or the element's
-base type will be used (and no \f(CW\*(C`xsi:type\*(C'\fR attribute created).
+key inbetween the facts which were taken from the element.  The type is
+is long syntax \f(CW"{$ns}$type"\fR.  See \fIXML::Compile::Util::unpack_type()\fR
+.PP
+With the writer, you have to provide such an \f(CW\*(C`XSI_TYPE\*(C'\fR value or the
+element's base type will be used (and no \f(CW\*(C`xsi:type\*(C'\fR attribute created).
+This will probably cause warnings about unused tags.  The type can be
+provided in full (see \fIXML::Compile::Util::pack_type()\fR) or [1.31]
+prefixed.
+.PP
+[1.25] then the value is not an \s-1ARRAY\s0, but only the keyword \f(CW\*(C`AUTO\*(C'\fR,
+the parser will try to auto-detect all types which are valid alternatives.
+This currently only works for non-builtin types.  The auto-detection might
+be slow and (because many schemas are broken) not produce a complete list.
+When debugging is enabled (\*(L"use Log::Report mode => 3;\*(R") you will see to
+which list this \s-1AUTO\s0 gets expanded.
+.PP
+.Vb 1
+\&  xsi_type => { $base_type => \*(AqAUTO\*(Aq }   # requires X::C v1.25
+.Ve
+.PP
+XML::Compile::Cache (since v1.01) makes using \f(CW\*(C`xsi:type\*(C'\fR easier.  When
+you have a ::Cache based object (for instance a XML::Compile::WSDL11)
+you can simply say
+.PP
+.Vb 1
+\&  $wsdl\->addXsiType( $base_type => \*(AqAUTO\*(Aq )
+.Ve
+.PP
+Now, you do not need to pass the xsi table to each compilation call.
 .SS "Key rewrite"
 .IX Subsection "Key rewrite"
+[improved with release 1.10]
+The standard practice is to use the localName of the \s-1XML\s0 elements as
+key in the Perl \s-1HASH\s0; the key rewrite mechanism is used to change that,
+sometimes to separate elements which have the same localName within
+different name-spaces, or when an element and an attribute share a name
+(key rewrite is applied to elements \s-1AND\s0 attributes) in other cases just
+for fun or convenience.
+.PP
+Rewrite rules are interpreted at \*(L"compile-time\*(R", which means that they
+\&\fBdo not slow-down\fR the \s-1XML\s0 construction or deconstruction.  The rules
+work the same for readers and writers, because they are applied to
+name found in the schema.
+.PP
+Key rewrite rules can be set during schema object initiation
+with new(key_rewrite) and to an existing schema object with
+\&\fIaddKeyRewrite()\fR.  These rules will be used in all calls to
+\&\fIcompile()\fR.
+.PP
+Next, you can use compile(key_rewrite) to add rules which
+are only used for a single compilation.  These are applied before
+the global rules.  All rules will always be attempted, and the
+rulle will me applied to the result of the previous change.
+.PP
+The last defined rewrite rules will be applied first, with one major
+exception: the \f(CW\*(C`PREFIXED\*(C'\fR rules will be executed before any other
+rule.
+.PP
 \fIkey_rewrite via table\fR
 .IX Subsection "key_rewrite via table"
 .PP
@@ -1598,8 +2252,8 @@ the element.  The full name can be created with
 \&  $schema\->addKeyRewrite( \e%table );
 .Ve
 .PP
-\fIrewrite via function\fR
-.IX Subsection "rewrite via function"
+\fIRewrite via function\fR
+.IX Subsection "Rewrite via function"
 .PP
 When a \s-1CODE\s0 reference is provided, it will get called for each key
 which is found in the schema.  Passed are the name-space of the
@@ -1639,8 +2293,8 @@ In the perl representation of the data, the name-spaces get ignored
 (to make the programmer's life simple) but that may cause these nasty
 conflicts.
 .PP
-\fIrewrite for convenience\fR
-.IX Subsection "rewrite for convenience"
+\fIRewrite for convenience\fR
+.IX Subsection "Rewrite for convenience"
 .PP
 In \s-1XML\s0, we often see names like \f(CW\*(C`my\-elem\-name\*(C'\fR, which in Perl
 would be accessed as
@@ -1665,8 +2319,8 @@ then \f(CW\*(C`my\-elem\-name\*(C'\fR in \s-1XML\s0 will get mapped onto \f(CW\*
 in Perl, both in the \s-1READER\s0 as the \s-1WRITER\s0.  Be warned that the substitute
 command returns the success, not the modified value!
 .PP
-\fIpre-defined key_rewrite rules\fR
-.IX Subsection "pre-defined key_rewrite rules"
+\fIPre-defined key_rewrite rules\fR
+.IX Subsection "Pre-defined key_rewrite rules"
 .IP "\s-1UNDERSCORES\s0" 4
 .IX Item "UNDERSCORES"
 Replace dashes (\-) with underscores (_).
@@ -1721,62 +2375,18 @@ Above is equivalent to:
 Special care is taken that the prefix will not be added twice.  For instance,
 if the same prefix appears twice, or a \f(CW\*(C`PREFIXED\*(C'\fR rule is provided as well,
 then still only one prefix is added.
-.PP
-[improved with release 1.10]
-The standard practice is to use the localName of the \s-1XML\s0 elements as
-key in the Perl \s-1HASH\s0; the key rewrite mechanism is used to change that,
-sometimes to seperate elements which have the same localName within
-different name-spaces, or when an element and an attribute share a name
-(key rewrite is applied to elements \s-1AND\s0 attributes) in other cases just
-for fun or convenience.
-.PP
-Rewrite rules are interpreted at \*(L"compile-time\*(R", which means that they
-\&\fBdo not slow-down\fR the \s-1XML\s0 construction or deconstruction.  The rules
-work the same for readers and writers, because they are applied to
-name found in the schema.
-.PP
-Key rewrite rules can be set during schema object initiation
-with new(key_rewrite) and to an existing schema object with
-\&\fIaddKeyRewrite()\fR.  These rules will be used in all calls to
-\&\fIcompile()\fR.
-.PP
-Next, you can use compile(key_rewrite) to add rules which
-are only used for a single compilation.  These are applied before
-the global rules.  All rules will always be attempted, and the
-rulle will me applied to the result of the previous change.
-.PP
-The last defined rewrite rules will be applied first, with one major
-exception: the \f(CW\*(C`PREFIXED\*(C'\fR rules will be executed before any other
-rule.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

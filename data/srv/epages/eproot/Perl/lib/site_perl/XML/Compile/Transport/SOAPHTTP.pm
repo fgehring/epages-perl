@@ -1,13 +1,13 @@
-# Copyrights 2007-2011 by Mark Overmeer.
+# Copyrights 2007-2017 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 use warnings;
 use strict;
 
 package XML::Compile::Transport::SOAPHTTP;
 use vars '$VERSION';
-$VERSION = '2.24';
+$VERSION = '3.21';
 
 use base 'XML::Compile::Transport';
 
@@ -19,17 +19,12 @@ use LWP            ();
 use LWP::UserAgent ();
 use HTTP::Request  ();
 use HTTP::Headers  ();
-
-if($] >= 5.008003)
-{   use Encode;
-    Encode->import;
-}
-else
-{   *encode = sub { $_[1] };
-}
+use Encode;
 
 # (Microsofts HTTP Extension Framework)
 my $http_ext_id = SOAP11ENV;
+
+my $mime_xop    = 'application/xop+xml';
 
 __PACKAGE__->register(SOAP11HTTP);
 
@@ -54,18 +49,22 @@ sub initWSDL11($)
 #-------------------------------------------
 
 
+my $default_ua;
 sub userAgent(;$)
 {   my ($self, $agent) = (shift, shift);
     return $self->{user_agent} = $agent
         if defined $agent;
 
-    $self->{user_agent} ||= LWP::UserAgent->new
+    $self->{user_agent} ||= $default_ua ||= LWP::UserAgent->new
       ( requests_redirectable => [ qw/GET HEAD POST M-POST/ ]
-      , parse_head => 0
-      , protocols_allowed => [ qw/http https/ ]
+      , protocols_allowed     => [ qw/http https/ ]
+      , parse_head            => 0
       , @_
       );
 }
+
+
+sub defaultUserAgent() { $default_ua }
 
 #-------------------------------------------
 
@@ -90,14 +89,15 @@ sub _prepare_call($)
     $self->headerAddVersions($header);
 
     my $content_type;
+
     if($version eq 'SOAP11')
-    {   $mime  ||= 'text/xml';
-        $content_type = qq{$mime; charset="$charset"};
+    {   $mime  ||= ref $soap ? $soap->mimeType : 'text/xml';
+        $content_type = qq{$mime; charset=$charset};
     }
     elsif($version eq 'SOAP12')
-    {   $mime  ||= 'application/soap+xml';
+    {   $mime  ||= ref $soap ? $soap->mimeType : 'application/soap+xml';
         my $sa   = defined $action ? qq{; action="$action"} : '';
-        $content_type = qq{$mime; charset="$charset"$sa};
+        $content_type = qq{$mime; charset=$charset$sa};
         $header->header(Accept => $mime);  # not the HTML answer
     }
     else
@@ -105,7 +105,9 @@ sub _prepare_call($)
     }
 
     if($method eq 'POST')
-    {   $header->header(SOAPAction => qq{"$action"})
+    {   # should only be used by SOAP11, but you never know.  So, SOAP12
+        # will have the action both ways.
+        $header->header(SOAPAction => qq{"$action"})
             if defined $action;
     }
     elsif($method eq 'M-POST')
@@ -123,8 +125,6 @@ sub _prepare_call($)
     # Ideally, we should change server when one fails, and stick to that
     # one as long as possible.
     my $server  = $self->address;
-    my $request = HTTP::Request->new($method => $server, $header);
-    $request->protocol('HTTP/1.1');
 
     # Create handler
 
@@ -137,11 +137,15 @@ sub _prepare_call($)
         unless $expect;
 
     my $hook = $args->{hook};
-      $hook
+
+    $hook
     ? sub  # hooked code
-      { my $trace = $_[1];
+      { my $trace   = $_[1];
+
+        my $request = HTTP::Request->new($method => $server, $header);
+        $request->protocol('HTTP/1.1');
         $create_message->($request, $_[0], $_[2]);
- 
+
         $trace->{http_request}  = $request;
         $trace->{action}        = $action;
         $trace->{soap_version}  = $version;
@@ -149,21 +153,34 @@ sub _prepare_call($)
         $trace->{user_agent}    = $ua;
         $trace->{hooked}        = 1;
 
-        my $response = $hook->($request, $trace)
+        my $response = $hook->($request, $trace, $self)
             or return undef;
 
+        UNIVERSAL::isa($response, 'HTTP::Response')
+            or error __x"transport_hook must produce a HTTP::Response, got {resp}"
+                 , resp => $response;
+
         $trace->{http_response} = $response;
+        if($response->is_error)
+        {   error $response->message
+                if $response->header('Client-Warning');
+
+            warning $response->message;
+            # still try to parse the response for Fault blocks
+        }
 
         $parse_message->($response);
       }
 
     : sub  # real call
-      { my $trace = $_[1];
+      { my $trace   = $_[1];
+
+        my $request = HTTP::Request->new($method => $server, $header);
+        $request->protocol('HTTP/1.1');
         $create_message->($request, $_[0], $_[2]);
 
         $trace->{http_request}  = $request;
 
-#warn $request->as_string;
         my $response = $ua->request($request)
             or return undef;
 
@@ -192,22 +209,22 @@ sub _prepare_simple_call($)
       };
 
     my $parse  = sub
-      { my $response = shift
-            or error __x"no response produced";
+      { my $response = shift;
+        UNIVERSAL::isa($response, 'HTTP::Response')
+            or error __x"no response object received";
 
         my $ct       = $response->content_type || '';
-
         lc($ct) ne 'multipart/related'
             or error __x"remote system uses XOP, use XML::Compile::XOP";
-        
-        info "received ".$response->status_line;
+
+        trace "received ".$response->status_line;
 
         $ct =~ m,[/+]xml$,i
             or error __x"answer is not xml but `{type}'", type => $ct;
 
         # HTTP::Message::decoded_content() does not work for old Perls
-        my $content = $] >= 5.008 ? $response->decoded_content(ref => 1)
-          : $response->content(ref => 1);
+        my $content = $response->decoded_content(ref => 1)
+                   || $response->content(ref => 1);
 
         ($content, {});
       };
@@ -217,65 +234,69 @@ sub _prepare_simple_call($)
 
 sub _prepare_xop_call($)
 {   my ($self, $content_type) = @_;
+
     my ($simple_create, $simple_parse)
       = $self->_prepare_simple_call($content_type);
 
     my $charset = $self->charset;
     my $create  = sub
       { my ($request, $content, $mtom) = @_;
-        $mtom ||= [];
+        $mtom        ||= [];
         @$mtom or return $simple_create->($request, $content);
 
-        my $bound     = "MIME-boundary-".int rand 10000;
+        my $bound      = "MIME-boundary-".int rand 10000;
         (my $start_cid = $mtom->[0]->cid) =~ s/^.*\@/xml@/;
 
-        $request->header(Content_Type => <<_CT);
+        my $si         = "$content_type";
+        $si            =~ s/\"/\\"/g;
+        $request->header(Content_Type => <<__CT);
 multipart/related;
  boundary="$bound";
- type="application/xop+xml"
+ type="$mime_xop";
  start="<$start_cid>";
- start-info="text/xml"
-_CT
+ start-info="$si"
+__CT
 
         my $base = HTTP::Message->new
-          ( [ Content_Type => <<_CT
-application/xop+xml;
- charset="$charset"; type="text/xml"
-_CT
+          ( [ Content_Type => qq{$mime_xop; charset="$charset"; type="$si"}
             , Content_Transfer_Encoding => '8bit'
-            , Content_ID  => '<'.$start_cid.'>'
+            , Content_ID  => "<$start_cid>"
             ] );
         $base->content_ref($content);   # already bytes (not utf-8)
 
-        my @parts = ($base, map { $_->mimePart } @$mtom);
-        $request->parts(@parts); #$base, map { $_->mimePart } @$mtom);
+        my @parts = ($base, map $_->mimePart, @$mtom);
+        $request->parts(@parts); #$base, map $_->mimePart, @$mtom);
         $request;
       };
 
     my $parse  = sub
       { my ($response, $mtom) = @_;
-        my $ct       = $response->header('Content-Type') || '';
-
-        $ct =~ m!^\s*multipart/related\s*\;!
+        my $ct = $response->header('Content-Type') || '';
+        $ct    =~ m!^\s*multipart/related\s*\;!i
              or return $simple_parse->($response);
 
-        my %parts;
+        my (@parts, %parts);
         foreach my $part ($response->parts)
         {   my $include = XML::Compile::XOP::Include->fromMime($part)
                or next;
             $parts{$include->cid} = $include;
+            push @parts, $include;
         }
 
-        if($ct !~ m!start\=(["']?)\<([^"']*)\>\1!)
-        {   warning __x"cannot find root node in content-type `{ct}'", ct=>$ct;
-            return ();
-        }
+        @parts
+            or error "no parts in response multi-part for XOP";
 
-        my $startid = $2;
-        my $root = delete $parts{$startid};
-        unless(defined $root)
-        {   warning __x"cannot find root node id in parts `{id}'",id=>$startid;
-            return ();
+        my $root;
+        if($ct =~ m!start\=(["']?)\<([^"']*)\>\1!)
+        {   my $startid = $2;
+            $root = delete $parts{$startid};
+            defined $root
+                or warning __x"cannot find root node id in parts `{id}'"
+                    , id => $startid;
+        }
+        unless($root)
+        {   $root = shift @parts;
+            delete $parts{$root->cid};
         }
 
         ($root->content(1), \%parts);
@@ -290,7 +311,7 @@ sub _prepare_for_no_answer($)
       { my $response = shift;
         my $ct       = $response->content_type || '';
 
-        info "received ".$response->status_line;
+        trace "received ".$response->status_line;
 
         my $content = '';
         if($ct =~ m,[/+]xml$,i)

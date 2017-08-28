@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::Common 3"
-.TH XML::LibXML::Common 3 "2009-10-07" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::Common 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -181,11 +181,11 @@ encoding functions are exported by XML::LibXML::Common.
 .SS "Encoding functions"
 .IX Subsection "Encoding functions"
 To encode or decode a string to or from \s-1UTF\-8\s0, XML::LibXML::Common exports two
-functions, which provide interfact to the encoding support in \f(CW\*(C`libxml2\*(C'\fR. Which encodings are supported by these functions depends on how \f(CW\*(C`libxml2\*(C'\fR was compiled. \s-1UTF\-16\s0 is always supported and on most installations, \s-1ISO\s0
+functions, which provide an interface to the encoding support in \f(CW\*(C`libxml2\*(C'\fR. Which encodings are supported by these functions depends on how \f(CW\*(C`libxml2\*(C'\fR was compiled. \s-1UTF\-16\s0 is always supported and on most installations, \s-1ISO\s0
 encodings are supported as well.
 .PP
 This interface was useful for older versions of Perl. Since Perl >= 5.8
-provides similar funcions via the \f(CW\*(C`Encode\*(C'\fR module, it is probably a good idea to use those instead.
+provides similar functions via the \f(CW\*(C`Encode\*(C'\fR module, it is probably a good idea to use those instead.
 .IP "encodeToUTF8" 4
 .IX Item "encodeToUTF8"
 .Vb 1
@@ -205,9 +205,9 @@ encoding. Note that the conversion can raise an error if the given string
 contains characters that cannot be represented in the target encoding.
 .PP
 Both these functions report their errors on the standard error. If an error
-occours the function will \fIcroak()\fR. To catch the error information it is
-required to call the encoding function from within an eval block in order to
-prevent the entire script from being stopped on encoding error.
+occurs the function will \fIcroak()\fR. To catch the error information it is required
+to call the encoding function from within an eval block in order to prevent the
+entire script from being stopped on encoding error.
 .SS "A note on history"
 .IX Subsection "A note on history"
 Before XML::LibXML 1.70, this class was available as a separate \s-1CPAN\s0
@@ -217,18 +217,18 @@ this direction, we decided to merge XML::LibXML::Common 0.13 and XML::LibXML
 1.70 to one \s-1CPAN\s0 distribution.
 .PP
 The merge also naturally eliminates a practical and urgent problem experienced
-by many XML::LibXML users on certain platforms, namely misterious misbehavior
+by many XML::LibXML users on certain platforms, namely mysterious misbehavior
 of XML::LibXML occurring if the installed (often pre-packaged) version of
 XML::LibXML::Common was compiled against an older version of libxml2 than
 XML::LibXML.
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Matt Sergeant, 
-Christian Glahn, 
+Matt Sergeant,
+Christian Glahn,
 Petr Pajas
 .SH "VERSION"
 .IX Header "VERSION"
-1.70
+2.0129
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 2001\-2007, AxKit.com Ltd.
@@ -236,3 +236,7 @@ Petr Pajas
 2002\-2006, Christian Glahn.
 .PP
 2006\-2009, Petr Pajas.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

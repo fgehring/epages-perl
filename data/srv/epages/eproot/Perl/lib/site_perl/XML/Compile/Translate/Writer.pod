@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::Translate::Writer - translate HASH to XML
@@ -14,54 +16,24 @@ XML::Compile::Translate::Writer - translate HASH to XML
 
 =head1 DESCRIPTION
 
-=head2 Unsupported features
-
 The translator understands schemas, but does not encode that into
 actions.  This module implements those actions to translate from
 a (nested) Perl HASH structure onto XML.
 
+Extends L<"DESCRIPTION" in XML::Compile::Translate|XML::Compile::Translate/"DESCRIPTION">.
+ 
 =head1 METHODS
 
-=head2 Constructors
-
-=over 4
-
-=item $obj-E<gt>B<new>(TRANSLATOR, OPTIONS)
-
-See L<XML::Compile::Translate/"Constructors">
-
-=item $obj-E<gt>B<register>(NAME)
-
-=item XML::Compile::Translate::Writer-E<gt>B<register>(NAME)
-
-See L<XML::Compile::Translate/"Constructors">
-
-=back
-
-=head2 Attributes
-
-=head2 Handlers
-
-=over 4
-
-=item XML::Compile::Translate::Writer-E<gt>B<compile>(ELEMENT|ATTRIBUTE|TYPE, OPTIONS)
-
-See L<XML::Compile::Translate/"Handlers">
-
-=back
-
+Extends L<"METHODS" in XML::Compile::Translate|XML::Compile::Translate/"METHODS">.
+ 
 =head1 DETAILS
 
+Extends L<"DETAILS" in XML::Compile::Translate|XML::Compile::Translate/"DETAILS">.
+ 
 =head2 Translator options
 
-=head3 performance optimization
-
-=head3 qualified XML
-
-=head3 Name-spaces
-
-=head3 Wildcards handlers
-
+Extends L<"Translator options" in XML::Compile::Translate|XML::Compile::Translate/"Translator options">.
+ 
 =head2 Processing Wildcards
 
 Complex elements can define C<any> (element) and C<anyAttribute> components,
@@ -97,7 +69,20 @@ L<XML::Compile::Schema::compile(mixed_elements)|XML::Compile::Schema/"Compilers"
 
 =item ATTRIBUTES (default)
 
-Add attributes to the provided node.
+Add attributes to the provided node.  When you provide a HASH, it is
+taken as node content with attributes.  The content has to be stored
+with key '_'.  When it is not a HASH, the data is node content.
+
+There are various ways you can specify content.  Up to [1.51], you
+could only pass a matching XML::LibXML::Element.  Release [1.51] added
+strings to the spectrum.  If the string does not contain encoded entities
+or E<lt> and E<gt>, then it is assumed to be a real perl string.  When
+the string contains an XML fragment which has the same localname as to be
+created, that will be used.  When the XML fragment is not wrapped in the
+expected node, this is created for you.
+
+In any case, attributes provided with the content will get added to the
+content data.
 
 =item STRUCTURAL
 
@@ -107,6 +92,15 @@ used or an XML node.
 =back
 
 =head2 Schema hooks
+
+All writer hooks behave differently.  Be warned that the user values
+can be a SCALAR or a HASH, dependent on the type.  You can intervene
+on higher data-structure levels, to repair lower levels, if you want
+to.
+
+[1.48] The hooks get a long list of parameters.  The C<$fulltype>
+indicates the type of object which is being processed, which is
+especially useful with the 'extends' selector.
 
 =head3 hooks executed before normal processing
 
@@ -149,12 +143,11 @@ On the moment, the only predefined C<after> hook is C<PRINT_PATH>.
 When a schema makes a mess out of things, we can fix that with hooks.
 Also, when you need things that XML::Compile does not support (yet).
 
-All writer hooks behave differently.  Be warned that the user values
-can be a SCALAR or a HASH, dependent on the type.  You can intervene
-on higher data-structure levels, to repair lower levels, if you want
-to.
-
 =head2 Typemaps
+
+In a typemap, a relation between an XML element type and a Perl class (or
+object) is made.  Each translator back-end will implement this a little
+differently.  This section is about how the writer handles typemaps.
 
 =head3 Typemap to Class
 
@@ -169,9 +162,9 @@ is defined, they are treated smartly.  When some other data than an
 objects is found on a location which has a typemap definition, it will
 be used as such; objects are optional.
 
-The object (of present) will be checked to be of the expected class.
+The object (if present) will be checked to be of the expected class.
 It will be a compile-time error when the class does not implement the
-C<toXML>method.
+C<toXML> method.
 
  $schema->typemap($sometype => 'My::Perl::Class');
 
@@ -234,40 +227,19 @@ in the input data.  However, this would mean that all the (many) internal
 parser constructs would need to be extended.  That would slow-down the
 writer considerably.
 
-In a typemap, a relation between an XML element type and a Perl class (or
-object) is made.  Each translator back-end will implement this a little
-differently.  This section is about how the writer handles typemaps.
-
 =head1 SEE ALSO
 
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2006-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

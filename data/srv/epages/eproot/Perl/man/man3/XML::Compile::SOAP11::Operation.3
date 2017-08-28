@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::SOAP11::Operation 3"
-.TH XML::Compile::SOAP11::Operation 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::SOAP11::Operation 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -148,28 +148,33 @@ XML::Compile::SOAP11::Operation \- defines a SOAP11 interaction
 .IX Header "DESCRIPTION"
 Objects of this type define one possible \s-1SOAP11\s0 interaction, either
 client side or server side.
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in XML::Compile::SOAP::Operation.
 .SH "METHODS"
 .IX Header "METHODS"
+Extends \*(L"\s-1METHODS\s0\*(R" in XML::Compile::SOAP::Operation.
 .SS "Constructors"
 .IX Subsection "Constructors"
-.IP "XML::Compile::SOAP11::Operation\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::SOAP11::Operation->new(OPTIONS)"
+Extends \*(L"Constructors\*(R" in XML::Compile::SOAP::Operation.
+.IP "XML::Compile::SOAP11::Operation\->\fBnew\fR(%options)" 4
+.IX Item "XML::Compile::SOAP11::Operation->new(%options)"
 \&\f(CW\*(C`input_def\*(C'\fR, \f(CW\*(C`output_def\*(C'\fR and \f(CW\*(C`fault_def\*(C'\fR are HASHes which contain
 the input and output message header, body and fault-header definitions
 in \s-1WSDL1\s0.1 style.
 .Sp
-.Vb 11
-\& \-Option    \-\-Defined in     \-\-Default
-\&  action      XML::Compile::SOAP::Operation  undef
-\&  endpoints   XML::Compile::SOAP::Operation  []
-\&  fault_def                    <undef>
-\&  input_def                    <undef>
-\&  kin         XML::Compile::SOAP::Operation  <required>
-\&  nam         XML::Compile::SOAP::Operation  <required>
-\&  output_def                   <undef>
-\&  schemas     XML::Compile::SOAP::Operation  <required>
-\&  style                        \*(Aqdocument\*(Aq
-\&  transport   XML::Compile::SOAP::Operation  \*(AqHTTP\*(Aq
+.Vb 12
+\& \-Option     \-\-Defined in                   \-\-Default
+\&  action       XML::Compile::SOAP::Operation  undef
+\&  endpoints    XML::Compile::SOAP::Operation  []
+\&  fault_def                                   <undef>
+\&  input_def                                   <undef>
+\&  kind         XML::Compile::SOAP::Operation  <required>
+\&  name         XML::Compile::SOAP::Operation  <required>
+\&  output_def                                  <undef>
+\&  schemas      XML::Compile::SOAP::Operation  <required>
+\&  server_type  XML::Compile::SOAP::Operation  undef
+\&  style                                       \*(Aqdocument\*(Aq
+\&  transport    XML::Compile::SOAP::Operation  \*(AqHTTP\*(Aq
 .Ve
 .RS 4
 .IP "action => \s-1STRING\s0" 2
@@ -181,14 +186,16 @@ in \s-1WSDL1\s0.1 style.
 .IX Item "fault_def => HASH"
 .IP "input_def => \s-1HASH\s0" 2
 .IX Item "input_def => HASH"
-.IP "kin => d" 2
-.IX Item "kin => d"
-.IP "nam => e" 2
-.IX Item "nam => e"
+.IP "kind => 'one\-way'|..." 2
+.IX Item "kind => 'one-way'|..."
+.IP "name => \s-1STRING\s0" 2
+.IX Item "name => STRING"
 .IP "output_def => \s-1HASH\s0" 2
 .IX Item "output_def => HASH"
 .IP "schemas => XML::Compile::Cache" 2
 .IX Item "schemas => XML::Compile::Cache"
+.IP "server_type => \s-1NAME\s0" 2
+.IX Item "server_type => NAME"
 .IP "style => 'document'|'rpc'" 2
 .IX Item "style => 'document'|'rpc'"
 .IP "transport => URI|'\s-1HTTP\s0'" 2
@@ -199,74 +206,100 @@ in \s-1WSDL1\s0.1 style.
 .PD
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBbindingName\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBbindingName\fR" 4
-.IX Item "$obj->bindingName"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
-.ie n .IP "$obj\->\fBclientClass\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBclientClass\fR" 4
-.IX Item "$obj->clientClass"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
-.ie n .IP "$obj\->\fBendPoints\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBendPoints\fR" 4
-.IX Item "$obj->endPoints"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
-.ie n .IP "$obj\->\fBkind\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBkind\fR" 4
-.IX Item "$obj->kind"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
-.ie n .IP "$obj\->\fBname\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBname\fR" 4
-.IX Item "$obj->name"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
-.ie n .IP "$obj\->\fBportName\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBportName\fR" 4
-.IX Item "$obj->portName"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
-.ie n .IP "$obj\->\fBschemas\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBschemas\fR" 4
-.IX Item "$obj->schemas"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
-.ie n .IP "$obj\->\fBserverClass\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBserverClass\fR" 4
-.IX Item "$obj->serverClass"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
-.ie n .IP "$obj\->\fBserviceName\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBserviceName\fR" 4
-.IX Item "$obj->serviceName"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
-.ie n .IP "$obj\->\fBsoapAction\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBsoapAction\fR" 4
-.IX Item "$obj->soapAction"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
-.ie n .IP "$obj\->\fBstyle\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBstyle\fR" 4
-.IX Item "$obj->style"
+Extends \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation.
+.ie n .IP "$obj\->\fBbindingName\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBbindingName\fR()" 4
+.IX Item "$obj->bindingName()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+.ie n .IP "$obj\->\fBclientClass\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBclientClass\fR()" 4
+.IX Item "$obj->clientClass()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+.ie n .IP "$obj\->\fBendPoints\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBendPoints\fR()" 4
+.IX Item "$obj->endPoints()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+.ie n .IP "$obj\->\fBkind\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBkind\fR()" 4
+.IX Item "$obj->kind()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+.ie n .IP "$obj\->\fBlongName\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBlongName\fR()" 4
+.IX Item "$obj->longName()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+.ie n .IP "$obj\->\fBname\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBname\fR()" 4
+.IX Item "$obj->name()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+.ie n .IP "$obj\->\fBportName\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBportName\fR()" 4
+.IX Item "$obj->portName()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+.ie n .IP "$obj\->\fBschemas\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBschemas\fR()" 4
+.IX Item "$obj->schemas()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+.ie n .IP "$obj\->\fBserverClass\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBserverClass\fR()" 4
+.IX Item "$obj->serverClass()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+.ie n .IP "$obj\->\fBserviceName\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBserviceName\fR()" 4
+.IX Item "$obj->serviceName()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+.ie n .IP "$obj\->\fBsoapAction\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBsoapAction\fR()" 4
+.IX Item "$obj->soapAction()"
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+.ie n .IP "$obj\->\fBstyle\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBstyle\fR()" 4
+.IX Item "$obj->style()"
 .PD 0
-.ie n .IP "$obj\->\fBversion\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBversion\fR" 4
-.IX Item "$obj->version"
+.ie n .IP "$obj\->\fBversion\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBversion\fR()" 4
+.IX Item "$obj->version()"
 .PD
-See \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
 .ie n .IP "$obj\->\fBwsaAction\fR('\s-1INPUT\s0'|'\s-1OUTPUT\s0')" 4
 .el .IP "\f(CW$obj\fR\->\fBwsaAction\fR('\s-1INPUT\s0'|'\s-1OUTPUT\s0')" 4
 .IX Item "$obj->wsaAction('INPUT'|'OUTPUT')"
-See \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
+Inherited, see \*(L"Accessors\*(R" in XML::Compile::SOAP::Operation
 .SS "Modify"
 .IX Subsection "Modify"
 Operations are often modified by \s-1SOAP\s0 extensions.
 See XML::Compile::SOAP::WSA, for instance. Also demonstrated in
 the \s-1FAQ\s0, XML::Compile::SOAP::FAQ.
-.ie n .IP "$obj\->\fBaddHeader\fR(('\s-1INPUT\s0'|'\s-1OUTPUT\s0'|'\s-1FAULT\s0'), \s-1LABEL\s0, \s-1ELEM\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBaddHeader\fR(('\s-1INPUT\s0'|'\s-1OUTPUT\s0'|'\s-1FAULT\s0'), \s-1LABEL\s0, \s-1ELEM\s0)" 4
-.IX Item "$obj->addHeader(('INPUT'|'OUTPUT'|'FAULT'), LABEL, ELEM)"
+.ie n .IP "$obj\->\fBaddHeader\fR( <'\s-1INPUT\s0'|'\s-1OUTPUT\s0'|'\s-1FAULT\s0'>, $label, $element, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBaddHeader\fR( <'\s-1INPUT\s0'|'\s-1OUTPUT\s0'|'\s-1FAULT\s0'>, \f(CW$label\fR, \f(CW$element\fR, \f(CW%options\fR )" 4
+.IX Item "$obj->addHeader( <'INPUT'|'OUTPUT'|'FAULT'>, $label, $element, %options )"
+Add a header definitions.  Many protocols on top of \s-1SOAP\s0, like \s-1WSS\s0, add
+headers to the operations which are not specified in the \s-1WSDL\s0.
+.Sp
+[2.31] When you add a header with same \f(CW$label\fR again, it will get silently
+ignored unless the \f(CW$element\fR type differs. An \f(CW$element\fR is either a full
+type or a [3.00] prefixed type.
+.Sp
+.Vb 3
+\& \-Option        \-\-Default
+\&  destination     undef
+\&  mustUnderstand  undef
+.Ve
+.RS 4
+.IP "destination => \s-1ROLE\s0" 2
+.IX Item "destination => ROLE"
+[2.33] adds the destination attribute.
+.IP "mustUnderstand => \s-1BOOLEAN\s0" 2
+.IX Item "mustUnderstand => BOOLEAN"
+[2.33] adds the mustUnderstand attribute.
+.RE
+.RS 4
+.RE
 .SS "Handlers"
 .IX Subsection "Handlers"
-.PD 0
-.ie n .IP "$obj\->\fBcompileClient\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileClient\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileClient(OPTIONS)"
-.PD
+Extends \*(L"Handlers\*(R" in XML::Compile::SOAP::Operation.
+.ie n .IP "$obj\->\fBcompileClient\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileClient\fR(%options)" 4
+.IX Item "$obj->compileClient(%options)"
 Returns one \s-1CODE\s0 reference which handles the processing for this
 operation. Options \f(CW\*(C`transporter\*(C'\fR, \f(CW\*(C`transport_hook\*(C'\fR, and
 \&\f(CW\*(C`endpoint\*(C'\fR are passed to \fIcompileTransporter()\fR.
@@ -275,18 +308,18 @@ You pass that \s-1CODE\s0 reference an input message of the correct
 type, as pure Perl \s-1HASH\s0 structure.  An 'request\-response' operation
 will return then answer, or \f(CW\*(C`undef\*(C'\fR in case of failure.  An 'one\-way'
 operation with return \f(CW\*(C`undef\*(C'\fR in case of failure, and a true value
-when successfull.
+when successful.
 .Sp
 You \fBcannot\fR pass options for \fIXML::Compile::Schema::compile()\fR, like
 \&\f(CW\*(C`<sloppy_integers =\*(C'\fR 0>>, hooks or typemaps this way. Provide these to
 the \f(CW\*(C`::WSDL\*(C'\fR or other \f(CW\*(C`::Cache\*(C'\fR object which defines the types, via
 \&\f(CW\*(C`new\*(C'\fR option \f(CW\*(C`opts_rw\*(C'\fR and friends.
-.ie n .IP "$obj\->\fBcompileHandler\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileHandler\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileHandler(OPTIONS)"
+.ie n .IP "$obj\->\fBcompileHandler\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileHandler\fR(%options)" 4
+.IX Item "$obj->compileHandler(%options)"
 Prepare the routines which will decode the request and encode the answer,
 as will be run on the server. The XML::Compile::SOAP::Server will
-connect these. All \s-1OPTIONS\s0 will get passed to
+connect these. All \f(CW%options\fR will get passed to
 \&\fIXML::Compile::SOAP11::Server::compileHandler()\fR
 .Sp
 .Vb 3
@@ -305,26 +338,27 @@ Determines whether the handler belongs to a received message.
 .RE
 .RS 4
 .RE
-.ie n .IP "$obj\->\fBcompileTransporter\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileTransporter\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileTransporter(OPTIONS)"
-See \*(L"Handlers\*(R" in XML::Compile::SOAP::Operation
+.ie n .IP "$obj\->\fBcompileTransporter\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileTransporter\fR(%options)" 4
+.IX Item "$obj->compileTransporter(%options)"
+Inherited, see \*(L"Handlers\*(R" in XML::Compile::SOAP::Operation
 .SS "Helpers"
 .IX Subsection "Helpers"
-.ie n .IP "$obj\->\fBexplain\fR(\s-1WSDL\s0, \s-1FORMAT\s0, \s-1DIRECTION\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBexplain\fR(\s-1WSDL\s0, \s-1FORMAT\s0, \s-1DIRECTION\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->explain(WSDL, FORMAT, DIRECTION, OPTIONS)"
+Extends \*(L"Helpers\*(R" in XML::Compile::SOAP::Operation.
+.ie n .IP "$obj\->\fBexplain\fR($wsdl, $format, $direction, %options)" 4
+.el .IP "\f(CW$obj\fR\->\fBexplain\fR($wsdl, \f(CW$format\fR, \f(CW$direction\fR, \f(CW%options\fR)" 4
+.IX Item "$obj->explain($wsdl, $format, $direction, %options)"
 [since 2.13]
 .Sp
 Dump an annotated structure showing how the operation works, helping
-developers to understand the schema. \s-1FORMAT\s0 is always \f(CW\*(C`PERL\*(C'\fR: \f(CW\*(C`XML\*(C'\fR
-is not yet supported.
+developers to understand the schema. The \f(CW$format\fR must be string \*(L"\s-1PERL\s0\*(R".
+($format \*(L"\s-1XML\s0\*(R" is not yet supported)
 .Sp
-The \s-1DIRECTION\s0 is \f(CW\*(C`INPUT\*(C'\fR, it will return the message which the client
-sends to the server (input for the server). The \f(CW\*(C`OUTPUT\*(C'\fR message is
-sent as response by the server.
+When the \f(CW$direction\fR is string \*(L"\s-1INPUT\s0\*(R", it will return the message which
+the client sends to the server (input for the server). The \*(L"\s-1OUTPUT\s0\*(R"
+message is sent as response by the server.
 .Sp
-All \s-1OPTIONS\s0 besides those described here are passed to
+All \f(CW%options\fR besides those described here are passed to
 \&\fIXML::Compile::Schema::template()\fR, when \f(CW\*(C`recurse\*(C'\fR is enabled.
 .Sp
 .Vb 3
@@ -342,39 +376,23 @@ Append the templates of all the part structures.
 .RS 4
 .RE
 .PD 0
-.IP "XML::Compile::SOAP11::Operation\->\fBregister\fR(\s-1URI\s0, \s-1ENVNS\s0)" 4
-.IX Item "XML::Compile::SOAP11::Operation->register(URI, ENVNS)"
+.ie n .IP "$obj\->\fBparsedWSDL\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBparsedWSDL\fR(%options)" 4
+.IX Item "$obj->parsedWSDL(%options)"
 .PD
-See \*(L"Helpers\*(R" in XML::Compile::SOAP::Operation
+Inherited, see \*(L"Helpers\*(R" in XML::Compile::SOAP::Operation
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

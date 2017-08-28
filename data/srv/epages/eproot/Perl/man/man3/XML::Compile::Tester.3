@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Tester 3"
-.TH XML::Compile::Tester 3 "2010-06-15" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Tester 3 "2012-08-16" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -174,9 +174,8 @@ which simplify writing tests for XML::Compile related distributions.
 .IX Header "FUNCTIONS"
 .SS "Reader checks"
 .IX Subsection "Reader checks"
-\&\fBreader_create\fR(\s-1SCHEMA\s0, \s-1COMMENT\s0, \s-1TYPE\s0, \s-1OPTIONS\s0)
-.Sp
-.RS 4
+.IP "\fBreader_create\fR(\s-1SCHEMA\s0, \s-1COMMENT\s0, \s-1TYPE\s0, \s-1OPTIONS\s0)" 4
+.IX Item "reader_create(SCHEMA, COMMENT, TYPE, OPTIONS)"
 Create a reader for \s-1TYPE\s0.  One test is created, reporting
 success or failure of the creation.
 .Sp
@@ -201,11 +200,8 @@ example: reader_create
 \& my $reader = reader_create($schema, \*(Aqmy test\*(Aq, \*(AqlocalName\*(Aq
 \&   , check_occurs => 0, @other_options);
 .Ve
-.RE
-.PP
-\&\fBreader_error\fR(\s-1SCHEMA\s0, \s-1TYPE\s0, \s-1XML\s0)
-.Sp
-.RS 4
+.IP "\fBreader_error\fR(\s-1SCHEMA\s0, \s-1TYPE\s0, \s-1XML\s0)" 4
+.IX Item "reader_error(SCHEMA, TYPE, XML)"
 Parsing the \s-1XML\s0 to interpret the \s-1TYPE\s0 should return an error.  The
 error text is returned.
 .Sp
@@ -219,12 +215,10 @@ example: reader_error
 \& is($error, \*(Aqerror text\*(Aq, \*(Aqmy test\*(Aq);
 \& like($error, qr/error pattern/, \*(Aqmy test\*(Aq);
 .Ve
-.RE
 .SS "Writer checks"
 .IX Subsection "Writer checks"
-\&\fBwriter_create\fR(\s-1SCHEMA\s0, \s-1COMMENT\s0, \s-1TYPE\s0, \s-1OPTIONS\s0)
-.Sp
-.RS 4
+.IP "\fBwriter_create\fR(\s-1SCHEMA\s0, \s-1COMMENT\s0, \s-1TYPE\s0, \s-1OPTIONS\s0)" 4
+.IX Item "writer_create(SCHEMA, COMMENT, TYPE, OPTIONS)"
 Create a writer for \s-1TYPE\s0.  One test (in the Test::More sense) is created,
 reporting success or failure of the creation.
 .Sp
@@ -248,11 +242,8 @@ example: writer_create
 \& # implicit creation of $doc
 \& my $xml    = writer_test($writer, $data);
 .Ve
-.RE
-.PP
-\&\fBwriter_error\fR(\s-1SCHEMA\s0, \s-1TYPE\s0, \s-1DATA\s0)
-.Sp
-.RS 4
+.IP "\fBwriter_error\fR(\s-1SCHEMA\s0, \s-1TYPE\s0, \s-1DATA\s0)" 4
+.IX Item "writer_error(SCHEMA, TYPE, DATA)"
 Translating the Perl \s-1DATA\s0 into the \s-1XML\s0 type should return a validation
 error, which is returned.
 .Sp
@@ -264,35 +255,19 @@ example: writer_error
 \& is($error, \*(Aqerror text\*(Aq, \*(Aqmy test\*(Aq);
 \& like($error, qr/error pattern/, \*(Aqmy test\*(Aq);
 .Ve
-.RE
-.PP
-\&\fBwriter_test\fR(\s-1WRITER\s0, \s-1DATA\s0, [\s-1DOC\s0])
-.Sp
-.RS 4
+.IP "\fBwriter_test\fR(\s-1WRITER\s0, \s-1DATA\s0, [\s-1DOC\s0])" 4
+.IX Item "writer_test(WRITER, DATA, [DOC])"
 Run the test with a compiled \s-1WRITER\s0, which was created with \fIwriter_create()\fR.
 When no \s-1DOC\s0 (XML::LibXML::Document object) was specified, then one will
 be created for you.
-.RE
 .SS "Check templates"
 .IX Subsection "Check templates"
-\&\fBtempl_perl\fR(\s-1SCHEMA\s0, \s-1TYPE\s0, \s-1OPTIONS\s0)
-.Sp
-.RS 4
-Create an example template for \s-1TYPE\s0, as Perl data
-structure (like Data::Dumper) The \s-1OPTIONS\s0 are passed to
-XML::Compile::Schema subroutine template.
-.Sp
-example: templ_perl
-.Sp
-.Vb 2
-\& my $out = templ_perl($schema, $type, show => \*(AqALL\*(Aq);
-\& is($out, $expected);
-.Ve
-.RE
-.PP
-\&\fBtempl_xml\fR(\s-1SCHEMA\s0, \s-1TYPE\s0, \s-1OPTIONS\s0)
-.Sp
-.RS 4
+.IP "\fBtempl_perl\fR(\s-1SCHEMA\s0, \s-1TYPE\s0, \s-1OPTIONS\s0)" 4
+.IX Item "templ_perl(SCHEMA, TYPE, OPTIONS)"
+.PD 0
+.IP "\fBtempl_xml\fR(\s-1SCHEMA\s0, \s-1TYPE\s0, \s-1OPTIONS\s0)" 4
+.IX Item "templ_xml(SCHEMA, TYPE, OPTIONS)"
+.PD
 Create an example template for \s-1TYPE\s0, as \s-1XML\s0 message.
 The \s-1OPTIONS\s0 are passed to XML::Compile::Schema subroutine template.
 .Sp
@@ -302,12 +277,10 @@ example: templ_xml
 \& my $out = templ_xml($schema, $type, show => \*(AqALL\*(Aq);
 \& is($out, $expected);
 .Ve
-.RE
 .SS "Helpers"
 .IX Subsection "Helpers"
-\&\fBcompare_xml\fR(\s-1XML\s0, \s-1EXPECTED\s0, [\s-1COMMENT\s0])
-.Sp
-.RS 4
+.IP "\fBcompare_xml\fR(\s-1XML\s0, \s-1EXPECTED\s0, [\s-1COMMENT\s0])" 4
+.IX Item "compare_xml(XML, EXPECTED, [COMMENT])"
 Compare the \s-1XML\s0 (either a string or an XML::LibXML::Element) with
 the \s-1EXPECTED\s0 string.  Both sources are stripped from layout before
 comparing.
@@ -322,11 +295,8 @@ example: compare_xml
 \&   <test1>...</test1>
 \& _XML
 .Ve
-.RE
-.PP
-\&\fBset_compile_defaults\fR(\s-1OPTIONS\s0)
-.Sp
-.RS 4
+.IP "\fBset_compile_defaults\fR(\s-1OPTIONS\s0)" 4
+.IX Item "set_compile_defaults(OPTIONS)"
 Each call to create a reader or writer (also indirectly) with
 XML::Compile::Schema subroutine compile will get these \s-1OPTIONS\s0 passed, on top
 (and overruling) the usual settings.
@@ -340,40 +310,39 @@ example:
 \&
 \& set_compile_defaults();   # reset
 .Ve
-.RE
-.PP
-\&\fBset_default_namespace\fR(\s-1TESTNS\s0)
-.Sp
-.RS 4
+.IP "\fBset_default_namespace\fR(\s-1TESTNS\s0)" 4
+.IX Item "set_default_namespace(TESTNS)"
 Defined which namespace to use when a relative (only localName) type
 is provided.  By default, this is \f(CW\*(C`undef\*(C'\fR (an error when used)
-.RE
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-Tester distribution version 0.06,
-built on June 15, 2010. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
+This module is part of XML-Compile-Tester distribution version 0.90,
+built on August 16, 2012. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
-All modules in this suite:
+Other distributions in this suite:
 XML::Compile,
 XML::Compile::SOAP,
 XML::Compile::SOAP12,
 XML::Compile::SOAP::Daemon,
+XML::Compile::SOAP::WSA,
+XML::Compile::C14N,
+XML::Compile::WSS,
 XML::Compile::Tester,
 XML::Compile::Cache,
 XML::Compile::Dumper,
 XML::Compile::RPC,
-and
 XML::Rewrite,
-XML::ExistDB,
+XML::eXistDB,
+and
 XML::LibXML::Simple.
 .PP
 Please post questions or ideas to the mailinglist at
 \&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
-For life contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
+For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2008\-2010 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2008\-2012 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

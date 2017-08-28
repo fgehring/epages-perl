@@ -1,27 +1,26 @@
 package LWP::Protocol;
 
-require LWP::MemberMixin;
-@ISA = qw(LWP::MemberMixin);
-$VERSION = "6.00";
+use base 'LWP::MemberMixin';
+
+our $VERSION = '6.17';
 
 use strict;
 use Carp ();
 use HTTP::Status ();
 use HTTP::Response;
+use Try::Tiny qw(try catch);
 
 my %ImplementedBy = (); # scheme => classname
-
-
 
 sub new
 {
     my($class, $scheme, $ua) = @_;
 
     my $self = bless {
-	scheme => $scheme,
-	ua => $ua,
+        scheme => $scheme,
+        ua => $ua,
 
-	# historical/redundant
+        # historical/redundant
         max_size => $ua->{max_size},
     }, $class;
 
@@ -33,7 +32,7 @@ sub create
 {
     my($scheme, $ua) = @_;
     my $impclass = LWP::Protocol::implementor($scheme) or
-	Carp::croak("Protocol scheme '$scheme' is not supported");
+        Carp::croak("Protocol scheme '$scheme' is not supported");
 
     # hand-off to scheme specific implementation sub-class
     my $protocol = $impclass->new($scheme, $ua);
@@ -47,7 +46,7 @@ sub implementor
     my($scheme, $impclass) = @_;
 
     if ($impclass) {
-	$ImplementedBy{$scheme} = $impclass;
+        $ImplementedBy{$scheme} = $impclass;
     }
     my $ic = $ImplementedBy{$scheme};
     return $ic if $ic;
@@ -62,16 +61,21 @@ sub implementor
     no strict 'refs';
     # check we actually have one for the scheme:
     unless (@{"${ic}::ISA"}) {
-	# try to autoload it
-	eval "require $ic";
-	if ($@) {
-	    if ($@ =~ /Can't locate/) { #' #emacs get confused by '
-		$ic = '';
-	    }
-	    else {
-		die "$@\n";
-	    }
-	}
+        # try to autoload it
+        try {
+            (my $class = $ic) =~ s{::}{/}g;
+            $class .= '.pm' unless $class =~ /\.pm$/;
+            require $class;
+        }
+        catch {
+            my $error = $_;
+            if ($error =~ /Can't locate/) {
+                $ic = '';
+            }
+            else {
+                die "$error\n";
+            }
+        };
     }
     $ImplementedBy{$scheme} = $ic if $ic;
     $ic;
@@ -96,14 +100,14 @@ sub collect
     my $content;
     my($ua, $max_size) = @{$self}{qw(ua max_size)};
 
-    eval {
-	local $\; # protect the print below from surprises
+    try {
+        local $\; # protect the print below from surprises
         if (!defined($arg) || !$response->is_success) {
             $response->{default_add_content} = 1;
         }
         elsif (!ref($arg) && length($arg)) {
             open(my $fh, ">", $arg) or die "Can't write to '$arg': $!";
-	    binmode($fh);
+            binmode($fh);
             push(@{$response->{handlers}{response_data}}, {
                 callback => sub {
                     print $fh $_[3] or die "Can't write to '$arg': $!";
@@ -112,16 +116,16 @@ sub collect
             });
             push(@{$response->{handlers}{response_done}}, {
                 callback => sub {
-		    close($fh) or die "Can't write to '$arg': $!";
-		    undef($fh);
-		},
-	    });
+                    close($fh) or die "Can't write to '$arg': $!";
+                    undef($fh);
+                },
+            });
         }
         elsif (ref($arg) eq 'CODE') {
             push(@{$response->{handlers}{response_data}}, {
                 callback => sub {
-		    &$arg($_[3], $_[0], $self);
-		    1;
+                    &$arg($_[3], $_[0], $self);
+                    1;
                 },
             });
         }
@@ -133,11 +137,11 @@ sub collect
 
         if (delete $response->{default_add_content}) {
             push(@{$response->{handlers}{response_data}}, {
-		callback => sub {
-		    $_[0]->add_content($_[3]);
-		    1;
-		},
-	    });
+                callback => sub {
+                    $_[0]->add_content($_[3]);
+                    1;
+                },
+            });
         }
 
 
@@ -160,17 +164,15 @@ sub collect
                 last;
             }
         }
+    }
+    catch {
+        my $error = $_;
+        chomp($error);
+        $response->push_header('X-Died' => $error);
+        $response->push_header("Client-Aborted", "die");
     };
-    my $err = $@;
     delete $response->{handlers}{response_data};
     delete $response->{handlers} unless %{$response->{handlers}};
-    if ($err) {
-        chomp($err);
-        $response->push_header('X-Died' => $err);
-        $response->push_header("Client-Aborted", "die");
-        return $response;
-    }
-
     return $response;
 }
 
@@ -181,8 +183,8 @@ sub collect_once
     my $content = \ $_[3];
     my $first = 1;
     $self->collect($arg, $response, sub {
-	return $content if $first--;
-	return \ "";
+        return $content if $first--;
+        return \ "";
     });
 }
 
@@ -190,6 +192,8 @@ sub collect_once
 
 
 __END__
+
+=pod
 
 =head1 NAME
 
@@ -203,7 +207,7 @@ LWP::Protocol - Base class for LWP protocols
 
 =head1 DESCRIPTION
 
-This class is used a the base class for all protocol implementations
+This class is used as the base class for all protocol implementations
 supported by the LWP library.
 
 When creating an instance of this class using
@@ -212,7 +216,7 @@ appropriate for that access method. In other words, the
 LWP::Protocol::create() function calls the constructor for one of its
 subclasses.
 
-All derived LWP::Protocol classes need to override the request()
+All derived C<LWP::Protocol> classes need to override the request()
 method which is used to service a request. The overridden method can
 make use of the collect() function to collect together chunks of data
 as it is received.
@@ -289,3 +293,5 @@ Copyright 1995-2001 Gisle Aas.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
+
+=cut

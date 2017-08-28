@@ -124,19 +124,25 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::SOAP::FAQ 3"
-.TH XML::Compile::SOAP::FAQ 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::SOAP::FAQ 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-XML::Compile::FAQ \- frequently asked questions
+XML::Compile::SOAP::FAQ \- frequently asked questions
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
+On this page, a wild collection of questions are answered related to
+the XML::Compile::SOAP modules.  Or better said: let's hope there will
+be more in the future. If you have contributions either in question or
+as answer, then please contribute via the xml mailinglist.
+.PP
+Also read XML::Compile::FAQ.
 .SS "Modifing the messages"
 .IX Subsection "Modifing the messages"
-\fIadd header fields\fR
-.IX Subsection "add header fields"
+\fIadd \s-1XML\s0 header fields\fR
+.IX Subsection "add XML header fields"
 .PP
 Although WSDLs offer a nice way to define header-fields explicitly, quite
 a number of applications require fields which are not described. Also
@@ -159,7 +165,7 @@ for a complex example. A simple example follows here.
 \&
 \&  sub wsdl11Init($@)
 \&  {   my ($self, $wsdl, $args) = @_;
-\&      $wsdl\->prefixes(myprefix => $my_ns);
+\&      $wsdl\->addPrefixes(myprefix => $my_ns);
 \&      $wsdl\->importDefinitions($my_schema_file);
 \&      $self;
 \&  }
@@ -179,41 +185,174 @@ With \f(CW\*(C`soap11ClientWrapper()\*(C'\fR and \f(CW\*(C`soap11HandlerWrapper(
 you can influence the client respectively server processing, for
 instance to fill-in default values.
 .PP
-On this page, a wild collection of questions are answered related to
-the XML::Compile::SOAP modules.  Or better said: let's hope there will
-be more in the future. If you have contributions either in question or
-as answer, then please contribute via the xml mailinglist.
+\fIadding \s-1HTTP\s0 headers\fR
+.IX Subsection "adding HTTP headers"
 .PP
-See also XML::Compile::FAQ.
+Some applications require to add headers to the \s-1HTTP\s0 headers sent or
+check headers which are received. \s-1SOAP\s0 is not about \s-1HTTP\s0, so you have
+to dive deeper in the underlaying constructs; you have to construct the
+code references in more steps, not using the auto-generation mechanisms
+of some objects, by default hidden to you.
+.PP
+Examples of needs: authentication/cookies in the header, content
+(crypt) checksums, non-standard content-type headers.
+.PP
+The ::WSDL11 module detects that the soap-http protocol is needed.
+(There is also a pure http protocol defined in the \s-1SOAP\s0 spec, which
+is never used).  When the operation gets compiled (with compileClient),
+the ::SOAPHTTP module is used to create the soap-http specific message
+transport logic. Then, that module uses \s-1LWP\s0 to do the actual \s-1HTTP\s0
+exchange. To be able to access the in\- and outgoing messages, you have
+to reach to that LWP::UserAgent.
+.PP
+Michael Ludwig contributed the following example (slightly adapted)
+Of course, select your own preferences carefully.
+.PP
+.Vb 1
+\&  my $ua = LWP::UserAgent\->new(timeout => 10);
+\&
+\&  # First the HTTP logic
+\&  # defaults when https is used
+\&  $ua\->ssl_opts(verify_hostname => 0, keep_alive => 1);
+\&
+\&  # Auto\-use cookies
+\&  $ua\->cookie_jar( {file => $my_jar_file
+\&    , autosave => 1, ignore_discard => 1 });
+\&
+\&  # Now, we need the SOAP logic
+\&  my $trans = XML::Compile::Transport::SOAPHTTP
+\&    \->new(user_agent => $ua, address => $srv_url);
+\&
+\&  # Finally the message, with explicit transporter
+\&  my $call = $wsdl\->compileClient($opname, transport => $trans);
+\&
+\&  # Or more operations at the same time
+\&  # $wsdl\->compileCalls(transport => $trans);
+\&
+\&  # $answer is the decoded XML content.
+\&  my($answer, $trace) = $call\->( \e%parms );
+\&
+\&  # If you need headers from the response HTTP headers.
+\&  my $http_response = $trace\->response;
+\&  print $http_response\->header(\*(AqX\-Secret\*(Aq);
+.Ve
+.PP
+You may know the \f(CW$srv_url\fR to get the address of the server, but
+you can also ask the operation itself. Here a different implementation:
+.PP
+.Vb 4
+\&  my $op    = $wsdl\->operation($opname);
+\&  my $srv   = ($op\->addresses)[0];
+\&  my $trans = XML::Compile::Transport::SOAPHTTP\->new(address => $srv
+\&    , timeout => 15, ssl_opts => { verify_hostname => 0 });
+\&
+\&  # Now configure the userAgent
+\&  my $ua    = $trans\->userAgent;
+\&  ...
+\&
+\&  my $call  = $op\->compileClient(transport => $trans);
+\&  ...
+.Ve
+.PP
+The LWP::UserAgent has many useful hooks (<i>Handlers</i>), for
+instance \f(CW\*(C`request_send\*(C'\fR and \f(CW\*(C`response_done\*(C'\fR.
+.PP
+Even shorter, The next works as well. In the whole XML::Compile::SOAP
+suite, parameters passed on higher levels are passed to all lower
+levels. Yeh, unclean programming but useful.
+.PP
+.Vb 3
+\&  my $ua    = $trans\->userAgent;
+\&  my $call  = $wsdl\->compileClient(transport => $trans
+\&    , user_agent => $ua);
+.Ve
+.PP
+When you only need to add simple authentication to the headers, you
+may use the magic of \s-1LWP:\s0 provide your server address into
+.PP
+.Vb 1
+\&  http://user:password@example.com/service
+.Ve
+.PP
+\fIadd Basic Auth \s-1HTTP\s0 header\fR
+.IX Subsection "add Basic Auth HTTP header"
+.PP
+An simple example for the previous section, is the often needed basic
+authentication.  You need something like this:
+.PP
+.Vb 3
+\&   my $ua = LWP::UserAgent\->new(timeout => 10);
+\&   my $call = $wsdl\->compileClient($operation, user_agent => $ua
+\&    , transport_hook => \e&basic_auth);
+\&
+\&   sub basic_auth($$)
+\&   {   my ($request, $trace) = @_;
+\&       $request\->authorization_basic($user, $password);
+\&       $ua\->request($request);     # returns $response
+\&   }
+.Ve
+.PP
+That's all.  When you use XML::Compile::Cache to maintain the
+calls (advised), it would look like this:
+.PP
+.Vb 1
+\&   $wsdl\->compileCalls(user_agent => $ua, transport_hook => \e&basic_auth);
+.Ve
+.SS "Collection \s-1XSD\s0 imports"
+.IX Subsection "Collection XSD imports"
+From a maintenance point of view, it is a very bad idea that some \s-1XML\s0
+client implementations load all the required schemas on the moment they
+start off. The server may change the schemas at any moment, which may
+break the application at any moment. Also, network problems will cause
+the application to break easily. Therefore, XML::Compile requires the
+schemas to be on local disk (although you can use tricks with wget at
+start-up time to voluntarily give-up your stability)
+.PP
+To collect the imported schema files, you may use this (on the
+UNIX/Linux prompt)
+.PP
+.Vb 3
+\&  wget \-c \-nv $(cat * |
+\&                sed \-n \*(Aqs/.*schemaLocation="\e([^"]*\e)".*/\e1/p\*(Aq |
+\&                sort \-u)
+.Ve
+.PP
+In your program, you typically start with
+.PP
+.Vb 2
+\&  my $wsdl = XML::Compile::WSDL11\->new($wsdl_filename);
+\&  $wsdl\->importDefinitions([glob "*.xsd"]);
+.Ve
+.SS "Using \s-1SSL\s0"
+.IX Subsection "Using SSL"
+Abeltje contributed an \s-1SSL\s0 usage example, which then got adapted to this:
+.PP
+.Vb 1
+\&   use LWP::UserAgent;
+\&
+\&   my $wsdl = XML::Compile::WSDL11\->new($wsdlfn);
+\&
+\&   # LWP 6.00 introduces ssl_opts
+\&   @ENV{keys %lwp5_ssl} = values %lwp5_ssl
+\&       if LWP::UserAgent\->VERSION < 6;
+\&   my $ua = LWP::UserAgent\->new(ssl_opts => \e%lwp6_ssl);
+\&
+\&   $wsdl\->compileCalls(user_agent => $ua);
+.Ve
+.PP
+Do not forget to explicitly install \f(CW\*(C`LWP::Protocol::https\*(C'\fR !!!
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

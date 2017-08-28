@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::SOAP::Util - general purpose routines for XML::Compile::SOAP
@@ -7,10 +9,14 @@ XML::Compile::SOAP::Util - general purpose routines for XML::Compile::SOAP
  XML::Compile::SOAP::Util
    is a Exporter
 
+=head1 SYNOPSIS
+
+ use XML::Compile::SOAP::Util qw/:soap11 WSDL11/;
+
 =head1 DESCRIPTION
 
 This module collects functions which are useful on many places in the
-SOAP implemention, just as L<XML::Compile::Util|XML::Compile::Util> does for general XML
+SOAP implementation, just as L<XML::Compile::Util|XML::Compile::Util> does for general XML
 implementations (often you will needs things from both).
 
 On the moment, only a long list of constant URIs are exported.
@@ -34,44 +40,26 @@ C<WSDL11SOAP12>.
 The export TAG C<:daemon> refers currently only to the constant C<MSEXT>,
 which refers to the MicroSoft Extension Framework namespace.
 
+Besides, this tag also defines namespaces for server implementations:
+C<XC_DAEMON_NS> refers to the L<XML::Compile::SOAP::Daemon|XML::Compile::SOAP::Daemon> server.
+
 =pod
 
 The export TAG C<:xop10> refers to C<XOP10>, C<XMIME10> and C<XMIME11>
 
-=head1 SYNOPSYS
-
- use XML::Compile::SOAP::Util qw/:soap11 WSDL11/;
-
 =head1 SEE ALSO
 
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2007-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

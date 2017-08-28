@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::XPathExpression 3"
-.TH XML::LibXML::XPathExpression 3 "2009-10-07" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::XPathExpression 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -135,9 +135,9 @@ XML::LibXML::XPathExpression \- XML::LibXML::XPathExpression \- interface to lib
 .IX Header "SYNOPSIS"
 .Vb 2
 \&  use XML::LibXML;
-\&  my $compiled_xpath = new XML::LibXML::XPathExpression(\*(Aq//foo[@bar="baz"][position()<4]\*(Aq);
+\&  my $compiled_xpath = XML::LibXML::XPathExpression\->new(\*(Aq//foo[@bar="baz"][position()<4]\*(Aq);
 \&
-\&  # interface from XML::LibXML::Node 
+\&  # interface from XML::LibXML::Node
 \&
 \&  my $result = $node\->find($compiled_xpath);
 \&  my @nodes = $node\->findnodes($compiled_xpath);
@@ -167,12 +167,12 @@ representing the pre-compiled expressions (the actual data structure is
 internal to libxml2).
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Matt Sergeant, 
-Christian Glahn, 
+Matt Sergeant,
+Christian Glahn,
 Petr Pajas
 .SH "VERSION"
 .IX Header "VERSION"
-1.70
+2.0129
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 2001\-2007, AxKit.com Ltd.
@@ -180,3 +180,7 @@ Petr Pajas
 2002\-2006, Christian Glahn.
 .PP
 2006\-2009, Petr Pajas.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

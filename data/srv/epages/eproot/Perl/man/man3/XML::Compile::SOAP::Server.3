@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::SOAP::Server 3"
-.TH XML::Compile::SOAP::Server 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::SOAP::Server 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -165,8 +165,8 @@ message exchange protocols must implement.
 .IX Subsection "Instantiation"
 This object can not be instantiated, but is only used as secundary
 base class.  The primary must contain the \f(CW\*(C`new\*(C'\fR.
-.IP "XML::Compile::SOAP::Server\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::SOAP::Server->new(OPTIONS)"
+.IP "XML::Compile::SOAP::Server\->\fBnew\fR(%options)" 4
+.IX Item "XML::Compile::SOAP::Server->new(%options)"
 .Vb 2
 \& \-Option\-\-Default
 \&  role    \*(AqNEXT\*(Aq
@@ -186,15 +186,15 @@ and the constants defined in XML::Compile::SOAP::Util
 .RE
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBrole\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBrole\fR" 4
-.IX Item "$obj->role"
+.ie n .IP "$obj\->\fBrole\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBrole\fR()" 4
+.IX Item "$obj->role()"
 Returns the \s-1URI\s0 of the role (actor) of this server.
 .SS "Actions"
 .IX Subsection "Actions"
-.ie n .IP "$obj\->\fBcompileFilter\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileFilter\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileFilter(OPTIONS)"
+.ie n .IP "$obj\->\fBcompileFilter\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileFilter\fR(%options)" 4
+.IX Item "$obj->compileFilter(%options)"
 This routine returns a \s-1CODE\s0 reference which can be used for
 compileHandler(selector); so see whether a certain message has arrived.
 On the moment, only the first \f(CW\*(C`body\*(C'\fR element is used to determine that.
@@ -216,9 +216,9 @@ On the moment, only the first \f(CW\*(C`body\*(C'\fR element is used to determin
 .RE
 .RS 4
 .RE
-.ie n .IP "$obj\->\fBcompileHandler\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileHandler\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileHandler(OPTIONS)"
+.ie n .IP "$obj\->\fBcompileHandler\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileHandler\fR(%options)" 4
+.IX Item "$obj->compileHandler(%options)"
 .PD
 Returns an \s-1HTTP\s0 status code and an XML::LibXML::Document pair.
 .Sp
@@ -242,7 +242,7 @@ user.
 The \s-1CODE\s0 reference is used to decode the (parsed) \s-1XML\s0 input message
 into the pure Perl request.  The reference is a \s-1READER\s0, created with
 \&\fIXML::Compile::Schema::compile()\fR.  If no input decoder is specified,
-then the  callbackhandler will be called with the un-decoded
+then the callback handler will be called with the un-decoded
 XML::LibXML::Document node.
 .IP "encode => \s-1CODE\s0" 2
 .IX Item "encode => CODE"
@@ -256,12 +256,12 @@ produce error messages.
 The identification for this action, for instance used for logging.  When
 the action is created via a \s-1WSDL\s0, the portname will be used here.
 .Sp
-It is a pitty that the portname is not passed in the \s-1SOAP\s0 message,
+It is a pity that the portname is not passed in the \s-1SOAP\s0 message,
 because it is not so easy to detect which handler must be called.
 .IP "selector => \s-1CODE\s0" 2
 .IX Item "selector => CODE"
 One way or the other, you have to figure-out whether a message addresses
-a certain process.  The callback will only be used if the \s-1CODE\s0 reference
+a certain process. The callback will only be used if the \s-1CODE\s0 reference
 specified here returns a true value.
 .Sp
 The \s-1CODE\s0 reference will be called with the \s-1XML\s0 version of the message,
@@ -270,38 +270,21 @@ and a \s-1HASH\s0 which contains the information about the \s-1XML\s0 collected 
 .RE
 .RS 4
 .RE
-.IP "XML::Compile::SOAP::Server\->\fBfaultWriter\fR" 4
-.IX Item "XML::Compile::SOAP::Server->faultWriter"
+.IP "XML::Compile::SOAP::Server\->\fBfaultWriter\fR()" 4
+.IX Item "XML::Compile::SOAP::Server->faultWriter()"
 Returns a \s-1CODE\s0 reference which can be used to produce faults.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

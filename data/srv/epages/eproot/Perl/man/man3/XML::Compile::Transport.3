@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Transport 3"
-.TH XML::Compile::Transport 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Transport 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -157,7 +157,7 @@ This module defines the exchange of (\s-1XML\s0) messages. The module does not
 known how to parse or compose \s-1XML\s0, but only worries about the transport
 aspects.
 .PP
-On the moment, there are two transporter implementations:
+On the moment, there are three transporter implementations:
 .IP "XML::Compile::Transport::SOAPHTTP" 4
 .IX Item "XML::Compile::Transport::SOAPHTTP"
 implements an synchronous message exchange; the library waits for an
@@ -166,15 +166,23 @@ exchanged using \s-1HTTP\s0 with \s-1SOAP\s0 encapsulation (\s-1SOAP\s0 also def
 transport protocol over \s-1HTTP\s0 without encapsulation)
 .IP "XML::Compile::Transport::SOAPHTTP_AnyEvent" 4
 .IX Item "XML::Compile::Transport::SOAPHTTP_AnyEvent"
-This requires the installation of an additional module. The user
-provides a callback to handle responses. Many queries can be spawned
-in parallel.
+Event-driven implementation, based on AnyEvent.  The user provides a
+callback to handle responses. Many queries can be spawned in parallel,
+in a single process.  Find this in a separate distribution.
+.IP "XML::Compile::Transport::SOAPHTTP_MojoUA" 4
+.IX Item "XML::Compile::Transport::SOAPHTTP_MojoUA"
+Event-driven implementation,  which fits in the Mojolicious infrastructure.
+Find this in a separate distribution.
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in XML::Compile::SOAP::Extension.
 .SH "METHODS"
 .IX Header "METHODS"
+Extends \*(L"\s-1METHODS\s0\*(R" in XML::Compile::SOAP::Extension.
 .SS "Constructors"
 .IX Subsection "Constructors"
-.IP "XML::Compile::Transport\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::Transport->new(OPTIONS)"
+Extends \*(L"Constructors\*(R" in XML::Compile::SOAP::Extension.
+.IP "XML::Compile::Transport\->\fBnew\fR(%options)" 4
+.IX Item "XML::Compile::Transport->new(%options)"
 .Vb 3
 \& \-Option \-\-Default
 \&  address  \*(Aqhttp://localhost\*(Aq
@@ -191,72 +199,97 @@ One or more \s-1URI\s0 which represents the servers.
 .RE
 .SS "\s-1WSDL11\s0"
 .IX Subsection "WSDL11"
+Extends \*(L"\s-1WSDL11\s0\*(R" in XML::Compile::SOAP::Extension.
+.ie n .IP "$obj\->\fBwsdl11Init\fR($wsdl, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBwsdl11Init\fR($wsdl, \f(CW$args\fR)" 4
+.IX Item "$obj->wsdl11Init($wsdl, $args)"
 .PD 0
-.ie n .IP "$obj\->\fBwsdl11Init\fR(\s-1WSDL\s0, \s-1ARGS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBwsdl11Init\fR(\s-1WSDL\s0, \s-1ARGS\s0)" 4
-.IX Item "$obj->wsdl11Init(WSDL, ARGS)"
-.IP "XML::Compile::Transport\->\fBwsdl11Init\fR(\s-1WSDL\s0, \s-1ARGS\s0)" 4
-.IX Item "XML::Compile::Transport->wsdl11Init(WSDL, ARGS)"
+.ie n .IP "XML::Compile::Transport\->\fBwsdl11Init\fR($wsdl, $args)" 4
+.el .IP "XML::Compile::Transport\->\fBwsdl11Init\fR($wsdl, \f(CW$args\fR)" 4
+.IX Item "XML::Compile::Transport->wsdl11Init($wsdl, $args)"
 .PD
-See \*(L"\s-1WSDL11\s0\*(R" in XML::Compile::SOAP::Extension
+Inherited, see \*(L"\s-1WSDL11\s0\*(R" in XML::Compile::SOAP::Extension
 .SS "\s-1SOAP11\s0"
 .IX Subsection "SOAP11"
-.ie n .IP "$obj\->\fBsoap11ClientWrapper\fR(\s-1OPERATION\s0, \s-1CALL\s0, \s-1ARGS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBsoap11ClientWrapper\fR(\s-1OPERATION\s0, \s-1CALL\s0, \s-1ARGS\s0)" 4
-.IX Item "$obj->soap11ClientWrapper(OPERATION, CALL, ARGS)"
-See \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension
-.ie n .IP "$obj\->\fBsoap11HandlerWrapper\fR(\s-1OPERATION\s0, \s-1CALLBACK\s0, \s-1ARGS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBsoap11HandlerWrapper\fR(\s-1OPERATION\s0, \s-1CALLBACK\s0, \s-1ARGS\s0)" 4
-.IX Item "$obj->soap11HandlerWrapper(OPERATION, CALLBACK, ARGS)"
-See \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension
-.ie n .IP "$obj\->\fBsoap11OperationInit\fR(\s-1OPERATION\s0, \s-1ARGS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBsoap11OperationInit\fR(\s-1OPERATION\s0, \s-1ARGS\s0)" 4
-.IX Item "$obj->soap11OperationInit(OPERATION, ARGS)"
+Extends \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension.
+.ie n .IP "$obj\->\fBsoap11ClientWrapper\fR($operation, $call, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap11ClientWrapper\fR($operation, \f(CW$call\fR, \f(CW$args\fR)" 4
+.IX Item "$obj->soap11ClientWrapper($operation, $call, $args)"
+Inherited, see \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension
+.ie n .IP "$obj\->\fBsoap11HandlerWrapper\fR($operation, $callback, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap11HandlerWrapper\fR($operation, \f(CW$callback\fR, \f(CW$args\fR)" 4
+.IX Item "$obj->soap11HandlerWrapper($operation, $callback, $args)"
+Inherited, see \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension
+.ie n .IP "$obj\->\fBsoap11OperationInit\fR($operation, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap11OperationInit\fR($operation, \f(CW$args\fR)" 4
+.IX Item "$obj->soap11OperationInit($operation, $args)"
 .PD 0
-.IP "XML::Compile::Transport\->\fBsoap11OperationInit\fR(\s-1OPERATION\s0, \s-1ARGS\s0)" 4
-.IX Item "XML::Compile::Transport->soap11OperationInit(OPERATION, ARGS)"
+.ie n .IP "XML::Compile::Transport\->\fBsoap11OperationInit\fR($operation, $args)" 4
+.el .IP "XML::Compile::Transport\->\fBsoap11OperationInit\fR($operation, \f(CW$args\fR)" 4
+.IX Item "XML::Compile::Transport->soap11OperationInit($operation, $args)"
 .PD
-See \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension
+Inherited, see \*(L"\s-1SOAP11\s0\*(R" in XML::Compile::SOAP::Extension
+.SS "\s-1SOAP12\s0"
+.IX Subsection "SOAP12"
+Extends \*(L"\s-1SOAP12\s0\*(R" in XML::Compile::SOAP::Extension.
+.ie n .IP "$obj\->\fBsoap12ClientWrapper\fR($operation, $call, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap12ClientWrapper\fR($operation, \f(CW$call\fR, \f(CW$args\fR)" 4
+.IX Item "$obj->soap12ClientWrapper($operation, $call, $args)"
+Inherited, see \*(L"\s-1SOAP12\s0\*(R" in XML::Compile::SOAP::Extension
+.ie n .IP "$obj\->\fBsoap12HandlerWrapper\fR($operation, $callback, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap12HandlerWrapper\fR($operation, \f(CW$callback\fR, \f(CW$args\fR)" 4
+.IX Item "$obj->soap12HandlerWrapper($operation, $callback, $args)"
+Inherited, see \*(L"\s-1SOAP12\s0\*(R" in XML::Compile::SOAP::Extension
+.ie n .IP "$obj\->\fBsoap12OperationInit\fR($operation, $args)" 4
+.el .IP "\f(CW$obj\fR\->\fBsoap12OperationInit\fR($operation, \f(CW$args\fR)" 4
+.IX Item "$obj->soap12OperationInit($operation, $args)"
+.PD 0
+.ie n .IP "XML::Compile::Transport\->\fBsoap12OperationInit\fR($operation, $args)" 4
+.el .IP "XML::Compile::Transport\->\fBsoap12OperationInit\fR($operation, \f(CW$args\fR)" 4
+.IX Item "XML::Compile::Transport->soap12OperationInit($operation, $args)"
+.PD
+Inherited, see \*(L"\s-1SOAP12\s0\*(R" in XML::Compile::SOAP::Extension
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBaddress\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBaddress\fR" 4
-.IX Item "$obj->address"
+.ie n .IP "$obj\->\fBaddress\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBaddress\fR()" 4
+.IX Item "$obj->address()"
 Get a server address to contact. If multiple addresses were specified,
 than one is chosen at random.
-.ie n .IP "$obj\->\fBaddresses\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBaddresses\fR" 4
-.IX Item "$obj->addresses"
+.ie n .IP "$obj\->\fBaddresses\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBaddresses\fR()" 4
+.IX Item "$obj->addresses()"
 Returns a list of all server contact addresses (URIs)
-.ie n .IP "$obj\->\fBcharset\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcharset\fR" 4
-.IX Item "$obj->charset"
+.ie n .IP "$obj\->\fBcharset\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcharset\fR()" 4
+.IX Item "$obj->charset()"
 Returns the charset to be used when sending,
 .SS "Handlers"
 .IX Subsection "Handlers"
-.ie n .IP "$obj\->\fBcompileClient\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBcompileClient\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->compileClient(OPTIONS)"
+.ie n .IP "$obj\->\fBcompileClient\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBcompileClient\fR(%options)" 4
+.IX Item "$obj->compileClient(%options)"
 Compile a client handler.  Returned is a subroutine which is called
 with a text represenation of the \s-1XML\s0 request, or an XML::LibXML tree.
 In \s-1SCALAR\s0 context, an XML::LibXML parsed tree of the answer message
 is returned.  In \s-1LIST\s0 context, that answer is followed by a \s-1HASH\s0 which
 contains trace information.
 .Sp
-.Vb 3
-\& \-Option\-\-Default
-\&  hook    <undef>
-\&  kind    \*(Aqrequest\-response\*(Aq
+.Vb 4
+\& \-Option    \-\-Default
+\&  hook        <undef>
+\&  kind        \*(Aqrequest\-response\*(Aq
+\&  xml_format  0
 .Ve
 .RS 4
 .IP "hook => \s-1CODE\s0" 2
 .IX Item "hook => CODE"
-See section \*(L"Use of the transport hook\*(R" in \s-1DETAILS\s0.
+See section \*(L"Use of the transport hook\*(R".
 When defined, the hook will be called, in stead of transmitting the
-message.  The hook will get a two parameters passed in: the textual
-representation of the \s-1XML\s0 message to be transmitted, and the trace
-\&\s-1HASH\s0 with all values collected so far.  The trace \s-1HASH\s0 will have a
-massive amount of additional information added as well.
+message.  The hook will gets three parameters passed in: the textual
+representation of the \s-1XML\s0 message to be transmitted, the trace \s-1HASH\s0 with
+all values collected so far, and the transporter object.  The trace \s-1HASH\s0
+will have a massive amount of additional information added as well.
 .Sp
 You may add information to the trace.  You have to return a textual
 representation of the \s-1XML\s0 answer, or \f(CW\*(C`undef\*(C'\fR to indicate that the
@@ -264,6 +297,10 @@ message was totally unacceptable.
 .IP "kind => \s-1STRING\s0" 2
 .IX Item "kind => STRING"
 Kind of communication, as defined by \s-1WSDL\s0.
+.IP "xml_format => 0|1|2" 2
+.IX Item "xml_format => 0|1|2"
+[2.26] See XML::LibXML::Document subroutine toString.  With '1', you will get
+beautified output.
 .RE
 .RS 4
 .RE
@@ -271,6 +308,64 @@ Kind of communication, as defined by \s-1WSDL\s0.
 .IX Header "DETAILS"
 .SS "Use of the transport hook"
 .IX Subsection "Use of the transport hook"
+A \fItransport hook\fR can be used to follow the process of creating a
+message to its furthest extend: it will be called with the data as
+used by the actual protocol, but will not connect to the internet.
+Within the transport hook routine, you have to simulate the remote
+server's activities.
+.PP
+There are two reasons to use a hook:
+.IP "." 4
+You want to fake a server, to produce a test environment.
+.IP "." 4
+You may need to modify the request or answer messages outside the
+reach of XML::Compile::SOAP, because something is wrong in either
+your \s-1WSDL\s0 of XML::Compile message processing.
+.PP
+\fI\s-1XML\s0 and Header Modifications\fR
+.IX Subsection "XML and Header Modifications"
+.PP
+Some servers require special extensions, which do not follow any standard
+(or logic). But even those features can be tricked, although it requires
+quite some programming skills.
+.PP
+The \f(CW\*(C`transport_hook\*(C'\fR routine is called with a \f(CW$trace\fR hash, one of
+whose entries is the UserAgent which was set up for the data transfer. You
+can modify the outgoing message \s-1XML\s0 body and headers, carry out the data
+exchange using the UserAgent, and then examine the returned Response for
+content and headers using methods similar to the following:
+.PP
+.Vb 3
+\& sub transport_hook($$$)
+\& {   my ($request, $trace, $transporter) = @_;
+\&     my $content = $request\->content;
+\&
+\&     # ... modify content if you need
+\&     my $new_content = encode "utf\-8", $anything;
+\&     $request\->content($new_content);
+\&     $request\->header(Content_Length => length $new_content);
+\&     $request\->header(Content_Type => \*(Aqtext/plain; charset=utf\-8\*(Aq);
+\&
+\&     # ... update the headers
+\&     $request\->header(Name => "value");
+\&
+\&     # sent the request myself
+\&     my $ua = $trace\->{user_agent};
+\&     my $response = $ua\->request($request);
+\&
+\&     # ... check the response headers
+\&     my $name = $response\->header(\*(AqName\*(Aq);
+\&
+\&     # ... use the response content
+\&     my $received = $response\->decoded_content || $response\->content;
+\&
+\&     $response;
+\& }
+.Ve
+.PP
+You should be aware that if you change the size or length of the content
+you \s-1MUST\s0 update the \f(CW\*(C`Content\-Length\*(C'\fR header value, as demonstrated above.
+.PP
 \fITransport hook for debugging\fR
 .IX Subsection "Transport hook for debugging"
 .PP
@@ -320,53 +415,58 @@ or
 \&      transport_hook => \e&fake_server);
 .Ve
 .PP
-A transport hook can be used to follow the process of creating a
-message to its furthest extend: it will be called with the data
-as used by the actual protocol, but will not actually connect to
-the internet.  Within the transport hook routine, you have to
-simulate the remote server's activities.
+\fITransport hook for basic authentication\fR
+.IX Subsection "Transport hook for basic authentication"
 .PP
-There are two reasons to use a hook:
-.IP "." 4
-You may need to modify the request or answer messages outside the
-reach of XML::Compile::SOAP, because something is wrong in either
-your \s-1WSDL\s0 of XML::Compile message processing.
-.IP "." 4
-You want to fake a server, to produce a test environment.
+[Adapted from an example contributed by Kieron Johnson]
+This example shows a transport_hook for \fIcompileClient()\fR to add to http
+headers for the basic http authentication.  The parameter can also be
+used for \fIcompileAll()\fR and many other related functions.
+.PP
+.Vb 2
+\&  my $call = $wsdl\->compileClient($operation
+\&     , transport_hook => \e&basic_auth );
+\&
+\&  # HTTP basic authentication encodes the username and password with
+\&  # Base64. The encoded source string has format: "username:password"
+\&  # With the below HTTP header being required:
+\&  #        "Authorization: Basic [encoded password]"
+\&
+\&  use MIME::Base64 \*(Aqencode_base64\*(Aq;
+\&
+\&  my $user     = \*(Aqmyuserid\*(Aq ;
+\&  my $password = \*(Aqmypassword\*(Aq;
+\&
+\&  sub basic_auth($$)
+\&  {   my ($request, $trace) = @_;
+\&
+\&      # Encode userid and password
+\&      my $authorization = \*(AqBasic \*(Aq. encode_base64 "$user:$password";
+\&
+\&      # Modify http header to include basic authorisation
+\&      $request\->header(Authorization => $authorization );
+\&
+\&      my $ua = $trace\->{user_agent};
+\&      $ua\->request($request);
+\&  }
+.Ve
 .SH "Helpers"
 .IX Header "Helpers"
-.IP "XML::Compile::Transport\->\fBregister\fR(\s-1URI\s0)" 4
-.IX Item "XML::Compile::Transport->register(URI)"
+.IP "XML::Compile::Transport\->\fBregister\fR($uri)" 4
+.IX Item "XML::Compile::Transport->register($uri)"
 Declare an transporter type.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

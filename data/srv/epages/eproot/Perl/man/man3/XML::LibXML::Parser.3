@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::Parser 3"
-.TH XML::LibXML::Parser 3 "2009-10-07" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::Parser 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -134,16 +134,16 @@ XML::LibXML::Parser \- Parsing XML Data with XML::LibXML
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 .Vb 1
-\&  use XML::LibXML 1.70;
+\&  use XML::LibXML \*(Aq1.70\*(Aq;
 \&
 \&  # Parser constructor
-\&  
+\&
 \&  $parser = XML::LibXML\->new();
 \&  $parser = XML::LibXML\->new(option=>value, ...);
 \&  $parser = XML::LibXML\->new({option=>value, ...});
-\&  
+\&
 \&  # Parsing XML
-\&  
+\&
 \&  $dom = XML::LibXML\->load_xml(
 \&      location => $file_or_url
 \&      # parser options ...
@@ -152,56 +152,60 @@ XML::LibXML::Parser \- Parsing XML Data with XML::LibXML
 \&      string => $xml_string
 \&      # parser options ...
 \&    );
+\&  $dom = XML::LibXML\->load_xml(
+\&      string => (\e$xml_string)
+\&      # parser options ...
+\&    );
 \&  $dom = XML::LibXML\->load_xml({
 \&      IO => $perl_file_handle
 \&      # parser options ...
 \&    );
 \&  $dom = $parser\->load_xml(...);
-\&                          
+\&
 \&  # Parsing HTML
-\&  
+\&
 \&  $dom = XML::LibXML\->load_html(...);
 \&  $dom = $parser\->load_html(...);
-\&                          
+\&
 \&  # Parsing well\-balanced XML chunks
-\&                               
+\&
 \&  $fragment = $parser\->parse_balanced_chunk( $wbxmlstring, $encoding );
-\&  
+\&
 \&  # Processing XInclude
-\&  
+\&
 \&  $parser\->process_xincludes( $doc );
 \&  $parser\->processXIncludes( $doc );
-\&  
+\&
 \&  # Old\-style parser interfaces
-\&                               
+\&
 \&  $doc = $parser\->parse_file( $xmlfilename );
 \&  $doc = $parser\->parse_fh( $io_fh );
 \&  $doc = $parser\->parse_string( $xmlstring);
 \&  $doc = $parser\->parse_html_file( $htmlfile, \e%opts );
 \&  $doc = $parser\->parse_html_fh( $io_fh, \e%opts );
 \&  $doc = $parser\->parse_html_string( $htmlstring, \e%opts );
-\&  
+\&
 \&  # Push parser
-\&                            
+\&
 \&  $parser\->parse_chunk($string, $terminate);
 \&  $parser\->init_push();
 \&  $parser\->push(@data);
 \&  $doc = $parser\->finish_push( $recover );
-\&  
+\&
 \&  # Set/query parser options
-\&                      
+\&
 \&  $parser\->option_exists($name);
 \&  $parser\->get_option($name);
 \&  $parser\->set_option($name,$value);
 \&  $parser\->set_options({$name=>$value,...});
-\&  
+\&
 \&  # XML catalogs
-\&                      
+\&
 \&  $parser\->load_catalog( $catalog_file );
 .Ve
 .SH "PARSING"
 .IX Header "PARSING"
-A \s-1XML\s0 document is read into a data structure such as a \s-1DOM\s0 tree by a piece of
+An \s-1XML\s0 document is read into a data structure such as a \s-1DOM\s0 tree by a piece of
 software, called a parser. XML::LibXML currently provides four different parser
 interfaces:
 .IP "\(bu" 4
@@ -227,7 +231,7 @@ have to create a parser instance before you can parse any \s-1XML\s0 data.
 Create a new \s-1XML\s0 and \s-1HTML\s0 parser instance. Each parser instance holds default
 values for various parser options. Optionally, one can pass a hash reference or
 a list of option => value pairs to set a different default set of options.
-Unless specified otherwise, the options \f(CW\*(C`load_ext_dtd\*(C'\fR, \f(CW\*(C`expand_entities\*(C'\fR, and \f(CW\*(C`huge\*(C'\fR are set to 1. See \*(L"Parser Options\*(R" for a list of libxml2 parser's options.
+Unless specified otherwise, the options \f(CW\*(C`load_ext_dtd\*(C'\fR, and \f(CW\*(C`expand_entities\*(C'\fR are set to 1. See \*(L"Parser Options\*(R" for a list of libxml2 parser's options.
 .SS "\s-1DOM\s0 Parser"
 .IX Subsection "DOM Parser"
 One of the common parser interfaces of XML::LibXML is the \s-1DOM\s0 parser. This
@@ -252,6 +256,10 @@ eval{} block
 \&      string => $xml_string
 \&      # parser options ...
 \&    );
+\&  $dom = XML::LibXML\->load_xml(
+\&      string => (\e$xml_string)
+\&      # parser options ...
+\&    );
 \&  $dom = XML::LibXML\->load_xml({
 \&      IO => $perl_file_handle
 \&      # parser options ...
@@ -267,28 +275,27 @@ method. In both cases it internally creates a new parser instance passing the
 specified parser options; if called as an object method, it clones the original
 parser (preserving its settings) and additionally applies the specified options
 to the new parser. See the constructor \f(CW\*(C`new\*(C'\fR and \*(L"Parser Options\*(R" for more information.
-.IP "load_xml" 4
-.IX Item "load_xml"
+.IP "load_html" 4
+.IX Item "load_html"
 .Vb 2
 \&  $dom = XML::LibXML\->load_html(...);
 \&  $dom = $parser\->load_html(...);
 .Ve
 .Sp
 This function is available since XML::LibXML 1.70. It has the same usage as \f(CW\*(C`load_xml\*(C'\fR, providing interface to the \s-1HTML\s0 parser. See \f(CW\*(C`load_xml\*(C'\fR for more information.
-.Sp
+.PP
 Parsing \s-1HTML\s0 may cause problems, especially if the ampersand ('&') is used.
 This is a common problem if \s-1HTML\s0 code is parsed that contains links to
 CGI-scripts. Such links cause the parser to throw errors. In such cases libxml2
 still parses the entire document as there was no error, but the error causes
 XML::LibXML to stop the parsing process. However, the document is not lost.
 Such \s-1HTML\s0 documents should be parsed using the \fIrecover\fR flag. By default recovering is deactivated.
-.Sp
+.PP
 The functions described above are implemented to parse well formed documents.
 In some cases a program gets well balanced \s-1XML\s0 instead of well formed documents
-(e.g. a \s-1XML\s0 fragment from a Database). With XML::LibXML it is not required to
+(e.g. an \s-1XML\s0 fragment from a database). With XML::LibXML it is not required to
 wrap such fragments in the code, because XML::LibXML is capable even to parse
 well balanced \s-1XML\s0 fragments.
-.RS 4
 .IP "parse_balanced_chunk" 4
 .IX Item "parse_balanced_chunk"
 .Vb 1
@@ -302,12 +309,10 @@ default).
 .IX Item "parse_xml_chunk"
 This is the old name of \fIparse_balanced_chunk()\fR. Because it may causes confusion
 with the push parser interface, this function should not be used anymore.
-.RE
-.RS 4
-.Sp
-By default XML::LibXML does not process XInclude tags within a \s-1XML\s0 Document
-(see options section below). XML::LibXML allows to post process a document to
-expand XInclude tags.
+.PP
+By default XML::LibXML does not process XInclude tags within an \s-1XML\s0 Document
+(see options section below). XML::LibXML allows one to post-process a document
+to expand XInclude tags.
 .IP "process_xincludes" 4
 .IX Item "process_xincludes"
 .Vb 1
@@ -367,12 +372,14 @@ about the base \s-1URI\s0 of the document. To set the base \s-1URI\s0 one should
 \&  $doc = $parser\->parse_string( $xmlstring);
 .Ve
 .Sp
-This function is similar to \fIparse_fh()\fR, but it parses a \s-1XML\s0 document that is
-available as a single string in memory. Again, you can pass an optional base
-\&\s-1URI\s0 to the function.
+This function is similar to \fIparse_fh()\fR, but it parses an \s-1XML\s0 document that is
+available as a single string in memory, or alternatively as a reference to a
+scalar containing a string. Again, you can pass an optional base \s-1URI\s0 to the
+function.
 .Sp
-.Vb 1
+.Vb 2
 \&  my $doc = $parser\->parse_string( $xmlstring, $baseuri );
+\&  my $doc = $parser\->parse_string(\e$xmlstring, $baseuri);
 .Ve
 .IP "parse_html_file" 4
 .IX Item "parse_html_file"
@@ -408,9 +415,6 @@ Similar to \fIparse_string()\fR but parses \s-1HTML\s0 (strict) strings.
 .Sp
 An optional second argument can be used to pass some options to the \s-1HTML\s0 parser
 as a \s-1HASH\s0 reference. See options labeled with \s-1HTML\s0 in \*(L"Parser Options\*(R".
-.RE
-.RS 4
-.RE
 .SS "Push Parser"
 .IX Subsection "Push Parser"
 XML::LibXML provides a push parser interface. Rather than pulling the data from
@@ -611,7 +615,7 @@ Sets multiple parsing options at once.
 libxml2 2.7.3. Some options have no effect if an older version of libxml2 is
 used.
 .PP
-Each of the flags listed below is labeled labeled
+Each of the flags listed below is labeled
 .IP "/parser/" 4
 .IX Item "/parser/"
 if it can be used with a \f(CW\*(C`XML::LibXML\*(C'\fR parser object (i.e. passed to \f(CW\*(C`XML::LibXML\->new\*(C'\fR, \f(CW\*(C`XML::LibXML\->set_option\*(C'\fR, etc.)
@@ -643,7 +647,7 @@ element). The line numbers are also used for reporting positions of validation
 errors.
 .Sp
 \&\s-1IMPORTANT:\s0 Due to limitations in the libxml2 library line numbers greater than
-65535 will be returned as 65535. Unfortunatelly, this is a long and sad story,
+65535 will be returned as 65535. Unfortunately, this is a long and sad story,
 please see <http://bugzilla.gnome.org/show_bug.cgi?id=325533> for more details.
 .IP "encoding" 4
 .IX Item "encoding"
@@ -673,12 +677,12 @@ substitute entities; possible values are 0 and 1; default is 1
 .Sp
 Note that although this flag disables entity substitution, it does not prevent
 the parser from loading external entities; when substitution of an external
-entity is disabled, the entity will be represented in the document tree by a
+entity is disabled, the entity will be represented in the document tree by an
 \&\s-1XML_ENTITY_REF_NODE\s0 node whose subtree will be the content obtained by parsing
-the external resource; Although this is level of nesting is visible from the
-\&\s-1DOM\s0 it is transparent to XPath data model, so it is possible to match nodes in
-an unexpanded entity by the same XPath expression as if the entity was
-expanded. See also ext_ent_handler.
+the external resource; Although this nesting is visible from the \s-1DOM\s0 it is
+transparent to XPath data model, so it is possible to match nodes in an
+unexpanded entity by the same XPath expression as if the entity were expanded.
+See also ext_ent_handler.
 .IP "ext_ent_handler" 4
 .IX Item "ext_ent_handler"
 /parser/
@@ -705,7 +709,7 @@ resolvers, as in
 \&  sub match {   # accept file:/ URIs except for XML catalogs in /etc/xml/
 \&    my ($uri) = @_;
 \&    return ($uri=~m{^file:/}
-\&            and $uri !~ m{^file:///etc/xml/}) 
+\&            and $uri !~ m{^file:///etc/xml/})
 \&           ? 1 : 0;
 \&  }
 \&  $c\->register_callbacks([ \e&match, sub{}, sub{}, sub{} ]);
@@ -752,13 +756,20 @@ pedantic error reporting; possible values are 0 and 1
 /parser, html, reader/
 .Sp
 remove blank nodes; possible values are 0 and 1
+.IP "no_defdtd" 4
+.IX Item "no_defdtd"
+/html/
+.Sp
+do not add a default \s-1DOCTYPE\s0; possible values are 0 and 1
+.Sp
+the default is (0) to add a \s-1DTD\s0 when the input html lacks one
 .IP "expand_xinclude or xinclude" 4
 .IX Item "expand_xinclude or xinclude"
 /parser, reader/
 .Sp
 Implement XInclude substitution; possible values are 0 and 1
 .Sp
-Expands XIinclude tags immediately while parsing the document. Note that the
+Expands XInclude tags immediately while parsing the document. Note that the
 parser will use the \s-1URI\s0 resolvers installed via \f(CW\*(C`XML::LibXML::InputCallback\*(C'\fR to parse the included document (if any).
 .IP "no_xinclude_nodes" 4
 .IX Item "no_xinclude_nodes"
@@ -796,18 +807,23 @@ not fixup \s-1XINCLUDE\s0 xml#base \s-1URIS\s0; possible values are 0 and 1
 /parser, html, reader/
 .Sp
 relax any hardcoded limit from the parser; possible values are 0 and 1. Unless
-specified, XML::LibXML sets this option to 1.
+specified, XML::LibXML sets this option to 0.
+.Sp
+Note: the default value for this option was changed to protect against denial
+of service through entity expansion attacks. Before enabling the option ensure
+you have taken alternative measures to protect your application against this
+type of attack.
 .IP "gdome" 4
 .IX Item "gdome"
 /parser/
 .Sp
 \&\s-1THIS\s0 \s-1OPTION\s0 \s-1IS\s0 \s-1EXPERIMENTAL\s0!
 .Sp
-Although quite powerful, XML:LibXML's \s-1DOM\s0 implementation is incomplete with
+Although quite powerful, XML::LibXML's \s-1DOM\s0 implementation is incomplete with
 respect to the \s-1DOM\s0 level 2 or level 3 specifications. \s-1XML::GDOME\s0 is based on
-libxml2 as well and and provides a rather complete \s-1DOM\s0 implementation by
-wrapping libgdome. This flag allows you to make use of XML::LibXML's full
-parser options and \s-1XML::GDOME\s0's \s-1DOM\s0 implementation at the same time.
+libxml2 as well, and provides a rather complete \s-1DOM\s0 implementation by wrapping
+libgdome. This flag allows you to make use of XML::LibXML's full parser options
+and \s-1XML::GDOME\s0's \s-1DOM\s0 implementation at the same time.
 .Sp
 To make use of this function, one has to install libgdome and configure
 XML::LibXML to use this library. For this you need to rebuild XML::LibXML!
@@ -837,7 +853,7 @@ The following obsolete methods trigger parser options in some special way:
 .IP "recover_silently" 4
 .IX Item "recover_silently"
 .Vb 1
-\&  $parser\->recover_silently(1);;
+\&  $parser\->recover_silently(1);
 .Ve
 .Sp
 If called without an argument, returns true if the current value of the \f(CW\*(C`recover\*(C'\fR parser option is 2 and returns false otherwise. With a true argument sets the \f(CW\*(C`recover\*(C'\fR parser option to 2; with a false argument sets the \f(CW\*(C`recover\*(C'\fR parser option to 0.
@@ -854,7 +870,7 @@ Get/set the \f(CW\*(C`expand_entities\*(C'\fR option. If called with a true argu
 \&  $parser\->keep_blanks(0);
 .Ve
 .Sp
-This is actually an oposite of the \f(CW\*(C`no_blanks\*(C'\fR parser option. If used without an argument retrieves negated value of \f(CW\*(C`no_blanks\*(C'\fR. If used with an argument sets \f(CW\*(C`no_blanks\*(C'\fR to the oposite value.
+This is actually the opposite of the \f(CW\*(C`no_blanks\*(C'\fR parser option. If used without an argument retrieves negated value of \f(CW\*(C`no_blanks\*(C'\fR. If used with an argument sets \f(CW\*(C`no_blanks\*(C'\fR to the opposite value.
 .IP "base_uri" 4
 .IX Item "base_uri"
 .Vb 1
@@ -883,6 +899,13 @@ resolving systems at the same time.
 .Ve
 .Sp
 Loads the \s-1XML\s0 catalog file \f(CW$catalog_file\fR.
+.Sp
+.Vb 2
+\&  # Global external entity loader (similar to ext_ent_handler option
+\&  # but this works really globally, also in XML::LibXSLT include etc..)
+\&
+\&  XML::LibXML::externalEntityLoader(\e&my_loader);
+.Ve
 .SH "ERROR REPORTING"
 .IX Header "ERROR REPORTING"
 XML::LibXML throws exceptions during parsing, validation or XPath processing
@@ -903,12 +926,12 @@ Note: since version 1.59, \fIget_last_error()\fR is no longer available in
 XML::LibXML for thread-safety reasons.
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Matt Sergeant, 
-Christian Glahn, 
+Matt Sergeant,
+Christian Glahn,
 Petr Pajas
 .SH "VERSION"
 .IX Header "VERSION"
-1.70
+2.0129
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 2001\-2007, AxKit.com Ltd.
@@ -916,3 +939,7 @@ Petr Pajas
 2002\-2006, Christian Glahn.
 .PP
 2006\-2009, Petr Pajas.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

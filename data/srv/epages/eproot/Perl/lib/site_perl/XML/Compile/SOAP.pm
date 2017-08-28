@@ -1,26 +1,29 @@
-# Copyrights 2007-2011 by Mark Overmeer.
+# Copyrights 2007-2017 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 use warnings;
 use strict;
 
 package XML::Compile::SOAP;
 use vars '$VERSION';
-$VERSION = '2.24';
+$VERSION = '3.21';
 
 
-use Log::Report 'xml-compile-soap', syntax => 'SHORT';
+use Log::Report          'xml-compile-soap';
 use XML::Compile         ();
-use XML::Compile::Util   qw/pack_type unpack_type type_of_node/;
+use XML::Compile::Util   qw(SCHEMA2001 SCHEMA2001i pack_type
+   unpack_type type_of_node);
 use XML::Compile::Cache  ();
-use XML::Compile::SOAP::Util qw/:xop10/;
+use XML::Compile::SOAP::Util qw/:xop10 SOAP11ENC/;
 
 use Time::HiRes          qw/time/;
 use MIME::Base64         qw/decode_base64/;
 
-# XML::Compile::SOAP::WSA::Util often not installed
+# XML::Compile::WSA::Util often not installed
 use constant WSA10 => 'http://www.w3.org/2005/08/addressing';
+
+sub _xop_enabled() { exists $INC{'XML/Compile/XOP.pm'} }
 
 
 sub new($@)
@@ -34,11 +37,11 @@ sub new($@)
 
 sub init($)
 {   my ($self, $args) = @_;
-    $self->{mimens}  = $args->{media_type} || 'application/soap+xml';
+    $self->{XCS_mime}   = $args->{media_type} || 'application/soap+xml';
 
-    my $schemas = $self->{schemas} = $args->{schemas}
+    my $schemas = $self->{XCS_schemas} = $args->{schemas}
      || XML::Compile::Cache->new(allow_undeclared => 1
-        , any_element => 'ATTEMPT', any_attribute => 'ATTEMPT');
+          , any_element => 'ATTEMPT', any_attribute => 'ATTEMPT');
 
     UNIVERSAL::isa($schemas, 'XML::Compile::Cache')
         or panic "schemas must be a Cache object";
@@ -46,15 +49,40 @@ sub init($)
     $self;
 }
 
+sub _initSOAP($)
+{   my ($thing, $schemas) = @_;
+    return $thing
+        if $schemas->{did_init_SOAP}++;   # ugly
 
-sub name()    {shift->{name}}
-sub version() {panic "not implemented"}
+    $schemas->addPrefixes(xsd => SCHEMA2001, xsi => SCHEMA2001i);
+
+    $thing;
+}
 
 
-sub schemas() {shift->{schemas}}
+{   my (%registered, %envelope);
+    sub register($)
+    { my ($class, $uri, $env, $opclass) = @_;
+      $registered{$uri} = $class;
+      $envelope{$env}   = $opclass if $env;
+    }
+    sub plugin($)       { $registered{$_[1]} }
+    sub fromEnvelope($) { $envelope{$_[1]} }
+    sub registered($)   { values %registered }
+}
 
 #--------------------
 
+sub version()   {panic "not implemented"}
+sub mediaType() {shift->{XCS_mime}}
+
+
+sub schemas() {
+use Carp 'cluck';
+ref $_[0] or cluck;
+shift->{XCS_schemas}}
+
+#--------------------
 
 sub compileMessage($@)
 {   my ($self, $direction, %args) = @_;
@@ -106,22 +134,31 @@ sub _sender(@)
       = $args{hooks} ? [ @{$args{hooks}} ] : [];
 
     my @mtom;
-    push @$hooks, $self->_writer_xop_hook(\@mtom);
-    my ($body,  $blabels) = $self->_writer_body  (\%args);
-    my ($faults,$flabels) = $self->_writer_faults(\%args, $args{faults});
+    push @$hooks, $self->_writer_xop_hook(\@mtom)
+                if _xop_enabled;
 
-    my ($header,$hlabels) = $self->_writer_header(\%args);
-    push @$hooks, $self->_writer_hook('SOAP-ENV:Header', @$header);
+    my ($body,  $blabels) = $args{create_body}
+       ? $args{create_body}->($self, %args)
+       : $self->_writer_body(\%args);
+    my ($faults, $flabels) = $self->_writer_faults(\%args, $args{faults});
+
+    my ($header, $hlabels) = $self->_writer_header(\%args);
+    push @$hooks, $self->_writer_hook($self->envType('Header'), @$header);
 
     my $style = $args{style} || 'none';
     if($style eq 'document')
-    {   push @$hooks, $self->_writer_hook('SOAP-ENV:Body', @$body, @$faults);
+    {   push @$hooks, $self->_writer_hook($self->envType('Body')
+          , @$body, @$faults);
     }
     elsif($style eq 'rpc')
-    {   my $procedure = $args{body}{procedure}
+    {   my $procedure = $args{procedure} || $args{body}{procedure}
             or error __x"sending operation requires procedure name with RPC";
-        push @$hooks, $self->_writer_rpc_hook('SOAP-ENV:Body'
-          , $procedure, $body, $faults);
+
+        my $use = $args{use} || $args{body}{use} || 'literal';
+        my $bt  = $self->envType('Body');
+        push @$hooks, $use eq 'literal'
+           ? $self->_writer_body_rpclit_hook($bt, $procedure, $body, $faults)
+           : $self->_writer_body_rpcenc_hook($bt, $procedure, $body, $faults);
     }
     else
     {   error __x"unknown style `{style}'", style => $style;
@@ -131,25 +168,25 @@ sub _sender(@)
     # Pack everything together in one procedure
     #
 
-    my $envelope = $self->_writer('SOAP-ENV:Envelope', %args);
+    my $envelope = $self->_writer($self->envType('Envelope'), %args);
 
     sub
     {   my ($values, $charset) = ref $_[0] eq 'HASH' ? @_ : ( {@_}, undef);
         my %copy  = %$values;  # do not destroy the calling hash
         my $doc   = delete $copy{_doc}
-                 || XML::LibXML::Document->new('1.0', $charset || 'UTF-8');
+          || XML::LibXML::Document->new('1.0', $charset || 'UTF-8');
 
         my %data;
-        $data{$_}   = delete $copy{$_} for qw/Header Body/;
+        $data{$_}  = delete $copy{$_} for qw/Header Body/;
         $data{Body} ||= {};
 
         foreach my $label (@$hlabels)
-        {   defined $copy{$label} or next;
+        {   exists $copy{$label} or next;
             $data{Header}{$label} ||= delete $copy{$label};
         }
 
         foreach my $label (@$blabels, @$flabels)
-        {   defined $copy{$label} or next;
+        {   exists $copy{$label} or next;
             $data{Body}{$label} ||= delete $copy{$label};
         }
 
@@ -164,8 +201,12 @@ sub _sender(@)
         }
 
         @mtom = ();   # filled via hook
+
+#use Data::Dumper;
+#warn Dumper \%data;
         my $root = $envelope->($doc, \%data)
             or return;
+
         $doc->setDocumentElement($root);
 
         return ($doc, \@mtom)
@@ -183,6 +224,9 @@ sub _writer_hook($$@)
 
     my $code = sub
      {  my ($doc, $data, $path, $tag) = @_;
+        UNIVERSAL::isa($data, 'XML::LibXML::Element')
+            and return $data;
+
         my %data = %$data;
         my @h = @do;
         my @childs;
@@ -204,32 +248,47 @@ sub _writer_hook($$@)
    +{ type => $type, replace => $code };
 }
 
-sub _writer_rpc_hook($$$$$)
+sub _writer_body_rpclit_hook($$$$$)
 {   my ($self, $type, $procedure, $params, $faults) = @_;
-    my @params = @$params;
-    my @faults = @$faults;
-    my $proc   = $self->schemas->prefixed($procedure);
+    my @params   = @$params;
+    my @faults   = @$faults;
+    my $schemas  = $self->schemas;
+
+    my $proc     = $schemas->prefixed($procedure);
+    my ($prefix) = split /\:/, $proc;
+    my $prefdef  = $schemas->prefix($prefix);
+    my $proc_ns  = $prefdef->{uri};
+    $prefdef->{used} = 0;
 
     my $code   = sub
      {  my ($doc, $data, $path, $tag) = @_;
+        UNIVERSAL::isa($data, 'XML::LibXML::Element')
+            and return $data;
+
         my %data = %$data;
         my @f = @faults;
         my (@fchilds, @pchilds);
         while(@f)
         {   my ($k, $c) = (shift @f, shift @f);
-            if(my $v = delete $data{$k}) { push @fchilds, $c->($doc, $v) }
+            my $v = delete $data{$k};
+            push @fchilds, $c->($doc, $v) if defined $v;
         }
         my @p = @params;
         while(@p)
         {   my ($k, $c) = (shift @p, shift @p);
-            if(my $v = delete $data{$k}) { push @pchilds, $c->($doc, $v) }
+            my $v = delete $data{$k};
+            push @pchilds, $c->($doc, $v) if defined $v;
         }
         warning __x"unused values {names}", names => [keys %data]
             if keys %data;
 
-        my $node = $doc->createElement($tag);
         my $proc = $doc->createElement($proc);
+        $proc->setNamespace($proc_ns, $prefix, 0);
+        $proc->setAttribute("SOAP-ENV:encodingStyle", SOAP11ENC);
+
         $proc->appendChild($_) for @pchilds;
+
+        my $node = $doc->createElement($tag);
         $node->appendChild($proc);
         $node->appendChild($_) for @fchilds;
         $node;
@@ -243,14 +302,14 @@ sub _writer_header($)
     my (@rules, @hlabels);
 
     my $header  = $args->{header} || [];
-    my $soapenv = $self->_envNS;
+    my $soapenv = $self->envelopeNS;
 
     foreach my $h (ref $header eq 'ARRAY' ? @$header : $header)
     {   my $part    = $h->{parts}[0];
         my $label   = $part->{name};
         my $element = $part->{element};
         my $code    = $part->{writer}
-         || $self->_writer($element, %$args, elements_qualified => 'TOP'
+         || $self->_writer($element, %$args
               , include_namespaces => sub {$_[0] ne $soapenv && $_[2]});
 
         push @rules, $label => $code;
@@ -264,13 +323,14 @@ sub _writer_body($)
 {   my ($self, $args) = @_;
     my (@rules, @blabels);
 
-    my $body  = $args->{body};
-    my $use   = $body->{use} || 'literal';
-    $use eq 'literal'
-        or error __x"RPC encoded not supported by this version";
+    my $body  = $args->{body} || $args->{fault};
+    my $use   = $body->{use}  || 'literal';
+#   $use eq 'literal'
+#       or error __x"RPC encoded not supported by this version";
 
     my $parts = $body->{parts} || [];
     my $style = $args->{style};
+    local $args->{is_rpc_enc} = $style eq 'rpc' && $use eq 'encoded';
 
     foreach my $part (@$parts)
     {   my $label  = $part->{name};
@@ -297,11 +357,13 @@ sub _writer_body($)
 sub _writer_body_element($$)
 {   my ($self, $args, $part) = @_;
     my $element = $part->{element};
-    my $soapenv = $self->_envNS;
+    my $soapenv = $self->envelopeNS;
 
-    $part->{writer}
-       ||= $self->_writer($element, %$args, elements_qualified => 'TOP'
-            , include_namespaces => sub {$_[0] ne $soapenv && $_[2]});
+    $part->{writer} ||= $self->_writer
+      ( $element, %$args
+      , include_namespaces  => sub {$_[0] ne $soapenv && $_[2]}
+      , xsi_type_everywhere => $args->{is_rpc_enc}
+      );
 }
 
 sub _writer_body_type($$)
@@ -314,14 +376,13 @@ sub _writer_body_type($$)
     return $part->{writer}
         if $part->{writer};
 
-    my $soapenv = $self->_envNS;
+    my $soapenv = $self->envelopeNS;
 
-    $part->{writer} =
-        $self->schemas->compileType
-          ( WRITER  => $part->{type}, %$args
-          , element => $part->{name}
-          , include_namespaces => sub {$_[0] ne $soapenv && $_[2]}
-          );
+    $part->{writer} = $self->schemas->compileType
+      ( WRITER  => $part->{type}, %$args, element => $part->{name}
+      , include_namespaces => sub {$_[0] ne $soapenv && $_[2]}
+      , xsi_type_everywhere => $args->{is_rpc_enc}
+      );
 }
 
 sub _writer_faults($) { ([], []) }
@@ -334,12 +395,12 @@ sub _writer_xop_hook($)
         return $r->($doc, $val)
             unless UNIVERSAL::isa($val, 'XML::Compile::XOP::Include');
 
-        my $node = $val->xmlNode($doc, $path, $tag); 
+        my $node = $val->xmlNode($doc, $path, $tag);
         push @$xop_objects, $val;
         $node;
       };
 
-   +{ type => 'xsd:base64Binary', replace => $collect_objects };
+   +{ extends => 'xsd:base64Binary', replace => $collect_objects };
 }
 
 #------------------------------------------------
@@ -366,11 +427,15 @@ sub _receiver(@)
     my $style  = $args{style} || 'document';
     my $kind   = $args{kind}  || 'request-response';
     if($style eq 'rpc')
-    {   if($kind ne 'one-way' && $kind ne 'notification')
-        {   my $procedure = $args{body}{procedure}
+    {   my $procedure = $args{procedure} || $args{body}{procedure};
+        keys %{$args{body}}==0 || $procedure
             or error __x"receiving operation requires procedure name with RPC";
-            $body  = $self->_reader_body_rpc_wrapper($procedure, $body);
-        }
+
+        my $use = $args{use} || $args{body}{use} || 'literal';
+#warn "RPC READER BODY $use";
+        $body = $use eq 'literal'
+           ? $self->_reader_body_rpclit_wrapper($procedure, $body)
+           : $self->_reader_body_rpcenc_wrapper($procedure, $body);
     }
     elsif($style ne 'document')
     {   error __x"unknown style `{style}'", style => $style;
@@ -381,15 +446,15 @@ sub _receiver(@)
 
     my @hooks  = @{$self->{hooks} || []};
     push @hooks
-      , $self->_reader_hook('SOAP-ENV:Header', $header)
-      , $self->_reader_hook('SOAP-ENV:Body',   $body  );
+      , $self->_reader_hook($self->envType('Header'), $header)
+      , $self->_reader_hook($self->envType('Body'),   $body  );
 
     #
     # Pack everything together in one procedure
     #
 
-    my $envelope = $self->_reader('SOAP-ENV:Envelope', %args
-      , hooks  => \@hooks);
+    my $envelope = $self->_reader($self->envType('Envelope')
+      , %args, hooks => \@hooks);
 
     # add simplified fault information
     my $faultdec = $self->_reader_faults(\%args, $args{faults});
@@ -411,8 +476,8 @@ sub _receiver(@)
 
 sub _reader_hook($$)
 {   my ($self, $type, $do) = @_;
-    my %trans = map { ($_->[1] => [ $_->[0], $_->[2] ]) } @$do; # we need copies
-    my $envns = $self->_envNS;
+    my %trans = map +($_->[1] => [ $_->[0], $_->[2] ]), @$do; # we need copies
+    my $envns = $self->envelopeNS;
 
     my $code  = sub
      {  my ($xml, $trans, $path, $label) = @_;
@@ -421,13 +486,17 @@ sub _reader_hook($$)
         {   next unless $child->isa('XML::LibXML::Element');
             my $type = type_of_node $child;
             if(my $t = $trans{$type})
-            {   my $v = $t->[1]->($child);
-                $h{$t->[0]} = $v if defined $v;
+            {   my ($label, $code) = @$t;
+                my $v = $code->($child) or next;
+                   if(!defined $v)        { }
+                elsif(!exists $h{$label}) { $h{$label} = $v }
+                elsif(ref $h{$label} eq 'ARRAY') { push @{$h{$label}}, $v }
+                else { $h{$label} = [ $h{$label}, $v ] }
                 next;
             }
             else
             {   $h{$type} = $child;
-                trace __x"node {type} not understood, expect from {has}",
+                trace __x"node {type} not understood, expected are {has}",
                     type => $type, has => [sort keys %trans];
             }
 
@@ -440,21 +509,22 @@ sub _reader_hook($$)
    +{ type    => $type
     , replace => $code
     };
- 
+
 }
 
-sub _reader_body_rpc_wrapper($$)
+sub _reader_body_rpclit_wrapper($$)
 {   my ($self, $procedure, $body) = @_;
-    my %trans = map { ($_->[1] => [ $_->[0], $_->[2] ]) } @$body;
+    my %trans = map +($_->[1] => [ $_->[0], $_->[2] ]), @$body;
 
-    # this should use key_rewrite
+    # this should use key_rewrite, but there is no $wsdl here
+    # my $label = $wsdl->prefixed($procedure);
     my $label = (unpack_type $procedure)[1];
 
     my $code = sub
       { my $xml = shift or return {};
         my %h;
         foreach my $child ($xml->childNodes)
-        {   next unless $child->isa('XML::LibXML::Element');
+        {   $child->isa('XML::LibXML::Element') or next;
             my $type = type_of_node $child;
             if(my $t = $trans{$type})
                  { $h{$t->[0]} = $t->[1]->($child) }
@@ -475,8 +545,7 @@ sub _reader_header($)
     {   my $part    = $h->{parts}[0];
         my $label   = $part->{name};
         my $element = $part->{element};
-        my $code    = $part->{reader}
-          ||= $self->_reader($element, %$args, elements_qualified => 'TOP');
+        my $code    = $part->{reader} ||= $self->_reader($element, %$args);
         push @rules, [$label, $element, $code];
     }
 
@@ -488,12 +557,14 @@ sub _reader_body($$)
     my $body  = $args->{body};
     my $parts = $body->{parts} || [];
     my @hooks = @{$args->{hooks} || []};
-    push @hooks, $self->_reader_xop_hook($refxops);
+    push @hooks, $self->_reader_xop_hook($refxops)
+                if _xop_enabled;
+
     local $args->{hooks} = \@hooks;
 
     my @rules;
     foreach my $part (@$parts)
-    {   my $label   = $part->{name};
+    {   my $label = $part->{name};
 
         my ($t, $code);
         if($part->{element})
@@ -507,6 +578,8 @@ sub _reader_body($$)
         push @rules, [ $label, $t, $code ];
     }
 
+#use Data::Dumper;
+#warn "RULES=", Dumper \@rules, $parts;
     \@rules;
 }
 
@@ -514,10 +587,9 @@ sub _reader_body_element($$)
 {   my ($self, $args, $part) = @_;
 
     my $element = $part->{element};
-    my $code    = $part->{reader}
-       || $self->_reader($element, %$args, elements_qualified => 'TOP');
+    my $code    = $part->{reader} || $self->_reader($element, %$args);
 
-    return ($element, $code);
+    ($element, $code);
 }
 
 sub _reader_body_type($$)
@@ -570,8 +642,8 @@ sub _reader_xop_hook($)
    +{ type => 'xsd:base64Binary', replace => $xop_merge };
 }
 
-sub _reader(@) { my $self = shift; $self->{schemas}->reader(@_) }
-sub _writer(@) { my $self = shift; $self->{schemas}->writer(@_) }
+sub _reader(@) { shift->schemas->reader(@_) }
+sub _writer(@) { shift->schemas->writer(@_) }
 
 #------------------------------------------------
 

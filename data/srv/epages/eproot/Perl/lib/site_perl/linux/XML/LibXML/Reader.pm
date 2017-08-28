@@ -14,14 +14,14 @@ use strict;
 use warnings;
 
 use vars qw ($VERSION);
-$VERSION = "1.70"; # VERSION TEMPLATE: DO NOT CHANGE
+$VERSION = "2.0129"; # VERSION TEMPLATE: DO NOT CHANGE
 
 use 5.008_000;
 
 BEGIN {
   UNIVERSAL::can('XML::LibXML::Reader','_newForFile') or
       croak("Cannot use XML::LibXML::Reader module - ".
-	    "your libxml2 is compiled without reader support!");
+            "your libxml2 is compiled without reader support!");
 }
 
 use base qw(Exporter);
@@ -99,12 +99,14 @@ BEGIN {
 $EXPORT_TAGS{all}=\@EXPORT_OK;
 }
 
+our %_preserve_flag;
+
 {
   my %props = (
-    load_ext_dtd => 1,		 # load the external subset
-    complete_attributes => 2,	 # default DTD attributes
-    validation => 3,		 # validate with the DTD
-    expand_entities => 4,	 # substitute entities
+    load_ext_dtd => 1,           # load the external subset
+    complete_attributes => 2,    # default DTD attributes
+    validation => 3,             # validate with the DTD
+    expand_entities => 4,        # substitute entities
   );
   sub getParserProp {
     my ($self, $name) = @_;
@@ -138,14 +140,16 @@ $EXPORT_TAGS{all}=\@EXPORT_OK;
     }
     elsif ( defined $args{string} ) {
       $self = $class->_newForString( $args{string}, $URI, $encoding, $options );
-      $string_pool{$self} = \$args{string};
+      if (defined($self)) {
+        $string_pool{$self} = \$args{string};
+      }
     }
     elsif ( defined $args{IO} ) {
       $self = $class->_newForIO( $args{IO}, $URI, $encoding, $options  );
     }
     elsif ( defined $args{DOM} ) {
       croak("DOM must be a XML::LibXML::Document node")
-	unless UNIVERSAL::isa($args{DOM}, 'XML::LibXML::Document');
+        unless UNIVERSAL::isa($args{DOM}, 'XML::LibXML::Document');
       $self = $class->_newForDOM( $args{DOM} );
     }
     elsif ( defined $args{FD} ) {
@@ -157,18 +161,18 @@ $EXPORT_TAGS{all}=\@EXPORT_OK;
     }
     if ($args{RelaxNG}) {
       if (ref($args{RelaxNG})) {
-	$rng_pool{$self} = \$args{RelaxNG};
-	$self->_setRelaxNG($args{RelaxNG});
+        $rng_pool{$self} = \$args{RelaxNG};
+        $self->_setRelaxNG($args{RelaxNG});
       } else {
-	$self->_setRelaxNGFile($args{RelaxNG});
+        $self->_setRelaxNGFile($args{RelaxNG});
       }
     }
     if ($args{Schema}) {
       if (ref($args{Schema})) {
-	$xsd_pool{$self} = \$args{Schema};
-	$self->_setXSD($args{Schema});
+        $xsd_pool{$self} = \$args{Schema};
+        $self->_setXSD($args{Schema});
       } else {
-	$self->_setXSDFile($args{Schema});
+        $self->_setXSDFile($args{Schema});
       }
     }
     return $self;

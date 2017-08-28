@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::SOAP::Trace 3"
-.TH XML::Compile::SOAP::Trace 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::SOAP::Trace 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -135,7 +135,7 @@ XML::Compile::SOAP::Trace \- help displaying trace details.
 .IX Header "SYNOPSIS"
 .Vb 2
 \& my ($answer, $trace) = $call\->(%params);
-\& #now $trace is a XML::Compile::SOAP::Trace
+\& # now $trace is a XML::Compile::SOAP::Trace
 \&
 \& my $req = $trace\->request;   # HTTP message which was sent
 \& my $res = $trace\->response;  # HTTP message received
@@ -144,8 +144,9 @@ XML::Compile::SOAP::Trace \- help displaying trace details.
 \& my $dura  = $trace\->elapse;
 \&
 \& $trace\->printTimings;
+\& $trace\->printErrors;
 \& $trace\->printTimings(\e*STDERR);
-\& $trace\->printRequest;
+\& $trace\->printRequest(pretty_print => 1);
 \& $trace\->printResponse;
 .Ve
 .SH "DESCRIPTION"
@@ -156,19 +157,19 @@ as produced by a \s-1SOAP\s0 call (client side).
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.IP "XML::Compile::SOAP::Trace\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::SOAP::Trace->new(OPTIONS)"
+.IP "XML::Compile::SOAP::Trace\->\fBnew\fR(%options)" 4
+.IX Item "XML::Compile::SOAP::Trace->new(%options)"
 Called by the \s-1SOAP\s0 call implementation; not for normal users.
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBdate\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBdate\fR" 4
-.IX Item "$obj->date"
+.ie n .IP "$obj\->\fBdate\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBdate\fR()" 4
+.IX Item "$obj->date()"
 Returns the date string which represent the moment that the call
 was initiated.
-.ie n .IP "$obj\->\fBelapse\fR([\s-1KIND\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBelapse\fR([\s-1KIND\s0])" 4
-.IX Item "$obj->elapse([KIND])"
+.ie n .IP "$obj\->\fBelapse\fR( [$kind] )" 4
+.el .IP "\f(CW$obj\fR\->\fBelapse\fR( [$kind] )" 4
+.IX Item "$obj->elapse( [$kind] )"
 Returns the time in seconds (with hires, sub-second detail) of a part of
 the \s-1SOAP\s0 communication. Some values may be \f(CW\*(C`undef\*(C'\fR.  Elapse without
 argument will return the total time elapsed.
@@ -176,7 +177,7 @@ argument will return the total time elapsed.
 As KINDs are defined \f(CW\*(C`encode\*(C'\fR (the time required by the translator
 build by XML::Compile::Schema to translate Perl into an XML::LibXML
 tree), \f(CW\*(C`transport\*(C'\fR, and \f(CW\*(C`decode\*(C'\fR (from XML::LibXML tree into Perl)>.
-The transport components are also provided seperately, as \f(CW\*(C`stringify\*(C'\fR
+The transport components are also provided separately, as \f(CW\*(C`stringify\*(C'\fR
 (by XML::LibXML to convert a tree into text), \f(CW\*(C`connect\*(C'\fR (for the network
 message exchange by HTTP::Daemon), and \f(CW\*(C`parse\*(C'\fR (parsing answer string
 into \s-1XML\s0)
@@ -188,71 +189,100 @@ example:
 .Vb 1
 \& print $trace\->elapse(\*(Aqdecode\*(Aq);
 .Ve
-.ie n .IP "$obj\->\fBerror\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBerror\fR" 4
-.IX Item "$obj->error"
-Often contains an error message, when something went wrong.
-.ie n .IP "$obj\->\fBrequest\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBrequest\fR" 4
-.IX Item "$obj->request"
+.ie n .IP "$obj\->\fBerror\fR( [$error] )" 4
+.el .IP "\f(CW$obj\fR\->\fBerror\fR( [$error] )" 4
+.IX Item "$obj->error( [$error] )"
+Often contains an error message, when something went wrong.  The message
+is returned as Log::Report::Exception.  Only the first error is returned,
+use \fIerrors()\fR to get all.
+.Sp
+[2.31] When an \f(CW$error\fR is provided, it is added to the internal list of errors.
+The \f(CW$error\fR parameter may be a Log::Report::Exception, a
+Log::Report::Message or a simple string.
+.ie n .IP "$obj\->\fBerrors\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBerrors\fR()" 4
+.IX Item "$obj->errors()"
+[2.31] Return all errors, which are Log::Report::Exception objects.
+See also \fIerror()\fR.
+.ie n .IP "$obj\->\fBrequest\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBrequest\fR()" 4
+.IX Item "$obj->request()"
 Returns the HTTP::Request object used for this \s-1SOAP\s0 call.  This might
 be quite useful during debugging, because a lot of the processing is
 hidden for the user... but you may want to see or log what is actually
 begin send.
-.ie n .IP "$obj\->\fBresponse\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBresponse\fR" 4
-.IX Item "$obj->response"
+.ie n .IP "$obj\->\fBresponse\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBresponse\fR()" 4
+.IX Item "$obj->response()"
 Returns the HTTP::Response object, returned by the remote server.  In
 some erroneous cases, the client library will create an error response
 without any message was exchanged.
-.ie n .IP "$obj\->\fBstart\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBstart\fR" 4
-.IX Item "$obj->start"
+.ie n .IP "$obj\->\fBresponseDOM\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBresponseDOM\fR()" 4
+.IX Item "$obj->responseDOM()"
+Returns the XML::LibXML::Document top node of the response: the parsed
+text of the content of the received \s-1HTTP\s0 message.
+.ie n .IP "$obj\->\fBstart\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBstart\fR()" 4
+.IX Item "$obj->start()"
 Returns the (platform dependent) time value which represent the moment
 that the call was initiated.  See Time::HiRes method \f(CW\*(C`time\*(C'\fR.
 .SS "Printing"
 .IX Subsection "Printing"
-.ie n .IP "$obj\->\fBprintRequest\fR([\s-1FILEHANDLE\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBprintRequest\fR([\s-1FILEHANDLE\s0])" 4
-.IX Item "$obj->printRequest([FILEHANDLE])"
-.PD 0
-.ie n .IP "$obj\->\fBprintResponse\fR([\s-1FILEHANDLE\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBprintResponse\fR([\s-1FILEHANDLE\s0])" 4
-.IX Item "$obj->printResponse([FILEHANDLE])"
-.ie n .IP "$obj\->\fBprintTimings\fR([\s-1FILEHANDLE\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBprintTimings\fR([\s-1FILEHANDLE\s0])" 4
-.IX Item "$obj->printTimings([FILEHANDLE])"
-.PD
+.ie n .IP "$obj\->\fBprintErrors\fR( [$fh] )" 4
+.el .IP "\f(CW$obj\fR\->\fBprintErrors\fR( [$fh] )" 4
+.IX Item "$obj->printErrors( [$fh] )"
+The filehandle defaults to \s-1STDERR\s0.
+.Sp
+If you want to see more output, try adding \f(CW\*(C`<use Log::Report mode =\*(C'\fR 3;>>
+.ie n .IP "$obj\->\fBprintRequest\fR( [$fh], %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBprintRequest\fR( [$fh], \f(CW%options\fR )" 4
+.IX Item "$obj->printRequest( [$fh], %options )"
+.Vb 2
+\& \-Option      \-\-Default
+\&  pretty_print  0
+.Ve
+.RS 4
+.IP "pretty_print => 0|1|2" 2
+.IX Item "pretty_print => 0|1|2"
+Use XML::Compile::Transport::compileClient(xml_format) if you want
+the messages to be shown readible.  The digits reflect XML::LibXML
+format settings: '0' is unchanged, '1' will show indented formatting,
+and '2' has even more whitespace in it.
+.RE
+.RS 4
+.RE
+.ie n .IP "$obj\->\fBprintResponse\fR( [$fh], %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBprintResponse\fR( [$fh], \f(CW%options\fR )" 4
+.IX Item "$obj->printResponse( [$fh], %options )"
+.Vb 2
+\& \-Option      \-\-Default
+\&  pretty_print  0
+.Ve
+.RS 4
+.IP "pretty_print => 0|1|2" 2
+.IX Item "pretty_print => 0|1|2"
+Use XML::Compile::Transport::compileClient(xml_format) if you want
+the messages to be shown readible.
+.RE
+.RS 4
+.RE
+.ie n .IP "$obj\->\fBprintTimings\fR( [$fh] )" 4
+.el .IP "\f(CW$obj\fR\->\fBprintTimings\fR( [$fh] )" 4
+.IX Item "$obj->printTimings( [$fh] )"
 Print an overview on various timings to the selected filehandle.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::Error 3"
-.TH XML::LibXML::Error 3 "2009-10-07" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::Error 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -164,8 +164,8 @@ XML::LibXML::Error \- Structured Errors
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-The XML::LibXML::Error class is a tiny frontend to \fIlibxml2\fR's structured error support. If XML::LibXML is compied with structured error
-support, all errors reported by libxml2 are transformed to XML::LibXML:Error
+The XML::LibXML::Error class is a tiny frontend to \fIlibxml2\fR's structured error support. If XML::LibXML is compiled with structured error
+support, all errors reported by libxml2 are transformed to XML::LibXML::Error
 objects. These objects automatically serialize to the corresponding error
 messages when printed or used in a string operation, but as objects, can also
 be used to get a detailed and structured information about the error that
@@ -175,7 +175,7 @@ Unlike most other XML::LibXML objects, XML::LibXML::Error doesn't wrap an
 underlying \fIlibxml2\fR structure directly, but rather transforms it to a blessed Perl hash reference
 containing the individual fields of the structured error information as hash
 key-value pairs. Individual items (fields) of a structured error can either be
-obtained directly as $@\->{field}, or using autoloaded methods such as as
+obtained directly as $@\->{field}, or using autoloaded methods such as
 $@\->\fIfield()\fR (where field is the field name). XML::LibXML::Error objects have
 the following fields: domain, code, level, file, line, nodename, message, str1,
 str2, str3, num1, num2, and _prev (some of them may be undefined).
@@ -186,18 +186,19 @@ str2, str3, num1, num2, and _prev (some of them may be undefined).
 \&  $XML::LibXML::Error::WARNINGS=1;
 .Ve
 .Sp
-Traditionally, XML::LibXML was supressing parser warnings by setting libxml2's
+Traditionally, XML::LibXML was suppressing parser warnings by setting libxml2's
 global variable xmlGetWarningsDefaultValue to 0. Since 1.70 we do not change
 libxml2's global variables anymore; for backward compatibility, XML::LibXML
 suppresses warnings. This variable can be set to 1 to enable reporting of these
 warnings via Perl \f(CW\*(C`warn\*(C'\fR and to 2 to report hem via \f(CW\*(C`die\*(C'\fR.
-.Sp
+.IP "as_string" 4
+.IX Item "as_string"
 .Vb 1
 \&  $message = $@\->as_string();
 .Ve
 .Sp
-This functions takes serializes a XML::LibXML::Error object to a string
-containing the full error message close to the message produced by \fIlibxml2\fR default error handlers and tools like xmllint. This method is also used to
+This function serializes an XML::LibXML::Error object to a string containing
+the full error message close to the message produced by \fIlibxml2\fR default error handlers and tools like xmllint. This method is also used to
 overload "" operator on XML::LibXML::Error, so it is automatically called
 whenever XML::LibXML::Error object is treated as a string (e.g. in print $@).
 .IP "dump" 4
@@ -206,9 +207,9 @@ whenever XML::LibXML::Error object is treated as a string (e.g. in print $@).
 \&  print $@\->dump();
 .Ve
 .Sp
-This function serializes a XML::LibXML::Error to a string displaying all fields
-of the error structure individually on separate lines of the form 'name' =>
-\&'value'.
+This function serializes an XML::LibXML::Error to a string displaying all
+fields of the error structure individually on separate lines of the form 'name'
+=> 'value'.
 .IP "domain" 4
 .IX Item "domain"
 .Vb 1
@@ -342,12 +343,12 @@ This field can possibly hold a reference to another XML::LibXML::Error object
 representing an error which occurred just before this error.
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Matt Sergeant, 
-Christian Glahn, 
+Matt Sergeant,
+Christian Glahn,
 Petr Pajas
 .SH "VERSION"
 .IX Header "VERSION"
-1.70
+2.0129
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 2001\-2007, AxKit.com Ltd.
@@ -355,3 +356,7 @@ Petr Pajas
 2002\-2006, Christian Glahn.
 .PP
 2006\-2009, Petr Pajas.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

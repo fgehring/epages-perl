@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::Schema::Instance - Represents one schema
@@ -18,7 +20,7 @@ process it.
 
 =over 4
 
-=item $obj-E<gt>B<new>(TOP, OPTIONS)
+=item $obj-E<gt>B<new>($top, %options)
 
 Get's the top of an XML::LibXML tree, which must be a schema element.
 The tree is parsed: the information collected.
@@ -60,61 +62,61 @@ Overrule or set the target namespace.
 
 =over 4
 
-=item $obj-E<gt>B<attributeGroups>
+=item $obj-E<gt>B<attributeGroups>()
 
 Returns a list of all defined attribute groups.
 
-=item $obj-E<gt>B<attributes>
+=item $obj-E<gt>B<attributes>()
 
 Returns a lost of all globally defined attribute names.
 
-=item $obj-E<gt>B<complexTypes>
+=item $obj-E<gt>B<complexTypes>()
 
 Returns a list with all complexType names.
 
-=item $obj-E<gt>B<element>(URI)
+=item $obj-E<gt>B<element>($uri)
 
 Returns one global element definition.
 
-=item $obj-E<gt>B<elements>
+=item $obj-E<gt>B<elements>()
 
 Returns a list of all globally defined element names.
 
-=item $obj-E<gt>B<filename>
+=item $obj-E<gt>B<filename>()
 
-=item $obj-E<gt>B<groups>
+=item $obj-E<gt>B<groups>()
 
 Returns a list of all defined model groups.
 
-=item $obj-E<gt>B<schema>
+=item $obj-E<gt>B<schema>()
 
-=item $obj-E<gt>B<schemaInstance>
+=item $obj-E<gt>B<schemaInstance>()
 
-=item $obj-E<gt>B<schemaNamespace>
+=item $obj-E<gt>B<schemaNamespace>()
 
-=item $obj-E<gt>B<sgs>
+=item $obj-E<gt>B<sgs>()
 
 Returns a HASH with the base-type as key and an ARRAY of types
 which extend it.
 
-=item $obj-E<gt>B<simpleTypes>
+=item $obj-E<gt>B<simpleTypes>()
 
 Returns a list with all simpleType names.
 
-=item $obj-E<gt>B<source>
+=item $obj-E<gt>B<source>()
 
-=item $obj-E<gt>B<targetNamespace>
+=item $obj-E<gt>B<targetNamespace>()
 
-=item $obj-E<gt>B<tnses>
+=item $obj-E<gt>B<tnses>()
 
 A schema can defined more than one target namespace, where recent
 schema spec changes provide a targetNamespace attribute.
 
-=item $obj-E<gt>B<type>(URI)
+=item $obj-E<gt>B<type>($uri)
 
 Returns the type definition with the specified name.
 
-=item $obj-E<gt>B<types>
+=item $obj-E<gt>B<types>()
 
 Returns a list of all simpleTypes and complexTypes
 
@@ -124,32 +126,32 @@ Returns a list of all simpleTypes and complexTypes
 
 =over 4
 
-=item $obj-E<gt>B<find>(KIND, FULLNAME)
+=item $obj-E<gt>B<find>($kind, $fullname)
 
-Returns the definition for the object of KIND, with FULLNAME.
+Returns the definition for the object of $kind, with $fullname.
 
 example: of find
 
   my $attr = $instance->find(attribute => '{myns}my_global_attr');
 
-=item $obj-E<gt>B<importLocations>(NAMESPACE)
+=item $obj-E<gt>B<importLocations>($ns)
 
-Returns a list of all schemaLocations specified with the import NAMESPACE
+Returns a list of all schemaLocations specified with the import $ns
 (one of the values returned by L<imports()|XML::Compile::Schema::Instance/"Index">).
 
-=item $obj-E<gt>B<imports>
+=item $obj-E<gt>B<imports>()
 
 Returns a list with all namespaces which need to be imported.
 
-=item $obj-E<gt>B<includeLocations>
+=item $obj-E<gt>B<includeLocations>()
 
 Returns a list of all schemaLocations which where specified with include
 statements.
 
-=item $obj-E<gt>B<printIndex>([FILEHANDLE], OPTIONS)
+=item $obj-E<gt>B<printIndex>( [$fh], %options )
 
 Prints an overview over the defined objects within this schema to the
-selected FILEHANDLE.
+selected $fh.
 
  -Option       --Default
   kinds          <all>
@@ -174,34 +176,17 @@ anyway).
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2006-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

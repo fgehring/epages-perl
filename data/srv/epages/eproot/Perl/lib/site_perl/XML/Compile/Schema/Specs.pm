@@ -1,14 +1,14 @@
-# Copyrights 2006-2011 by Mark Overmeer.
+# Copyrights 2006-2016 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 
 use warnings;
 use strict;
 
 package XML::Compile::Schema::Specs;
 use vars '$VERSION';
-$VERSION = '1.22';
+$VERSION = '1.54';
 
 
 use Log::Report 'xml-compile', syntax => 'SHORT';
@@ -94,7 +94,7 @@ my @builtin_extra_2001  = qw/
  gYearMonth
  hexBinary
  normalizedString
- precissionDecimal
+ precisionDecimal
  /;
 
 my %builtin_public_1999 = map { ($_ => $_) }
@@ -117,8 +117,8 @@ my %sloppy_int_version =
  , unsignedInt        => 'unsigned_int'
  );
 
-my %sloppy_float_version = map { ($_ => 'sloppy_float') }
-   qw/decimal precissionDecimal float double/;
+my %sloppy_float_version = map +($_ => 'sloppy_float'),
+   qw/decimal precisionDecimal float double/;
 
 my %schema_1999 =
  ( uri_xsd => SCHEMA1999

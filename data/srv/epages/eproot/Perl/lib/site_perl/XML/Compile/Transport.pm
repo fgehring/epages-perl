@@ -1,20 +1,21 @@
-# Copyrights 2007-2011 by Mark Overmeer.
+# Copyrights 2007-2017 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 use warnings;
 use strict;
 
 package XML::Compile::Transport;
 use vars '$VERSION';
-$VERSION = '2.24';
+$VERSION = '3.21';
 
 use base 'XML::Compile::SOAP::Extension';
 
 use Log::Report 'xml-compile-soap', syntax => 'SHORT';
+use Log::Report::Exception ();
 
-use XML::LibXML ();
-use Time::HiRes qw/time/;
+use XML::LibXML            ();
+use Time::HiRes            qw/time/;
 
 
 sub init($)
@@ -46,46 +47,51 @@ sub address()
 #-------------------------------------
 
 
-my $parser = XML::LibXML->new;
-
 sub compileClient(@)
 {   my ($self, %args) = @_;
-    my $call  = $self->_prepare_call(\%args);
-    my $kind  = $args{kind} || 'request-response';
+    my $call   = $self->_prepare_call(\%args);
+    my $kind   = $args{kind} || 'request-response';
+    my $format = $args{xml_format} || 0;
 
     sub
     {   my ($xmlout, $trace, $mtom) = @_;
         my $start     = time;
-        my $textout   = ref $xmlout ? $xmlout->toString : $xmlout;
+        my $textout   = ref $xmlout ? $xmlout->toString($format) : $xmlout;
 #warn $xmlout->toString(1);   # show message sent
 
         my $stringify = time;
         $trace->{stringify_elapse} = $stringify - $start;
         $trace->{transport_start}  = $start;
 
-        my ($textin, $xops) = eval { $call->(\$textout, $trace, $mtom) };
+        my ($textin, $xops) = try { $call->(\$textout, $trace, $mtom) };
         my $connected = time;
         $trace->{connect_elapse}   = $connected - $stringify;
         if($@)
-        {   $trace->{error} = $@;
+        {   $trace->{errors} = [$@->wasFatal];
             return;
         }
 
         my $xmlin;
         if($textin)
-        {   $xmlin = eval {$parser->parse_string($$textin)};
-            $trace->{error} = $@ if $@;
+        {   $xmlin = try {XML::LibXML->load_xml(string => $$textin)};
+            if($@) { $trace->{errors} = [$@->wasFatal] }
+            else   { $trace->{response_dom} = $xmlin }
         }
 
-        my $answer;
+        my $answer = $xmlin;
         if($kind eq 'one-way')
         {   my $response = $trace->{http_response};
             my $code = defined $response ? $response->code : -1;
-            if($code==202) { $answer = $xmlin || {} }
-            else { $trace->{error} = "call failed with code $code" }
+            if($code==202) { $answer ||= {} }
+            else
+            {   push @{$trace->{errors}}, Log::Report::Exception->new
+                 (reason => 'error', message => __"call failed with code $code")
+            }
         }
-        elsif($xmlin) { $answer = $xmlin }
-        else { $trace->{error} ||= 'no xml as answer' }
+        elsif(!$xmlin)
+        {   push @{$trace->{errors}}, Log::Report::Exception->new
+              (reason => 'error', message => __"no xml as answer");
+        }
 
         my $end = $trace->{transport_end} = time;
 

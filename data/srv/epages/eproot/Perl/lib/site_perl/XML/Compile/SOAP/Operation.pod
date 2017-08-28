@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::SOAP::Operation - base-class for possible interactions
@@ -25,37 +27,45 @@ a server.
 
 =over 4
 
-=item XML::Compile::SOAP::Operation-E<gt>B<new>(OPTIONS)
+=item XML::Compile::SOAP::Operation-E<gt>B<new>(%options)
 
- -Option   --Default
-  action     undef
-  endpoints  []
-  kin        <required>
-  nam        <required>
-  schemas    <required>
-  transport  'HTTP'
+ -Option     --Default
+  action       undef
+  endpoints    []
+  kind         <required>
+  name         <required>
+  schemas      <required>
+  server_type  undef
+  transport    'HTTP'
 
 =over 2
 
 =item action => STRING
 
-Some string which is refering to the action which is taken.  For SOAP
+Some string which is referring to the action which is taken.  For SOAP
 protocols, this defines the soapAction header.
 
 =item endpoints => ADDRESS|ARRAY
 
 Where to contact the server.
 
-=item kin => d
+=item kind => 'one-way'|...
 
 This returns the type of operation this is.  There are four kinds, which
 are returned as strings C<one-way>, C<request-response>, C<sollicit-response>,
 and C<notification>.  The latter two are initiated by a server, the former
 two by a client.
 
-=item nam => e
+=item name => STRING
 
 =item schemas => XML::Compile::Cache
+
+=item server_type => NAME
+
+Most server implementations show some problems.  Also, servers may produce
+responses using their own namespaces (like for error codes).  When you know
+which server you are talking to, the quirks of the specific server type can
+be loaded.  Read more in the L<XML::Compile::SOAP/"Supported servers">.
 
 =item transport => URI|'HTTP'
 
@@ -71,37 +81,42 @@ Transfer Protocol.
 
 =over 4
 
-=item $obj-E<gt>B<bindingName>
+=item $obj-E<gt>B<bindingName>()
 
-=item $obj-E<gt>B<clientClass>
+=item $obj-E<gt>B<clientClass>()
 
 Returns the class name which implements the Client side for this protocol.
 
-=item $obj-E<gt>B<endPoints>
+=item $obj-E<gt>B<endPoints>()
 
 Returns the list of alternative URLs for the end-point, which should
 be defined within the service's port declaration.
 
-=item $obj-E<gt>B<kind>
+=item $obj-E<gt>B<kind>()
 
-=item $obj-E<gt>B<name>
+=item $obj-E<gt>B<longName>()
 
-=item $obj-E<gt>B<portName>
+[3.06] prefix the service name before the operation name, to make it
+really unique.  A C<#> is used as separator.
 
-=item $obj-E<gt>B<schemas>
+=item $obj-E<gt>B<name>()
 
-=item $obj-E<gt>B<serverClass>
+=item $obj-E<gt>B<portName>()
+
+=item $obj-E<gt>B<schemas>()
+
+=item $obj-E<gt>B<serverClass>()
 
 Returns the class name which implements the Server side for this protocol.
 
-=item $obj-E<gt>B<serviceName>
+=item $obj-E<gt>B<serviceName>()
 
-=item $obj-E<gt>B<soapAction>
+=item $obj-E<gt>B<soapAction>()
 
 Used for the C<soapAction> header in HTTP transport, for routing
 messages through firewalls.
 
-=item $obj-E<gt>B<version>
+=item $obj-E<gt>B<version>()
 
 =item $obj-E<gt>B<wsaAction>('INPUT'|'OUTPUT')
 
@@ -116,14 +131,14 @@ server). The C<OUTPUT> is used by the server in its message back.
 
 =over 4
 
-=item $obj-E<gt>B<compileClient>(OPTIONS)
+=item $obj-E<gt>B<compileClient>(%options)
 
 Returns one CODE reference which handles the conversion from a perl
 data-structure into a request message, the transmission of the
 request, the receipt of the answer, and the decoding of that answer
 into a Perl data-structure.
 
-=item $obj-E<gt>B<compileHandler>(OPTIONS)
+=item $obj-E<gt>B<compileHandler>(%options)
 
 Returns a code reference which translates in incoming XML message
 into Perl a data-structure, then calls the callback.  The result of
@@ -138,7 +153,7 @@ the callback is encoded from Perl into XML and returned.
 
 =back
 
-=item $obj-E<gt>B<compileTransporter>(OPTIONS)
+=item $obj-E<gt>B<compileTransporter>(%options)
 
 Create the transporter code for a certain specific target.
 
@@ -166,13 +181,17 @@ Passed to L<XML::Compile::Transport::compileClient(hook)|XML::Compile::Transport
 used to create off-line tests and last resort work-arounds.  See the
 DETAILs chapter in the L<XML::Compile::Transport|XML::Compile::Transport> manual page.
 
-=item transporter => CODE
+=item transporter => CODE|XML::Compile::Transport-object
 
 The routine which will be used to exchange the data with the server.
 This code is created by an L<XML::Compile::Transport::compileClient()|XML::Compile::Transport/"Handlers">
-extension. By default, a transporter compatible to the protocol
-is created.  However, in most cases you want to reuse one (HTTP1.1)
-connection to a server.
+extension.
+
+By default, a transporter compatible to the protocol is created.  However,
+in most cases you want to reuse one (HTTP1.1) connection to a server.
+
+[3.14] You may provide a L<XML::Compile::Transport|XML::Compile::Transport> object as well.  Its
+compileClient() will be called for you.
 
 =back
 
@@ -182,51 +201,50 @@ connection to a server.
 
 =over 4
 
-=item $obj-E<gt>B<explain>(WSDL, FORMAT, DIRECTION, OPTIONS)
+=item $obj-E<gt>B<explain>($wsdl, $format, $direction, %options)
 
 Dump an annotated structure showing how the operation works, helping
-developers to understand the schema. FORMAT is C<PERL> or C<XML>.
+developers to understand the schema. $format is C<PERL> or C<XML>.
 
-The DIRECTION is C<INPUT>, it will return the message which the client
+The $direction is C<INPUT>, it will return the message which the client
 sends to the server (input for the server). The C<OUTPUT> message is
 sent as response by the server.
 
-=item XML::Compile::SOAP::Operation-E<gt>B<register>(URI, ENVNS)
+=item $obj-E<gt>B<parsedWSDL>(%options)
 
-Declare an operation type, but WSDL specific URI and envelope namespace.
+[2.29] For some purposes, it is useful to get access to the parsed WSDL
+structure.
+
+B<Be aware> that the structure returned is consided "internal"
+and strongly influenced by behavior of L<XML::Compile|XML::Compile>; backwards
+compatibility will not be maintained at all cost.
+
+You can use L<XML::Compile::Schema::template()|XML::Compile::Schema/"Compilers"> format C<TREE> to get
+more details about the element types mentioned in this structure.
+
+example: 
+
+  use Data::Dumper;
+  $Data::Dumper::Indent    = 1;
+  $Data::Dumper::Quotekeys = 0;
+
+  print Dumper $op->parsedWSDL;
 
 =back
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
-
-Other distributions in this suite:
-L<XML::Compile>,
-L<XML::Compile::SOAP>,
-L<XML::Compile::SOAP12>,
-L<XML::Compile::SOAP::Daemon>,
-L<XML::Compile::SOAP::WSA>,
-L<XML::Compile::C14N>,
-L<XML::Compile::WSS>,
-L<XML::Compile::Tester>,
-L<XML::Compile::Cache>,
-L<XML::Compile::Dumper>,
-L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
-and
-L<XML::LibXML::Simple>.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Please post questions or ideas to the mailinglist at
-F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile> .
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2007-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

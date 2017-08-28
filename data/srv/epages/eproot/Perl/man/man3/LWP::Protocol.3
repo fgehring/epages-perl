@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "LWP::Protocol 3"
-.TH LWP::Protocol 3 "2012-01-14" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH LWP::Protocol 3 "2017-01-31" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -140,16 +140,16 @@ LWP::Protocol \- Base class for LWP protocols
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-This class is used a the base class for all protocol implementations
+This class is used as the base class for all protocol implementations
 supported by the \s-1LWP\s0 library.
 .PP
 When creating an instance of this class using
-\&\f(CW\*(C`LWP::Protocol::create($url)\*(C'\fR, and you get an initialised subclass
+\&\f(CW\*(C`LWP::Protocol::create($url)\*(C'\fR, and you get an initialized subclass
 appropriate for that access method. In other words, the
 \&\fILWP::Protocol::create()\fR function calls the constructor for one of its
 subclasses.
 .PP
-All derived LWP::Protocol classes need to override the \fIrequest()\fR
+All derived \f(CW\*(C`LWP::Protocol\*(C'\fR classes need to override the \fIrequest()\fR
 method which is used to service a request. The overridden method can
 make use of the \fIcollect()\fR function to collect together chunks of data
 as it is received.
@@ -197,7 +197,7 @@ routine, then content is passed to this routine.
 The \f(CW$collector\fR is a routine that will be called and which is
 responsible for returning pieces (as ref to scalar) of the content to
 process.  The \f(CW$collector\fR signals \s-1EOF\s0 by returning a reference to an
-empty sting.
+empty string.
 .Sp
 The return value from \fIcollect()\fR is the \f(CW$response\fR object reference.
 .Sp

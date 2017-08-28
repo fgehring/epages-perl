@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "lwptut 3"
-.TH lwptut 3 "2012-02-11" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH lwptut 3 "2017-01-18" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -283,7 +283,7 @@ like so:
 \&  $response = $browser\->get( $url, $key1, $value1, $key2, $value2, ... );
 .Ve
 .PP
-For example, here's how to send some more Netscape-like headers, in case
+For example, here's how to send some commonly used headers, in case
 you're dealing with a site that would otherwise reject your request:
 .PP
 .Vb 6
@@ -323,49 +323,21 @@ A default LWP::UserAgent object acts like a browser with its cookies
 support turned off. There are various ways of turning it on, by setting
 its \f(CW\*(C`cookie_jar\*(C'\fR attribute. A \*(L"cookie jar\*(R" is an object representing
 a little database of all
-the \s-1HTTP\s0 cookies that a browser can know about. It can correspond to a
-file on disk (the way Netscape uses its \fIcookies.txt\fR file), or it can
-be just an in-memory object that starts out empty, and whose collection of
+the \s-1HTTP\s0 cookies that a browser knows about. It can correspond to a
+file on disk or 
+an in-memory object that starts out empty, and whose collection of
 cookies will disappear once the program is finished running.
 .PP
 To give a browser an in-memory empty cookie jar, you set its \f(CW\*(C`cookie_jar\*(C'\fR
 attribute like so:
 .PP
-.Vb 1
-\&  $browser\->cookie_jar({});
-.Ve
-.PP
-To give it a copy that will be read from a file on disk, and will be saved
-to it when the program is finished running, set the \f(CW\*(C`cookie_jar\*(C'\fR attribute
-like this:
-.PP
-.Vb 7
-\&  use HTTP::Cookies;
-\&  $browser\->cookie_jar( HTTP::Cookies\->new(
-\&    \*(Aqfile\*(Aq => \*(Aq/some/where/cookies.lwp\*(Aq,
-\&        # where to read/write cookies
-\&    \*(Aqautosave\*(Aq => 1,
-\&        # save it to disk when done
-\&  ));
-.Ve
-.PP
-That file will be an LWP-specific format. If you want to be access the
-cookies in your Netscape cookies file, you can use the
-HTTP::Cookies::Netscape class:
-.PP
 .Vb 2
-\&  use HTTP::Cookies;
-\&    # yes, loads HTTP::Cookies::Netscape too
-\&  
-\&  $browser\->cookie_jar( HTTP::Cookies::Netscape\->new(
-\&    \*(Aqfile\*(Aq => \*(Aqc:/Program Files/Netscape/Users/DIR\-NAME\-HERE/cookies.txt\*(Aq,
-\&        # where to read cookies
-\&  ));
+\&  use HTTP::CookieJar::LWP;
+\&  $browser\->cookie_jar( HTTP::CookieJar::LWP\->new );
 .Ve
 .PP
-You could add an \f(CW\*(C`\*(Aqautosave\*(Aq => 1\*(C'\fR line as further above, but at
-time of writing, it's uncertain whether Netscape might discard some of
-the cookies you could be writing back to disk.
+To save a cookie jar to disk, see \*(L"dump_cookies\*(R" in HTTP::CookieJar.
+To load cookies from disk into a jar, see \*(L"load_cookies\*(R" in HTTP::CookieJar.
 .SS "Posting Form Data"
 .IX Subsection "Posting Form Data"
 Many \s-1HTML\s0 forms send data to their server using an \s-1HTTP\s0 \s-1POST\s0 request, which
@@ -812,7 +784,15 @@ For example,
 .PP
 When you use this \f(CW\*(C`:content_file\*(C'\fR option, the \f(CW$response\fR will have
 all the normal header lines, but \f(CW\*(C`$response\->content\*(C'\fR will be
-empty.
+empty.  Errors writing to the content file (for example due to
+permission denied or the filesystem being full) will be reported via
+the \f(CW\*(C`Client\-Aborted\*(C'\fR or \f(CW\*(C`X\-Died\*(C'\fR response headers, and not the
+\&\f(CW\*(C`is_success\*(C'\fR method:
+.PP
+.Vb 2
+\&  if ($response\->header(\*(AqClient\-Aborted\*(Aq) eq \*(Aqdie\*(Aq) {
+\&    # handle error ...
+.Ve
 .PP
 Note that this \*(L":content_file\*(R" option isn't supported under older
 versions of \s-1LWP\s0, so you should consider adding \f(CW\*(C`use LWP 5.66;\*(C'\fR to check

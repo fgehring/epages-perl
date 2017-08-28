@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::Reader 3"
-.TH XML::LibXML::Reader 3 "2009-10-07" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::Reader 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -138,7 +138,7 @@ XML::LibXML::Reader \- XML::LibXML::Reader \- interface to libxml2 pull parser
 \&
 \&
 \&
-\&  my $reader = new XML::LibXML::Reader(location => "file.xml")
+\&  my $reader = XML::LibXML::Reader\->new(location => "file.xml")
 \&         or die "cannot read file.xml\en";
 \&  while ($reader\->read) {
 \&    processNode($reader);
@@ -147,7 +147,7 @@ XML::LibXML::Reader \- XML::LibXML::Reader \- interface to libxml2 pull parser
 \&
 \&
 \&  sub processNode {
-\&      $reader = shift;
+\&      my $reader = shift;
 \&      printf "%d %d %s %d\en", ($reader\->depth,
 \&                               $reader\->nodeType,
 \&                               $reader\->name,
@@ -158,7 +158,7 @@ XML::LibXML::Reader \- XML::LibXML::Reader \- interface to libxml2 pull parser
 or
 .PP
 .Vb 5
-\&  $reader = new XML::LibXML::Reader(location => "file.xml")
+\&  my $reader = XML::LibXML::Reader\->new(location => "file.xml")
 \&         or die "cannot read file.xml\en";
 \&    $reader\->preservePattern(\*(Aq//table/tr\*(Aq);
 \&    $reader\->finish;
@@ -166,14 +166,15 @@ or
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-This is a perl interface to libxml2's pull-parser implementation xmlTextReader \fIhttp://xmlsoft.org/html/libxml\-xmlreader.html\fR. This feature requires at least libxml2\-2.6.21. Pull-parser (StAX in Java,
-XmlReader in C#) use an iterator approach to parse a xml-file. They are easier
-to program than event-based parser (\s-1SAX\s0) and much more lightweight than
-tree-based parser (\s-1DOM\s0), which load the complete tree into memory.
+This is a perl interface to libxml2's pull-parser implementation xmlTextReader \fIhttp://xmlsoft.org/html/libxml\-xmlreader.html\fR. This feature requires at least libxml2\-2.6.21. Pull-parsers (such as StAX in
+Java, or XmlReader in C#) use an iterator approach to parse \s-1XML\s0 documents. They
+are easier to program than event-based parser (\s-1SAX\s0) and much more lightweight
+than tree-based parser (\s-1DOM\s0), which load the complete tree into memory.
 .PP
 The Reader acts as a cursor going forward on the document stream and stopping
-at each node in the way. At every point DOM-like methods of the Reader object
-allow to examine the current node (name, namespace, attributes, etc.)
+at each node on the way. At every point, the DOM-like methods of the Reader
+object allow one to examine the current node (name, namespace, attributes,
+etc.)
 .PP
 The user's code keeps control of the progress and simply calls the \f(CW\*(C`read()\*(C'\fR function repeatedly to progress to the next node in the document order. Other
 functions provide means for skipping complete sub-trees, or nodes until a
@@ -241,7 +242,7 @@ is then used to validate the document as it is processed.
 can be used to pass either a XML::LibXML::Schema object or a filename or \s-1URL\s0 of a W3C \s-1XSD\s0 schema to the constructor. The schema
 is then used to validate the document as it is processed.
 .IP "..." 4
-the reader further supports various parser options described in XML::LibXML::Parser (specificly those labeled by /reader/).
+the reader further supports various parser options described in XML::LibXML::Parser (specifically those labeled by /reader/).
 .SH "METHODS CONTROLLING PARSING PROGRESS"
 .IX Header "METHODS CONTROLLING PARSING PROGRESS"
 .IP "read ()" 4
@@ -359,7 +360,7 @@ Returns a string containing the \s-1XML\s0 of the node including its content, or
 if the current node is neither an element nor attribute.
 .IP "\fInodePath()\fR" 4
 .IX Item "nodePath()"
-Returns a cannonical location path to the current element from the root node to
+Returns a canonical location path to the current element from the root node to
 the current node. Namespaced elements are matched by '*', because there is no
 way to declare prefixes within XPath patterns. Unlike \f(CW\*(C`XML::LibXML::Node::nodePath()\*(C'\fR, this function does not provide sibling counts (i.e. instead of e.g. '/a/b[1]'
 and '/a/b[2]' you get '/a/b' for both matches).
@@ -599,12 +600,12 @@ http://dotgnu.org/pnetlib\-doc/System/Xml/XmlTextReader.html
 Heiko Klein, <H.Klein@gmx.net<gt> and Petr Pajas
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Matt Sergeant, 
-Christian Glahn, 
+Matt Sergeant,
+Christian Glahn,
 Petr Pajas
 .SH "VERSION"
 .IX Header "VERSION"
-1.70
+2.0129
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 2001\-2007, AxKit.com Ltd.
@@ -612,3 +613,7 @@ Petr Pajas
 2002\-2006, Christian Glahn.
 .PP
 2006\-2009, Petr Pajas.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

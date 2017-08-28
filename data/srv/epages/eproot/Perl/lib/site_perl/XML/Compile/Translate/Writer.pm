@@ -1,23 +1,26 @@
-# Copyrights 2006-2011 by Mark Overmeer.
+# Copyrights 2006-2016 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
- 
+# Pod stripped from pm file by OODoc 2.02.
+
 package XML::Compile::Translate::Writer;
 use vars '$VERSION';
-$VERSION = '1.22';
+$VERSION = '1.54';
 
 use base 'XML::Compile::Translate';
 
 use strict;
 use warnings;
-no warnings 'once';
+no warnings 'once', 'recursion';
 
 use Log::Report   qw/xml-compile/;
 use List::Util    qw/first/;
-use Scalar::Util  qw/blessed/;
+use Scalar::Util  qw/blessed weaken/;
 use XML::Compile::Util qw/pack_type unpack_type type_of_node SCHEMA2001i
-  odd_elements even_elements/;
+  SCHEMA2001 odd_elements even_elements/;
+
+use XML::LibXML;
+use Encode        qw/encode/;
 
 
 # Each action implementation returns a code reference, which will be
@@ -26,7 +29,7 @@ use XML::Compile::Util qw/pack_type unpack_type type_of_node SCHEMA2001i
 # before you attempt to change anything.
 #
 # The returned writer subroutines will always be called
-#       $writer->($doc, $value) 
+#       $writer->($doc, $value)
 
 sub actsAs($) { $_[1] eq 'WRITER' }
 
@@ -99,7 +102,7 @@ sub typemapToHooks($$)
 
         }
 
-        push @$hooks, { type => $type, before => $hook };
+        push @$hooks, +{action => 'WRITER', type => $type, before => $hook};
     }
     $hooks;
 }
@@ -110,6 +113,7 @@ sub makeElementWrapper
         my ($doc, $data) = @_;
         UNIVERSAL::isa($doc, 'XML::LibXML::Document')
             or error __x"first argument of call to writer must be an XML::LibXML::Document";
+
 
         my $top = $processor->(@_);
         $doc->indexElements;
@@ -146,16 +150,17 @@ sub makeSequence($@)
 
     if(@pairs==2)
     {   my ($take, $do) = @pairs;
-        return $do
-            if ref $do eq 'BLOCK' || ref $do eq 'ANY';
 
-        return bless sub {
-            my ($doc, $values) = @_;
-            defined $values or return;
-            $do->($doc, delete $values->{$take});
-        }, 'BLOCK';
+        return
+            ref $do eq 'ANY'   ? bless(sub { $do->(@_) }, 'BLOCK')
+          : ref $do eq 'BLOCK' ? $do
+          : bless sub {
+                my ($doc, $values) = @_;
+                defined $values or return;
+                $do->($doc, delete $values->{$take});
+            }, 'BLOCK';
     }
- 
+
     bless sub {
         my ($doc, $values) = @_;
         defined $values or return;
@@ -174,13 +179,15 @@ sub makeSequence($@)
 }
 
 sub makeChoice($@)
-{   my ($self, $path, %do) = @_;
-    my @specials;
-    foreach my $el (keys %do)
-    {   push @specials, delete $do{$el}
-            if ref $do{$el} eq 'BLOCK' || ref $do{$el} eq 'ANY';
+{   my ($self, $path) = (shift, shift);
+    my (%do, @specials);
+    while(@_)   # protect order of specials
+    {    my ($el, $do) = (shift, shift);
+         if(ref $do eq 'BLOCK' || ref $do eq 'ANY')
+              { push @specials, $do }
+         else { $do{$el} = $do }
     }
- 
+
     if(!@specials && keys %do==1)
     {   my ($take, $do) = %do;
         return bless sub {
@@ -194,10 +201,13 @@ sub makeChoice($@)
         my ($doc, $values) = @_;
         defined $values or return ();
         foreach my $take (keys %do)
-        {   return $do{$take}->($doc, delete $values->{$take})
+        {
+#warn "TAKE($take) = ", (defined $values->{$take} ? 'defined' : "undef");
+            return $do{$take}->($doc, delete $values->{$take})
                 if defined $values->{$take};
         }
 
+#warn "TRY SPECIALS";
         my $starter = keys %$values;
         foreach (@specials)
         {   my @d = try { $_->($doc, $values) };
@@ -213,6 +223,7 @@ sub makeChoice($@)
             return @d;
         }
 
+#warn "BLURK!";
         # blurk... any element with minOccurs=0 or default?
         foreach (values %do)
         {   my @d = try { $_->($doc, undef) };
@@ -258,7 +269,7 @@ sub makeAll($@)
         @res;
     }, 'BLOCK';
 }
- 
+
 #
 ## Element
 #
@@ -321,7 +332,7 @@ sub makeBlockHandler
     if($min==0 && $max eq 'unbounded')
     {   my $code = sub {
             my $doc    = shift;
-            my $values = delete shift->{$multi};
+            my $values = $_[0] ? delete shift->{$multi} : undef;
               ref $values eq 'ARRAY' ? (map {$process->($doc, {%$_})} @$values)
             : defined $values        ? $process->($doc, $values)
             :                          (undef);
@@ -332,7 +343,7 @@ sub makeBlockHandler
     if($max eq 'unbounded')
     {   my $code = sub {
             my $doc    = shift;
-            my $values = delete shift->{$multi};
+            my $values = $_[0] ? delete shift->{$multi} : undef;
             my @values = ref $values eq 'ARRAY' ? @$values
                        : defined $values ? $values : ();
 
@@ -439,28 +450,6 @@ sub makeElementFixed
     };
 }
 
-sub makeElementNillable
-{   my ($self, $path, $ns, $childname, $do, $value, $tag) = @_;
-    my $inas    = $self->{interpret_nillable_as_optional};
-
-    $self->_registerNSprefix(xsi => SCHEMA2001i, 0);
-    my $nilattr = $self->makeTagQualified($path, undef, 'nil', SCHEMA2001i);
-
-    sub
-    {   my ($doc, $value) = @_;
-        defined $value  or return;
-        $value eq 'NIL' or return $do->($doc, $value);
-
-        return $doc->createTextNode('')
-            if $inas;
-
-        my $node = $doc->createElement($tag);
-
-        $node->setAttribute($nilattr => 'true');
-        $node;
-    };
-}
-
 sub makeElementDefault
 {   my ($self, $path, $ns, $childname, $do, $default) = @_;
     my $mode = $self->{default_values};
@@ -489,17 +478,26 @@ sub makeElementAbstract
 # complexType/ComplexContent
 #
 
+sub nil($)
+{   my ($self, $path) = @_;
+    $self->makeTagQualified($path, undef, 'nil', SCHEMA2001i);
+}
+
 sub makeComplexElement
-{   my ($self, $path, $tag, $elems, $attrs, $any_attr) = @_;
-    my @elems = odd_elements @$elems;
-    my @attrs = @$attrs;
-    my $tags  = join ', ', even_elements(@$elems), even_elements(@attrs);
-    my @anya  = @$any_attr;
-    my $iut   = $self->{ignore_unused_tags};
+{   my ($self, $path, $tag, $elems, $attrs, $any_attr,undef, $is_nillable) = @_;
+    my @elems   = odd_elements @$elems;
+    my @attrs   = @$attrs;
+    my $tags    = join ', ', grep defined
+      , even_elements(@$elems), even_elements(@attrs);
+    my @anya    = @$any_attr;
+    my $iut     = $self->{ignore_unused_tags};
+    my $nilattr = $is_nillable ? $self->nil($path) : undef;
 
     return
     sub
     {   my ($doc, $data) = @_;
+        $data = { _ => 'NIL' } if $data eq 'NIL';
+
         return $doc->importNode($data)
             if UNIVERSAL::isa($data, 'XML::LibXML::Element');
 
@@ -508,12 +506,16 @@ sub makeComplexElement
                 or error __x"complex `{tag}' requires data at {path}"
                       , tag => $tag, path => $path, _class => 'misfit';
 
-            error __x"complex `{tag}' requires a HASH of input data, not `{found}' at {path}"
-               , tag => $tag, found => (ref $data || $data), path => $path;
+            error __x"complex `{tag}' requires a HASH of input data, not `{got}' at {path}"
+               , tag => $tag, got => (ref $data || $data), path => $path;
         }
 
         my $copy   = { %$data };  # do not destroy callers hash
-        my @childs = map {$_->($doc, $copy)} @elems;
+
+        my @childs = ($is_nillable && (delete $copy->{_} || '') eq 'NIL')
+          ? $doc->createAttribute($nilattr => 'true')
+          : map($_->($doc, $copy), @elems);
+
         for(my $i=0; $i<@attrs; $i+=2)
         {   push @childs, $attrs[$i+1]->($doc, delete $copy->{$attrs[$i]});
         }
@@ -523,13 +525,13 @@ sub makeComplexElement
 
         if(%$copy)
         {   my @not_used
-              = defined $iut ? grep({$_ !~ $iut} keys %$copy) : keys %$copy;
+              = defined $iut ? (grep $_ !~ $iut, keys %$copy) : keys %$copy;
 
             if(@not_used)
             {   trace "available tags are: $tags";
                 mistake __xn "tag `{tags}' not used at {path}"
-                  , "unused tags {tags} at {path}"
-                  , scalar @not_used, tags => [sort @not_used], path => $path;
+                 , "unused tags {tags} at {path}"
+                 , scalar @not_used, tags => [sort @not_used], path => $path;
             }
         }
 
@@ -539,7 +541,7 @@ sub makeComplexElement
         {   defined $child or next;
             if(ref $child)
             {   next if UNIVERSAL::isa($child, 'XML::LibXML::Text')
-                     && $child->data eq '' ;
+                     && $child->data eq '';
             }
             else
             {   length $child or next;
@@ -557,9 +559,10 @@ sub makeComplexElement
 #
 
 sub makeTaggedElement
-{   my ($self, $path, $tag, $st, $attrs, $attrs_any) = @_;
-    my @attrs = @$attrs;
-    my @anya  = @$attrs_any;
+{   my ($self, $path, $tag, $st, $attrs, $attrs_any,undef, $is_nillable) = @_;
+    my @attrs   = @$attrs;
+    my @anya    = @$attrs_any;
+    my $nilattr = $is_nillable ? $self->nil($path) : undef;
 
     return sub {
         my ($doc, $data) = @_;
@@ -572,6 +575,9 @@ sub makeTaggedElement
         my ($node, @childs);
         if(UNIVERSAL::isa($content, 'XML::LibXML::Node'))
         {   $node = $doc->importNode($content);
+        }
+        elsif($is_nillable && $content eq 'NIL')
+        {   push @childs, $doc->createAttribute($nilattr => 'true');
         }
         elsif(defined $content)
         {   push @childs, $st->($doc, $content);
@@ -605,9 +611,11 @@ sub makeTaggedElement
 #
 
 sub makeMixedElement
-{   my ($self, $path, $tag, $elems, $attrs, $attrs_any) = @_;
-    my @attrs = @$attrs;
-    my @anya  = @$attrs_any;
+{   my ($self, $path, $tag, $elems, $attrs, $attrs_any,undef, $is_nillable) =@_;
+    my @attrs   = @$attrs;
+    my @anya    = @$attrs_any;
+    my $nilattr = $is_nillable ? $self->nil($path) : undef;
+    (my $locname = $tag) =~ s/.*\://;
 
     my $mixed = $self->{mixed_elements};
     if($mixed eq 'ATTRIBUTES') { ; }
@@ -628,19 +636,49 @@ sub makeMixedElement
             };
     }
 
+    my $iut     = $self->{ignore_unused_tags};
     sub { my ($doc, $data) = @_;
           defined $data or return;
 
           return $doc->importNode($data)
               if UNIVERSAL::isa($data, 'XML::LibXML::Element');
 
-          my $copy = UNIVERSAL::isa($data, 'HASH') ? {%$data} : {_ => $data};
+          my $copy    = UNIVERSAL::isa($data, 'HASH') ? {%$data} : {_ => $data};
           my $content = delete $copy->{_};
           defined $content or return;
 
-          UNIVERSAL::isa($content, 'XML::LibXML::Node')
-              or $content = $doc->createTextNode($content);
-          my $node = $doc->importNode($content);
+          #XXX there are no regression test for these options
+          my $node;
+          if(blessed $content && $content->isa('XML::LibXML::Node'))
+          {   $node    = $doc->importNode($content);
+          }
+          elsif($is_nillable && $content eq 'NIL')
+          {   # nillable element
+              $node    = $doc->createElement($tag);
+              $node->setAttribute($nilattr => 'true');
+          }
+          elsif($content =~ /\<.*?\>|\&\w+\;/)
+          {   # XXX I do not know a way to fill text nodes without getting
+              # entity encoding on them.  Apparently, libxml2 has a
+              # xmlStringTextNoenc, which is not provided in XML::LibXML.
+              # Now, we need the expensive roundtrip, via the parser.
+
+              my $frag = XML::LibXML->new
+                ->parse_balanced_chunk(encode utf8 => $content);
+
+              $node = $frag->firstChild;
+              if($node->localName ne $locname)
+              {   # <nodes>  -->   <$locname>$nodes</$locname>
+                  my $c = $node;
+                  $node = $doc->createElement($tag);
+                  $node->appendChild($frag);
+              }
+          }
+          else
+          {   # Plain text
+              $node    = $doc->createElement($tag);
+              $node->appendText($content);
+          }
 
           my @childs;
           for(my $i=0; $i<@attrs; $i+=2)
@@ -650,10 +688,15 @@ sub makeMixedElement
           push @childs, $_->($doc, $copy)
               for @anya;
 
-          if(my @not_used = sort keys %$copy)
-          {   error __xn "tag `{tags}' not processed at {path}"
-                       , "unprocessed tags {tags} at {path}"
-                       , scalar @not_used, tags => \@not_used, path => $path;
+          if(%$copy)
+          {   my @not_used
+                = defined $iut ? (grep $_ !~ $iut, keys %$copy) : keys %$copy;
+
+              if(my @not_used = sort keys %$copy)
+              {   error __xn "tag `{tags}' not processed at {path}"
+                    , "unprocessed tags {tags} at {path}", scalar @not_used
+                    , tags => [sort @not_used], path => $path;
+              }
           }
 
           @childs or return $node;
@@ -670,7 +713,8 @@ sub makeMixedElement
 #
 
 sub makeSimpleElement
-{   my ($self, $path, $tag, $st) = @_;
+{   my ($self, $path, $tag, $st, undef, undef, undef, $is_nillable) = @_;
+    my $nilattr = $is_nillable ? $self->nil($path) : undef;
 
     sub {
         my ($doc, $data) = @_;
@@ -679,7 +723,10 @@ sub makeSimpleElement
         $data = $data->{_}
             if ref $data eq 'HASH';
 
-        my $value = $st->($doc, $data);
+        my $value = ($is_nillable && $data eq 'NIL')
+          ? $doc->createAttribute($nilattr => 'true')
+          : $st->($doc, $data);
+
         defined $value
             or return ();
 
@@ -708,7 +755,7 @@ sub makeBuiltin
     $check
     ? ( defined $format
       ? sub { defined $_[1] or return undef;
-              my $value = $format->($_[1], $trans);
+              my $value = $format->($_[1], $trans, $path);
               return $value if defined $value && $check->($value);
               error __x$err, value => $value, type => $type, path => $path;
             }
@@ -717,7 +764,7 @@ sub makeBuiltin
             }
       )
     : ( defined $format
-      ? sub { defined $_[1] ? $format->($_[1], $trans) : undef }
+      ? sub { defined $_[1] ? $format->($_[1], $trans, $path) : undef }
       : sub { $_[1] }
       );
 }
@@ -764,7 +811,7 @@ sub makeUnion
           defined $value or return undef;
           for(@types) {my $v = try { $_->($doc, $value) }; $@ or return $v }
 
-          substr $value, 10, -1, '...' if length($value) > 13;
+          substr $value, 20, -5, '...' if length($value) > 50;
           error __x"no match for `{text}' in union at {path}"
              , text => $value, path => $path;
         };
@@ -795,7 +842,7 @@ sub makeAttributeRequired
 {   my ($self, $path, $ns, $tag, $label, $do) = @_;
 
     sub { my $value = $do->(@_);
-          return $_[0]->createAttributeNS($ns, $tag, $value)
+          return $_[0]->createAttribute($tag, $value)
               if defined $value;
 
           error __x"attribute `{tag}' is required at {path}"
@@ -866,8 +913,8 @@ sub makeAttributeFixed
 
 # any
 
-sub _splitAnyList($$$)
-{   my ($self, $path, $type, $v) = @_;
+sub _split_any_list($$$)
+{   my ($path, $type, $v) = @_;
     my @nodes = ref $v eq 'ARRAY' ? @$v : defined $v ? $v : return ([], []);
     my (@attrs, @elems);
 
@@ -895,23 +942,35 @@ sub _splitAnyList($$$)
 
 sub makeAnyAttribute
 {   my ($self, $path, $handler, $yes, $no, $process) = @_;
-    my %yes = map { ($_ => 1) } @{$yes || []};
-    my %no  = map { ($_ => 1) } @{$no  || []};
+    my %yes   = map +($_ => 1), @{$yes || []};
+    my %no    = map +($_ => 1), @{$no  || []};
+    my $prefs = $self->{prefixes};
+
+    weaken $self;
 
     bless
     sub { my ($doc, $values) = @_;
 
           my @res;
-          foreach my $type (keys %$values)
-          {   my ($ns, $local) = unpack_type $type;
-              length $ns or substr($type, 0, 1) eq '{' or next;
-              my @elems;
+          foreach my $label (sort keys %$values)
+          {   my ($type, $ns, $local);
+              if(substr($label, 0, 1) eq '{')
+              {   ($ns, $local) = unpack_type $label;
+                  $type         = $label;
+              }
+              elsif(index($label, ':') >= 0)
+              {   (my $prefix, $local) = split ':', $label, 2;
+                  my $match = first {$_->{prefix} eq $prefix} values %$prefs;
+                  my $ns    = $match ? $match->{uri} : undef;
+                  $type     = pack_type $ns, $local;
+              }
+              else {next}  # not fully qualified, not an 'any'
 
               $yes{$ns} or next if keys %yes;
               $no{$ns} and next if keys %no;
 
-              my ($attrs, $elems)
-                = $self->_splitAnyList($path, $type, delete $values->{$type});
+              my $value = delete $values->{$label} or next;
+              my ($attrs, $elems) = _split_any_list $path, $type, $value;
 
               $values->{$type} = $elems if @$elems;
               @$attrs or next;
@@ -932,25 +991,36 @@ sub makeAnyAttribute
 
 sub makeAnyElement
 {   my ($self, $path, $handler, $yes, $no, $process, $min, $max) = @_;
-    my %yes = map { ($_ => 1) } @{$yes || []};
-    my %no  = map { ($_ => 1) } @{$no  || []};
+    my %yes   = map +($_ => 1), @{$yes || []};
+    my %no    = map +($_ => 1), @{$no  || []};
+    my $prefs = $self->{prefixes};
 
     $handler ||= 'SKIP_ALL';
+    weaken $self;
+
     bless
     sub { my ($doc, $values) = @_;
           my @res;
 
-          foreach my $type (keys %$values)
-          {   my ($ns, $local) = unpack_type $type;
-
-              # name-spaceless Perl, then not for any(Attribute)
-              length $ns or substr($type, 0, 1) eq '{' or next;
+          foreach my $label (sort keys %$values)
+          {   my ($type, $ns, $local);
+              if(substr($label, 0, 1) eq '{')
+              {   ($ns, $local) = unpack_type $label;
+                  $type         = $label;
+              }
+              elsif(index($label, ':') >= 0)
+              {   (my $prefix, $local) = split ':', $label, 2;
+                  my $match = first {$_->{prefix} eq $prefix} values %$prefs;
+                  $ns    = $match ? $match->{uri} : undef;
+                  $type  = pack_type $ns, $local;
+              }
+              else {next}  # not fully qualified, not an 'any'
 
               $yes{$ns} or next if keys %yes;
               $no{$ns} and next if keys %no;
 
-              my ($attrs, $elems)
-                 = $self->_splitAnyList($path, $type, delete $values->{$type});
+              my $value = delete $values->{$label} or next;
+              my ($attrs, $elems) = _split_any_list $path, $type, $value;
 
               $values->{$type} = $attrs if @$attrs;
               @$elems or next;
@@ -990,7 +1060,9 @@ sub makeXsiTypeSwitch($$$$)
     foreach my $type (sort keys %$types)
     {   my ($ns, $local) = unpack_type $type;
         my $tag = $self->makeTagQualified($where, undef, $local, $ns);
-        $types{$type} = [ $tag, $types->{$type} ];
+
+        # register code under both prefixed and full type name
+        $types{$self->prefixed($type)} = $types{$type} = [$tag,$types->{$type}];
     }
 
     sub {
@@ -1012,39 +1084,45 @@ sub makeXsiTypeSwitch($$$$)
     };
 }
 
-sub makeHook($$$$$$)
-{   my ($self, $path, $r, $tag, $before, $replace, $after) = @_;
+sub makeHook($$$$$$$)
+{   my ($self, $path, $r, $tag, $before, $replace, $after, $fulltype) = @_;
     return $r unless $before || $replace || $after;
 
-    error __x"writer only supports one production (replace) hook"
-        if $replace && @$replace > 1;
+    my $do_replace;
+    if($replace)
+    {   return sub {()} if grep $_ eq 'SKIP', @$replace;
 
-    return sub {()} if $replace && grep {$_ eq 'SKIP'} @$replace;
+        # Input for replace is Perl, output is XML... so we cannot stack them
+        error __x"writer only supports one replace hook (for {type})"
+          , type => $fulltype
+            if @$replace > 1;
 
-    my @replace = $replace ? map {$self->_decodeReplace($path,$_)} @$replace:();
-    my @before  = $before  ? map {$self->_decodeBefore($path,$_) } @$before :();
-    my @after   = $after   ? map {$self->_decodeAfter($path,$_)  } @$after  :();
+        $do_replace = $self->_decodeReplace($path, $replace->[0]);
+    }
+
+    my @do_before = $before ? map $self->_decodeBefore($path,$_), @$before :();
+    my @do_after  = $after  ? map $self->_decodeAfter($path,$_),  @$after  :();
 
     sub
     {  my ($doc, $val) = @_;
        defined $val or return;
-       foreach (@before)
-       {   $val = $_->($doc, $val, $path);
+       foreach (@do_before)
+       {   $val = $_->($doc, $val, $path, $fulltype);
            defined $val or return ();
        }
 
-       my $xml = @replace
-               ? $replace[0]->($doc, $val, $path, $tag, $r)
+       my $xml = $do_replace
+               ? $do_replace->($doc, $val, $path, $tag, $r, $fulltype)
                : $r->($doc, $val);
        defined $xml or return ();
 
-       foreach (@after)
-       {   $xml = $_->($doc, $xml, $path, $val);
+       foreach (@do_after)
+       {   $xml = $_->($doc, $xml, $path, $val, $fulltype);
            defined $xml or return ();
        }
 
        $xml;
-     }
+    };
 }
 
 sub _decodeBefore($$)
@@ -1075,26 +1153,42 @@ sub _decodeAfter($$)
 
 sub makeBlocked($$$)
 {   my ($self, $where, $class, $type) = @_;
+    my $err_type = $self->prefixed($type);
 
     # errors are produced in class=misfit to allow other choices to succeed.
       $class eq 'anyType'
     ? { st => sub { error __x"use of `{type}' blocked at {where}"
-              , type => $type, where => $where, _class => 'misfit';
+              , type => $err_type, where => $where, _class => 'misfit';
           }}
     : $class eq 'simpleType'
     ? { st => sub { error __x"use of {class} `{type}' blocked at {where}"
-              , class => $class, type => $type, where => $where
+              , class => $class, type => $err_type, where => $where
               , _class => 'misfit';
           }}
     : $class eq 'complexType'
     ? { elems => [] }
     : $class eq 'ref'
     ? { st => sub { error __x"use of referenced `{type}' blocked at {where}"
-              , type => $type, where => $where, _class => 'misfit';
+              , type => $err_type, where => $where, _class => 'misfit';
           }}
     : panic "blocking of $class for $type not implemented";
 }
 
+sub addTypeAttribute($$)
+{   my ($self, $type, $do) = @_;
+    my $xsi   = $self->_registerNSprefix(xsi => SCHEMA2001i, 1) . ':type';
+    my $xsd   = $self->_registerNSprefix(xsd => SCHEMA2001, 1);
+    my $typed = $self->prefixed($type);
+
+    sub {
+        my $r = $do->(@_);
+        $type && $r && UNIVERSAL::isa($r, 'XML::LibXML::Element') or return $r;
+        return $r if $r->getAttributeNS(SCHEMA2001i, 'type');
+        $r->setAttribute($xsi, $typed);
+        $r;
+    };
+}
+
+#------------
 
 1;
-

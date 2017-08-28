@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::SAX::Generator 3"
-.TH XML::LibXML::SAX::Generator 3 "2009-09-23" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::SAX::Generator 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -137,12 +137,12 @@ XML::LibXML::SAX::Generator \- Generate SAX events from a LibXML tree
 \&  my $handler = MySAXHandler\->new();
 \&  my $generator = XML::LibXML::SAX::Generator\->new(Handler => $handler);
 \&  my $dom = XML::LibXML\->new\->parse_file("foo.xml");
-\&  
+\&
 \&  $generator\->generate($dom);
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-\&\s-1THIS\s0 \s-1CLASS\s0 \s-1IS\s0 \s-1DEPRACED\s0! Use XML::LibXML::SAX::Parser instead!
+\&\s-1THIS\s0 \s-1CLASS\s0 \s-1IS\s0 \s-1DEPRECATED\s0! Use XML::LibXML::SAX::Parser instead!
 .PP
 This helper class allows you to generate \s-1SAX\s0 events from any XML::LibXML
 node, and all it's sub-nodes. This basically gives you interop from

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::NodeList 3"
-.TH XML::LibXML::NodeList 3 "2009-09-23" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::NodeList 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -146,9 +146,9 @@ detailed by the W3C \s-1DOM\s0 documentation of Node Lists.
 .Ve
 .SH "API"
 .IX Header "API"
-.SS "\fInew()\fP"
-.IX Subsection "new()"
-You will almost never have to create a new NodeSet object, as it is all
+.SS "new(@nodes)"
+.IX Subsection "new(@nodes)"
+You will almost never have to create a new NodeList object, as it is all
 done for you by XPath.
 .SS "\fIget_nodelist()\fP"
 .IX Subsection "get_nodelist()"
@@ -161,12 +161,20 @@ See the XPath specification for what \*(L"string-value\*(R" means.
 .IX Subsection "to_literal()"
 Returns the concatenation of all the string-values of all
 the nodes in the list.
+.SS "to_literal_delimited($separator)"
+.IX Subsection "to_literal_delimited($separator)"
+Returns the concatenation of all the string-values of all
+the nodes in the list, delimited by the specified separator.
+.SS "\fIto_literal_list()\fP"
+.IX Subsection "to_literal_list()"
+Returns all the string-values of all the nodes in the list as
+a perl list.
 .SS "get_node($pos)"
 .IX Subsection "get_node($pos)"
 Returns the node at \f(CW$pos\fR. The node position in XPath is based at 1, not 0.
 .SS "\fIsize()\fP"
 .IX Subsection "size()"
-Returns the number of nodes in the NodeSet.
+Returns the number of nodes in the NodeList.
 .SS "\fIpop()\fP"
 .IX Subsection "pop()"
 Equivalent to perl's pop function.
@@ -183,12 +191,35 @@ Equivalent to perl's shift function.
 .SS "unshift(@nodes)"
 .IX Subsection "unshift(@nodes)"
 Equivalent to perl's unshift function.
-.SS "prepend($nodeset)"
-.IX Subsection "prepend($nodeset)"
+.SS "prepend($nodelist)"
+.IX Subsection "prepend($nodelist)"
 Given a nodelist, prepends the list of nodes in \f(CW$nodelist\fR to the front of
 the current list.
-.SS "\fIiterator()\fP"
-.IX Subsection "iterator()"
-Will return a new nodelist iterator for the current nodelist. A
-nodelist iterator is usefull if more complex nodelist processing is
-needed.
+.SS "map($coderef)"
+.IX Subsection "map($coderef)"
+Equivalent to perl's map function.
+.SS "grep($coderef)"
+.IX Subsection "grep($coderef)"
+Equivalent to perl's grep function.
+.SS "sort($coderef)"
+.IX Subsection "sort($coderef)"
+Equivalent to perl's sort function.
+.PP
+Caveat: Perl's magic \f(CW$a\fR and \f(CW$b\fR variables are not available in
+\&\f(CW$coderef\fR. Instead the two terms are passed to the coderef as arguments.
+.SS "\fIreverse()\fP"
+.IX Subsection "reverse()"
+Equivalent to perl's reverse function.
+.SS "foreach($coderef)"
+.IX Subsection "foreach($coderef)"
+Inspired by perl's foreach loop. Executes the coderef on each item in
+the list. Similar to \f(CW\*(C`map\*(C'\fR, but instead of returning the list of values
+returned by \f(CW$coderef\fR, returns the original NodeList.
+.ie n .SS "reduce($coderef, $init)"
+.el .SS "reduce($coderef, \f(CW$init\fP)"
+.IX Subsection "reduce($coderef, $init)"
+Equivalent to List::Util's reduce function. \f(CW$init\fR is optional and
+provides an initial value for the reduction.
+.PP
+Caveat: Perl's magic \f(CW$a\fR and \f(CW$b\fR variables are not available in
+\&\f(CW$coderef\fR. Instead the two terms are passed to the coderef as arguments.

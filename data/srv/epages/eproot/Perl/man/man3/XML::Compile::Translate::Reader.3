@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Translate::Reader 3"
-.TH XML::Compile::Translate::Reader 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Translate::Reader 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -145,51 +145,27 @@ XML::Compile::Translate::Reader \- translate XML to HASH
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-.SS "Unsupported features"
-.IX Subsection "Unsupported features"
 The translator understands schemas, but does not encode that into
 actions.  This module implements those actions to translate from \s-1XML\s0
 into a (nested) Perl \s-1HASH\s0 structure.
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in XML::Compile::Translate.
 .SH "METHODS"
 .IX Header "METHODS"
-.SS "Constructors"
-.IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBnew\fR(\s-1TRANSLATOR\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBnew\fR(\s-1TRANSLATOR\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->new(TRANSLATOR, OPTIONS)"
-See \*(L"Constructors\*(R" in XML::Compile::Translate
-.ie n .IP "$obj\->\fBregister\fR(\s-1NAME\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBregister\fR(\s-1NAME\s0)" 4
-.IX Item "$obj->register(NAME)"
-.PD 0
-.IP "XML::Compile::Translate::Reader\->\fBregister\fR(\s-1NAME\s0)" 4
-.IX Item "XML::Compile::Translate::Reader->register(NAME)"
-.PD
-See \*(L"Constructors\*(R" in XML::Compile::Translate
-.SS "Attributes"
-.IX Subsection "Attributes"
-.SS "Handlers"
-.IX Subsection "Handlers"
-.IP "XML::Compile::Translate::Reader\->\fBcompile\fR(ELEMENT|ATTRIBUTE|TYPE, \s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::Translate::Reader->compile(ELEMENT|ATTRIBUTE|TYPE, OPTIONS)"
-See \*(L"Handlers\*(R" in XML::Compile::Translate
+Extends \*(L"\s-1METHODS\s0\*(R" in XML::Compile::Translate.
 .SH "DETAILS"
 .IX Header "DETAILS"
+Extends \*(L"\s-1DETAILS\s0\*(R" in XML::Compile::Translate.
 .SS "Translator options"
 .IX Subsection "Translator options"
-\fIperformance optimization\fR
-.IX Subsection "performance optimization"
-.PP
-\fIqualified \s-1XML\s0\fR
-.IX Subsection "qualified XML"
-.PP
-\fIName-spaces\fR
-.IX Subsection "Name-spaces"
-.PP
-\fIWildcards handlers\fR
-.IX Subsection "Wildcards handlers"
+Extends \*(L"Translator options\*(R" in XML::Compile::Translate.
 .SS "Processing Wildcards"
 .IX Subsection "Processing Wildcards"
+If you want to collect information from the \s-1XML\s0 structure, which is
+permitted by \f(CW\*(C`any\*(C'\fR and \f(CW\*(C`anyAttribute\*(C'\fR specifications in the schema,
+you have to implement that yourself.  The problem is \f(CW\*(C`XML::Compile\*(C'\fR
+has less knowledge than you about the possible data.
+.PP
 \fIoption any_attribute\fR
 .IX Subsection "option any_attribute"
 .PP
@@ -217,10 +193,6 @@ from the container which are not used.  Also in this case \f(CW\*(C`TAKE_ALL\*(C
 is required to produce \f(CW\*(C`any\*(C'\fR results.  \f(CW\*(C`SKIP_ALL\*(C'\fR will ignore all
 results, although this are being processed for validation needs.
 .PP
-The \f(CW\*(C`minOccurs\*(C'\fR and \f(CW\*(C`maxOccurs\*(C'\fR of \f(CW\*(C`any\*(C'\fR are ignored: the amount of
-elements is always unbounded.  Therefore, you will get an array of
-elements back per type.
-.PP
 \fIoption any_type \s-1CODE\s0\fR
 .IX Subsection "option any_type CODE"
 .PP
@@ -234,17 +206,12 @@ awayre the \f(CW$node\fR may actually be a string already.
 .PP
 .Vb 6
 \&   $schema\->compile(READER => ..., any_type => \e&handle_any_type);
-\&   sub handle_any_type
+\&   sub handle_any_type($$$)
 \&   { my ($path, $node, $handler) = @_;
 \&     ref $node or return $node;
 \&     $node;
 \&   }
 .Ve
-.PP
-If you want to collect information from the \s-1XML\s0 structure, which is
-permitted by \f(CW\*(C`any\*(C'\fR and \f(CW\*(C`anyAttribute\*(C'\fR specifications in the schema,
-you have to implement that yourself.  The problem is \f(CW\*(C`XML::Compile\*(C'\fR
-has less knowledge than you about the possible data.
 .SS "Mixed elements"
 .IX Subsection "Mixed elements"
 [available since 0.86]
@@ -328,16 +295,22 @@ This hook has a predefined \f(CW\*(C`SKIP\*(C'\fR, which will not process the
 found element, but simply return the string \*(L"\s-1SKIPPED\s0\*(R" as value.
 This way, a whole tree of unneeded translations can be avoided.
 .PP
+[1.51] The predefined hook \f(CW\*(C`XML_NODE\*(C'\fR will not attempt to parse the
+selected element, but returns the XML::LibXML::Element node instead.
+This may break on some schema-contained validations.
+.PP
 Sometimes, the Schema spec is such a mess, that XML::Compile cannot
 automatically translate it.  I have seen cases where confusion
 over name-spaces is created: a choice between three elements with
 the same name but different types.  Well, in such case you may use
 XML::LibXML::Simple to translate a part of your tree.  Simply
 .PP
-.Vb 8
+.Vb 10
 \& use XML::LibXML::Simple  qw/XMLin/;
 \& $schema\->addHook
-\&   ( type    => ...type\-definition...
+\&   ( action  => \*(AqREADER\*(Aq
+\&   , type    => \*(Aqtns:xyz\*(Aq     # or pack_type($tns,\*(Aqxyz\*(Aq)
+\&  #  path    => qr!/company$! # by element name
 \&   , replace =>
 \&       sub { my ($xml, $args, $path, $type, $r) = @_;
 \&             ($type => XMLin($xml, ...));
@@ -348,19 +321,23 @@ XML::LibXML::Simple to translate a part of your tree.  Simply
 \fIhooks for post-processing, after the data is collected\fR
 .IX Subsection "hooks for post-processing, after the data is collected"
 .PP
-The data is collect, and passed as second argument after the \s-1XML\s0 node.
-The third argument is the path.  Be careful that the collected data
+Your code reference gets called with three parameters: the \s-1XML\s0 node,
+the data collected and the path.  Be careful that the collected data
 might be a \s-1SCALAR\s0 (for simpleType).  Return a \s-1HASH\s0 or a \s-1SCALAR\s0.  \f(CW\*(C`undef\*(C'\fR
 may work, unless it is the value of a required element you throw awy.
 .PP
-This hook also offers a predefined \f(CW\*(C`PRINT_PATH\*(C'\fR.  Besides, it has
-\&\f(CW\*(C`XML_NODE\*(C'\fR, \f(CW\*(C`NODE_TYPE\*(C'\fR, \f(CW\*(C`ELEMENT_ORDER\*(C'\fR, and \f(CW\*(C`ATTRIBUTE_ORDER\*(C'\fR, which
-will result in additional fields in the \s-1HASH\s0, respectively containing the
-\&\s-1NODE\s0 which was processed (an XML::LibXML::Element), the type_of_node,
-the element names, and the attribute names.  The keys start with an
-underscore \f(CW\*(C`_\*(C'\fR.
+This hook also offers a predefined \f(CW\*(C`PRINT_PATH\*(C'\fR.  Besides, it
+has \f(CW\*(C`INCLUDE_PATH\*(C'\fR, \f(CW\*(C`XML_NODE\*(C'\fR, \f(CW\*(C`NODE_TYPE\*(C'\fR, \f(CW\*(C`ELEMENT_ORDER\*(C'\fR,
+and \f(CW\*(C`ATTRIBUTE_ORDER\*(C'\fR, which will result in additional fields in
+the \s-1HASH\s0, respectively containing the \s-1NODE\s0 which was processed (an
+XML::LibXML::Element), the type_of_node, the element names, and the
+attribute names.  The keys start with an underscore \f(CW\*(C`_\*(C'\fR.
 .SS "Typemaps"
 .IX Subsection "Typemaps"
+In a typemap, a relation between an \s-1XML\s0 element type and a Perl class (or
+object) is made.  Each translator back-end will implement this a little
+differently.  This section is about how the reader handles typemaps.
+.PP
 \fITypemap to Class\fR
 .IX Subsection "Typemap to Class"
 .PP
@@ -368,7 +345,7 @@ Usually, an \s-1XML\s0 type will be mapped on a Perl class.  The Perl class
 implements the \f(CW\*(C`fromXML\*(C'\fR method as constructor.
 .PP
 .Vb 1
-\& $schema\->typemap($sometype => \*(AqMy::Perl::Class\*(Aq);
+\& $schema\->addTypemaps($sometype => \*(AqMy::Perl::Class\*(Aq);
 \&
 \& package My::Perl::Class;
 \& ...
@@ -402,7 +379,7 @@ the \s-1XML\s0 structure:
 \fITypemap to Object\fR
 .IX Subsection "Typemap to Object"
 .PP
-An other option is to implement an object factory: one object which creates
+Another option is to implement an object factory: one object which creates
 other objects.  In this case, the \f(CW$xmltype\fR parameter can come of use,
 to have one object spawning many different other objects.
 .PP
@@ -463,39 +440,18 @@ is comparible to
 .Ve
 .PP
 with some extra checks.
-.PP
-In a typemap, a relation between an \s-1XML\s0 element type and a Perl class (or
-object) is made.  Each translator back-end will implement this a little
-differently.  This section is about how the reader handles typemaps.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

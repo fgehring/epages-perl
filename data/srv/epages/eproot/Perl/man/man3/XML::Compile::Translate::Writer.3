@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Translate::Writer 3"
-.TH XML::Compile::Translate::Writer 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Translate::Writer 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -145,49 +145,20 @@ XML::Compile::Translate::Writer \- translate HASH to XML
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-.SS "Unsupported features"
-.IX Subsection "Unsupported features"
 The translator understands schemas, but does not encode that into
 actions.  This module implements those actions to translate from
 a (nested) Perl \s-1HASH\s0 structure onto \s-1XML\s0.
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in XML::Compile::Translate.
 .SH "METHODS"
 .IX Header "METHODS"
-.SS "Constructors"
-.IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBnew\fR(\s-1TRANSLATOR\s0, \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBnew\fR(\s-1TRANSLATOR\s0, \s-1OPTIONS\s0)" 4
-.IX Item "$obj->new(TRANSLATOR, OPTIONS)"
-See \*(L"Constructors\*(R" in XML::Compile::Translate
-.ie n .IP "$obj\->\fBregister\fR(\s-1NAME\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBregister\fR(\s-1NAME\s0)" 4
-.IX Item "$obj->register(NAME)"
-.PD 0
-.IP "XML::Compile::Translate::Writer\->\fBregister\fR(\s-1NAME\s0)" 4
-.IX Item "XML::Compile::Translate::Writer->register(NAME)"
-.PD
-See \*(L"Constructors\*(R" in XML::Compile::Translate
-.SS "Attributes"
-.IX Subsection "Attributes"
-.SS "Handlers"
-.IX Subsection "Handlers"
-.IP "XML::Compile::Translate::Writer\->\fBcompile\fR(ELEMENT|ATTRIBUTE|TYPE, \s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::Translate::Writer->compile(ELEMENT|ATTRIBUTE|TYPE, OPTIONS)"
-See \*(L"Handlers\*(R" in XML::Compile::Translate
+Extends \*(L"\s-1METHODS\s0\*(R" in XML::Compile::Translate.
 .SH "DETAILS"
 .IX Header "DETAILS"
+Extends \*(L"\s-1DETAILS\s0\*(R" in XML::Compile::Translate.
 .SS "Translator options"
 .IX Subsection "Translator options"
-\fIperformance optimization\fR
-.IX Subsection "performance optimization"
-.PP
-\fIqualified \s-1XML\s0\fR
-.IX Subsection "qualified XML"
-.PP
-\fIName-spaces\fR
-.IX Subsection "Name-spaces"
-.PP
-\fIWildcards handlers\fR
-.IX Subsection "Wildcards handlers"
+Extends \*(L"Translator options\*(R" in XML::Compile::Translate.
 .SS "Processing Wildcards"
 .IX Subsection "Processing Wildcards"
 Complex elements can define \f(CW\*(C`any\*(C'\fR (element) and \f(CW\*(C`anyAttribute\*(C'\fR components,
@@ -219,13 +190,35 @@ node.
 XML::Compile::Schema::compile(mixed_elements) can be set to
 .IP "\s-1ATTRIBUTES\s0 (default)" 4
 .IX Item "ATTRIBUTES (default)"
-Add attributes to the provided node.
+Add attributes to the provided node.  When you provide a \s-1HASH\s0, it is
+taken as node content with attributes.  The content has to be stored
+with key '_'.  When it is not a \s-1HASH\s0, the data is node content.
+.Sp
+There are various ways you can specify content.  Up to [1.51], you
+could only pass a matching XML::LibXML::Element.  Release [1.51] added
+strings to the spectrum.  If the string does not contain encoded entities
+or < and >, then it is assumed to be a real perl string.  When
+the string contains an \s-1XML\s0 fragment which has the same localname as to be
+created, that will be used.  When the \s-1XML\s0 fragment is not wrapped in the
+expected node, this is created for you.
+.Sp
+In any case, attributes provided with the content will get added to the
+content data.
 .IP "\s-1STRUCTURAL\s0" 4
 .IX Item "STRUCTURAL"
 [0.89] behaves as if the attribute is not there: a data-structure can be
 used or an \s-1XML\s0 node.
 .SS "Schema hooks"
 .IX Subsection "Schema hooks"
+All writer hooks behave differently.  Be warned that the user values
+can be a \s-1SCALAR\s0 or a \s-1HASH\s0, dependent on the type.  You can intervene
+on higher data-structure levels, to repair lower levels, if you want
+to.
+.PP
+[1.48] The hooks get a long list of parameters.  The \f(CW$fulltype\fR
+indicates the type of object which is being processed, which is
+especially useful with the 'extends' selector.
+.PP
 \fIhooks executed before normal processing\fR
 .IX Subsection "hooks executed before normal processing"
 .PP
@@ -270,13 +263,12 @@ On the moment, the only predefined \f(CW\*(C`after\*(C'\fR hook is \f(CW\*(C`PRI
 .PP
 When a schema makes a mess out of things, we can fix that with hooks.
 Also, when you need things that XML::Compile does not support (yet).
-.PP
-All writer hooks behave differently.  Be warned that the user values
-can be a \s-1SCALAR\s0 or a \s-1HASH\s0, dependent on the type.  You can intervene
-on higher data-structure levels, to repair lower levels, if you want
-to.
 .SS "Typemaps"
 .IX Subsection "Typemaps"
+In a typemap, a relation between an \s-1XML\s0 element type and a Perl class (or
+object) is made.  Each translator back-end will implement this a little
+differently.  This section is about how the writer handles typemaps.
+.PP
 \fITypemap to Class\fR
 .IX Subsection "Typemap to Class"
 .PP
@@ -291,9 +283,9 @@ is defined, they are treated smartly.  When some other data than an
 objects is found on a location which has a typemap definition, it will
 be used as such; objects are optional.
 .PP
-The object (of present) will be checked to be of the expected class.
+The object (if present) will be checked to be of the expected class.
 It will be a compile-time error when the class does not implement the
-\&\f(CW\*(C`toXML\*(C'\fRmethod.
+\&\f(CW\*(C`toXML\*(C'\fR method.
 .PP
 .Vb 1
 \& $schema\->typemap($sometype => \*(AqMy::Perl::Class\*(Aq);
@@ -364,39 +356,18 @@ Of course, it could have been implemented by accepting an object anywhere
 in the input data.  However, this would mean that all the (many) internal
 parser constructs would need to be extended.  That would slow-down the
 writer considerably.
-.PP
-In a typemap, a relation between an \s-1XML\s0 element type and a Perl class (or
-object) is made.  Each translator back-end will implement this a little
-differently.  This section is about how the writer handles typemaps.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

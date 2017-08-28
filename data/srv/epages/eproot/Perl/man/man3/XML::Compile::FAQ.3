@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::FAQ 3"
-.TH XML::Compile::FAQ 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::FAQ 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -133,6 +133,11 @@
 XML::Compile::FAQ \- frequently asked questions
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
+On this page, a wild collection of questions are answered.  If you have
+contributions either in question or as answer, then please contribute
+via the mailinglist.
+.PP
+See also XML::Compile::SOAP::FAQ.
 .SS "The data structure"
 .IX Subsection "The data structure"
 \fIwhat do the cho_, seq_ and all_ start of labels mean?\fR
@@ -173,10 +178,14 @@ or by default from the \s-1XML\s0 schemas.
 See \*(L"Key rewrite\*(R" in XML::Compile::Schema for the full list of options.
 .SS "Schemas"
 .IX Subsection "Schemas"
+Be aware that the \*(L"2001\*(R" schema specification is continuously under
+development.  So, the namespace has not been changed over time, but
+the content has.
+.PP
 \fIqualified elements\fR
 .IX Subsection "qualified elements"
 .PP
-One of the more noticable problems with schemas is the specification of
+One of the more noticeable problems with schemas is the specification of
 the namespaces to be used for the schema.  In older schema's, like many
 important protocols, there was no way to specify whether elements should
 be used qualified or not.  Some schema's lack the target namespace
@@ -315,7 +324,7 @@ Of course, you can also use an external file for this.
 .IX Subsection "Example"
 .PP
 This is a piece of code actually used.  It shows various complications
-when an external schema is \*(L"loaded\*(R" \*(L"dynamically\*(R" into an other schema.
+when an external schema is \*(L"loaded\*(R" \*(L"dynamically\*(R" into another schema.
 .PP
 .Vb 4
 \&  # In the top of your script
@@ -327,7 +336,7 @@ when an external schema is \*(L"loaded\*(R" \*(L"dynamically\*(R" into an other 
 \&  my $schema     = XML::Compile::Cache\->new(....);
 \&  $schema\->addSchemaDirs($schema_dir);
 \&  $schema\->importDefinitions($xyz_xsd, target_namespace => $xyz_ns);
-\&  $schema\->prefixes(xyz => $xyz_ns);
+\&  $schema\->addPrefixes(xyz => $xyz_ns);
 \&  $schema\->addKeyRewrite(\*(AqPREFIXED(xyz)\*(Aq);
 .Ve
 .PP
@@ -336,17 +345,13 @@ overruled.  The ::Cache extension handles prefixes much nicer than
 the ::Schema base object.  So, with reading/writing the hash keys
 which relate to the elements in this schema will have \f(CW\*(C`xyz_\*(C'\fR as
 prefix for clarity.
-.PP
-Be aware that the \*(L"2001\*(R" schema specification is continuously under
-development.  So, the namespace has not been changed over time, but
-the content has.
 .SS "Processing"
 .IX Subsection "Processing"
 \fImy data is not recognized\fR
 .IX Subsection "my data is not recognized"
 .PP
 You do specify the data in your structure, but it seems not to
-be recognized.  See \*(L"Wrong error message\*(R"
+be recognized.  See \*(L"wrong error message\*(R"
 .PP
 \fIwrong error message\fR
 .IX Subsection "wrong error message"
@@ -364,41 +369,18 @@ Try turning on debugging with:
 .Vb 1
 \&  use Log::Report  mode => "DEBUG";
 .Ve
-.PP
-On this page, a wild collection of questions are answered.  If you have
-contributions either in question or as answer, then please contribute
-via the mailinglist.
-.PP
-See also XML::Compile::SOAP::FAQ.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

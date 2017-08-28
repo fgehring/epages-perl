@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::LibXML::Document 3"
-.TH XML::LibXML::Document 3 "2009-10-07" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::LibXML::Document 3 "2017-03-14" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -136,7 +136,7 @@ XML::LibXML::Document \- XML::LibXML DOM Document Class
 .Vb 3
 \&  use XML::LibXML;
 \&  # Only methods specific to Document nodes are listed here,
-\&  # see XML::LibXML::Node manpage for other methods
+\&  # see the XML::LibXML::Node manpage for other methods
 \&
 \&  $dom = XML::LibXML::Document\->new( $version, $encoding );
 \&  $dom = XML::LibXML::Document\->createDocument( $version, $encoding );
@@ -151,9 +151,9 @@ XML::LibXML::Document \- XML::LibXML DOM Document Class
 \&  my $compression = $doc\->compression;
 \&  $doc\->setCompression($ziplevel);
 \&  $docstring = $dom\->toString($format);
-\&  $c14nstr = $doc\->toStringC14N($comment_flag, $xpath [, $xpath_context ]); 
-\&  $ec14nstr = $doc\->toStringEC14N($comment_flag, $xpath [, $xpath_context ], $inclusive_prefix_list); 
-\&  $str = $doc\->serialize($format); 
+\&  $c14nstr = $doc\->toStringC14N($comment_flag, $xpath [, $xpath_context ]);
+\&  $ec14nstr = $doc\->toStringEC14N($comment_flag, $xpath [, $xpath_context ], $inclusive_prefix_list);
+\&  $str = $doc\->serialize($format);
 \&  $state = $doc\->toFile($filename, $format);
 \&  $state = $doc\->toFH($fh, $format);
 \&  $str = $document\->toStringHTML();
@@ -163,13 +163,13 @@ XML::LibXML::Document \- XML::LibXML DOM Document Class
 \&  $root = $dom\->documentElement();
 \&  $dom\->setDocumentElement( $root );
 \&  $element = $dom\->createElement( $nodename );
-\&  $element = $dom\->createElementNS( $namespaceURI, $qname );
+\&  $element = $dom\->createElementNS( $namespaceURI, $nodename );
 \&  $text = $dom\->createTextNode( $content_text );
 \&  $comment = $dom\->createComment( $comment_text );
 \&  $attrnode = $doc\->createAttribute($name [,$value]);
 \&  $attrnode = $doc\->createAttributeNS( namespaceURI, $name [,$value] );
 \&  $fragment = $doc\->createDocumentFragment();
-\&  $cdata = $dom\->create( $cdata_content );
+\&  $cdata = $dom\->createCDATASection( $cdata_content );
 \&  my $pi = $doc\->createProcessingInstruction( $target, $data );
 \&  my $entref = $doc\->createEntityReference($refname);
 \&  $dtd = $document\->createInternalSubset( $rootnode, $public, $system);
@@ -305,10 +305,10 @@ encoding), '\s-1UTF\-8\s0' is returned.
 \&  $doc\->setEncoding($new_encoding);
 .Ve
 .Sp
-This method allows to change the declaration of encoding in the \s-1XML\s0 declaration
-of the document. The value also affects the encoding in which the document is
-serialized to \s-1XML\s0 by \f(CW$doc\fR\->\fItoString()\fR. Use \fIsetEncoding()\fR to remove the encoding
-declaration.
+This method allows one to change the declaration of encoding in the \s-1XML\s0
+declaration of the document. The value also affects the encoding in which the
+document is serialized to \s-1XML\s0 by \f(CW$doc\fR\->\fItoString()\fR. Use \fIsetEncoding()\fR to remove
+the encoding declaration.
 .IP "version" 4
 .IX Item "version"
 .Vb 1
@@ -361,16 +361,16 @@ Note that this feature will \fIonly\fR work if libxml2 is compiled with zlib sup
 \&  $docstring = $dom\->toString($format);
 .Ve
 .Sp
-\&\fItoString\fR is a \s-1DOM\s0 serializing function, so the \s-1DOM\s0 Tree is serialized into a \s-1XML\s0 string,
-ready for output.
+\&\fItoString\fR is a \s-1DOM\s0 serializing function, so the \s-1DOM\s0 Tree is serialized into an \s-1XML\s0
+string, ready for output.
 .Sp
 \&\s-1IMPORTANT:\s0 unlike toString for other nodes, on document nodes this function
 returns the \s-1XML\s0 as a byte string in the original encoding of the document (see
 the \fIactualEncoding()\fR method)! This means you can simply do:
 .Sp
 .Vb 2
-\&  open OUT, $file;
-\&  print OUT $doc\->toString;
+\&  open my $out_fh, \*(Aq>\*(Aq, $file;
+\&  print {$out_fh} $doc\->toString;
 .Ve
 .Sp
 regardless of the actual encoding of the document. See the section on encodings
@@ -510,7 +510,7 @@ This function creates a new Element Node bound to the \s-1DOM\s0 with the name \
 .IP "createElementNS" 4
 .IX Item "createElementNS"
 .Vb 1
-\&  $element = $dom\->createElementNS( $namespaceURI, $qname );
+\&  $element = $dom\->createElementNS( $namespaceURI, $nodename );
 .Ve
 .Sp
 This function creates a new Element Node bound to the \s-1DOM\s0 with the name \f(CW$nodename\fR and placed in the given namespace.
@@ -552,7 +552,7 @@ This function creates a DocumentFragment.
 .IP "createCDATASection" 4
 .IX Item "createCDATASection"
 .Vb 1
-\&  $cdata = $dom\->create( $cdata_content );
+\&  $cdata = $dom\->createCDATASection( $cdata_content );
 .Ve
 .Sp
 Similar to createTextNode and createComment, this function creates a
@@ -733,7 +733,7 @@ document by using this function. The removed dtd node will be returned.
 .Sp
 Implements the \s-1DOM\s0 Level 2 function
 .Sp
-In \s-1SCALAR\s0 context this function returns a XML::LibXML::NodeList object.
+In \s-1SCALAR\s0 context this function returns an XML::LibXML::NodeList object.
 .IP "getElementsByTagNameNS" 4
 .IX Item "getElementsByTagNameNS"
 .Vb 1
@@ -742,7 +742,7 @@ In \s-1SCALAR\s0 context this function returns a XML::LibXML::NodeList object.
 .Sp
 Implements the \s-1DOM\s0 Level 2 function
 .Sp
-In \s-1SCALAR\s0 context this function returns a XML::LibXML::NodeList object.
+In \s-1SCALAR\s0 context this function returns an XML::LibXML::NodeList object.
 .IP "getElementsByLocalName" 4
 .IX Item "getElementsByLocalName"
 .Vb 1
@@ -752,7 +752,7 @@ In \s-1SCALAR\s0 context this function returns a XML::LibXML::NodeList object.
 This allows the fetching of all nodes from a given document with the given
 Localname.
 .Sp
-In \s-1SCALAR\s0 context this function returns a XML::LibXML::NodeList object.
+In \s-1SCALAR\s0 context this function returns an XML::LibXML::NodeList object.
 .IP "getElementById" 4
 .IX Item "getElementById"
 .Vb 1
@@ -792,12 +792,12 @@ This function returns number of elements indexed, \-1 if error occurred, or \-2
 if this feature is not available in the running libxml2.
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Matt Sergeant, 
-Christian Glahn, 
+Matt Sergeant,
+Christian Glahn,
 Petr Pajas
 .SH "VERSION"
 .IX Header "VERSION"
-1.70
+2.0129
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 2001\-2007, AxKit.com Ltd.
@@ -805,3 +805,7 @@ Petr Pajas
 2002\-2006, Christian Glahn.
 .PP
 2006\-2009, Petr Pajas.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

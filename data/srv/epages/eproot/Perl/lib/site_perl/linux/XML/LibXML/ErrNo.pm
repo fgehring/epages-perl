@@ -11,9 +11,10 @@
 package XML::LibXML::ErrNo;
 
 use strict;
+use warnings;
 use vars qw($VERSION);
 
-$VERSION = "1.70"; # VERSION TEMPLATE: DO NOT CHANGE
+$VERSION = "2.0129"; # VERSION TEMPLATE: DO NOT CHANGE
 
 use constant ERR_OK                               => 0;
 use constant ERR_INTERNAL_ERROR                   => 1;
@@ -495,6 +496,6 @@ use constant FTP_EPSV_ANSWER                      => 2001;
 use constant FTP_ACCNT                            => 2002;
 use constant HTTP_URL_SYNTAX                      => 2020;
 use constant HTTP_USE_IP                          => 2021;
-use constant HTTP_UNKNOWN_HOST			 => 2022;
+use constant HTTP_UNKNOWN_HOST                   => 2022;
 
 1;

@@ -124,13 +124,15 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::Iterator 3"
-.TH XML::Compile::Iterator 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::Iterator 3 "2016-09-19" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
 XML::Compile::Iterator \- reduce view on a node tree
+.SH "SYNOPSIS"
+.IX Header "SYNOPSIS"
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 It would have been nice to be able to use XML::LibXML::Iterator, but
@@ -141,127 +143,115 @@ The main user for this object currently is XML::Compile::Translate.
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBdescend\fR([\s-1NODE\s0, [\s-1PATH\s0, [\s-1FILTER\s0]]])" 4
-.el .IP "\f(CW$obj\fR\->\fBdescend\fR([\s-1NODE\s0, [\s-1PATH\s0, [\s-1FILTER\s0]]])" 4
-.IX Item "$obj->descend([NODE, [PATH, [FILTER]]])"
-The \s-1NODE\s0 is a child of the node handled by the iterator where this
-method is called upon.  Without explicit \s-1NODE\s0, the current node is used.
+.ie n .IP "$obj\->\fBdescend\fR( [$node, [$path, [$filter]]] )" 4
+.el .IP "\f(CW$obj\fR\->\fBdescend\fR( [$node, [$path, [$filter]]] )" 4
+.IX Item "$obj->descend( [$node, [$path, [$filter]]] )"
+The \f(CW$node\fR is a child of the node handled by the iterator where this
+method is called upon.  Without explicit \f(CW$node\fR, the current node is used.
 Returned is a new XML::Compile::Iterator object.  The new iterator
-will use the same \s-1FILTER\s0 as the parent iterator by default.  The internal
-administered path with be extended with the \s-1PATH\s0.
-.IP "XML::Compile::Iterator\->\fBnew\fR(\s-1NODE\s0, \s-1PATH\s0, \s-1FILTER\s0,)" 4
-.IX Item "XML::Compile::Iterator->new(NODE, PATH, FILTER,)"
-The \s-1NODE\s0 is a XML::LibXML::Node object, of which the direct childs
+will use the same \f(CW$filter\fR as the parent iterator by default.  The internal
+administered path with be extended with the \f(CW$path\fR.
+.ie n .IP "XML::Compile::Iterator\->\fBnew\fR($node, $path, $filter,)" 4
+.el .IP "XML::Compile::Iterator\->\fBnew\fR($node, \f(CW$path\fR, \f(CW$filter\fR,)" 4
+.IX Item "XML::Compile::Iterator->new($node, $path, $filter,)"
+The \f(CW$node\fR is a XML::LibXML::Node object, of which the direct children
 are inspected.
 .Sp
-The \s-1FILTER\s0 a \s-1CODE\s0 reference which is called for each child node.
-The only paramter is the parent \s-1NODE\s0, and then it must return
+The \f(CW$filter\fR a \s-1CODE\s0 reference which is called for each child node.
+The only parameter is the parent \f(CW$node\fR, and then it must return
 either true or false.  In case of true, the node is selected.
-The \s-1FILTERS\s0 is applied to all childs of the \s-1NODE\s0 once, when the
+The \s-1FILTERS\s0 is applied to all children of the \f(CW$node\fR once, when the
 first child is requested by the program.
 .SS "Attributes"
 .IX Subsection "Attributes"
-.ie n .IP "$obj\->\fBfilter\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBfilter\fR" 4
-.IX Item "$obj->filter"
+.ie n .IP "$obj\->\fBfilter\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBfilter\fR()" 4
+.IX Item "$obj->filter()"
 Returns the \s-1CODE\s0 reference which is used to select the nodes.
-.ie n .IP "$obj\->\fBnode\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBnode\fR" 4
-.IX Item "$obj->node"
-Returns the XML::LibXML::Node node of which the childs are walked
+.ie n .IP "$obj\->\fBnode\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBnode\fR()" 4
+.IX Item "$obj->node()"
+Returns the XML::LibXML::Node node of which the children are walked
 through.
-.ie n .IP "$obj\->\fBpath\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBpath\fR" 4
-.IX Item "$obj->path"
+.ie n .IP "$obj\->\fBpath\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBpath\fR()" 4
+.IX Item "$obj->path()"
 The path represents the location where the node is, like a symbolic
 link, how you got there.
 .SS "Scanning"
 .IX Subsection "Scanning"
-.ie n .IP "$obj\->\fBchilds\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBchilds\fR" 4
-.IX Item "$obj->childs"
+.ie n .IP "$obj\->\fBchilds\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBchilds\fR()" 4
+.IX Item "$obj->childs()"
 Returns the child nodes which fulfil the filter requirements.  In \s-1LIST\s0
 context as list, in \s-1SCALAR\s0 context as reference to an \s-1ARRAY\s0.
-.ie n .IP "$obj\->\fBcurrentChild\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcurrentChild\fR" 4
-.IX Item "$obj->currentChild"
+.ie n .IP "$obj\->\fBcurrentChild\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcurrentChild\fR()" 4
+.IX Item "$obj->currentChild()"
 Returns the current child node.
-.ie n .IP "$obj\->\fBfirstChild\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBfirstChild\fR" 4
-.IX Item "$obj->firstChild"
+.ie n .IP "$obj\->\fBfirstChild\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBfirstChild\fR()" 4
+.IX Item "$obj->firstChild()"
 Returns the first child node.  Does not change the current position.
-.ie n .IP "$obj\->\fBlastChild\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBlastChild\fR" 4
-.IX Item "$obj->lastChild"
+.ie n .IP "$obj\->\fBlastChild\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBlastChild\fR()" 4
+.IX Item "$obj->lastChild()"
 Returns the last child node which fulfills the requirements.
 Does not change the current position.
-.ie n .IP "$obj\->\fBnextChild\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBnextChild\fR" 4
-.IX Item "$obj->nextChild"
+.ie n .IP "$obj\->\fBnextChild\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBnextChild\fR()" 4
+.IX Item "$obj->nextChild()"
 Returns the next child when available, otherwise \f(CW\*(C`undef\*(C'\fR.
-.ie n .IP "$obj\->\fBnrChildren\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBnrChildren\fR" 4
-.IX Item "$obj->nrChildren"
+.ie n .IP "$obj\->\fBnrChildren\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBnrChildren\fR()" 4
+.IX Item "$obj->nrChildren()"
 Returns the number of childnodes which fulfill the restriction.
-.ie n .IP "$obj\->\fBpreviousChild\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBpreviousChild\fR" 4
-.IX Item "$obj->previousChild"
+.ie n .IP "$obj\->\fBpreviousChild\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBpreviousChild\fR()" 4
+.IX Item "$obj->previousChild()"
 Returns the previous child when available, otherwise \f(CW\*(C`undef\*(C'\fR.
 .SS "simplify \s-1XML\s0 node access"
 .IX Subsection "simplify XML node access"
-.ie n .IP "$obj\->\fBcurrentContent\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcurrentContent\fR" 4
-.IX Item "$obj->currentContent"
+.ie n .IP "$obj\->\fBcurrentContent\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcurrentContent\fR()" 4
+.IX Item "$obj->currentContent()"
 Returns the textContent of the \fIcurrentChild()\fR node, or undef.
-.ie n .IP "$obj\->\fBcurrentLocal\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcurrentLocal\fR" 4
-.IX Item "$obj->currentLocal"
+.ie n .IP "$obj\->\fBcurrentLocal\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcurrentLocal\fR()" 4
+.IX Item "$obj->currentLocal()"
 Returns the local name of the \fIcurrentChild()\fR, or the empty string.
-.ie n .IP "$obj\->\fBcurrentType\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcurrentType\fR" 4
-.IX Item "$obj->currentType"
+.ie n .IP "$obj\->\fBcurrentType\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcurrentType\fR()" 4
+.IX Item "$obj->currentType()"
 Returns the type of the \fIcurrentChild()\fR, or the empty string.
-.ie n .IP "$obj\->\fBnodeLocal\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBnodeLocal\fR" 4
-.IX Item "$obj->nodeLocal"
+.ie n .IP "$obj\->\fBnodeLocal\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBnodeLocal\fR()" 4
+.IX Item "$obj->nodeLocal()"
 Returns the local name of the \fInode()\fR, or the empty string.
-.ie n .IP "$obj\->\fBnodeType\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBnodeType\fR" 4
-.IX Item "$obj->nodeType"
+.ie n .IP "$obj\->\fBnodeNil\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBnodeNil\fR()" 4
+.IX Item "$obj->nodeNil()"
+Returns true if the current node has \f(CW\*(C`xsi:type="true"\*(C'\fR.
+.ie n .IP "$obj\->\fBnodeType\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBnodeType\fR()" 4
+.IX Item "$obj->nodeType()"
 Returns the type of the \fInode()\fR, or the empty string.
-.ie n .IP "$obj\->\fBtextContent\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtextContent\fR" 4
-.IX Item "$obj->textContent"
+.ie n .IP "$obj\->\fBtextContent\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBtextContent\fR()" 4
+.IX Item "$obj->textContent()"
 Returns the textContent of the \fInode()\fR, or undef.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile distribution version 1.22,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile distribution version 1.54,
+built on September 19, 2016. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2006\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2006\-2016 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

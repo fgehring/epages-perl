@@ -1,20 +1,20 @@
 package LWP::Simple;
 
 use strict;
-use vars qw($ua %loop_check $FULL_LWP @EXPORT @EXPORT_OK $VERSION);
+use vars qw($ua %loop_check $FULL_LWP @EXPORT @EXPORT_OK);
 
 require Exporter;
 
 @EXPORT = qw(get head getprint getstore mirror);
 @EXPORT_OK = qw($ua);
 
-# I really hate this.  I was a bad idea to do it in the first place.
+# I really hate this.  It was a bad idea to do it in the first place.
 # Wonder how to get rid of it???  (It even makes LWP::Simple 7% slower
 # for trivial tests)
 use HTTP::Status;
 push(@EXPORT, @HTTP::Status::EXPORT);
 
-$VERSION = "6.00";
+our $VERSION = '6.17';
 
 sub import
 {
@@ -46,13 +46,13 @@ sub head ($)
     my $response = $ua->request($request);
 
     if ($response->is_success) {
-	return $response unless wantarray;
-	return (scalar $response->header('Content-Type'),
-		scalar $response->header('Content-Length'),
-		HTTP::Date::str2time($response->header('Last-Modified')),
-		HTTP::Date::str2time($response->header('Expires')),
-		scalar $response->header('Server'),
-	       );
+        return $response unless wantarray;
+        return (scalar $response->header('Content-Type'),
+                scalar $response->header('Content-Length'),
+                HTTP::Date::str2time($response->header('Last-Modified')),
+                HTTP::Date::str2time($response->header('Expires')),
+                scalar $response->header('Server'),
+               );
     }
     return;
 }
@@ -65,11 +65,11 @@ sub getprint ($)
     local($\) = ""; # ensure standard $OUTPUT_RECORD_SEPARATOR
     my $callback = sub { print $_[0] };
     if ($^O eq "MacOS") {
-	$callback = sub { $_[0] =~ s/\015?\012/\n/g; print $_[0] }
+        $callback = sub { $_[0] =~ s/\015?\012/\n/g; print $_[0] }
     }
     my $response = $ua->request($request, $callback);
     unless ($response->is_success) {
-	print STDERR $response->status_line, " <URL:$url>\n";
+        print STDERR $response->status_line, " <URL:$url>\n";
     }
     $response->code;
 }
@@ -97,6 +97,8 @@ sub mirror ($$)
 
 __END__
 
+=pod
+
 =head1 NAME
 
 LWP::Simple - simple procedural interface to LWP
@@ -123,7 +125,7 @@ This module is meant for people who want a simplified view of the
 libwww-perl library.  It should also be suitable for one-liners.  If
 you need more control or access to the header fields in the requests
 sent and responses received, then you should use the full object-oriented
-interface provided by the C<LWP::UserAgent> module.
+interface provided by the L<LWP::UserAgent> module.
 
 The following functions are provided (and exported) by this module:
 
@@ -251,3 +253,5 @@ it as C<LWP::Simple::head($url)>.
 
 L<LWP>, L<lwpcook>, L<LWP::UserAgent>, L<HTTP::Status>, L<lwp-request>,
 L<lwp-mirror>
+
+=cut

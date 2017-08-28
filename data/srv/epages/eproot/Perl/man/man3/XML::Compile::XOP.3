@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "XML::Compile::XOP 3"
-.TH XML::Compile::XOP 3 "2011-06-20" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH XML::Compile::XOP 3 "2017-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -142,6 +142,10 @@ XML::Compile::XOP \- MTOM and XOP handler
 \&  my $xop       = XML::Compile::XOP\->new;
 \&  my $xop_image = $xop\->bytes($binary_image);
 \&  my $answer    = $call\->(image => $xop_image);
+\&
+\&  # returned XOPs in SOAP
+\&  my ($answer, $trace, $xop) = $wsdl\->call($operation)\->(%data);
+\&  print $_\->string for @$xop;   # See XML::Compile::XOP::Include
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
@@ -149,12 +153,12 @@ The \s-1SOAP\s0 Message Transmission Optimization Mechanism (\s-1MTOM\s0) is des
 for \s-1SOAP1\s0.2, but also usable for \s-1SOAP1\s0.1.  It optimizes the transport of
 binary information (like images) which are part of the \s-1XML\s0 message: in
 stead of base64 encoding them adding 25% to the size of the data, these
-binaries are added as pure binary attachement to the \s-1SOAP\s0 message.
+binaries are added as pure binary attachment to the \s-1SOAP\s0 message.
 .PP
 In the official specification, the \s-1XML\s0 message will be created first
 with the base64 representation of the data in it. Only at transmission,
 a preprocessor \s-1XOP\s0 (XML-binary Optimized Packaging) extracts those
-components to be send seperately.  In Perl, we have to be more careful
+components to be send separately.  In Perl, we have to be more careful
 about performance.  Therefore, the path via encoding to base64 and then
 decoding it back to binary in the sender (and the reverse process for
 the receiver) is avoided.
@@ -162,12 +166,12 @@ the receiver) is avoided.
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBbytes\fR((STRING|SCALAR), \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBbytes\fR((STRING|SCALAR), \s-1OPTIONS\s0)" 4
-.IX Item "$obj->bytes((STRING|SCALAR), OPTIONS)"
+.ie n .IP "$obj\->\fBbytes\fR( <STRING|SCALAR>, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBbytes\fR( <STRING|SCALAR>, \f(CW%options\fR )" 4
+.IX Item "$obj->bytes( <STRING|SCALAR>, %options )"
 Create a XML::Compile::XOP::Include object which sources from a
 \&\s-1STRING\s0 (representing bytes) or a \s-1SCALAR\s0 reference to such a string.
-With the \s-1OPTIONS\s0, you can overrule defaults generated for the \*(L"Include\*(R"
+With the \f(CW%options\fR, you can overrule defaults generated for the \*(L"Include\*(R"
 object.
 .Sp
 example: use of \fIbytes()\fR
@@ -176,11 +180,11 @@ example: use of \fIbytes()\fR
 \&  my $data = $xop\->bytes($string, type => \*(Aqtext/html\*(Aq);
 \&  # $data is a XML::Compile::XOP::Include
 .Ve
-.ie n .IP "$obj\->\fBfile\fR((FILENAME|FILEHANDLE), \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBfile\fR((FILENAME|FILEHANDLE), \s-1OPTIONS\s0)" 4
-.IX Item "$obj->file((FILENAME|FILEHANDLE), OPTIONS)"
+.ie n .IP "$obj\->\fBfile\fR( <$filename|$fh>, %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBfile\fR( <$filename|$fh>, \f(CW%options\fR )" 4
+.IX Item "$obj->file( <$filename|$fh>, %options )"
 Create a XML::Compile::XOP::Include object which sources from a
-\&\s-1FILE\s0 specified by \s-1NAME\s0 or \s-1HANDLE\s0.  With the \s-1OPTIONS\s0, you can overrule
+\&\s-1FILE\s0 specified by \s-1NAME\s0 or \s-1HANDLE\s0.  With the \f(CW%options\fR, you can overrule
 defaults generated for the \*(L"Include\*(R" object.
 .Sp
 example: use of \fIfile()\fR
@@ -193,8 +197,8 @@ example: use of \fIfile()\fR
 \&  my $data = $xop\->file($fn, type => $fn);
 \&  # $data is a XML::Compile::XOP::Include
 .Ve
-.IP "XML::Compile::XOP\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "XML::Compile::XOP->new(OPTIONS)"
+.IP "XML::Compile::XOP\->\fBnew\fR(%options)" 4
+.IX Item "XML::Compile::XOP->new(%options)"
 .Vb 4
 \& \-Option         \-\-Default
 \&  hostname         \*(Aqlocalhost\*(Aq
@@ -215,6 +219,8 @@ a email address.
 .RS 4
 .RE
 .PD
+.SH "DETAILS"
+.IX Header "DETAILS"
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 .IP "\s-1MTOM\s0 \s-1SOAP1\s0.2: \fIhttp://www.w3.org/TR/soap12\-mtom/\fR" 4
@@ -229,33 +235,16 @@ a email address.
 .PD
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of XML-Compile-SOAP distribution version 2.24,
-built on June 20, 2011. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
-.PP
-Other distributions in this suite:
-XML::Compile,
-XML::Compile::SOAP,
-XML::Compile::SOAP12,
-XML::Compile::SOAP::Daemon,
-XML::Compile::SOAP::WSA,
-XML::Compile::C14N,
-XML::Compile::WSS,
-XML::Compile::Tester,
-XML::Compile::Cache,
-XML::Compile::Dumper,
-XML::Compile::RPC,
-XML::Rewrite,
-XML::eXistDB,
-and
-XML::LibXML::Simple.
+This module is part of XML-Compile-SOAP distribution version 3.21,
+built on January 11, 2017. Website: \fIhttp://perl.overmeer.net/xml\-compile/\fR
 .PP
 Please post questions or ideas to the mailinglist at
-\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR
+\&\fIhttp://lists.scsys.co.uk/cgi\-bin/mailman/listinfo/xml\-compile\fR .
 For live contact with other developers, visit the \f(CW\*(C`#xml\-compile\*(C'\fR channel
 on \f(CW\*(C`irc.perl.org\*(C'\fR.
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

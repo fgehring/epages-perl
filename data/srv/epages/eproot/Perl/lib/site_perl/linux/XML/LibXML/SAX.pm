@@ -1,4 +1,4 @@
-# $Id: SAX.pm 785 2009-07-16 14:17:46Z pajas $
+# $Id$
 #
 # This is free software, you may use it and distribute it under the same terms as
 # Perl itself.
@@ -10,20 +10,34 @@
 package XML::LibXML::SAX;
 
 use strict;
+use warnings;
+
 use vars qw($VERSION @ISA);
 
-$VERSION = "1.70"; # VERSION TEMPLATE: DO NOT CHANGE
+$VERSION = "2.0129"; # VERSION TEMPLATE: DO NOT CHANGE
 
 use XML::LibXML;
 use XML::SAX::Base;
 
-use base qw(XML::SAX::Base);
+use parent qw(XML::SAX::Base);
 
 use Carp;
 use IO::File;
 
 sub CLONE_SKIP {
   return $XML::LibXML::__threads_shared ? 0 : 1;
+}
+
+sub set_feature {
+        my ($self, $feat, $val) = @_;
+
+        if ($feat eq 'http://xmlns.perl.org/sax/join-character-data') {
+                $self->{JOIN_CHARACTERS} = $val;
+                return 1;
+        }
+
+        shift(@_);
+        return $self->SUPER::set_feature(@_);
 }
 
 sub _parse_characterstream {
@@ -35,6 +49,7 @@ sub _parse_characterstream {
 
 sub _parse_bytestream {
     my ( $self, $fh ) = @_;
+
     $self->{ParserOptions}{LibParser}      = XML::LibXML->new;
     $self->{ParserOptions}{ParseFunc}      = \&XML::LibXML::parse_fh;
     $self->{ParserOptions}{ParseFuncParam} = $fh;
@@ -75,6 +90,12 @@ sub _parse {
     my $self = shift;
     my $args = bless $self->{ParserOptions}, ref($self);
 
+    if (defined($self->{JOIN_CHARACTERS})) {
+        $args->{LibParser}->{JOIN_CHARACTERS} = $self->{JOIN_CHARACTERS};
+    } else {
+        $args->{LibParser}->{JOIN_CHARACTERS} = 0;
+    }
+
     $args->{LibParser}->set_handler( $self );
     eval {
       $args->{ParseFunc}->($args->{LibParser}, $args->{ParseFuncParam});
@@ -91,7 +112,6 @@ sub _parse {
     }
     return;
 }
-
 
 1;
 
