@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Log::Report::Dispatcher::File 3"
-.TH Log::Report::Dispatcher::File 3 "2011-08-23" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Log::Report::Dispatcher::File 3 "2017-02-09" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -171,26 +171,30 @@ Log::Report::Dispatcher::File \- send messages to a file or file\-handle
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 This basic file logger accepts an file-handle or filename as destination.
+.PP
+[1.00] writing to the file protected by a lock, so multiple processes
+can write to the same file.
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in Log::Report::Dispatcher.
 .SH "METHODS"
 .IX Header "METHODS"
+Extends \*(L"\s-1METHODS\s0\*(R" in Log::Report::Dispatcher.
 .SS "Constructors"
 .IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBclose\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBclose\fR" 4
-.IX Item "$obj->close"
-Only when initiated with a \s-1FILENAME\s0, the file will be closed.  In any
-other case, nothing will be done.
-.IP "Log::Report::Dispatcher::File\->\fBnew\fR(\s-1TYPE\s0, \s-1NAME\s0, \s-1OPTIONS\s0)" 4
-.IX Item "Log::Report::Dispatcher::File->new(TYPE, NAME, OPTIONS)"
-.Vb 8
-\& \-Option       \-\-Defined in     \-\-Default
+Extends \*(L"Constructors\*(R" in Log::Report::Dispatcher.
+.ie n .IP "Log::Report::Dispatcher::File\->\fBnew\fR($type, $name, %options)" 4
+.el .IP "Log::Report::Dispatcher::File\->\fBnew\fR($type, \f(CW$name\fR, \f(CW%options\fR)" 4
+.IX Item "Log::Report::Dispatcher::File->new($type, $name, %options)"
+.Vb 9
+\& \-Option       \-\-Defined in             \-\-Default
 \&  accept         Log::Report::Dispatcher  depend on mode
 \&  charset        Log::Report::Dispatcher  LOCALE
+\&  format                                  <adds timestamp>
 \&  format_reason  Log::Report::Dispatcher  \*(AqLOWERCASE\*(Aq
 \&  locale         Log::Report::Dispatcher  <system locale>
 \&  mode           Log::Report::Dispatcher  \*(AqNORMAL\*(Aq
-\&  replace                         false
-\&  to                              <required>
+\&  replace                                 false
+\&  to                                      <required>
 .Ve
 .RS 4
 .IP "accept => \s-1REASONS\s0" 2
@@ -198,8 +202,46 @@ other case, nothing will be done.
 .PD 0
 .IP "charset => \s-1CHARSET\s0" 2
 .IX Item "charset => CHARSET"
+.IP "format => CODE|'\s-1LONG\s0'" 2
+.IX Item "format => CODE|'LONG'"
+.PD
+[1.00] process each printed line.  By default, this adds a timestamp,
+but you may want to add hostname, process number, or more.
+.Sp
+.Vb 3
+\&   format => sub { \*(Aq[\*(Aq.localtime().\*(Aq] \*(Aq.$_[0] }
+\&   format => sub { shift }   # no timestamp
+\&   format => \*(AqLONG\*(Aq
+.Ve
+.Sp
+The first parameter to format is the string to print; it is already
+translated and trailed by a newline.  The second parameter is the
+text-domain (if known).
+.Sp
+[1.10] As third parameter, you get the \f(CW$msg\fR raw object as well (maybe
+you want to use the message context?)
+[1.19] After the three positional parameters, there may be a list
+of pairs providing additional facts about the exception.  It may
+contain \f(CW\*(C`location\*(C'\fR information.
+.Sp
+The \*(L"\s-1LONG\s0\*(R" format is equivalent to:
+.Sp
+.Vb 2
+\&  my $t = strftime "%FT%T", gmtime;
+\&  "[$t $$] $_[1] $_[0]"
+.Ve
+.Sp
+Use of context:
+.Sp
+.Vb 4
+\&   format => sub { my ($msgstr, $domain, $msg, %more) = @_;
+\&      my $host = $msg\->context\->{host};
+\&      "$host $msgstr";
+\&   }
+.Ve
 .IP "format_reason => '\s-1UPPERCASE\s0'|'\s-1LOWERCASE\s0'|'\s-1UCFIRST\s0'|'\s-1IGNORE\s0'|CODE" 2
 .IX Item "format_reason => 'UPPERCASE'|'LOWERCASE'|'UCFIRST'|'IGNORE'|CODE"
+.PD 0
 .IP "locale => \s-1LOCALE\s0" 2
 .IX Item "locale => LOCALE"
 .IP "mode => '\s-1NORMAL\s0'|'\s-1VERBOSE\s0'|'\s-1ASSERT\s0'|'\s-1DEBUG\s0'|0..3" 2
@@ -213,8 +255,8 @@ if it exists.  Probably you wish to append to existing information.
 Use the \s-1LOCALE\s0 setting by default, which is \s-1LC_CTYPE\s0 or \s-1LC_ALL\s0 or \s-1LANG\s0
 (in that order).  If these contain a character-set which Perl understands,
 then that is used, otherwise silently ignored.
-.IP "to => FILENAME|FILEHANDLE|OBJECT" 2
-.IX Item "to => FILENAME|FILEHANDLE|OBJECT"
+.IP "to => FILENAME|FILEHANDLE|OBJECT|CODE" 2
+.IX Item "to => FILENAME|FILEHANDLE|OBJECT|CODE"
 You can either specify a \s-1FILENAME\s0, which is opened in append mode with
 autoflush on. Or pass any kind of FILE-HANDLE or some \s-1OBJECT\s0 which
 implements a \f(CW\*(C`print()\*(C'\fR method. You probably want to have autoflush
@@ -222,77 +264,135 @@ enabled on your FILE-HANDLES.
 .Sp
 When cleaning-up the dispatcher, the file will only be closed in case
 of a \s-1FILENAME\s0.
+.Sp
+[1.10] When you pass a \s-1CODE\s0, then for each log message the function is
+called with two arguments: this dispatcher object and the message object.
+In some way (maybe via the message context) you have to determine the
+log filename.  This means that probably many log-files are open at the
+same time.
+.Sp
+.Vb 3
+\&   # configuration time
+\&   dispatcher FILE => \*(Aqlogfile\*(Aq, to =>
+\&       sub { my ($disp, $msg) = @_; $msg\->context\->{logfile} };
+\&
+\&   # whenever you want to change the logfile
+\&   textdomain\->updateContext(logfile => \*(Aq/var/log/app\*(Aq);
+\&   (textdomain \*(Aqmydomain\*(Aq)\->setContext(logfile => \*(Aq/var/log/app\*(Aq);
+\&
+\&   # or
+\&   error _\|_x"help", _context => {logfile => \*(Aq/dev/tty\*(Aq};
+\&   error _\|_x"help", _context => "logfile=/dev/tty";
+.Ve
 .RE
 .RS 4
 .RE
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBfilename\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBfilename\fR" 4
-.IX Item "$obj->filename"
+Extends \*(L"Accessors\*(R" in Log::Report::Dispatcher.
+.ie n .IP "$obj\->\fBfilename\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBfilename\fR()" 4
+.IX Item "$obj->filename()"
 Returns the name of the opened file, or \f(CW\*(C`undef\*(C'\fR in case this dispatcher
 was started from a file-handle or file-object.
-.ie n .IP "$obj\->\fBisDisabled\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBisDisabled\fR" 4
-.IX Item "$obj->isDisabled"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBmode\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBmode\fR" 4
-.IX Item "$obj->mode"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBname\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBname\fR" 4
-.IX Item "$obj->name"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBneeds\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBneeds\fR" 4
-.IX Item "$obj->needs"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBtype\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtype\fR" 4
-.IX Item "$obj->type"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBformat\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBformat\fR()" 4
+.IX Item "$obj->format()"
+.PD 0
+.ie n .IP "$obj\->\fBisDisabled\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBisDisabled\fR()" 4
+.IX Item "$obj->isDisabled()"
+.PD
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBmode\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBmode\fR()" 4
+.IX Item "$obj->mode()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBname\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBname\fR()" 4
+.IX Item "$obj->name()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBneeds\fR( [$reason] )" 4
+.el .IP "\f(CW$obj\fR\->\fBneeds\fR( [$reason] )" 4
+.IX Item "$obj->needs( [$reason] )"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBoutput\fR($msg)" 4
+.el .IP "\f(CW$obj\fR\->\fBoutput\fR($msg)" 4
+.IX Item "$obj->output($msg)"
+Returns the file-handle to write the log lines to. [1.10] This may
+depend on the \f(CW$msg\fR (especially message context)
+.ie n .IP "$obj\->\fBtype\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBtype\fR()" 4
+.IX Item "$obj->type()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.SS "File maintenance"
+.IX Subsection "File maintenance"
+.ie n .IP "$obj\->\fBclose\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBclose\fR()" 4
+.IX Item "$obj->close()"
+Only when initiated with a \s-1FILENAME\s0, the file will be closed.  In any
+other case, nothing will be done.
+.ie n .IP "$obj\->\fBrotate\fR($filename|CODE)" 4
+.el .IP "\f(CW$obj\fR\->\fBrotate\fR($filename|CODE)" 4
+.IX Item "$obj->rotate($filename|CODE)"
+[1.00] Move the current file to \f(CW$filename\fR, and start a new file.
 .SS "Logging"
 .IX Subsection "Logging"
-.ie n .IP "$obj\->\fBcollectLocation\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcollectLocation\fR" 4
-.IX Item "$obj->collectLocation"
+Extends \*(L"Logging\*(R" in Log::Report::Dispatcher.
+.ie n .IP "$obj\->\fBaddSkipStack\fR(@CODE)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddSkipStack\fR(@CODE)" 4
+.IX Item "$obj->addSkipStack(@CODE)"
 .PD 0
-.IP "Log::Report::Dispatcher::File\->\fBcollectLocation\fR" 4
-.IX Item "Log::Report::Dispatcher::File->collectLocation"
+.IP "Log::Report::Dispatcher::File\->\fBaddSkipStack\fR(@CODE)" 4
+.IX Item "Log::Report::Dispatcher::File->addSkipStack(@CODE)"
 .PD
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.IX Item "$obj->collectStack([MAXDEPTH])"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBcollectLocation\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcollectLocation\fR()" 4
+.IX Item "$obj->collectLocation()"
 .PD 0
-.IP "Log::Report::Dispatcher::File\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.IX Item "Log::Report::Dispatcher::File->collectStack([MAXDEPTH])"
+.IP "Log::Report::Dispatcher::File\->\fBcollectLocation\fR()" 4
+.IX Item "Log::Report::Dispatcher::File->collectLocation()"
 .PD
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBlog\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBlog\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.IX Item "$obj->log(HASH-of-OPTIONS, REASON, MESSAGE)"
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->stackTraceLine(OPTIONS)"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBcollectStack\fR( [$maxdepth] )" 4
+.el .IP "\f(CW$obj\fR\->\fBcollectStack\fR( [$maxdepth] )" 4
+.IX Item "$obj->collectStack( [$maxdepth] )"
 .PD 0
-.IP "Log::Report::Dispatcher::File\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.IX Item "Log::Report::Dispatcher::File->stackTraceLine(OPTIONS)"
+.IP "Log::Report::Dispatcher::File\->\fBcollectStack\fR( [$maxdepth] )" 4
+.IX Item "Log::Report::Dispatcher::File->collectStack( [$maxdepth] )"
 .PD
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBtranslate\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBtranslate\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.IX Item "$obj->translate(HASH-of-OPTIONS, REASON, MESSAGE)"
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBlog\fR(HASH\-$of\-%options, $reason, $message, $domain)" 4
+.el .IP "\f(CW$obj\fR\->\fBlog\fR(HASH\-$of\-%options, \f(CW$reason\fR, \f(CW$message\fR, \f(CW$domain\fR)" 4
+.IX Item "$obj->log(HASH-$of-%options, $reason, $message, $domain)"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBskipStack\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBskipStack\fR()" 4
+.IX Item "$obj->skipStack()"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBstackTraceLine\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBstackTraceLine\fR(%options)" 4
+.IX Item "$obj->stackTraceLine(%options)"
+.PD 0
+.IP "Log::Report::Dispatcher::File\->\fBstackTraceLine\fR(%options)" 4
+.IX Item "Log::Report::Dispatcher::File->stackTraceLine(%options)"
+.PD
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBtranslate\fR(HASH\-$of\-%options, $reason, $message)" 4
+.el .IP "\f(CW$obj\fR\->\fBtranslate\fR(HASH\-$of\-%options, \f(CW$reason\fR, \f(CW$message\fR)" 4
+.IX Item "$obj->translate(HASH-$of-%options, $reason, $message)"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.SH "DETAILS"
+.IX Header "DETAILS"
+Extends \*(L"\s-1DETAILS\s0\*(R" in Log::Report::Dispatcher.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
+This module is part of Log-Report distribution version 1.19,
+built on February 09, 2017. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

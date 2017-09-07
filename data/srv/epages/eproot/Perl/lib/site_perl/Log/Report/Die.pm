@@ -1,60 +1,63 @@
-# Copyrights 2007-2011 by Mark Overmeer.
+# Copyrights 2007-2017 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 use warnings;
 use strict;
 
 package Log::Report::Die;
 use vars '$VERSION';
-$VERSION = '0.94';
+$VERSION = '1.19';
 
 use base 'Exporter';
 
 our @EXPORT = qw/die_decode/;
 
-use Log::Report 'log-report';
 use POSIX  qw/locale_h/;
 
 
-sub die_decode($)
-{   my @text   = split /\n/, $_[0];
-    @text or return ();
+sub die_decode($%)
+{   my ($text, %args) = @_;
 
-    $text[0]   =~ s/\.$//;   # inconsequently used
+    my @text   = split /\n/, $text;
+    @text or return ();
     chomp $text[-1];
 
+    # Try to catch the error directly, to remove it from the error text
     my %opt    = (errno => $! + 0);
     my $err    = "$!";
 
     my $dietxt = $text[0];
-    if($text[0] =~ s/ at (.+) line (\d+)$// )
+    if($text[0] =~ s/ at (.+) line (\d+)\.?$// )
     {   $opt{location} = [undef, $1, $2, undef];
     }
     elsif(@text > 1 && $text[1] =~ m/^\s*at (.+) line (\d+)\.?$/ )
-    {   $opt{location} = [undef, $1, $2, undef];
+    {   # sometimes people carp/confess with \n, folding the line
+        $opt{location} = [undef, $1, $2, undef];
         splice @text, 1, 1;
     }
 
-    $text[0] =~ s/\s*[.:;]?\s*$err\s*$//
+    $text[0] =~ s/\s*[.:;]?\s*$err\s*$//  # the $err is translation sensitive
         or delete $opt{errno};
 
-    my $msg = shift @text;
-    length $msg or $msg = 'stopped';
+    my @msg = shift @text;
+    length $msg[0] or $msg[0] = 'stopped';
 
     my @stack;
     foreach (@text)
-    {   push @stack, [ $1, $2, $3 ]
-            if m/^\s*(.*?)\s+called at (.*?) line (\d+)\s*$/;
+    {   if(m/^\s*(.*?)\s+called at (.*?) line (\d+)\s*$/)
+             { push @stack, [ $1, $2, $3 ] }
+        else { push @msg, $_ }
     }
     $opt{stack}   = \@stack;
     $opt{classes} = [ 'perl', (@stack ? 'confess' : 'die') ];
 
     my $reason
-      = @{$opt{stack}} ? ($opt{errno} ? 'ALERT' : 'PANIC')
-      :                  ($opt{errno} ? 'FAULT' : 'ERROR');
+      = $opt{errno} ? 'FAULT'
+      : @stack      ? 'PANIC'
+      :               $args{on_die} || 'ERROR';
 
-    ($dietxt, \%opt, $reason, $msg);
+    ($dietxt, \%opt, $reason, join("\n", @msg));
 }
 
-1;
+"to die or not to die, that's the question";
