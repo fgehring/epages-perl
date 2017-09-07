@@ -124,38 +124,64 @@
 .\" ========================================================================
 .\"
 .IX Title "Log::Report::Message 3"
-.TH Log::Report::Message 3 "2011-08-23" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Log::Report::Message 3 "2017-02-09" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
 Log::Report::Message \- a piece of text to be translated
+.SH "INHERITANCE"
+.IX Header "INHERITANCE"
+.Vb 2
+\& Log::Report::Message is extended by
+\&   Dancer2::Plugin::LogReport::Message
+.Ve
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-.Vb 1
-\& # Created by Log::Report\*(Aqs _\|_ functions
+.Vb 2
+\& # Objects created by Log::Report\*(Aqs _\|_ functions
+\& # Full feature description in the DETAILS section
+\&
+\& # no interpolation
+\& _\|_"Hello, World";
+\&
+\& # with interpolation
+\& _\|_x"age {years}", years => 12;
+\&
+\& # interpolation for one or many
+\& my $nr_files = @files;
+\& _\|_nx"one file", "{_count} files", $nr_files;
+\& _\|_nx"one file", "{_count} files", \e@files;
+\&
+\& # interpolation of arrays
+\& _\|_x"price\-list: {prices%.2f}", prices => \e@prices, _join => \*(Aq, \*(Aq;
+\&
+\& # white\-spacing on msgid preserved
+\& print _\|_"\etCongratulations,\en";
+\& print "\et", _\|_("Congratulations,"), "\en";  # same
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-Any used of a translation function, like Log::Report::_\|_() or 
-Log::Report::_\|\fI_x()\fR will result in this object.  It will capture
+Any use of a translation function exported by Log::Report, like
+\&\f(CW\*(C`_\|_()\*(C'\fR (the function is named underscore-underscore) or \f(CW\*(C`_\|_x()\*(C'\fR
+(underscore-underscore-x) will result in this object.  It will capture
 some environmental information, and delay the translation until it
 is needed.
 .PP
-Creating an object first, and translating it later, is slower than
+Creating an object first and translating it later, is slower than
 translating it immediately.  However, on the location where the message
-is produced, we do not yet know to what language to translate: that
-depends on the front-end, the log dispatcher.
+is produced, we do not yet know in what language to translate it to:
+that depends on the front-end, the log dispatcher.
 .SH "METHODS"
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBclone\fR(\s-1OPTIONS\s0, \s-1VARIABLES\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBclone\fR(\s-1OPTIONS\s0, \s-1VARIABLES\s0)" 4
-.IX Item "$obj->clone(OPTIONS, VARIABLES)"
+.ie n .IP "$obj\->\fBclone\fR(%options, $variables)" 4
+.el .IP "\f(CW$obj\fR\->\fBclone\fR(%options, \f(CW$variables\fR)" 4
+.IX Item "$obj->clone(%options, $variables)"
 Returns a new object which copies info from original, and updates it
-with the specified \s-1OPTIONS\s0 and \s-1VARIABLES\s0.  The advantage is that the
+with the specified \f(CW%options\fR and \f(CW$variables\fR.  The advantage is that the
 cached translations are shared between the objects.
 .Sp
 example: use of \fIclone()\fR
@@ -167,71 +193,116 @@ example: use of \fIclone()\fR
 \& print $s;     # found 5 files
 \& print $t;     # found 3 files
 .Ve
-.IP "Log::Report::Message\->\fBnew\fR(\s-1OPTIONS\s0, \s-1VARIABLES\s0)" 4
-.IX Item "Log::Report::Message->new(OPTIONS, VARIABLES)"
-\&\fBDo not use this method directly\fR, but use Log::Report::_\|_() and
-friends.
+.ie n .IP "Log::Report::Message\->\fBfromTemplateToolkit\fR($domain, $msgid, $params)" 4
+.el .IP "Log::Report::Message\->\fBfromTemplateToolkit\fR($domain, \f(CW$msgid\fR, \f(CW$params\fR)" 4
+.IX Item "Log::Report::Message->fromTemplateToolkit($domain, $msgid, $params)"
+See Log::Report::Extract::Template on the details how to integrate
+Log::Report translations with Template::Toolkit (version 1 and 2)
+.IP "Log::Report::Message\->\fBnew\fR(%options)" 4
+.IX Item "Log::Report::Message->new(%options)"
+\&\fBEnd-users: do not use this method directly\fR, but use Log::Report::_\|_()
+and friends.  The \f(CW%options\fR is a mixed list of object initiation parameters
+(all with a leading underscore) and variables to be filled in into the
+translated \f(CW\*(C`_msgid\*(C'\fR string.
 .Sp
-.Vb 12
+.Vb 10
 \& \-Option   \-\-Default
 \&  _append    undef
 \&  _category  undef
 \&  _class     []
 \&  _classes   []
+\&  _context   undef
 \&  _count     undef
-\&  _domain    from use
+\&  _domain    <from "use Log::Report">
 \&  _expand    false
+\&  _join      $" $LIST_SEPARATOR
+\&  _lang      <from locale>
 \&  _msgid     undef
 \&  _plural    undef
 \&  _prepend   undef
 \&  _to        <undef>
 .Ve
 .RS 4
-.IP "_append => \s-1STRING\s0" 2
-.IX Item "_append => STRING"
-.PD 0
+.IP "_append => STRING|MESSAGE" 2
+.IX Item "_append => STRING|MESSAGE"
+Text as \s-1STRING\s0 or \s-1MESSAGE\s0 object to be displayed after the display
+of this message.
 .IP "_category => \s-1INTEGER\s0" 2
 .IX Item "_category => INTEGER"
+The category when the real gettext library is used, for instance
+\&\s-1LC_MESSAGES\s0.
 .IP "_class => STRING|ARRAY" 2
 .IX Item "_class => STRING|ARRAY"
-.PD
 When messages are used for exception based programming, you add
 \&\f(CW\*(C`_class\*(C'\fR parameters to the argument list.  Later, with for instance
 Log::Report::Dispatcher::Try::wasFatal(class), you can check the
 category of the message.
 .Sp
 One message can be part of multiple classes.  The \s-1STRING\s0 is used as
-comma\- and/or blank seperated list of class tokens, the \s-1ARRAY\s0 lists all
-tokens seperately. See \fIclasses()\fR.
+comma\- and/or blank separated list of class tokens (barewords), the
+\&\s-1ARRAY\s0 lists all tokens separately. See \fIclasses()\fR.
 .IP "_classes => STRING|ARRAY" 2
 .IX Item "_classes => STRING|ARRAY"
 Alternative for \f(CW\*(C`_class\*(C'\fR, which cannot be used at the same time.
-.IP "_count => \s-1INTEGER\s0" 2
-.IX Item "_count => INTEGER"
-When defined, then \f(CW\*(C`_plural\*(C'\fR need to be defined as well.
+.IP "_context => WORDS|ARRAY" 2
+.IX Item "_context => WORDS|ARRAY"
+[1.00] Set keywords which can be used to select alternatives
+between translations.  Read the \s-1DETAILS\s0 section in
+Log::Report::Translator::Context
+.IP "_count => INTEGER|ARRAY|HASH" 2
+.IX Item "_count => INTEGER|ARRAY|HASH"
+When defined, the \f(CW\*(C`_plural\*(C'\fR need to be defined as well.  When an
+\&\s-1ARRAY\s0 is provided, the length of the \s-1ARRAY\s0 is taken.  When a \s-1HASH\s0
+is given, the number of keys in the \s-1HASH\s0 is used.
 .IP "_domain => \s-1STRING\s0" 2
 .IX Item "_domain => STRING"
-The textdomain in which this msgid is defined.
+The text-domain (translation table) to which this \f(CW\*(C`_msgid\*(C'\fR belongs.
+.Sp
+With this parameter, your can \*(L"borrow\*(R" translations from other textdomains.
+Be very careful with this (although there are good use-cases)  The xgettext
+msgid extractor may add the used msgid to this namespace as well.  To
+avoid that, add a harmless '+':
+.Sp
+.Vb 1
+\&  print _\|_x(+"errors", _domain => \*(Aqglobal\*(Aq);
+.Ve
+.Sp
+The extractor will not take the msgid when it is an expression.  The '+'
+has no effect on the string at runtime.
 .IP "_expand => \s-1BOOLEAN\s0" 2
 .IX Item "_expand => BOOLEAN"
-Indicates whether variables are filled-in.
+Indicates whether variables are to be filled-in.
+.IP "_join => \s-1STRING\s0" 2
+.IX Item "_join => STRING"
+Which \s-1STRING\s0 to be used then an \s-1ARRAY\s0 is being filled-in.
+.IP "_lang => \s-1ISO\s0" 2
+.IX Item "_lang => ISO"
+[1.00] Override language setting from locale, for instance because that
+is not configured correctly (yet).  This does not extend to prepended
+or appended translated message object.
 .IP "_msgid => \s-1MSGID\s0" 2
 .IX Item "_msgid => MSGID"
-The message label, which refers to some translation information.  Usually
-a string which is close the English version of the error message.  This
-will also be used if there is no translation possible
+The message label, which refers to some translation information.
+Usually a string which is close the English version of the message.
+This will also be used if there is no translation possible/known.
+.Sp
+Leading white-space \f(CW\*(C`\es\*(C'\fR will be added to \f(CW\*(C`_prepend\*(C'\fR.  Trailing
+white-space will be added before \f(CW\*(C`_append\*(C'\fR.
 .IP "_plural => \s-1MSGID\s0" 2
 .IX Item "_plural => MSGID"
-Can be specified when a \f(CW\*(C`_count\*(C'\fR is specified.  This plural form of
-the message is used to simplify translation, and as fallback when no
-translations are possible: therefore, this can best resemble an English
-message.
-.IP "_prepend => \s-1STRING\s0" 2
-.IX Item "_prepend => STRING"
-.PD 0
+Can be used together with \f(CW\*(C`_count\*(C'\fR.  This plural form of the \f(CW\*(C`_msgid\*(C'\fR
+text is used to simplify the work of translators, and as fallback when
+no translation is possible: therefore, this can best resemble an
+English message.
+.Sp
+White-space at the beginning and end of the string are stripped off.
+The white-space provided by the \f(CW\*(C`_msgid\*(C'\fR will be used.
+.IP "_prepend => STRING|MESSAGE" 2
+.IX Item "_prepend => STRING|MESSAGE"
+Text as \s-1STRING\s0 or \s-1MESSAGE\s0 object to be displayed before the display
+of this message.
 .IP "_to => \s-1NAME\s0" 2
 .IX Item "_to => NAME"
-.PD
 Specify the \s-1NAME\s0 of a dispatcher as destination explicitly. Short
 for  \f(CW\*(C`report {to => NAME}, ...\*(C'\fR  See \fIto()\fR
 .RE
@@ -239,68 +310,93 @@ for  \f(CW\*(C`report {to => NAME}, ...\*(C'\fR  See \fIto()\fR
 .RE
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBappend\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBappend\fR" 4
-.IX Item "$obj->append"
+.ie n .IP "$obj\->\fBappend\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBappend\fR()" 4
+.IX Item "$obj->append()"
 Returns the string or Log::Report::Message object which is appended
 after this one.  Usually \f(CW\*(C`undef\*(C'\fR.
-.ie n .IP "$obj\->\fBclasses\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBclasses\fR" 4
-.IX Item "$obj->classes"
+.ie n .IP "$obj\->\fBclasses\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBclasses\fR()" 4
+.IX Item "$obj->classes()"
 Returns the \s-1LIST\s0 of classes which are defined for this message; message
 group indicators, as often found in exception-based programming.
-.ie n .IP "$obj\->\fBcount\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcount\fR" 4
-.IX Item "$obj->count"
+.ie n .IP "$obj\->\fBcontext\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcontext\fR()" 4
+.IX Item "$obj->context()"
+Returns an \s-1HASH\s0 if there is a context defined for this message.
+.ie n .IP "$obj\->\fBcount\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcount\fR()" 4
+.IX Item "$obj->count()"
 Returns the count, which is used to select the translation
 alternatives.
-.ie n .IP "$obj\->\fBdomain\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBdomain\fR" 4
-.IX Item "$obj->domain"
+.ie n .IP "$obj\->\fBdomain\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBdomain\fR()" 4
+.IX Item "$obj->domain()"
 Returns the domain of the first translatable string in the structure.
-.ie n .IP "$obj\->\fBmsgid\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBmsgid\fR" 4
-.IX Item "$obj->msgid"
+.ie n .IP "$obj\->\fBmsgid\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBmsgid\fR()" 4
+.IX Item "$obj->msgid()"
 Returns the msgid which will later be translated.
-.ie n .IP "$obj\->\fBprepend\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBprepend\fR" 4
-.IX Item "$obj->prepend"
+.ie n .IP "$obj\->\fBprepend\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBprepend\fR()" 4
+.IX Item "$obj->prepend()"
 Returns the string which is prepended to this one.  Usually \f(CW\*(C`undef\*(C'\fR.
-.ie n .IP "$obj\->\fBto\fR([\s-1NAME\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBto\fR([\s-1NAME\s0])" 4
-.IX Item "$obj->to([NAME])"
-Returns the \s-1NAME\s0 of a dispatcher if explicitly specified with
+.ie n .IP "$obj\->\fBto\fR( [$name] )" 4
+.el .IP "\f(CW$obj\fR\->\fBto\fR( [$name] )" 4
+.IX Item "$obj->to( [$name] )"
+Returns the \f(CW$name\fR of a dispatcher if explicitly specified with
 the '_to' key. Can also be used to set it.  Usually, this will
 return undef, because usually all dispatchers get all messages.
-.ie n .IP "$obj\->\fBvalueOf\fR(\s-1PARAMETER\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBvalueOf\fR(\s-1PARAMETER\s0)" 4
-.IX Item "$obj->valueOf(PARAMETER)"
-Lookup the named \s-1PARAMETER\s0 for the message.  All pre-defined names
-have their own method, and should be used with preference.
+.ie n .IP "$obj\->\fBvalueOf\fR($parameter)" 4
+.el .IP "\f(CW$obj\fR\->\fBvalueOf\fR($parameter)" 4
+.IX Item "$obj->valueOf($parameter)"
+Lookup the named \f(CW$parameter\fR for the message.  All pre-defined names
+have their own method which should be used with preference.
 .Sp
 example:
 .Sp
 When the message was produced with
-  my \f(CW@files\fR = qw/one two three/;
-  my \f(CW$msg\fR = _\|_xn \*(L"found one file: {files}\*(R"
-               , \*(L"found {_count} files: {files}\*(R"
-               , scalar \f(CW@files\fR, files => \e@files
-               , _class => '\s-1IO\s0, files';
+.Sp
+.Vb 9
+\&  my @files = qw/one two three/;
+\&  my $msg = _\|_xn "found one file: {file}"
+\&               , "found {nrfiles} files: {files}"
+\&               , scalar @files
+\&               , file    => $files[0]
+\&               , files   => \e@files
+\&               , nrfiles => @files+0
+\&               , _class  => \*(AqIO, files\*(Aq
+\&               , _join   => \*(Aq, \*(Aq;
+.Ve
 .Sp
 then the values can be takes from the produced message as
-  my \f(CW$files\fR = \f(CW$msg\fR\->valueOf('files');  # returns \s-1ARRAY\s0 reference
-  print @$files;              # 3
-  my \f(CW$count\fR = \f(CW$msg\fR\->count;    # 3
-  my \f(CW@class\fR = \f(CW$msg\fR\->classes;  # '\s-1IO\s0', 'files'
-  if($msg\->inClass('files'))  # true
+.Sp
+.Vb 5
+\&  my $files = $msg\->valueOf(\*(Aqfiles\*(Aq);  # returns ARRAY reference
+\&  print @$files;              # 3
+\&  my $count = $msg\->count;    # 3
+\&  my @class = $msg\->classes;  # \*(AqIO\*(Aq, \*(Aqfiles\*(Aq
+\&  if($msg\->inClass(\*(Aqfiles\*(Aq))  # true
+.Ve
+.Sp
+Simplified, the above example can also be written as:
+.Sp
+.Vb 6
+\&  local $" = \*(Aq, \*(Aq;
+\&  my $msg  = _\|_xn "found one file: {files}"
+\&                , "found {_count} files: {files}"
+\&                , @files      # has scalar context
+\&                , files   => \e@files
+\&                , _class  => \*(AqIO, files\*(Aq;
+.Ve
 .SS "Processing"
 .IX Subsection "Processing"
-.ie n .IP "$obj\->\fBconcat\fR(STRING|OBJECT, [\s-1PREPEND\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBconcat\fR(STRING|OBJECT, [\s-1PREPEND\s0])" 4
-.IX Item "$obj->concat(STRING|OBJECT, [PREPEND])"
+.ie n .IP "$obj\->\fBconcat\fR( STRING|$object, [$prepend] )" 4
+.el .IP "\f(CW$obj\fR\->\fBconcat\fR( STRING|$object, [$prepend] )" 4
+.IX Item "$obj->concat( STRING|$object, [$prepend] )"
 This method implements the overloading of concatenation, which is needed
-to delay translations even longer.  When \s-1PREPEND\s0 is true, the \s-1STRING\s0
-or \s-1OBJECT\s0 (other \f(CW\*(C`Log::Report::Message\*(C'\fR) needs to prepended, otherwise
+to delay translations even longer.  When \f(CW$prepend\fR is true, the \s-1STRING\s0
+or \f(CW$object\fR (other \f(CW\*(C`Log::Report::Message\*(C'\fR) needs to prepended, otherwise
 it is appended.
 .Sp
 example: of concatenation
@@ -309,24 +405,36 @@ example: of concatenation
 \& print _\|_"Hello" . \*(Aq \*(Aq . _\|_"World!";
 \& print _\|_("Hello")\->concat(\*(Aq \*(Aq)\->concat(_\|_"World!")\->concat("\en");
 .Ve
-.ie n .IP "$obj\->\fBinClass\fR(CLASS|REGEX)" 4
-.el .IP "\f(CW$obj\fR\->\fBinClass\fR(CLASS|REGEX)" 4
-.IX Item "$obj->inClass(CLASS|REGEX)"
-Returns true if the message is in the specified \s-1CLASS\s0 (string) or
-matches the \s-1REGEX\s0.  The trueth value is the (first matching) class.
-.ie n .IP "$obj\->\fBtoString\fR([\s-1LOCALE\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBtoString\fR([\s-1LOCALE\s0])" 4
-.IX Item "$obj->toString([LOCALE])"
+.ie n .IP "$obj\->\fBinClass\fR($class|Regexp)" 4
+.el .IP "\f(CW$obj\fR\->\fBinClass\fR($class|Regexp)" 4
+.IX Item "$obj->inClass($class|Regexp)"
+Returns true if the message is in the specified \f(CW$class\fR (string) or
+matches the Regexp.  The trueth value is the (first matching) class.
+.ie n .IP "$obj\->\fBtoHTML\fR( [$locale] )" 4
+.el .IP "\f(CW$obj\fR\->\fBtoHTML\fR( [$locale] )" 4
+.IX Item "$obj->toHTML( [$locale] )"
+[1.11] Translate the message, and then entity encode \s-1HTML\s0 volatile characters.
+.ie n .IP "$obj\->\fBtoString\fR( [$locale] )" 4
+.el .IP "\f(CW$obj\fR\->\fBtoString\fR( [$locale] )" 4
+.IX Item "$obj->toString( [$locale] )"
 Translate a message.  If not specified, the default locale is used.
-.ie n .IP "$obj\->\fBuntranslated\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBuntranslated\fR" 4
-.IX Item "$obj->untranslated"
+.ie n .IP "$obj\->\fBuntranslated\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBuntranslated\fR()" 4
+.IX Item "$obj->untranslated()"
 Return the concatenation of the prepend, msgid, and append strings.  Variable
 expansions within the msgid is not performed.
 .SH "DETAILS"
 .IX Header "DETAILS"
 .SS "\s-1OPTIONS\s0 and \s-1VARIABLES\s0"
 .IX Subsection "OPTIONS and VARIABLES"
+The Log::Report functions which define translation request can all
+have \s-1OPTIONS\s0.  Some can have \s-1VARIABLES\s0 to be interpolated in the string as
+well.  To distinguish between the \s-1OPTIONS\s0 and \s-1VARIABLES\s0 (both a list
+of key-value pairs), the keys of the \s-1OPTIONS\s0 start with an underscore \f(CW\*(C`_\*(C'\fR.
+As result of this, please avoid the use of keys which start with an
+underscore in variable names.  On the other hand, you are allowed to
+interpolate \s-1OPTION\s0 values in your strings.
+.PP
 \fIInterpolating\fR
 .IX Subsection "Interpolating"
 .PP
@@ -335,40 +443,65 @@ translated \s-1MSGID\s0 string.  The translation can contain the \s-1VARIABLE\s0
 and \s-1OPTION\s0 names between curly brackets.  Text between curly brackets
 which is not a known parameter will be left untouched.
 .PP
-Next to the name, you can specify a format code.  With \f(CW\*(C`gettext()\*(C'\fR,
-you often see this:
-.PP
 .Vb 1
-\& printf gettext("approx pi: %.6f\en"), PI;
+\& fault _\|_x"cannot open open {filename}", filename => $fn;
+\&
+\& print _\|_xn"directory {dir} contains one file"
+\&          ,"directory {dir} contains {nr_files} files"
+\&          , scalar(@files)            # (1) (2)
+\&          , nr_files => scalar @files # (3)
+\&          , dir      => $dir;
 .Ve
 .PP
-Locale::TextDomain has two ways.
+(1) this required third parameter is used to switch between the different
+plural forms.  English has only two forms, but some languages have many
+more.
+.PP
+(2) the \*(L"scalar\*(R" keyword is not needed, because the third parameter is
+in \s-1SCALAR\s0 context.  You may also pass \f(CW\*(C` \e@files \*(C'\fR there, because ARRAYs
+will be converted into their length.  A \s-1HASH\s0 will be converted into the
+number of keys in the \s-1HASH\s0.
+.PP
+(3) the \f(CW\*(C`scalar\*(C'\fR keyword is required here, because it is \s-1LIST\s0 context:
+otherwise all filenames will be filled-in as parameters to \f(CW\*(C`_\|_xn()\*(C'\fR.
+See below for the available \f(CW\*(C`_count\*(C'\fR valure, to see how the \f(CW\*(C`nr_files\*(C'\fR
+parameter can disappear.
+.PP
+\fIInterpolation of \s-1VARIABLES\s0\fR
+.IX Subsection "Interpolation of VARIABLES"
+.PP
+\&\f(CW\*(C`Log::Report\*(C'\fR uses String::Print to interpolate values in(translated)
+messages.  This is a very powerful syntax, and you should certainly read
+that manual-page.  Here, we only described additional features, specific
+to the usage of \f(CW\*(C`String::Print\*(C'\fR in \f(CW\*(C`Log::Report::Message\*(C'\fR objects.
+.PP
+There is no way of checking beforehand whether you have provided all
+required values, to be interpolated in the translated string.
+.PP
+For interpolating, the following rules apply:
+.IP "\(bu" 4
+Simple scalar values are interpolated \*(L"as is\*(R"
+.IP "\(bu" 4
+References to SCALARs will collect the value on the moment that the
+output is made.  The \f(CW\*(C`Log::Report::Message\*(C'\fR object which is created with
+the \f(CW\*(C`_\|_xn\*(C'\fR can be seen as a closure.  The translation can be reused.
+See example below.
+.IP "\(bu" 4
+Code references can be used to create the data \*(L"under fly\*(R".  The
+\&\f(CW\*(C`Log::Report::Message\*(C'\fR object which is being handled is passed as
+only argument.  This is a hash in which all \s-1OPTIONS\s0 and \s-1VARIABLES\s0
+can be found.
+.IP "\(bu" 4
+When the value is an \s-1ARRAY\s0, all members will be interpolated with \f(CW$"\fR
+between the elements.  Alternatively (maybe nicer), you can pass an
+interpolation parameter via the \f(CW\*(C`_join\*(C'\fR \s-1OPTION\s0.
 .PP
 .Vb 2
-\& printf _\|_"approx pi: %.6f\en", PI;
-\& print _\|_x"approx pi: {approx}\en", approx => sprintf("%.6f", PI);
+\& local $" = \*(Aq, \*(Aq;
+\& error _\|_x"matching files: {files}", files => \e@files;
+\&
+\& error _\|_x"matching files: {files}", files => \e@files, _join => \*(Aq, \*(Aq;
 .Ve
-.PP
-The first does not respect the wish to be able to reorder the
-arguments during translation.  The second version is quite long.
-With \f(CW\*(C`Log::Report\*(C'\fR, above syntaxes do work, but you can also do
-.PP
-.Vb 1
-\& print _\|_x"approx pi: {pi%.6f}\en", pi => PI;
-.Ve
-.PP
-So: the interpolation syntax is \f(CW\*(C` { name [format] } \*(C'\fR.  Other
-examples:
-.PP
-.Vb 3
-\& print _\|_x "{perms} {links%2d} {user%\-8s} {size%10d} {fn}\en"
-\&         , perms => \*(Aq\-rw\-r\-\-r\-\-\*(Aq, links => 1, user => \*(Aqme\*(Aq
-\&         , size => \*(Aq12345\*(Aq, fn => $filename;
-.Ve
-.PP
-An additional advantage is the fact that not all languages produce
-comparable length strings.  Now, the translators can take care that
-the layout of tables is optimal.
 .PP
 \fIInterpolation of \s-1OPTIONS\s0\fR
 .IX Subsection "Interpolation of OPTIONS"
@@ -378,9 +511,9 @@ simplify your coding.  The useful names are:
 .IP "_msgid" 4
 .IX Item "_msgid"
 The \s-1MSGID\s0 as provided with Log::Report::_\|_() and Log::Report::_\|\fI_x()\fR
-.IP "_msgid, _plural, _count" 4
-.IX Item "_msgid, _plural, _count"
-The single \s-1MSGID\s0 and \s-1PLURAL\s0 MSGIDs, respectively the \s-1COUNT\s0 as used with
+.IP "_plural, _count" 4
+.IX Item "_plural, _count"
+The \s-1PLURAL\s0 MSGIDs, respectively the \s-1COUNT\s0 as used with
 Log::Report::_\|\fI_n()\fR and Log::Report::_\|\fI_nx()\fR
 .IP "_textdomain" 4
 .IX Item "_textdomain"
@@ -391,38 +524,60 @@ Are to be used to group reports, and can be queried with \fIinClass()\fR,
 \&\fILog::Report::Exception::inClass()\fR, or
 \&\fILog::Report::Dispatcher::Try::wasFatal()\fR.
 .PP
-\fIInterpolation of \s-1VARIABLES\s0\fR
-.IX Subsection "Interpolation of VARIABLES"
+\&\fB. Example: using the _count\fR
 .PP
-There is no way of checking beforehand whether you have provided all required
-values, to be interpolated in the translated string.  A translation could be
-specified like this:
+With Locale::TextDomain, you have to do
 .PP
 .Vb 6
-\& my @files = @ARGV;
-\& local $"  = \*(Aq, \*(Aq;
-\& my $s = _\|_nx "One file specified ({files})"
-\&            , "{_count} files specified ({files})"
-\&            , scalar @files     # actually, \*(Aqscalar\*(Aq is not needed
-\&            , files => \e@files;
+\&  use Locale::TextDomain;
+\&  print _\|_nx ( "One file has been deleted.\en"
+\&             , "{num} files have been deleted.\en"
+\&             , $num_files
+\&             , num => $num_files
+\&             );
 .Ve
 .PP
-For interpolating, the following rules apply:
-.IP "." 4
-Simple scalar values are interpolated \*(L"as is\*(R"
-.IP "." 4
-References to SCALARs will collect the value on the moment that the
-output is made.  The \f(CW\*(C`Log::Report::Message\*(C'\fR object which is created with
-the \f(CW\*(C`_\|_xn\*(C'\fR can be seen as a closure.  The translation can be reused.
-See example below.
-.IP "." 4
-Code references can be used to create the data \*(L"under fly\*(R".  The
-\&\f(CW\*(C`Log::Report::Message\*(C'\fR object which is being handled is passed as
-only argument.  This is a hash in which all \s-1OPTIONS\s0 and \s-1VARIABLES\s0
-can be found.
-.IP "." 4
-When the value is an \s-1ARRAY\s0, all members will be interpolated with \f(CW$"\fR
-between the elements.
+With \f(CW\*(C`Log::Report\*(C'\fR, you can do
+.PP
+.Vb 5
+\&  use Log::Report;
+\&  print _\|_nx ( "One file has been deleted.\en"
+\&             , "{_count} files have been deleted.\en"
+\&             , $num_files
+\&             );
+.Ve
+.PP
+Of course, you need to be aware that the name used to reference the
+counter is fixed to \f(CW\*(C`_count\*(C'\fR.  The first example works as well, but
+is more verbose.
+.PP
+\fIHandling white-spaces\fR
+.IX Subsection "Handling white-spaces"
+.PP
+In above examples, the msgid and plural form have a trailing new-line.
+In general, it is much easier to write
+.PP
+.Vb 1
+\&   print _\|_x"Hello, World!\en";
+.Ve
+.PP
+than
+.PP
+.Vb 1
+\&   print _\|_x("Hello, World!") . "\en";
+.Ve
+.PP
+For the translation tables, however, that trailing new-line is \*(L"over
+information\*(R"; it is an layout issue, not a translation issue.
+.PP
+Therefore, the first form will automatically be translated into the
+second.  All leading and trailing white-space (blanks, new-lines, tabs,
+\&...) are removed from the msgid before the look-up, and then added to
+the translated string.
+.PP
+Leading and trailing white-space on the plural form will also be
+removed.  However, after translation the spacing of the msgid will
+be used.
 .PP
 \fIAvoiding repetative translations\fR
 .IX Subsection "Avoiding repetative translations"
@@ -432,7 +587,7 @@ handle the \f(CW\*(C`_\|_x()\*(C'\fR is created each time.
 .PP
 .Vb 3
 \& for my $i (1..100_000)
-\& {   print _\|_x "Hello World {i}\en", $i;
+\& {   print _\|_x "Hello World {i}\en", i => $i;
 \& }
 .Ve
 .PP
@@ -449,43 +604,38 @@ interpolation:
 \& }
 .Ve
 .PP
-Oops, not what you mean.
-With Log::Report, you can do
+Oops, not what you mean because the first value of \f(CW$i\fR is captured
+in the initial message object.  With Log::Report, you can do it (except
+when you use contexts)
 .PP
 .Vb 6
 \& use Log::Report;
 \& my $i;
-\& my $s = _\|_x("Hello World {i}", i => \e$i);
+\& my $s = _\|_x("Hello World {i}\en", i => \e$i);
 \& foreach $i (1..100_000)
 \& {   print $s;
 \& }
 .Ve
 .PP
-Mind you not to write: \f(CW\*(C`for my $i\*(C'\fR in this case!!!!
+Mind you not to write: \f(CW\*(C`for my $i\*(C'\fR in above case!!!!
+.PP
 You can also write an incomplete translation:
 .PP
 .Vb 5
 \& use Log::Report;
-\& my $s = _\|_x "Hello World {i}";
+\& my $s = _\|_x "Hello World {i}\en";
 \& foreach my $i (1..100_000)
 \& {   print $s\->(i => $i);
 \& }
 .Ve
 .PP
 In either case, the translation will be looked-up only once.
-.PP
-The Log::Report functions which define translation request can all
-have \s-1OPTIONS\s0.  Some can have \s-1VARIABLES\s0 to be interpolated in the string as
-well.  To distinguish between the \s-1OPTIONS\s0 and \s-1VARIABLES\s0 (both a list
-of key-value pairs), the keys of the \s-1OPTIONS\s0 start with an underscore \f(CW\*(C`_\*(C'\fR.
-As result of this, please avoid the use of keys which start with an
-underscore in variable names.  On the other hand, you are allowed to
-interpolate \s-1OPTION\s0 values in your strings.
 .SH "OVERLOADING"
 .IX Header "OVERLOADING"
-.IP "overload: \fBas function\fR" 4
-.IX Item "overload: as function"
-When the object is used to call as function, a new object is
+.ie n .IP "overload: \fBas \fB$function\fB\fR" 4
+.el .IP "overload: \fBas \f(CB$function\fB\fR" 4
+.IX Item "overload: as $function"
+When the object is used to call as \f(CW$function\fR, a new object is
 created with the data from the original one but updated with the
 new parameters.  Implemented in \f(CW\*(C`clone()\*(C'\fR.
 .IP "overload: \fBconcatenation\fR" 4
@@ -499,11 +649,11 @@ When the object is used in string context, it will get translated.
 Implemented as \fItoString()\fR.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
+This module is part of Log-Report distribution version 1.19,
+built on February 09, 2017. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

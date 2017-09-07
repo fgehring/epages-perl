@@ -9567,3 +9567,25 @@ C<LINKTYPE: dynamic>
 
 =back
 
+=head2 Thu Sep  7 13:45:59 2017: C<Module> L<Log::Report|Log::Report>
+
+=over 4
+
+=item *
+
+C<installed into: /srv/epages/eproot/Perl/lib/linux>
+
+=item *
+
+C<EXE_FILES: >
+
+=item *
+
+C<VERSION: 1.19>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=back
+

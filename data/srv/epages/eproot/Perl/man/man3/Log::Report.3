@@ -124,13 +124,13 @@
 .\" ========================================================================
 .\"
 .IX Title "Log::Report 3"
-.TH Log::Report 3 "2011-08-23" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Log::Report 3 "2017-02-09" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-Log::Report \- report a problem, pluggable handlers and language support
+Log::Report \- report a problem, with exceptions and translation support
 .SH "INHERITANCE"
 .IX Header "INHERITANCE"
 .Vb 2
@@ -139,127 +139,138 @@ Log::Report \- report a problem, pluggable handlers and language support
 .Ve
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-.Vb 1
-\& # Read section "The Reason for the report" first!!!
+.Vb 2
+\& # Invocation with \*(Aqmode\*(Aq to get trace and verbose messages
+\& use Log::Report mode => \*(AqDEBUG\*(Aq;
 \&
-\& # In each package, declare a name\-space.  Different packages
-\& # used by one program can have different translation tables.
-\& use Log::Report \*(Aqmy\-domain\*(Aq;
+\& # Usually invoked with a domain, which groups packages
+\& use Log::Report \*(Aqmy\-domain\*(Aq, %options;
 \&
-\& # Many destinations in parallel possible. Log::Report::Dispatcher
-\& dispatcher PERL => \*(Aqdefault\*(Aq
-\&   , reasons => \*(AqNOTICE\-\*(Aq;   # this disp. is automatically added
+\& # Interpolation syntax via String::Print
+\& # First step to translations, once you need it.
+\& print _\|_x"my name is {name}", name => $n;  # print, so no exception
+\& print _\|_"Hello World\en";     # (optional) translation, no interpolation
+\& print _\|_x\*(AqHello World\*(Aq;      # SYNTAX ERROR!!  \*(Aq is alternative for ::
 \&
-\& dispatcher SYSLOG => \*(Aqsyslog\*(Aq
-\&   , charset => \*(Aqiso\-8859\-1\*(Aq # explicit conversions
-\&   , locale => \*(Aqen_US\*(Aq;      # overrule user\*(Aqs locale
+\& # Functions replacing die/warn/carp, casting exceptions.
+\& error "oops";                # exception like die(), no translation
+\& \-f $config or panic "Help!"; # alert/error/fault/info/...more
 \&
-\& # Produce an error, long syntax
-\& report ERROR => _\|_x(\*(Aqgettext string\*(Aq, param => $param, ...)
+\& # Combined exception, interpolation, and optional translation
+\& error _\|_x"Help!";            # _\|_x() creates ::Message object
+\& error _\|_x(\*(Aqgettext msgid\*(Aq, param => $value, ...)
 \&     if $condition;
 \&
-\& # when syntax=SHORT (default since 0.26), many useful functions
-\& error _\|_x(\*(Aqgettext string\*(Aq, param => $param, ...)
-\&     if $condition;
+\& # Also non fatal "exceptions" find their way to dispatchers
+\& info _\|_x"started {pid}", pid => $$;   # translatable
+\& debug "$i was here!";        # you probably do not want to translate debug
+\& panic "arrghhh";             # like Carp::Confess
 \&
-\& # Overrule standard behavior for single message with HASH as
-\& # first parameter.  Only long syntax
-\& use Errno qw/ENOMEM/;
-\& use Log::Report syntax => \*(AqREPORT\*(Aq;
-\& report {to => \*(Aqsyslog\*(Aq, errno => ENOMEM}
-\&   , FAULT => _\|_x"cannot allocate {size} bytes", size => $size;
+\& # Many destinations for an exception message (may exist in parallel)
+\& dispatcher PERL => \*(Aqdefault\*(Aq # see Log::Report::Dispatcher: use die/warn
+\&   , reasons => \*(AqNOTICE\-\*(Aq;    # this dispatcher is already present at start
 \&
-\& # avoid messages without report level for daemons
-\& print _\|_"Hello World", "\en";  # only translation, no exception
-\& print _\|_\*(AqHello World\*(Aq;  # ERROR!!  \*(Aq is alternative for ::
+\& dispatcher SYSLOG => \*(Aqsyslog\*(Aq# also send to syslog
+\&   , charset => \*(Aqiso\-8859\-1\*(Aq  # explicit character conversions
+\&   , locale => \*(Aqen_US\*(Aq;       # overrule user\*(Aqs locale
 \&
-\& # fill\-in values, like Locale::TextDomain and gettext
+\& dispatcher close => \*(Aqdefault\*(Aq;  # stop default die/warn dispatcher
+\&
+\& # Fill\-in values, like Locale::TextDomain and gettext
 \& # See Log::Report::Message section DETAILS
-\& fault _\|_x "cannot allocate {size} bytes", size => $size;
-\& fault "cannot allocate $size bytes";      # no translation
-\& fault _\|_x "cannot allocate $size bytes";  # wrong, not static
+\& fault _\|_x"cannot allocate {size} bytes", size => $size;
+\& fault "cannot allocate $size bytes";     # no translation, ok
+\& fault _\|_x"cannot allocate $size bytes";  # not translatable, wrong
 \&
-\& print _\|_xn("found one file", "found {_count} files", @files), "\en";
+\& # Translation depending on count
+\& # Leading and trailing whitespace stay magically outside translation
+\& # tables.  @files in scalar context.  Special parameter with _
+\& print _\|_xn"found one file\en", "found {_count} files", @files;
+\&
+\& # Borrow from an other text\-domain (see Log::Report::Message)
+\& print _\|_x(+"errors in {line}", _domain => \*(Aqglobal\*(Aq, line => $line);
 \&
 \& # catch errors (implements hidden eval/die)
 \& try { error };
 \& if($@) {...}      # $@ isa Log::Report::Dispatcher::Try
+\& if(my $exception = $@\->wasFatal)         # ::Exception object
 \&
-\& # Language translations at the IO/layer
-\& use POSIX \*(Aq:locale_h\*(Aq;
+\& # Language translations at the output component
+\& # Translation management via Log::Report::Lexicon
+\& use POSIX::1003::Locale qw/setlocale LC_ALL/;
 \& setlocale(LC_ALL, \*(Aqnl_NL\*(Aq);
-\& info _\|_"Hello World!";  # in Dutch, if translation table found
+\& info _\|_"Hello World!";      # in Dutch, if translation table found
 \&
 \& # Exception classes, see Log::Report::Exception
-\& my $msg = _\|_x"something", _class => \*(Aqlocal,mine\*(Aq;
-\& if($msg\->inClass(\*(Aqlocal\*(Aq)) ...
+\& try { error _\|_x"something", _class => \*(Aqparsing,schema\*(Aq };
+\& if($@\->wasFatal\->inClass(\*(Aqparsing\*(Aq)) ...
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-Handling messages to users can be a hassle, certainly when the same
-module is used for command-line and in a graphical interfaces, and
-has to cope with internationalization at the same time; this set of
-modules tries to simplify this.  Log::Report combines \f(CW\*(C`gettext\*(C'\fR features
-with Log::Dispatch\-like features.  However, you can also use this
-module to do only translations or only message dispatching.
+Get messages to users and logs.  \f(CW\*(C`Log::Report\*(C'\fR combines three tasks
+which are closely related in one:
+.IP ". logging (like Log::Log4Perl and syslog), and" 4
+.IX Item ". logging (like Log::Log4Perl and syslog), and"
+.PD 0
+.IP ". exceptions (like error and info), with" 4
+.IX Item ". exceptions (like error and info), with"
+.ie n .IP ". translations (like ""gettext"" and Locale::TextDomain)" 4
+.el .IP ". translations (like \f(CWgettext\fR and Locale::TextDomain)" 4
+.IX Item ". translations (like gettext and Locale::TextDomain)"
+.PD
 .PP
-Read more about how and why in the \*(L"\s-1DETAILS\s0\*(R" section, below.  Especially,
-you should \fBread about the \s-1REASON\s0 parameter\fR.
+You \fBdo not need\fR to use this module for all three reasons: pick what
+you need now, maybe extend the usage later.  Read more about how and
+why in the \*(L"\s-1DETAILS\s0\*(R" section, below.  Especially, you should \fBread
+about the \s-1REASON\s0 parameter\fR.
 .PP
-Content of the whole \f(CW\*(C`Log::Report\*(C'\fR package:
-.IP ". Log::Report" 4
-.IX Item ". Log::Report"
-Exports the functions to end-users.  To avoid the need to pass around
-an logger-object to all end-user packages, the singleton object is
-wrapped in functions.
-.IP ". Translating" 4
-.IX Item ". Translating"
-You can use the \s-1GNU\s0 gettext infrastructure (via \s-1MO\s0 files handled by
-Log::Report::Translator::Gettext), or extract strings via \s-1PPI\s0
-(Log::Report::Extract::PerlPPI) into \s-1PO\s0 files which can be
-used directly (Log::Report::Lexicon::POTcompact).
-.IP ". Dispatching" 4
-.IX Item ". Dispatching"
-Multiple dispatchers in parallel can be active. Log::Report::Dispatcher
-takes care that the back-end gets the messages of the severity it needs,
-translated and in the right character-set.
-.IP ". Exception handling" 4
-.IX Item ". Exception handling"
-A simple exception system is implemented via \fItry()\fR and
-Log::Report::Dispatcher::Try.
+Also, you can study this module swiftly via the article published in
+the German Perl \f(CW\*(C`$foo\-magazine\*(C'\fR.  English version:
+\&\fIhttp://perl.overmeer.net/log\-report/papers/201306\-PerlMagazine\-article\-en.html\fR
 .SH "FUNCTIONS"
 .IX Header "FUNCTIONS"
 .SS "Report Production and Configuration"
 .IX Subsection "Report Production and Configuration"
-.IP "\fBdispatcher\fR((\s-1TYPE\s0, \s-1NAME\s0, \s-1OPTIONS\s0)|(\s-1COMMAND\s0 => \s-1NAME\s0, [NAMEs]))" 4
-.IX Item "dispatcher((TYPE, NAME, OPTIONS)|(COMMAND => NAME, [NAMEs]))"
+.ie n .IP "\fBdispatcher\fR( <$type, $name, %options>|<$command, @names> )" 4
+.el .IP "\fBdispatcher\fR( <$type, \f(CW$name\fR, \f(CW%options\fR>|<$command, \f(CW@names\fR> )" 4
+.IX Item "dispatcher( <$type, $name, %options>|<$command, @names> )"
 The \f(CW\*(C`dispatcher\*(C'\fR function controls access to dispatchers: the back-ends
-which do the actual logging. Dispatchers are global entities, address by
-a symbolic free to chose \s-1NAME\s0.
+which process messages, do the logging.  Dispatchers are global entities,
+addressed by a symbolic \f(CW$name\fR.  Please read Log::Report::Dispatcher as
+well.
 .Sp
-The \f(CW\*(C`Log::Report\*(C'\fR suite has its own dispatcher \s-1TYPES\s0, but also connects
-to external dispatching frame-works. Each need some (minor) conversions,
+The \f(CW\*(C`Log::Report\*(C'\fR suite has its own dispatcher \f(CW@types\fR, but also connects
+to external dispatching frameworks.  Each need some (minor) conversions,
 especially with respect to translation of \s-1REASONS\s0 of the reports
 into log-levels as the back-end understands.
 .Sp
-The \s-1OPTIONS\s0 are a mixture of parameters needed for the
+[1.10] When you open a dispatcher with a \f(CW$name\fR which is already in use,
+that existing dispatcher gets closed.  Except when you have given an
+\&'dispatcher \*(L"do\-not\-reopen\*(R"' earlier, in which case the first object
+stays alive, and the second attempt ignored. [1.11] The automatically
+created default dispatcher will get replaced, even when this option
+is given, by another dispatcher which is named 'default'.
+.Sp
+The \f(CW%options\fR are a mixture of parameters needed for the
 Log::Report dispatcher wrapper and the settings of the back-end.
 See Log::Report::Dispatcher, the documentation for the back-end
 specific wrappers, and the back-ends for more details.
 .Sp
 Implemented COMMANDs are \f(CW\*(C`close\*(C'\fR, \f(CW\*(C`find\*(C'\fR, \f(CW\*(C`list\*(C'\fR, \f(CW\*(C`disable\*(C'\fR,
-\&\f(CW\*(C`enable\*(C'\fR, \f(CW\*(C`mode\*(C'\fR, \f(CW\*(C`filter\*(C'\fR, and \f(CW\*(C`needs\*(C'\fR.  Most commands are followed
-by a \s-1LIST\s0 of dispatcher NAMEs to be address.  For \f(CW\*(C`mode\*(C'\fR see section
-\&\*(L"Run modes\*(R"; it requires a \s-1MODE\s0 argument before the \s-1LIST\s0 of NAMEs.
-Non-existing names will be ignored. When \f(CW\*(C`ALL\*(C'\fR is specified, then
-all existing dispatchers will get addressed.  For \f(CW\*(C`filter\*(C'\fR see
-\&\*(L"Filters\*(R" in Log::Report::Dispatcher; it requires a \s-1CODE\s0 reference before
-the NAMEs of the dispatchers which will have the it applied (defaults to
-all).
+\&\f(CW\*(C`enable\*(C'\fR, \f(CW\*(C`mode\*(C'\fR, \f(CW\*(C`filter\*(C'\fR, \f(CW\*(C`needs\*(C'\fR, \f(CW\*(C`active\-try\*(C'\fR, and \f(CW\*(C`do\-not\-reopen\*(C'\fR.
+.Sp
+Most commands are followed by a \s-1LIST\s0 of dispatcher \f(CW@names\fR to be addressed.
+For \f(CW\*(C`mode\*(C'\fR see section \*(L"Run modes\*(R"; it requires a \s-1MODE\s0 argument
+before the \s-1LIST\s0 of NAMEs.  Non-existing names will be ignored. When
+\&\f(CW\*(C`ALL\*(C'\fR is specified, then all existing dispatchers will get addressed.
+For \f(CW\*(C`filter\*(C'\fR see \*(L"Filters\*(R" in Log::Report::Dispatcher; it requires a \s-1CODE\s0
+reference before the \f(CW@names\fR of the dispatchers which will have the it
+applied (defaults to all).
 .Sp
 With \f(CW\*(C`needs\*(C'\fR, you only provide a \s-1REASON:\s0 it will return the list of
 dispatchers which need to be called in case of a message with the \s-1REASON\s0
-is triggered.
+is triggered.  The \f(CW\*(C`active\-try\*(C'\fR [1.09] returns the closest surrounding
+exception catcher, a Log::Report::Dispatcher::Try object.
 .Sp
 For both the creation as COMMANDs version of this method, all objects
 involved are returned as \s-1LIST\s0, non-existing ones skipped.  In \s-1SCALAR\s0
@@ -275,37 +286,42 @@ example: play with dispatchers
 \&
 \& dispatcher close => \*(Aqmylog\*(Aq;            # cleanup
 \& my $obj = dispatcher find => \*(Aqmylog\*(Aq; 
-\& my @obj = dispatcher list;
+\& my @obj = dispatcher \*(Aqlist\*(Aq;
 \& dispatcher disable => \*(Aqsyslog\*(Aq;
 \& dispatcher enable => \*(Aqmylog\*(Aq, \*(Aqsyslog\*(Aq; # more at a time
-\& dispatcher mode => DEBUG => \*(Aqmylog\*(Aq;
-\& dispatcher mode => DEBUG => \*(AqALL\*(Aq;
+\& dispatcher mode => \*(AqDEBUG\*(Aq, \*(Aqmylog\*(Aq;
+\& dispatcher mode => \*(AqDEBUG\*(Aq, \*(AqALL\*(Aq;
+\& my $catcher = dispatcher \*(Aqactive\-try\*(Aq;
+\& dispatcher \*(Aqdo\-not\-reopen\*(Aq;
 \&
 \& my @need_info = dispatcher needs => \*(AqINFO\*(Aq;
-\& if(dispatcher needs => \*(AqINFO\*(Aq) ...
+\& if(dispatcher needs => \*(AqINFO\*(Aq) ...      # anyone needs INFO
 \&
 \& # Getopt::Long integration: see Log::Report::Dispatcher::mode()
 \& dispatcher PERL => \*(Aqdefault\*(Aq, mode => \*(AqDEBUG\*(Aq, accept => \*(AqALL\*(Aq
 \&     if $debug;
 .Ve
-.IP "\fBreport\fR([HASH\-of\-OPTIONS], \s-1REASON\s0, MESSAGE|(\s-1STRING\s0,PARAMS),)" 4
-.IX Item "report([HASH-of-OPTIONS], REASON, MESSAGE|(STRING,PARAMS),)"
-Produce a report for certain \s-1REASON\s0.  The \s-1MESSAGE\s0 is a
-Log::Report::Message object (which are created with the
-special translation syntax like _\|\fI_x()\fR).  A not-translated message
-is \fB\s-1ONE\s0\fR string with optional parameters.  The \s-1HASH\s0 is an optional
-first parameter, which can be used to influence the dispatchers.  The
-\&\s-1HASH\s0 contains any combination of the \s-1OPTIONS\s0 listed below.
+.ie n .IP "\fBreport\fR( [%options], $reason, $message|<\s-1STRING\s0,$params>, )" 4
+.el .IP "\fBreport\fR( [%options], \f(CW$reason\fR, \f(CW$message\fR|<\s-1STRING\s0,$params>, )" 4
+.IX Item "report( [%options], $reason, $message|<STRING,$params>, )"
+The \f(CW\*(C`report\*(C'\fR function is sending (for some \f(CW$reason\fR) a \f(CW$message\fR to be
+displayed or logged (by a `dispatcher').  This function is the core
+for \fIerror()\fR, \fIinfo()\fR etc functions, which are nicer names for this
+exception throwing: better use those short names.
 .Sp
-When \f(CW\*(C`syntax =\*(C'\fR '\s-1SHORT\s0'> is configured (the default), you will also have
-abbreviations available, where the \s-1REASON\s0 is the name of the function.
-See for instance \fIinfo()\fR. In that case, you loose the chance for
-\&\s-1OPTIONS\s0.
+The \f(CW$reason\fR is a string like '\s-1ERROR\s0' (for function \f(CW\*(C`error()\*(C'\fR).
+The \f(CW$message\fR is a Log::Report::Message object (which are created with
+the special translation syntax like _\|\fI_x()\fR).  The \f(CW$message\fR may also
+be a plain string, or an Log::Report::Exception object. The optional
+first parameter is a \s-1HASH\s0 which can be used to influence the dispatchers.
 .Sp
-Returns is the \s-1LIST\s0 of dispatchers used to log the \s-1MESSAGE\s0.  When
-empty, no back-end has accepted it so the \s-1MESSAGE\s0 was \*(L"lost\*(R".  Even when
-no back-end need the message, it program will still exit when there is
-\&\s-1REASON\s0 to.
+The optional \f(CW%options\fR are listed below.  Quite differently from other
+functions and methods, they have to be passed in a \s-1HASH\s0 as first parameter.
+.Sp
+This function returns the \s-1LIST\s0 of dispatchers which accepted the \f(CW$message\fR.
+When empty, no back-end has accepted it so the \f(CW$message\fR was \*(L"lost\*(R".
+Even when no back-end needs the message, the program will still exit
+when there is a \f(CW$reason\fR to \f(CW\*(C`die()\*(C'\fR.
 .Sp
 .Vb 7
 \& \-Option  \-\-Default
@@ -319,12 +335,12 @@ no back-end need the message, it program will still exit when there is
 .RS 4
 .IP "errno => \s-1INTEGER\s0" 2
 .IX Item "errno => INTEGER"
-When the \s-1REASON\s0 includes the error text (See \*(L"Run modes\*(R"), you can
+When the \f(CW$reason\fR includes the error text (See \*(L"Run modes\*(R"), you can
 overrule the error code kept in \f(CW$!\fR.  In other cases, the return code
-default to \f(CW1\fR (historical \s-1UNIX\s0 behavior). When the message \s-1REASON\s0
+defaults to \f(CW1\fR (historical \s-1UNIX\s0 behavior). When the message \f(CW$reason\fR
 (combined with the run-mode) is severe enough to stop the program,
-this value as return code.  The use of this option itself will not
-trigger an \f(CW\*(C`die()\*(C'\fR.
+this value as return code of the program.  The use of this option itself
+will not trigger an \f(CW\*(C`die()\*(C'\fR.
 .IP "is_fatal => \s-1BOOLEAN\s0" 2
 .IX Item "is_fatal => BOOLEAN"
 Some logged exceptions are fatal, other aren't.  The default usually
@@ -345,21 +361,23 @@ When defined, that data is used to display the call stack.  Otherwise,
 it is collected via \f(CW\*(C`caller()\*(C'\fR if needed.
 .IP "to => NAME|ARRAY\-of\-NAMEs" 2
 .IX Item "to => NAME|ARRAY-of-NAMEs"
-Sent the \s-1MESSAGE\s0 only to the NAMEd dispatchers.  Ignore unknown NAMEs.
+Sent the \f(CW$message\fR only to the NAMEd dispatchers.  Ignore unknown NAMEs.
 Still, the dispatcher needs to be enabled and accept the REASONs.
 .RE
 .RS 4
 .Sp
 example: for use of \fIreport()\fR
 .Sp
-.Vb 2
+.Vb 3
+\& # long syntax example
 \& report TRACE => "start processing now";
 \& report INFO  => \*(Aq500: \*(Aq . _\|_\*(AqInternal Server Error\*(Aq;
 \&
+\& # explicit dispatcher, no translation
 \& report {to => \*(Aqsyslog\*(Aq}, NOTICE => "started process $$";
-\& notice "started process $$", _to => \*(Aqsyslog\*(Aq; #same
+\& notice "started process $$", _to => \*(Aqsyslog\*(Aq;   # same
 \&
-\& # with syntax SHORT
+\& # short syntax examples
 \& trace "start processing now";
 \& warning  _\|_x\*(AqDisk {percent%.2f}% full\*(Aq, percent => $p
 \&     if $p > 97;
@@ -369,96 +387,106 @@ example: for use of \fIreport()\fR
 \&    , WARNING => "do this at home!";
 .Ve
 .RE
-.IP "\fBtry\fR(\s-1CODE\s0, \s-1OPTIONS\s0)" 4
-.IX Item "try(CODE, OPTIONS)"
-Execute the \s-1CODE\s0, but block all dispatchers as long as it is running.
-When the execution of the \s-1CODE\s0 is terminated with an report which triggers
-an error, that is captured.  After the \f(CW\*(C`try\*(C'\fR, the \f(CW$@\fR will contain
-a Log::Report::Dispatcher::Try object, which contains the collected
-error messages.  When there where no errors, the result of the code
+.ie n .IP "\fBtry\fR(\s-1CODE\s0, %options)" 4
+.el .IP "\fBtry\fR(\s-1CODE\s0, \f(CW%options\fR)" 4
+.IX Item "try(CODE, %options)"
+Execute the \s-1CODE\s0 while blocking all dispatchers as long as it is running.
+The exceptions which occur while running the \s-1CODE\s0 are caught until it
+has finished.  When there where no fatal errors, the result of the \s-1CODE\s0
 execution is returned.
+.Sp
+After the \s-1CODE\s0 was tried, the \f(CW$@\fR will contain a
+Log::Report::Dispatcher::Try object, which contains the collected
+messages.
 .Sp
 Run-time errors from Perl and die's, croak's and confess's within the
 program (which shouldn't appear, but you never know) are collected into an
 Log::Report::Message object, using Log::Report::Die.
 .Sp
-The \s-1OPTIONS\s0 are passed to the constructor of the try-dispatcher, see
+The \f(CW%options\fR are passed to the constructor of the try-dispatcher, see
 \&\fILog::Report::Dispatcher::Try::new()\fR.  For instance, you may like to
 add \f(CW\*(C`mode => \*(AqDEBUG\*(Aq\*(C'\fR, or \f(CW\*(C`accept => \*(AqERROR\-\*(Aq\*(C'\fR.
 .Sp
-Be warned that the parameter to \f(CW\*(C`try\*(C'\fR is a \s-1CODE\s0 reference.  This means
-that you shall not use a comma after the block when there are \s-1OPTIONS\s0
+\&\fBBe warned\fR that the parameter to \f(CW\*(C`try\*(C'\fR is a \s-1CODE\s0 reference.  This means
+that you shall not use a comma after the block when there are \f(CW%options\fR
 specified.  On the other hand, you shall use a semi-colon after the
 block if there are no arguments.
+.Sp
+\&\fBBe warned\fR that the {} are interpreted as subroutine, which means that,
+for instance, it has its own \f(CW@_\fR.  The manual-page of Try::Tiny
+lists a few more side-effects of this.
 .Sp
 example:
 .Sp
 .Vb 2
-\& try { ... };       # mind the \*(Aq;\*(Aq !!
-\& if($@) {           # signals something went wrong
+\& my $x = try { 3/$x };  # mind the \*(Aq;\*(Aq !!
+\& if($@) {               # signals something went wrong
 \&
-\& if(try {...}) {    # block ended normally
+\& if(try {...}) {        # block ended normally, returns bool
 \&
-\& try { ... }        # no comma!!
+\& try { ... }            # no comma!!
 \&    mode => \*(AqDEBUG\*(Aq, accept => \*(AqERROR\-\*(Aq;
 \&
-\& try sub { ... },   # with comma, also \e&function
+\& try sub { ... },       # with comma, also \e&function
 \&    mode => \*(AqDEBUG\*(Aq, accept => \*(AqALL\*(Aq;
+\&
+\& my $response = try { $ua\->request($request) };
+\& if(my $e = $@\->wasFatal) ...
 .Ve
 .SS "Abbreviations for \fIreport()\fP"
 .IX Subsection "Abbreviations for report()"
-The following functions are abbreviations for calls to \fIreport()\fR, and
-available when syntax is \f(CW\*(C`SHORT\*(C'\fR (see \fIimport()\fR).  You cannot specify
-additional options to influence the behavior of \f(CW\*(C`report()\*(C'\fR, which are
-usually not needed anyway.
-.IP "\fBalert\fR(\s-1MESSAGE\s0)" 4
-.IX Item "alert(MESSAGE)"
-Short for \f(CW\*(C`report ALERT => MESSAGE\*(C'\fR
-.IP "\fBassert\fR(\s-1MESSAGE\s0)" 4
-.IX Item "assert(MESSAGE)"
-Short for \f(CW\*(C`report ASSERT => MESSAGE\*(C'\fR
-.IP "\fBerror\fR(\s-1MESSAGE\s0)" 4
-.IX Item "error(MESSAGE)"
-Short for \f(CW\*(C`report ERROR => MESSAGE\*(C'\fR
-.IP "\fBfailure\fR(\s-1MESSAGE\s0)" 4
-.IX Item "failure(MESSAGE)"
-Short for \f(CW\*(C`report FAILURE => MESSAGE\*(C'\fR
-.IP "\fBfault\fR(\s-1MESSAGE\s0)" 4
-.IX Item "fault(MESSAGE)"
-Short for \f(CW\*(C`report FAULT => MESSAGE\*(C'\fR
-.IP "\fBinfo\fR(\s-1MESSAGE\s0)" 4
-.IX Item "info(MESSAGE)"
-Short for \f(CW\*(C`report INFO => MESSAGE\*(C'\fR
-.IP "\fBmistake\fR(\s-1MESSAGE\s0)" 4
-.IX Item "mistake(MESSAGE)"
-Short for \f(CW\*(C`report MISTAKE => MESSAGE\*(C'\fR
-.IP "\fBnotice\fR(\s-1MESSAGE\s0)" 4
-.IX Item "notice(MESSAGE)"
-Short for \f(CW\*(C`report NOTICE => MESSAGE\*(C'\fR
-.IP "\fBpanic\fR(\s-1MESSAGE\s0)" 4
-.IX Item "panic(MESSAGE)"
-Short for \f(CW\*(C`report PANIC => MESSAGE\*(C'\fR
-.IP "\fBtrace\fR(\s-1MESSAGE\s0)" 4
-.IX Item "trace(MESSAGE)"
-Short for \f(CW\*(C`report TRACE => MESSAGE\*(C'\fR
-.IP "\fBwarning\fR(\s-1MESSAGE\s0)" 4
-.IX Item "warning(MESSAGE)"
-Short for \f(CW\*(C`report WARNING => MESSAGE\*(C'\fR
+The following functions are all wrappers for calls to \fIreport()\fR,
+and available when \*(L"syntax is \s-1SHORT\s0\*(R" (by default, see \fIimport()\fR).
+You cannot specify additional options to influence the behavior of
+\&\f(CW\*(C`report()\*(C'\fR, which are usually not needed anyway.
+.IP "\fBalert\fR($message)" 4
+.IX Item "alert($message)"
+Short for \f(CW\*(C`report ALERT => $message\*(C'\fR
+.IP "\fBassert\fR($message)" 4
+.IX Item "assert($message)"
+Short for \f(CW\*(C`report ASSERT => $message\*(C'\fR
+.IP "\fBerror\fR($message)" 4
+.IX Item "error($message)"
+Short for \f(CW\*(C`report ERROR => $message\*(C'\fR
+.IP "\fBfailure\fR($message)" 4
+.IX Item "failure($message)"
+Short for \f(CW\*(C`report FAILURE => $message\*(C'\fR
+.IP "\fBfault\fR($message)" 4
+.IX Item "fault($message)"
+Short for \f(CW\*(C`report FAULT => $message\*(C'\fR
+.IP "\fBinfo\fR($message)" 4
+.IX Item "info($message)"
+Short for \f(CW\*(C`report INFO => $message\*(C'\fR
+.IP "\fBmistake\fR($message)" 4
+.IX Item "mistake($message)"
+Short for \f(CW\*(C`report MISTAKE => $message\*(C'\fR
+.IP "\fBnotice\fR($message)" 4
+.IX Item "notice($message)"
+Short for \f(CW\*(C`report NOTICE => $message\*(C'\fR
+.IP "\fBpanic\fR($message)" 4
+.IX Item "panic($message)"
+Short for \f(CW\*(C`report PANIC => $message\*(C'\fR
+.IP "\fBtrace\fR($message)" 4
+.IX Item "trace($message)"
+Short for \f(CW\*(C`report TRACE => $message\*(C'\fR
+.IP "\fBwarning\fR($message)" 4
+.IX Item "warning($message)"
+Short for \f(CW\*(C`report WARNING => $message\*(C'\fR
 .SS "Language Translations"
 .IX Subsection "Language Translations"
 The language translations are initiate by limited set of functions
-which contain two under-score (\f(CW\*(C`_\*(C'\fR) characters in their name.  Most
+which contain \fBtwo under-scores\fR (\f(CW\*(C`_\|_\*(C'\fR) in their name.  Most
 of them return a Log::Report::Message object.
 .PP
-\&\s-1BE\s0 \s-1\fIWARNED\s0\fR\|(1) that \-in general\- its considered very bad practice to
-combine multiple translations into one message; translating
-may also affect the order of the translated components. Besides,
-when the translator only sees smaller parts of the text, his or
-her job becomes more complex.  So:
+\&\fBBe \f(BIwarned\fB\|(1)\fR that \-in general\- its considered very bad practice to
+combine multiple translations into one message: translating may also
+affect the order of the translated components. Besides, when the person
+which translates only sees smaller parts of the text, his (or her) job
+becomes more complex.  So:
 .PP
 .Vb 2
-\& print _\|_"Hello" . \*(Aq, \*(Aq . _\|_"World!";  # very bad idea!
-\& print _\|_"Hello, World!";    # yes: complete sentence.
+\& print _\|_"Hello" . \*(Aq, \*(Aq . _\|_"World!";  # works, but to be avoided
+\& print _\|_"Hello, World!";              # preferred, complete sentence
 .Ve
 .PP
 The the former case, tricks with overloading used by the
@@ -472,7 +500,7 @@ values:
 \& print _\|_"the color is {c}", c => _\|_"red";
 .Ve
 .PP
-\&\s-1BE\s0 \s-1\fIWARNED\s0\fR\|(2) that using \f(CW\*(C`_\|_\*(AqHello\*(Aq\*(C'\fR will produce a syntax error like
+\&\fBBe \f(BIwarned\fB\|(2)\fR that using \f(CW\*(C`_\|_\*(AqHello\*(Aq\*(C'\fR will produce a syntax error like
 \&\*(L"String found where operator expected at .... Can't find string terminator
 \&\*(R"'\*(L" anywhere before \s-1EOF\s0\*(R".  The first quote is the cause of the complaint,
 but the second generates the error.  In the early days of Perl, the single
@@ -480,26 +508,31 @@ quote was used to separate package name from function name, a role which
 was later replaced by a double-colon.  So \f(CW\*(C`_\|_\*(AqHello\*(Aq\*(C'\fR gets interpreted
 as \f(CW\*(C`_\|_::Hello \*(Aq\*(C'\fR.  Then, there is a trailing single quote which has
 no counterpart.
-.IP "\fBN_\|_\fR(\s-1MSGID\s0)" 4
-.IX Item "N__(MSGID)"
+.IP "\fBN_\|_\fR($msgid)" 4
+.IX Item "N__($msgid)"
 Label to indicate that the string is a text which will be translated
 later.  The function itself does nothing.  See also N_\|\fI_w()\fR.
 .Sp
+This no-op function is used as label to the xgettext program to build the
+translation tables.
+.Sp
 example: how to use N_\|_()
 .Sp
-.Vb 3
+.Vb 4
+\& # add three msgids to the translation table
 \& my @colors = (N_\|_"red", N_\|_"green", N_\|_"blue");
 \& my @colors = N_\|_w "red green blue";   # same
-\& print _\|_ $colors[1];
+\& print _\|_ $colors[1];                  # translate green
+\&
+\& # using _\|_(), would work as well
+\& my @colors = (_\|_"red", _\|_"green", _\|_"blue");
+\& print $colors[1];
+\& # however: this will always create all Log::Report::Message objects,
+\& # where maybe only one is used.
 .Ve
-.Sp
-Using _\|_(), would work as well
- my \f(CW@colors\fR = (_\|_\*(L"red\*(R", _\|_\*(L"green\*(R", _\|_\*(L"blue\*(R");
- print \f(CW$colors\fR[1];
-However: this will always create all Log::Report::Message objects,
-where maybe only one is used.
-.IP "\fBN_\|_n\fR(\s-1SINGLE_MSGID\s0, \s-1PLURAL_MSGID\s0)" 4
-.IX Item "N__n(SINGLE_MSGID, PLURAL_MSGID)"
+.ie n .IP "\fBN_\|_n\fR($single_msgid, $plural_msgid)" 4
+.el .IP "\fBN_\|_n\fR($single_msgid, \f(CW$plural_msgid\fR)" 4
+.IX Item "N__n($single_msgid, $plural_msgid)"
 Label to indicate that the two MSGIDs are related, the first as
 single, the seconds as its plural.  Only used to find the text
 fragments to be translated.  The function itself does nothing.
@@ -513,7 +546,7 @@ example: how to use N_\|\fI_n()\fR
 \&
 \& # be warned about SCALARs in prototype!
 \& print _\|_n @save, $nr_files;  # wrong!
-\& print _\|_n $save[0], $save[1], $nr_files;
+\& print _\|_n $save[0], $save[1], @files, %vars;
 .Ve
 .IP "\fBN_\|_w\fR(\s-1STRING\s0)" 4
 .IX Item "N__w(STRING)"
@@ -528,14 +561,17 @@ example: of N_\|\fI_w()\fR
 \&  my @colors = N_\|_w"red green blue";  # same
 \&  print _\|_ $colors[1];
 .Ve
-.IP "\fB_\|_\fR(\s-1MSGID\s0)" 4
-.IX Item "__(MSGID)"
-This function (name is two under-score characters) will cause the
-\&\s-1MSGID\s0 to be replaced by the translations when doing the actual output.
-Returned is one object, which will be used in translation later.
-Translating is invoked when the object gets stringified.
+.IP "\fB_\|_\fR($msgid)" 4
+.IX Item "__($msgid)"
+This function (name is \fBtwo\fR under-score characters) will cause the \f(CW$msgid\fR
+to be replaced by the translations when doing the actual output.  Returned
+is a Log::Report::Message object, which will be used in translation
+later.  Translating is invoked when the object gets stringified.  When
+you have no translation tables, the \f(CW$msgid\fR will be shown untranslated.
 .Sp
-If you need \s-1OPTIONS\s0, then take _\|\fI_x()\fR.
+If you need options for \fILog::Report::Message::new()\fR then use _\|\fI_x()\fR;
+the prototype of this function does not permit parameters: it is a
+prefix operator!
 .Sp
 example: how to use _\|_()
 .Sp
@@ -550,34 +586,43 @@ example: how to use _\|_()
 \& print $s;                   # ok, translated
 \& print $s\->toString(\*(Aqfr\*(Aq);   # ok, forced into French
 .Ve
-.IP "\fB_\|_n\fR(\s-1MSGID\s0, \s-1PLURAL_MSGID\s0, \s-1COUNT\s0, \s-1OPTIONS\s0)" 4
-.IX Item "__n(MSGID, PLURAL_MSGID, COUNT, OPTIONS)"
-It depends on the value of \s-1COUNT\s0 (and the selected language) which
+.ie n .IP "\fB_\|_n\fR($msgid, $plural_msgid, $count, \s-1PAIRS\s0)" 4
+.el .IP "\fB_\|_n\fR($msgid, \f(CW$plural_msgid\fR, \f(CW$count\fR, \s-1PAIRS\s0)" 4
+.IX Item "__n($msgid, $plural_msgid, $count, PAIRS)"
+It depends on the value of \f(CW$count\fR (and the selected language) which
 text will be displayed.  When translations can not be performed, then
-\&\s-1MSGID\s0 will be used when \s-1COUNT\s0 is 1, and \s-1PLURAL_MSGSID\s0 in other cases.
+\&\f(CW$msgid\fR will be used when \f(CW$count\fR is 1, and \s-1PLURAL_MSGSID\s0 in other cases.
 However, some languages have more complex schemes than English.
 .Sp
-\&\s-1OPTIONS\s0 are explained in \fILog::Report::Message::new()\fR.
-Locale::TextDomain subroutine _\|_n does not have \s-1OPTIONS\s0, but they mix
-with variables.
+The \s-1PAIRS\s0 are options for \fILog::Report::Message::new()\fR and variables
+to be filled in.
 .Sp
 example: how to use _\|\fI_n()\fR
 .Sp
-.Vb 4
+.Vb 3
 \& print _\|_n "one", "more", $a;
 \& print _\|_n("one", "more", $a), "\en";
 \& print +(_\|_n "one", "more", $a), "\en";
+\&
+\& # new\-lines are ignore at lookup, but printed.
 \& print _\|_n "one\en", "more\en", $a;
+\&
+\& # count is in scalar context
+\& # the value is also available as _count
+\& print _\|_n "found one\en", "found {_count}\en", @r;
+\&
+\& # ARRAYs and HASHes are counted
+\& print _\|_n "one", "more", \e@r;
 .Ve
-.IP "\fB_\|_nx\fR(\s-1MSGID\s0, \s-1PLURAL_MSGID\s0, \s-1COUNT\s0, \s-1OPTIONS\s0, \s-1VARIABLES\s0)" 4
-.IX Item "__nx(MSGID, PLURAL_MSGID, COUNT, OPTIONS, VARIABLES)"
-It depends on the value of \s-1COUNT\s0 (and the selected language) which
+.ie n .IP "\fB_\|_nx\fR($msgid, $plural_msgid, $count, \s-1PAIRS\s0)" 4
+.el .IP "\fB_\|_nx\fR($msgid, \f(CW$plural_msgid\fR, \f(CW$count\fR, \s-1PAIRS\s0)" 4
+.IX Item "__nx($msgid, $plural_msgid, $count, PAIRS)"
+It depends on the value of \f(CW$count\fR (and the selected language) which
 text will be displayed.  See details in _\|\fI_n()\fR.  After translation,
 the \s-1VARIABLES\s0 will be filled-in.
 .Sp
-\&\s-1OPTIONS\s0 are explained in \fILog::Report::Message::new()\fR.
-Locale::TextDomain subroutine _\|_nx does not support the \s-1OPTIONS\s0, but they look
-like variables.
+The \s-1PAIRS\s0 are options for \fILog::Report::Message::new()\fR and variables
+to be filled in.
 .Sp
 example: how to use _\|\fI_nx()\fR
 .Sp
@@ -588,130 +633,117 @@ example: how to use _\|\fI_nx()\fR
 \& local $" = \*(Aq, \*(Aq;
 \& print _\|_nx "one file: {f}", "{_count} files: {f}", @files, f => \e@files;
 .Ve
-.IP "\fB_\|_x\fR(\s-1MSGID\s0, \s-1OPTIONS\s0, \s-1VARIABLES\s0)" 4
-.IX Item "__x(MSGID, OPTIONS, VARIABLES)"
-Translate the \s-1MSGID\s0, and then expand the \s-1VARIABLES\s0 in that
-string.  Of course, translation and expanding is delayed as long
-as possible.  Both \s-1OPTIONS\s0 and \s-1VARIABLES\s0 are key-value pairs.
+.IP "\fB_\|_x\fR($msgid, \s-1PAIRS\s0)" 4
+.IX Item "__x($msgid, PAIRS)"
+Translate the \f(CW$msgid\fR and then interpolate the \s-1VARIABLES\s0 in that string.
+Of course, translation and interpolation is delayed as long as possible.
+Both \s-1OPTIONS\s0 and \s-1VARIABLES\s0 are key-value pairs.
 .Sp
-\&\s-1OPTIONS\s0 and \s-1VARIABLES\s0 are explained in \fILog::Report::Message::new()\fR.
-Locale::TextDomain subroutine _\|_x does not support the \s-1OPTIONS\s0, but they
-mix with variables.
-.IP "\fB_\|_xn\fR(\s-1SINGLE_MSGID\s0, \s-1PLURAL_MSGID\s0, \s-1COUNT\s0, \s-1OPTIONS\s0, \s-1VARIABLES\s0)" 4
-.IX Item "__xn(SINGLE_MSGID, PLURAL_MSGID, COUNT, OPTIONS, VARIABLES)"
-Same as _\|\fI_xn()\fR.
+The \s-1PAIRS\s0 are options for \fILog::Report::Message::new()\fR and variables
+to be filled in.
+.ie n .IP "\fB_\|_xn\fR($single_msgid, $plural_msgid, $count, $paurs)" 4
+.el .IP "\fB_\|_xn\fR($single_msgid, \f(CW$plural_msgid\fR, \f(CW$count\fR, \f(CW$paurs\fR)" 4
+.IX Item "__xn($single_msgid, $plural_msgid, $count, $paurs)"
+Same as _\|\fI_nx()\fR, because we have no preferred order for 'x' and 'n'.
 .SS "Configuration"
 .IX Subsection "Configuration"
-.ie n .IP "$obj\->\fBimport\fR([\s-1DOMAIN\s0], \s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBimport\fR([\s-1DOMAIN\s0], \s-1OPTIONS\s0)" 4
-.IX Item "$obj->import([DOMAIN], OPTIONS)"
+.ie n .IP "$obj\->\fBimport\fR( [$level,][$domain,] %options )" 4
+.el .IP "\f(CW$obj\fR\->\fBimport\fR( [$level,][$domain,] \f(CW%options\fR )" 4
+.IX Item "$obj->import( [$level,][$domain,] %options )"
 The import is automatically called when the package is compiled.  For all
 packages but one in your distribution, it will only contain the name of
-the \s-1DOMAIN\s0.  For one package, it will contain configuration information.
-These \s-1OPTIONS\s0 are used for all packages which use the same \s-1DOMAIN\s0.
+the \f(CW$domain\fR.
+.Sp
+For one package, the import list may additionally contain textdomain
+configuration \f(CW%options\fR.  These \f(CW%options\fR are used for all packages which
+use the same \f(CW$domain\fR.  These are alternatives:
+.Sp
+.Vb 3
+\&  # Do not use variables in the %*config!  They are not yet initialized
+\&  # when Log::Report\->import is run!!!
+\&  use Log::Report \*(Aqmy\-domain\*(Aq, %config, %domain_config;
+\&
+\&  use Log::Report \*(Aqmy\-domain\*(Aq, %config;
+\&  textdomain \*(Aqmy\-domain\*(Aq, %domain_config;   # vars allowed
+.Ve
+.Sp
+The latter syntax has major advantages, when the configuration of the
+domain is determined at run-time.  It is probably also easier to understand.
+.Sp
+See \fILog::Report::Domain::configure()\fR, for the \fBlist of \f(CB%options\fB\fR
+for the domain configuration.  Here, we only list the options which are
+related to the normal import behavior.
+.Sp
+The export \f(CW$level\fR is a plus (+) followed by a number, for instance \f(CW+1\fR,
+to indicate to on which caller level we need to work.  This is used
+in Log::Report::Optional.  It defaults to '0': my direct caller.
 .Sp
 .Vb 5
-\& \-Option         \-\-Default
-\&  mode             \*(AqNORMAL\*(Aq
-\&  native_language  \*(Aqen_US\*(Aq
-\&  syntax           \*(AqSHORT\*(Aq
-\&  translator       <rescue>
+\& \-Option       \-\-Default
+\&  import         undef
+\&  message_class  Log::Report::Message
+\&  mode           \*(AqNORMAL\*(Aq
+\&  syntax         \*(AqSHORT\*(Aq
 .Ve
 .RS 4
+.IP "import => FUNCTION|ARRAY" 2
+.IX Item "import => FUNCTION|ARRAY"
+[0.998] When not specified, the \f(CW\*(C`syntax\*(C'\fR option determines the list
+of functions which are being exported.  With this option, the \f(CW\*(C`syntax\*(C'\fR
+option is ignored and only the specified \s-1FUNCTION\s0(s) are imported.
+.IP "message_class => \s-1CLASS\s0" 2
+.IX Item "message_class => CLASS"
+[1.08] Use a more powerful message object class, for instance because
+your messages need extra attributes.  The provided \s-1CLASS\s0 must extend
+Log::Report::Message
 .IP "mode => \s-1LEVEL\s0" 2
 .IX Item "mode => LEVEL"
 This sets the default mode for all created dispatchers.  You can
 also selectively change the output mode, like
  dispatcher \s-1PERL\s0 => 'default', mode => 3
-.IP "native_language => \s-1CODESET\s0" 2
-.IX Item "native_language => CODESET"
-This is the language which you have used to write the translatable and
-the non-translatable messages in.  In case no translation is needed,
-you still wish the system error messages to be in the same language
-as the report.  Of course, each textdomain can define its own.
 .IP "syntax => '\s-1REPORT\s0'|'\s-1SHORT\s0'|'\s-1LONG\s0'" 2
 .IX Item "syntax => 'REPORT'|'SHORT'|'LONG'"
 The \s-1SHORT\s0 syntax will add the report abbreviations (like function
 \&\fIerror()\fR) to your name-space.  Otherwise, each message must be produced
 with \fIreport()\fR. \f(CW\*(C`LONG\*(C'\fR is an alternative to \f(CW\*(C`REPORT\*(C'\fR: both do not
-polute your namespace with the useful abbrev functions.
-.IP "translator => Log::Report::Translator" 2
-.IX Item "translator => Log::Report::Translator"
-Without explicit translator, a dummy translator is used for the domain
-which will use the untranslated message-id .
+pollute your namespace with the useful abbrev functions.
 .RE
 .RS 4
 .Sp
 example: of import
 .Sp
 .Vb 1
-\& use Log::Report mode => 3;     # or \*(AqDEBUG\*(Aq
+\& use Log::Report mode => 3;     # \*(Aq3\*(Aq or \*(AqDEBUG\*(Aq
 \&
 \& use Log::Report \*(Aqmy\-domain\*(Aq;   # in each package producing messages
 \&
 \& use Log::Report \*(Aqmy\-domain\*(Aq    # in one package, top of distr
-\&  , translator => Log::Report::Translator::POT\->new
-\&     ( lexicon  => \*(Aq/home/me/locale\*(Aq  # bindtextdomain
-\&     , charset  => \*(AqUTF\-8\*(Aq            # codeset
+\&  , mode            => \*(AqVERBOSE\*(Aq
+\&  , syntax          => \*(AqREPORT\*(Aq # report ERROR, not error()
+\&  , translator      => Log::Report::Translator::POT\->new
+\&     ( lexicon => \*(Aq/home/mine/locale\*(Aq  # bindtextdomain
+\&     , charset => \*(AqUTF\-8\*(Aq              # codeset
 \&     )
-\&  , native_language => \*(Aqnl_NL\*(Aq  # untranslated msgs are Dutch
-\&  , syntax          => \*(AqREPORT\*(Aq;# report ERROR, not error()
+\&  , native_language => \*(Aqnl_NL\*(Aq; # untranslated msgs are Dutch
+\&
+\& use Log::Report import => \*(Aqtry\*(Aq;      # or ARRAY of functions
 .Ve
 .RE
-.IP "Log::Report\->\fBtranslator\fR(\s-1TEXTDOMAIN\s0, [\s-1TRANSLATOR\s0])" 4
-.IX Item "Log::Report->translator(TEXTDOMAIN, [TRANSLATOR])"
-Returns the translator configured for the \s-1TEXTDOMAIN\s0. By default,
-a translator is configured which does not translate but directly
-uses the gettext message-ids.
+.ie n .IP "\fBtextdomain\fR( <[$domain], $config> | <$domain, '\s-1DELETE\s0'> )" 4
+.el .IP "\fBtextdomain\fR( <[$domain], \f(CW$config\fR> | <$domain, '\s-1DELETE\s0'> )" 4
+.IX Item "textdomain( <[$domain], $config> | <$domain, 'DELETE'> )"
+[1.00] Without CONFIGuration, this returns the Log::Report::Domain object
+which administers the \f(CW$domain\fR, by default the domain effictive in the scope
+of the package.
 .Sp
-When a \s-1TRANSLATOR\s0 is specified, it will be set to be used for the
-\&\s-1TEXTDOMAIN\s0.  When it is \f(CW\*(C`undef\*(C'\fR, the configuration is removed.
-You can only specify one \s-1TRANSLATOR\s0 per \s-1TEXTDOMAIN\s0.
-.Sp
-example: use if \fItranslator()\fR
-.Sp
-.Vb 4
-\& # in three steps
-\& use Log::Report;
-\& my $gettext = Log::Report::Translator::POT\->new(...);
-\& Log::Report\->translator(\*(Aqmy\-domain\*(Aq, $gettext);
-\&
-\& # in two steps
-\& use Log::Report;
-\& Log::Report\->translator(\*(Aqmy\-domain\*(Aq
-\&   , Log::Report::Translator::POT\->new(...));
-\&
-\& # in one step
-\& use Log::Report \*(Aqmy\-domain\*(Aq
-\&   , translator => Log::Report::Translator::POT\->new(...);
-.Ve
+A very special case is for \*(L"\s-1DELETE\s0\*(R", which will remove the domain
+configuration.
 .SS "Reasons"
 .IX Subsection "Reasons"
-.ie n .IP "$obj\->\fBisFatal\fR(\s-1REASON\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBisFatal\fR(\s-1REASON\s0)" 4
-.IX Item "$obj->isFatal(REASON)"
-.PD 0
-.IP "Log::Report\->\fBisFatal\fR(\s-1REASON\s0)" 4
-.IX Item "Log::Report->isFatal(REASON)"
-.PD
-Returns true if the \s-1REASON\s0 is severe enough to cause an exception
-(or program termination).
-.ie n .IP "$obj\->\fBisValidReason\fR(\s-1STRING\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBisValidReason\fR(\s-1STRING\s0)" 4
-.IX Item "$obj->isValidReason(STRING)"
-.PD 0
-.IP "Log::Report\->\fBisValidReason\fR(\s-1STRING\s0)" 4
-.IX Item "Log::Report->isValidReason(STRING)"
-.PD
-Returns true if the \s-1STRING\s0 is one of the predefined \s-1REASONS\s0.
-.ie n .IP "$obj\->\fBneeds\fR(\s-1REASON\s0, [\s-1REASONS\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBneeds\fR(\s-1REASON\s0, [\s-1REASONS\s0])" 4
-.IX Item "$obj->needs(REASON, [REASONS])"
-.PD 0
-.IP "Log::Report\->\fBneeds\fR(\s-1REASON\s0, [\s-1REASONS\s0])" 4
-.IX Item "Log::Report->needs(REASON, [REASONS])"
-.PD
-Returns true when the reporter needs any of the \s-1REASONS\s0, when any of
+.ie n .IP "Log::Report\->\fBneeds\fR( $reason, [$reasons] )" 4
+.el .IP "Log::Report\->\fBneeds\fR( \f(CW$reason\fR, [$reasons] )" 4
+.IX Item "Log::Report->needs( $reason, [$reasons] )"
+Returns true when the reporter needs any of the \f(CW$reasons\fR, when any of
 the active dispatchers is collecting messages in the specified level.
 This is useful when the processing of data for the message is relatively
 expensive, but for instance only required in debug mode.
@@ -728,25 +760,36 @@ example:
 .IX Header "DETAILS"
 .SS "Introduction"
 .IX Subsection "Introduction"
-There are three steps in this story: produce some text on a certain
-condition, translate it to the proper language, and deliver it in some
-way to a user.  Texts are usually produced by commands like \f(CW\*(C`print\*(C'\fR,
-\&\f(CW\*(C`die\*(C'\fR, \f(CW\*(C`warn\*(C'\fR, \f(CW\*(C`carp\*(C'\fR, or \f(CW\*(C`croak\*(C'\fR, which have no way of configuring
-the way of delivery to the user.  Therefore, they are replaced with a
-single new command: \f(CW\*(C`report\*(C'\fR (with various abbreviations)
+Getting messages to users and logs. The distincting concept of this module,
+is that three tasks which are strongly related are merged into one simple
+syntax.  The three tasks:
+.IP "produce some text on a certain condition," 4
+.IX Item "produce some text on a certain condition,"
+.PD 0
+.IP "translate it to the proper language, and" 4
+.IX Item "translate it to the proper language, and"
+.IP "deliver it in some way to a user." 4
+.IX Item "deliver it in some way to a user."
+.PD
 .PP
-Besides, the \f(CW\*(C`print\*(C'\fR/\f(CW\*(C`warn\*(C'\fR/\f(CW\*(C`die\*(C'\fR together produce only three levels of
-reasons to produce the message: many people manually implement more, like
-verbose and debug.  Syslog has some extra levels as well, like \f(CW\*(C`critical\*(C'\fR.
-The \s-1REASON\s0 argument to \f(CW\*(C`report()\*(C'\fR replace them all.
+Text messages in Perl are produced by commands like \f(CW\*(C`print\*(C'\fR, \f(CW\*(C`die\*(C'\fR,
+\&\f(CW\*(C`warn\*(C'\fR, \f(CW\*(C`carp\*(C'\fR, or \f(CW\*(C`croak\*(C'\fR.  But where is that output directed to?
+Translations is hard.  There is no clean exception mechanism.
 .PP
-The translations use the beautiful syntax defined by
-Locale::TextDomain, with some extensions (of course).  The main
-difference is that the actual translations are delayed till the delivery
-step.  This means that the pop-up in the graphical interface of the
-user will show the text in the language of the user, say Chinese,
-but at the same time syslog may write the English version of the text.
-With a little luck, translations can be avoided.
+Besides, the \f(CW\*(C`print\*(C'\fR/\f(CW\*(C`warn\*(C'\fR/\f(CW\*(C`die\*(C'\fR together produce only three different
+output \*(L"levels\*(R" with a message.  Think of the variation syslog offers:
+more than 7 levels.  Many people manually implement their own tricks to
+get additional levels, like verbose and debug flags.  Log::Report offers
+that variety.
+.PP
+The (optional) translations use the beautiful syntax defined by
+Locale::TextDomain, with some own extensions (of course).  A very
+important difference is that translations are delayed till the delivery
+step: until a dispatcher actually writes your message into a file, sends
+it to syslog, or shows it on the screen.  This means that the pop-up in
+the graphical interface of the user may show the text in the language
+of the user \-\-say Chinese in utf8\-\-, but at the same time syslog may
+write the latin1 English version of the same message.
 .SS "Background ideas"
 .IX Subsection "Background ideas"
 The following ideas are the base of this implementation:
@@ -759,29 +802,50 @@ handling (problem) conditions.  Simplifying the way to create reports,
 simplifies programming and maintenance.
 .IP ". multiple dispatchers" 4
 .IX Item ". multiple dispatchers"
-It is not the location where the (for instance) error occurs determines
-what will happen with the text, but the main application which uses the
-the complaining module has control.  Messages have a reason.  Based
-on the reason, they can get ignored, send to one, or send to multiple
-dispatchers (like Log::Dispatch, Log::Log4perl, or \s-1UNIX\s0 \fIsyslog\fR\|(1))
+It is not the location where the (for instance) error occurs which
+determines what will happen with the text, but the main application which
+uses the the complaining module has control.  Messages have a reason.
+Based on the `reason' classification, they can get ignored, send to one
+or multiple dispatchers, like Log::Dispatch, Log::Log4perl,
+or \s-1UNIX\s0 syslog.
 .IP ". delayed translations" 4
 .IX Item ". delayed translations"
 The background ideas are that of Locale::TextDomain, based
-on \f(CW\*(C`gettext()\*(C'\fR.  However, the \f(CW\*(C`Log::Report\*(C'\fR infrastructure has a
-pluggable translation backend.  Translations are postponed until the
-text is dispatched to a user or log-file; the same report can be sent
-to syslog in (for instance) English and to the user interface in Dutch.
-.IP ". avoid duplication" 4
-.IX Item ". avoid duplication"
-The same message may need to be documented on multiple locations: in
-web-pages for the graphical interface, in pod for the command-line
-configuration.  The same text may even end-up in pdf user-manuals.  When
-the message is written inside the Perl code, it's quite hard to get it
-out, to generate these documents.  Only an abstract message description
-protocol will make flexible re-use possible.
-This component still needs to be implemented.
+on \f(CW\*(C`gettext()\*(C'\fR.  However, in the \f(CW\*(C`Log::Report\*(C'\fR infrastructure,
+translations are postponed until the text is dispatched to a screen
+or log-file; the same report can be sent to syslog in (for instance)
+English and to the user interface in Dutch.
+.IP ". context sensitive" 4
+.IX Item ". context sensitive"
+Using contexts, you can set-up how to translate or rewrite messages,
+to improve messages.  A typical problem is whether to use gender in
+text (use 'his' or 'her'): you can set a gender in a context, and the
+use translation tables to pick the right one.
 .SS "Error handling models"
 .IX Subsection "Error handling models"
+There are two approaches to handling errors and warnings.  In the first
+approach, as produced by \f(CW\*(C`die\*(C'\fR, \f(CW\*(C`warn\*(C'\fR and the \f(CW\*(C`carp\*(C'\fR family of
+commands, the program handles the problem immediately on the location
+where the problem appears.  In the second approach, an \fIexception\fR
+is thrown on the spot where the problem is created, and then somewhere
+else in the program the condition is handled.
+.PP
+The implementation of exceptions in Perl5 is done with a eval-die pair:
+on the spot where the problem occurs, \f(CW\*(C`die\*(C'\fR is called.  But, because of
+the execution of that routine is placed within an \f(CW\*(C`eval\*(C'\fR, the program
+as a whole will not die, just the execution of a part of the program
+will seize.  However, what if the condition which caused the routine to die
+is solvable on a higher level?  Or what if the user of the code doesn't
+bother that a part fails, because it has implemented alternatives for
+that situation?  Exception handling is quite clumsy in Perl5.
+.PP
+The \f(CW\*(C`Log::Report\*(C'\fR set of distributions let modules concentrate on the
+program flow, and let the main program decide on the report handling
+model.  The infrastructure to translate messages into multiple languages,
+whether to create exceptions or carp/die, to collect longer explanations
+with the messages, to log to mail or syslog, and so on, is decided in
+pluggable back-ends.
+.PP
 \fIThe Reason for the report\fR
 .IX Subsection "The Reason for the report"
 .PP
@@ -855,6 +919,10 @@ needs to be informed about the problem.
 Some external cause makes it impossible for this program to continue.
 \&\f(CW$!\fR is set, and usually the system administrator wants to be
 informed.  The program will die.
+.Sp
+The difference with \f(CW\*(C`fault\*(C'\fR is subtile and not always clear.  A fault
+reports an error returned by an operating system call, where the failure
+would report an operational problem, like a failing mount.
 .IP ". panic (program)" 4
 .IX Item ". panic (program)"
 All above report classes are expected: some predictable situation
@@ -913,6 +981,62 @@ behavioral aspects of the messages, which are described in detail in
 behave as you expect: the \s-1DEBUG\s0 mode shows more than the \s-1VERBOSE\s0 mode,
 and both show more than the \s-1NORMAL\s0 mode.
 .PP
+\&\fB. Example: extract run mode from Getopt::Long\fR
+.PP
+The \f(CW\*(C`GetOptions()\*(C'\fR function will count the number of \f(CW\*(C`v\*(C'\fR options
+on the command-line when a \f(CW\*(C`+\*(C'\fR is after the option name.
+.PP
+.Vb 2
+\& use Log::Report;
+\& use Getopt::Long qw(:config no_ignore_case bundling);
+\&
+\& my $mode;    # defaults to NORMAL
+\& GetOptions \*(Aqv+\*(Aq        => \e$mode
+\&          , \*(Aqverbose=i\*(Aq => \e$mode
+\&          , \*(Aqmode=s\*(Aq    => \e$mode
+\&     or exit 1;
+\&
+\& dispatcher \*(AqPERL\*(Aq, \*(Aqdefault\*(Aq, mode => $mode;
+.Ve
+.PP
+Now, \f(CW\*(C`\-vv\*(C'\fR will set \f(CW$mode\fR to \f(CW2\fR, as will \f(CW\*(C`\-\-verbose 2\*(C'\fR and
+\&\f(CW\*(C`\-\-verbose=2\*(C'\fR and \f(CW\*(C`\-\-mode=ASSERT\*(C'\fR.  Of course, you do not need to
+provide all these options to the user: make a choice.
+.PP
+\&\fB. Example: the mode of a dispatcher\fR
+.PP
+.Vb 1
+\& my $mode = dispatcher(find => \*(Aqmyname\*(Aq)\->mode;
+.Ve
+.PP
+\&\fB. Example: run-time change mode of a dispatcher\fR
+.PP
+To change the running mode of the dispatcher, you can do
+  dispatcher mode => \s-1DEBUG\s0 => 'myname';
+.PP
+However, be warned that this does not change the types of messages
+accepted by the dispatcher!  So: probably you will not receive
+the trace, assert, and info messages after all.  So, probably you
+need to replace the dispatcher with a new one with the same name:
+  dispatcher \s-1FILE\s0 => 'myname', to => ..., mode => '\s-1DEBUG\s0';
+.PP
+This may reopen connections (depends on the actual dispatcher), which
+might be not what you wish to happened.  In that case, you must take
+the following approach:
+.PP
+.Vb 3
+\&  # at the start of your program
+\&  dispatcher FILE => \*(Aqmyname\*(Aq, to => ...
+\&     , accept => \*(AqALL\*(Aq;    # overrule the default \*(AqNOTICE\-\*(Aq !!
+\&
+\&  # now it works
+\&  dispatcher mode => DEBUG => \*(Aqmyname\*(Aq;    # debugging on
+\&  ...
+\&  dispatcher mode => NORMAL => \*(Aqmyname\*(Aq;   # debugging off
+.Ve
+.PP
+Of course, this comes with a small overall performance penalty.
+.PP
 \fIExceptions\fR
 .IX Subsection "Exceptions"
 .PP
@@ -943,35 +1067,12 @@ untranslated, with all unprocessed parameters still at hand.
 .Ve
 .PP
 See Log::Report::Dispatcher::Try and Log::Report::Exception.
-.PP
-There are two approaches to handling errors and warnings.  In the first
-approach, as produced by \f(CW\*(C`die\*(C'\fR, \f(CW\*(C`warn\*(C'\fR and the \f(CW\*(C`carp\*(C'\fR family of
-commands, the program handles the problem immediately on the location
-where the problem appears.  In the second approach, an \fIexception\fR
-is thrown on the spot where the problem is created, and then somewhere
-else in the program the condition is handled.
-.PP
-The implementation of exceptions in Perl5 is done with a eval-die pair:
-on the spot where the problem occurs, \f(CW\*(C`die\*(C'\fR is called.  But, because of
-the execution of that routine is placed within an \f(CW\*(C`eval\*(C'\fR, the program
-as a whole will not die, just the execution of a part of the program
-will seize.  However, what if the condition which caused the routine to die
-is solvable on a higher level?  Or what if the user of the code doesn't
-bother that a part fails, because it has implemented alternatives for
-that situation?  Exception handling is quite clumsy in Perl5.
-.PP
-The \f(CW\*(C`Log::Report\*(C'\fR set of distributions let modules concentrate on the
-program flow, and let the main program decide on the report handling
-model.  The infrastructure to translate messages into multiple languages,
-whether to create exceptions or carp/die, to collect longer explanations
-with the messages, to log to mail or syslog, and so on, is decided in
-pluggable back-ends.
 .SS "Comparison"
 .IX Subsection "Comparison"
 \fIdie/warn/Carp\fR
 .IX Subsection "die/warn/Carp"
 .PP
-A typical perl5 program can look like this
+A typical perl5 program can look like this:
 .PP
 .Vb 1
 \& my $dir = \*(Aq/etc\*(Aq;
@@ -1014,7 +1115,7 @@ Where \f(CW\*(C`die\*(C'\fR, \f(CW\*(C`warn\*(C'\fR, and \f(CW\*(C`print\*(C'\fR
 \&\f(CW\*(C`Log::Report\*(C'\fR, you would write
 .PP
 .Vb 1
-\& use Log::Report syntax => \*(AqSHORT\*(Aq;
+\& use Log::Report;
 \&
 \& # can be left\-out when there is no debug/verbose
 \& dispatcher PERL => \*(Aqdefault\*(Aq, mode => \*(AqDEBUG\*(Aq;
@@ -1060,16 +1161,6 @@ A lot of things are quite visibly different, and there are a few smaller
 changes.  There is no need for a new-line after the text of the message.
 When applicable (error about system problem), then the \f(CW$!\fR is added
 automatically.
-.PP
-The distinction between \f(CW\*(C`error\*(C'\fR and \f(CW\*(C`fault\*(C'\fR is a bit artificial her, just
-to demonstrate the difference between the two.  In this case, I want to
-express very explicitly that the user made an error by passing the name
-of a directory in which a file is not readable.  In the common case,
-the user is not to blame and we can use \f(CW\*(C`fault\*(C'\fR.
-.PP
-A \s-1CPAN\s0 module like \f(CW\*(C`Log::Message\*(C'\fR is an object oriented version of the
-standard Perl functions, and as such not really contributing to
-abstraction.
 .PP
 \fILog::Dispatch and Log::Log4perl\fR
 .IX Subsection "Log::Dispatch and Log::Log4perl"
@@ -1122,11 +1213,11 @@ objects which it has accessed.  When multiple names where given, it
 wishes to return a \s-1LIST\s0 of objects, not the count of them.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
+This module is part of Log-Report distribution version 1.19,
+built on February 09, 2017. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

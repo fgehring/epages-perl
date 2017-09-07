@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Log::Report::Exception 3"
-.TH Log::Report::Exception 3 "2011-08-23" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Log::Report::Exception 3 "2017-02-09" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -157,8 +157,8 @@ an (untranslated) report.
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.IP "Log::Report::Exception\->\fBnew\fR(\s-1OPTIONS\s0)" 4
-.IX Item "Log::Report::Exception->new(OPTIONS)"
+.IP "Log::Report::Exception\->\fBnew\fR(%options)" 4
+.IX Item "Log::Report::Exception->new(%options)"
 .Vb 4
 \& \-Option     \-\-Default
 \&  message      <required>
@@ -179,11 +179,11 @@ an (untranslated) report.
 .PD
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBisFatal\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBisFatal\fR" 4
-.IX Item "$obj->isFatal"
+.ie n .IP "$obj\->\fBisFatal\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBisFatal\fR()" 4
+.IX Item "$obj->isFatal()"
 Returns whether this exception has a severity which makes it fatal
-when thrown.  See \fILog::Report::isFatal()\fR.
+when thrown.  See \fILog::Report::Util::is_fatal()\fR.
 .Sp
 example:
 .Sp
@@ -191,10 +191,10 @@ example:
 \&  if($ex\->isFatal) { $ex\->throw(reason => \*(AqALERT\*(Aq) }
 \&  else { $ex\->throw }
 .Ve
-.ie n .IP "$obj\->\fBmessage\fR([\s-1MESSAGE\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBmessage\fR([\s-1MESSAGE\s0])" 4
-.IX Item "$obj->message([MESSAGE])"
-Change the \s-1MESSAGE\s0 of the exception, must be a Log::Report::Message
+.ie n .IP "$obj\->\fBmessage\fR( [$message] )" 4
+.el .IP "\f(CW$obj\fR\->\fBmessage\fR( [$message] )" 4
+.IX Item "$obj->message( [$message] )"
+Change the \f(CW$message\fR of the exception, must be a Log::Report::Message
 object.
 .Sp
 When you use a \f(CW\*(C`Log::Report::Message\*(C'\fR object, you will get a new one
@@ -208,24 +208,24 @@ example:
 \& $e\->message($e\->message\->concat(\*(Aq!!\*(Aq));
 \& $e\->message(_\|_x"some message {msg}", msg => $xyz);
 .Ve
-.ie n .IP "$obj\->\fBreason\fR([\s-1REASON\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBreason\fR([\s-1REASON\s0])" 4
-.IX Item "$obj->reason([REASON])"
+.ie n .IP "$obj\->\fBreason\fR( [$reason] )" 4
+.el .IP "\f(CW$obj\fR\->\fBreason\fR( [$reason] )" 4
+.IX Item "$obj->reason( [$reason] )"
 .PD 0
-.ie n .IP "$obj\->\fBreport_opts\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBreport_opts\fR" 4
-.IX Item "$obj->report_opts"
+.ie n .IP "$obj\->\fBreport_opts\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBreport_opts\fR()" 4
+.IX Item "$obj->report_opts()"
 .PD
 .SS "Processing"
 .IX Subsection "Processing"
-.ie n .IP "$obj\->\fBinClass\fR(CLASS|REGEX)" 4
-.el .IP "\f(CW$obj\fR\->\fBinClass\fR(CLASS|REGEX)" 4
-.IX Item "$obj->inClass(CLASS|REGEX)"
-Check whether any of the classes listed in the message match \s-1CLASS\s0
-(string) or the \s-1REGEX\s0.  This uses \fILog::Report::Message::inClass()\fR.
-.ie n .IP "$obj\->\fBprint\fR([\s-1FILEHANDLE\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBprint\fR([\s-1FILEHANDLE\s0])" 4
-.IX Item "$obj->print([FILEHANDLE])"
+.ie n .IP "$obj\->\fBinClass\fR($class|Regexp)" 4
+.el .IP "\f(CW$obj\fR\->\fBinClass\fR($class|Regexp)" 4
+.IX Item "$obj->inClass($class|Regexp)"
+Check whether any of the classes listed in the message match \f(CW$class\fR
+(string) or the Regexp.  This uses \fILog::Report::Message::inClass()\fR.
+.ie n .IP "$obj\->\fBprint\fR( [$fh] )" 4
+.el .IP "\f(CW$obj\fR\->\fBprint\fR( [$fh] )" 4
+.IX Item "$obj->print( [$fh] )"
 The default filehandle is \s-1STDOUT\s0.
 .Sp
 example:
@@ -234,14 +234,14 @@ example:
 \& print $exception;  # via overloading
 \& $exception\->print; # OO style
 .Ve
-.ie n .IP "$obj\->\fBthrow\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBthrow\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->throw(OPTIONS)"
+.ie n .IP "$obj\->\fBthrow\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBthrow\fR(%options)" 4
+.IX Item "$obj->throw(%options)"
 Insert the message contained in the exception into the currently
 defined dispatchers.  The \f(CW\*(C`throw\*(C'\fR name is commonly known
 exception related terminology for \f(CW\*(C`report\*(C'\fR.
 .Sp
-The \s-1OPTIONS\s0 overrule the captured options to \fILog::Report::report()\fR.
+The \f(CW%options\fR overrule the captured options to \fILog::Report::report()\fR.
 This can be used to overrule a destination.  Also, the reason can
 be changed.
 .Sp
@@ -255,9 +255,13 @@ example: overrule defaults to report
 \&
 \& $@\->wasFatal\->throw(reason => \*(AqWARNING\*(Aq);
 .Ve
-.ie n .IP "$obj\->\fBtoString\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtoString\fR" 4
-.IX Item "$obj->toString"
+.ie n .IP "$obj\->\fBtoHTML\fR( [$locale] )" 4
+.el .IP "\f(CW$obj\fR\->\fBtoHTML\fR( [$locale] )" 4
+.IX Item "$obj->toHTML( [$locale] )"
+[1.11] as \fItoString()\fR, and escape \s-1HTML\s0 volatile characters.
+.ie n .IP "$obj\->\fBtoString\fR( [$locale] )" 4
+.el .IP "\f(CW$obj\fR\->\fBtoString\fR( [$locale] )" 4
+.IX Item "$obj->toString( [$locale] )"
 Prints the reason and the message.  Differently from \fIthrow()\fR, this
 only represents the textual content: it does not re-cast the exceptions to
 higher levels.
@@ -275,11 +279,11 @@ example: printing exceptions
 Produces \*(L"reason: message\*(R".
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
+This module is part of Log-Report distribution version 1.19,
+built on February 09, 2017. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

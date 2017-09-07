@@ -1,45 +1,54 @@
-# Copyrights 2007-2011 by Mark Overmeer.
+# Copyrights 2007-2017 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 use warnings;
 use strict;
 
 package Log::Report::Dispatcher::Syslog;
 use vars '$VERSION';
-$VERSION = '0.94';
+$VERSION = '1.19';
 
 use base 'Log::Report::Dispatcher';
 
-use Sys::Syslog qw/:standard :extended :macros/;
-use Log::Report 'log-report', syntax => 'SHORT';
+use Log::Report 'log-report';
+
+use Sys::Syslog        qw/:standard :extended :macros/;
 use Log::Report::Util  qw/@reasons expand_reasons/;
+use Encode             qw/encode/;
 
 use File::Basename qw/basename/;
 
 my %default_reasonToPrio =
- ( TRACE   => LOG_DEBUG
- , ASSERT  => LOG_DEBUG
- , INFO    => LOG_INFO
- , NOTICE  => LOG_NOTICE
- , WARNING => LOG_WARNING
- , MISTAKE => LOG_WARNING
- , ERROR   => LOG_ERR
- , FAULT   => LOG_ERR
- , ALERT   => LOG_ALERT
- , FAILURE => LOG_EMERG
- , PANIC   => LOG_CRIT
- );
+  ( TRACE   => LOG_DEBUG
+  , ASSERT  => LOG_DEBUG
+  , INFO    => LOG_INFO
+  , NOTICE  => LOG_NOTICE
+  , WARNING => LOG_WARNING
+  , MISTAKE => LOG_WARNING
+  , ERROR   => LOG_ERR
+  , FAULT   => LOG_ERR
+  , ALERT   => LOG_ALERT
+  , FAILURE => LOG_EMERG
+  , PANIC   => LOG_CRIT
+  );
 
-@reasons != keys %default_reasonToPrio
-    and panic __"Not all reasons have a default translation";
+@reasons==keys %default_reasonToPrio
+    or panic __"not all reasons have a default translation";
 
+
+my $active;
 
 sub init($)
 {   my ($self, $args) = @_;
     $args->{format_reason} ||= 'IGNORE';
 
     $self->SUPER::init($args);
+
+    error __x"max one active syslog dispatcher, attempt for {new} have {old}"
+      , new => $self->name, old => $active
+        if $active;
+    $active   = $self->name;
 
     setlogsock(delete $args->{logsocket})
         if $args->{logsocket};
@@ -49,7 +58,11 @@ sub init($)
     my $fac   = delete $args->{facility} || 'user';
     openlog $ident, $flags, $fac;   # doesn't produce error.
 
-    $self->{prio} = { %default_reasonToPrio };
+    $self->{LRDS_incl_dom} = delete $args->{include_domain};
+    $self->{LRDS_charset}  = delete $args->{charset} || "utf-8";
+    $self->{LRDS_format}   = $args->{format} || sub {$_[0]};
+
+    $self->{prio} = +{ %default_reasonToPrio };
     if(my $to_prio = delete $args->{to_prio})
     {   my @to = @$to_prio;
         while(@to)
@@ -69,20 +82,40 @@ sub init($)
 
 sub close()
 {   my $self = shift;
+    undef $active;
     closelog;
+
     $self->SUPER::close;
 }
 
+#--------------
 
-sub log($$$$)
+sub format(;$)
 {   my $self = shift;
-    my $text = $self->SUPER::translate(@_) or return;
+    @_ ? $self->{LRDS_format} = shift : $self->{LRDS_format};
+}
 
-    my $prio = $self->reasonToPrio($_[1]);
+#--------------
+
+sub log($$$$$)
+{   my ($self, $opts, $reason, $msg, $domain) = @_;
+    my $text   = $self->translate($opts, $reason, $msg) or return;
+    my $format = $self->format;
 
     # handle each line in message separately
-    syslog $prio, "%s", $_
-        for split /\n/, $text;
+    $text    =~ s/\s+$//s;
+    my @text = split /\n/, $format->($text, $domain, $msg, %$opts);
+
+    my $prio    = $self->reasonToPrio($reason);
+    my $charset = $self->{LRDS_charset};
+
+    if($self->{LRDS_incl_dom} && $domain)
+    {   $domain  =~ s/\%//g;    # security
+        syslog $prio, "$domain %s", encode($charset, shift @text);
+    }
+
+    syslog $prio, "%s", encode($charset, $_)
+        for @text;
 }
 
 

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Log::Report::Die 3"
-.TH Log::Report::Die 3 "2011-08-23" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Log::Report::Die 3 "2017-02-09" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -137,10 +137,17 @@ Log::Report::Die \- compatibility routines with Perl's die/croak/confess
 \& Log::Report::Die
 \&   is a Exporter
 .Ve
-.SH "Functions"
-.IX Header "Functions"
-.IP "\fBdie_decode\fR(\s-1STRING\s0)" 4
-.IX Item "die_decode(STRING)"
+.SH "SYNOPSIS"
+.IX Header "SYNOPSIS"
+.SH "DESCRIPTION"
+.IX Header "DESCRIPTION"
+This module is used internally, to translate output of 'die' and Carp
+functions into Log::Report::Message objects.
+.SH "FUNCTIONS"
+.IX Header "FUNCTIONS"
+.ie n .IP "\fBdie_decode\fR(\s-1STRING\s0, %options)" 4
+.el .IP "\fBdie_decode\fR(\s-1STRING\s0, \f(CW%options\fR)" 4
+.IX Item "die_decode(STRING, %options)"
 The \s-1STRING\s0 is the content of \f(CW$@\fR after an \fIeval()\fR caught a \fIdie()\fR.
 \&\fIcroak()\fR, or \fIconfess()\fR.  This routine tries to convert this into
 parameters for \fILog::Report::report()\fR.  This is done in a very
@@ -166,16 +173,22 @@ following table is used:
 \&    no      yes      PANIC   (confess) implementation error
 \&    yes     yes      ALERT   (confess) external problem, caught
 \&
-\&      = @{$opt{stack}} ? ($opt{errno} ? \*(AqALERT\*(Aq : \*(AqPANIC\*(Aq)
-\&      :                  ($opt{errno} ? \*(AqFAULT\*(Aq : \*(AqERROR\*(Aq);
+\& \-Option\-\-Default
+\&  on_die  \*(AqERROR\*(Aq
 .Ve
+.RS 4
+.IP "on_die => \s-1REASON\s0" 2
+.IX Item "on_die => REASON"
+.RE
+.RS 4
+.RE
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
+This module is part of Log-Report distribution version 1.19,
+built on February 09, 2017. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

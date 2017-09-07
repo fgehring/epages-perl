@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Log::Report::Dispatcher::LogDispatch 3"
-.TH Log::Report::Dispatcher::LogDispatch 3 "2011-08-23" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Log::Report::Dispatcher::LogDispatch 3 "2017-02-09" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -163,16 +163,21 @@ the trickery in Perl programs.
 .PP
 The default translation table is list below.  You can change the mapping
 using new(to_level).  See example in \s-1SYNOPSIS\s0.
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in Log::Report::Dispatcher.
 .SH "METHODS"
 .IX Header "METHODS"
+Extends \*(L"\s-1METHODS\s0\*(R" in Log::Report::Dispatcher.
 .SS "Constructors"
 .IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBclose\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBclose\fR" 4
-.IX Item "$obj->close"
-See \*(L"Constructors\*(R" in Log::Report::Dispatcher
-.IP "Log::Report::Dispatcher::LogDispatch\->\fBnew\fR(\s-1TYPE\s0, \s-1NAME\s0, \s-1OPTIONS\s0)" 4
-.IX Item "Log::Report::Dispatcher::LogDispatch->new(TYPE, NAME, OPTIONS)"
+Extends \*(L"Constructors\*(R" in Log::Report::Dispatcher.
+.ie n .IP "$obj\->\fBclose\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBclose\fR()" 4
+.IX Item "$obj->close()"
+Inherited, see \*(L"Constructors\*(R" in Log::Report::Dispatcher
+.ie n .IP "Log::Report::Dispatcher::LogDispatch\->\fBnew\fR($type, $name, %options)" 4
+.el .IP "Log::Report::Dispatcher::LogDispatch\->\fBnew\fR($type, \f(CW$name\fR, \f(CW%options\fR)" 4
+.IX Item "Log::Report::Dispatcher::LogDispatch->new($type, $name, %options)"
 The Log::Dispatch infrastructure has quite a large number of output
 TYPEs, each extending the Log::Dispatch::Output base-class.  You
 do not create these objects yourself: Log::Report is doing it for you.
@@ -183,16 +188,16 @@ for the specific back-end.  See their respective manual-pages.  The errors
 produced by the back-ends quite horrible and untranslated, sorry.
 .Sp
 .Vb 10
-\& \-Option       \-\-Defined in     \-\-Default
+\& \-Option       \-\-Defined in             \-\-Default
 \&  accept         Log::Report::Dispatcher  depend on mode
-\&  callbacks                       []
+\&  callbacks                               []
 \&  charset        Log::Report::Dispatcher  <undef>
 \&  format_reason  Log::Report::Dispatcher  \*(AqLOWERCASE\*(Aq
 \&  locale         Log::Report::Dispatcher  <system locale>
-\&  max_level                       undef
-\&  min_level                       debug
+\&  max_level                               undef
+\&  min_level                               debug
 \&  mode           Log::Report::Dispatcher  \*(AqNORMAL\*(Aq
-\&  to_level                        []
+\&  to_level                                []
 .Ve
 .RS 4
 .IP "accept => \s-1REASONS\s0" 2
@@ -230,76 +235,93 @@ See \fIreasonToLevel()\fR.
 .RE
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBbackend\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBbackend\fR" 4
-.IX Item "$obj->backend"
+Extends \*(L"Accessors\*(R" in Log::Report::Dispatcher.
+.ie n .IP "$obj\->\fBbackend\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBbackend\fR()" 4
+.IX Item "$obj->backend()"
 Returns the Log::Dispatch::Output object which is used for logging.
-.ie n .IP "$obj\->\fBisDisabled\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBisDisabled\fR" 4
-.IX Item "$obj->isDisabled"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBmode\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBmode\fR" 4
-.IX Item "$obj->mode"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBname\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBname\fR" 4
-.IX Item "$obj->name"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBneeds\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBneeds\fR" 4
-.IX Item "$obj->needs"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBtype\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtype\fR" 4
-.IX Item "$obj->type"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBisDisabled\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBisDisabled\fR()" 4
+.IX Item "$obj->isDisabled()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBmode\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBmode\fR()" 4
+.IX Item "$obj->mode()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBname\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBname\fR()" 4
+.IX Item "$obj->name()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBneeds\fR( [$reason] )" 4
+.el .IP "\f(CW$obj\fR\->\fBneeds\fR( [$reason] )" 4
+.IX Item "$obj->needs( [$reason] )"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBtype\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBtype\fR()" 4
+.IX Item "$obj->type()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
 .SS "Logging"
 .IX Subsection "Logging"
-.ie n .IP "$obj\->\fBcollectLocation\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcollectLocation\fR" 4
-.IX Item "$obj->collectLocation"
+Extends \*(L"Logging\*(R" in Log::Report::Dispatcher.
+.ie n .IP "$obj\->\fBaddSkipStack\fR(@CODE)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddSkipStack\fR(@CODE)" 4
+.IX Item "$obj->addSkipStack(@CODE)"
 .PD 0
-.IP "Log::Report::Dispatcher::LogDispatch\->\fBcollectLocation\fR" 4
-.IX Item "Log::Report::Dispatcher::LogDispatch->collectLocation"
+.IP "Log::Report::Dispatcher::LogDispatch\->\fBaddSkipStack\fR(@CODE)" 4
+.IX Item "Log::Report::Dispatcher::LogDispatch->addSkipStack(@CODE)"
 .PD
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.IX Item "$obj->collectStack([MAXDEPTH])"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBcollectLocation\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcollectLocation\fR()" 4
+.IX Item "$obj->collectLocation()"
 .PD 0
-.IP "Log::Report::Dispatcher::LogDispatch\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.IX Item "Log::Report::Dispatcher::LogDispatch->collectStack([MAXDEPTH])"
+.IP "Log::Report::Dispatcher::LogDispatch\->\fBcollectLocation\fR()" 4
+.IX Item "Log::Report::Dispatcher::LogDispatch->collectLocation()"
 .PD
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBlog\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBlog\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.IX Item "$obj->log(HASH-of-OPTIONS, REASON, MESSAGE)"
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBreasonToLevel\fR(\s-1REASON\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBreasonToLevel\fR(\s-1REASON\s0)" 4
-.IX Item "$obj->reasonToLevel(REASON)"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBcollectStack\fR( [$maxdepth] )" 4
+.el .IP "\f(CW$obj\fR\->\fBcollectStack\fR( [$maxdepth] )" 4
+.IX Item "$obj->collectStack( [$maxdepth] )"
+.PD 0
+.IP "Log::Report::Dispatcher::LogDispatch\->\fBcollectStack\fR( [$maxdepth] )" 4
+.IX Item "Log::Report::Dispatcher::LogDispatch->collectStack( [$maxdepth] )"
+.PD
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBlog\fR(HASH\-$of\-%options, $reason, $message, $domain)" 4
+.el .IP "\f(CW$obj\fR\->\fBlog\fR(HASH\-$of\-%options, \f(CW$reason\fR, \f(CW$message\fR, \f(CW$domain\fR)" 4
+.IX Item "$obj->log(HASH-$of-%options, $reason, $message, $domain)"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBreasonToLevel\fR($reason)" 4
+.el .IP "\f(CW$obj\fR\->\fBreasonToLevel\fR($reason)" 4
+.IX Item "$obj->reasonToLevel($reason)"
 Returns a level which is understood by Log::Dispatch, based on
 a translation table.  This can be changed with new(to_level).
-.ie n .IP "$obj\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->stackTraceLine(OPTIONS)"
+.ie n .IP "$obj\->\fBskipStack\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBskipStack\fR()" 4
+.IX Item "$obj->skipStack()"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBstackTraceLine\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBstackTraceLine\fR(%options)" 4
+.IX Item "$obj->stackTraceLine(%options)"
 .PD 0
-.IP "Log::Report::Dispatcher::LogDispatch\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.IX Item "Log::Report::Dispatcher::LogDispatch->stackTraceLine(OPTIONS)"
+.IP "Log::Report::Dispatcher::LogDispatch\->\fBstackTraceLine\fR(%options)" 4
+.IX Item "Log::Report::Dispatcher::LogDispatch->stackTraceLine(%options)"
 .PD
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBtranslate\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBtranslate\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.IX Item "$obj->translate(HASH-of-OPTIONS, REASON, MESSAGE)"
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBtranslate\fR(HASH\-$of\-%options, $reason, $message)" 4
+.el .IP "\f(CW$obj\fR\->\fBtranslate\fR(HASH\-$of\-%options, \f(CW$reason\fR, \f(CW$message\fR)" 4
+.IX Item "$obj->translate(HASH-$of-%options, $reason, $message)"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.SH "DETAILS"
+.IX Header "DETAILS"
+Extends \*(L"\s-1DETAILS\s0\*(R" in Log::Report::Dispatcher.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
+This module is part of Log-Report distribution version 1.19,
+built on February 09, 2017. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

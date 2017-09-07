@@ -124,13 +124,13 @@
 .\" ========================================================================
 .\"
 .IX Title "Log::Report::Dispatcher 3"
-.TH Log::Report::Dispatcher 3 "2011-08-23" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Log::Report::Dispatcher 3 "2017-02-09" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-Log::Report::Dispatcher \- manage dispatching
+Log::Report::Dispatcher \- manage message dispatching, display or logging
 .SH "INHERITANCE"
 .IX Header "INHERITANCE"
 .Vb 8
@@ -158,39 +158,39 @@ Log::Report::Dispatcher \- manage dispatching
 \& # Full package name is used, same as \*(AqFILE\*(Aq
 \& dispatcher Log::Report::Dispatch::File => \*(Aqstderr\*(Aq
 \&   , to => \e*STDERR, accept => \*(AqNOTICE\-\*(Aq;
-\&
-\& # Within a "try" block, there is only one dispatcher
-\& dispatcher TRY => \*(Aqtry\*(Aq;
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-This base-class handles the creation of dispatchers, plus the
-common filtering rules.
+In Log::Report, dispatchers are used to handle (exception) messages
+which are created somewhere else.  Those message were produced (thrown)
+by \fILog::Report::error()\fR and friends.
 .PP
-See the \*(L"\s-1DETAILS\s0\*(R" section, below.
+This base-class handles the creation of dispatchers, plus the common
+filtering rules.  See the \*(L"\s-1DETAILS\s0\*(R" section, below.
 .SH "METHODS"
 .IX Header "METHODS"
 .SS "Constructors"
 .IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBclose\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBclose\fR" 4
-.IX Item "$obj->close"
+.ie n .IP "$obj\->\fBclose\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBclose\fR()" 4
+.IX Item "$obj->close()"
 Terminate the dispatcher activities.  The dispatcher gets disabled,
 to avoid the case that it is accidentally used.  Returns \f(CW\*(C`undef\*(C'\fR (false)
 if the dispatcher was already closed.
-.IP "Log::Report::Dispatcher\->\fBnew\fR(\s-1TYPE\s0, \s-1NAME\s0, \s-1OPTIONS\s0)" 4
-.IX Item "Log::Report::Dispatcher->new(TYPE, NAME, OPTIONS)"
-Create a dispatcher.  The \s-1TYPE\s0 of back-end to start is required, and listed
+.ie n .IP "Log::Report::Dispatcher\->\fBnew\fR($type, $name, %options)" 4
+.el .IP "Log::Report::Dispatcher\->\fBnew\fR($type, \f(CW$name\fR, \f(CW%options\fR)" 4
+.IX Item "Log::Report::Dispatcher->new($type, $name, %options)"
+Create a dispatcher.  The \f(CW$type\fR of back-end to start is required, and listed
 in the \*(L"\s-1DESCRIPTION\s0\*(R" part of this manual-page. For various external
 back-ends, special wrappers are created.
 .Sp
-The \s-1NAME\s0 must be uniquely identifying this dispatcher.  When a second
+The \f(CW$name\fR must be uniquely identifying this dispatcher.  When a second
 dispatcher is created (via \fILog::Report::dispatcher()\fR) with the name
 of an existing dispatcher, the existing one will get replaced.
 .Sp
-All \s-1OPTIONS\s0 which are not consumed by this base constructor are passed
-to the wrapped back-end.  Some of them will check whether all \s-1OPTIONS\s0
-are understood, other ignore unknown \s-1OPTIONS\s0.
+All \f(CW%options\fR which are not consumed by this base constructor are passed
+to the wrapped back-end.  Some of them will check whether all \f(CW%options\fR
+are understood, other ignore unknown \f(CW%options\fR.
 .Sp
 .Vb 6
 \& \-Option       \-\-Default
@@ -207,9 +207,9 @@ See \fILog::Report::Util::expand_reasons()\fR for possible values.  If
 the initial mode for this dispatcher does not need verbose or debug
 information, then those levels will not be accepted.
 .Sp
-When the mode equals \f(CW\*(C`NORMAL\*(C'\fR (the default) then \f(CW\*(C`accept\*(C'\fR's default
-is \f(CW\*(C`NOTICE\-\*(C'\fR.  In case of \f(CW\*(C`VERBOSE\*(C'\fR it will be \f(CW\*(C`INFO\-\*(C'\fR, \f(CW\*(C`ASSERT\*(C'\fR
-results in \f(CW\*(C`ASSERT\-\*(C'\fR, and \f(CW\*(C`DEBUG\*(C'\fR in \f(CW\*(C`ALL\*(C'\fR.
+When the mode equals \*(L"\s-1NORMAL\s0\*(R" (the default) then \f(CW\*(C`accept\*(C'\fR's default
+is \f(CW\*(C`NOTICE\-\*(C'\fR.  In case of \*(L"\s-1VERBOSE\s0\*(R"> it will be \f(CW\*(C`INFO\-\*(C'\fR, \f(CW\*(C`ASSERT\*(C'\fR
+results in \f(CW\*(C`ASSERT\-\*(C'\fR, and \*(L"\s-1DEBUG\s0\*(R" in \f(CW\*(C`ALL\*(C'\fR.
 .IP "charset => \s-1CHARSET\s0" 2
 .IX Item "charset => CHARSET"
 Convert the messages in the specified character-set (codeset).  By
@@ -239,61 +239,95 @@ for smooth Getopt::Long integration.
 .RE
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBisDisabled\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBisDisabled\fR" 4
-.IX Item "$obj->isDisabled"
+.ie n .IP "$obj\->\fBisDisabled\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBisDisabled\fR()" 4
+.IX Item "$obj->isDisabled()"
 .PD 0
-.ie n .IP "$obj\->\fBmode\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBmode\fR" 4
-.IX Item "$obj->mode"
+.ie n .IP "$obj\->\fBmode\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBmode\fR()" 4
+.IX Item "$obj->mode()"
 .PD
 Returns the mode in use for the dispatcher as number.  See new(mode)
 and \*(L"Run modes\*(R" in Log::Report.
-.ie n .IP "$obj\->\fBname\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBname\fR" 4
-.IX Item "$obj->name"
+.ie n .IP "$obj\->\fBname\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBname\fR()" 4
+.IX Item "$obj->name()"
 Returns the unique name of this dispatcher.
-.ie n .IP "$obj\->\fBneeds\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBneeds\fR" 4
-.IX Item "$obj->needs"
+.ie n .IP "$obj\->\fBneeds\fR( [$reason] )" 4
+.el .IP "\f(CW$obj\fR\->\fBneeds\fR( [$reason] )" 4
+.IX Item "$obj->needs( [$reason] )"
 Returns the list with all \s-1REASONS\s0 which are needed to fulfill this
 dispatcher's needs.  When disabled, the list is empty, but not forgotten.
-.ie n .IP "$obj\->\fBtype\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtype\fR" 4
-.IX Item "$obj->type"
-The dispatcher \s-1TYPE\s0, which is usually the same as the class of this
+.Sp
+[0.999] when only one \f(CW$reason\fR is specified, it is returned if in the
+list.
+.ie n .IP "$obj\->\fBtype\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBtype\fR()" 4
+.IX Item "$obj->type()"
+The dispatcher \f(CW$type\fR, which is usually the same as the class of this
 object, but not in case of wrappers like for Log::Dispatch.
 .SS "Logging"
 .IX Subsection "Logging"
-.ie n .IP "$obj\->\fBcollectLocation\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcollectLocation\fR" 4
-.IX Item "$obj->collectLocation"
+.ie n .IP "$obj\->\fBaddSkipStack\fR(@CODE)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddSkipStack\fR(@CODE)" 4
+.IX Item "$obj->addSkipStack(@CODE)"
 .PD 0
-.IP "Log::Report::Dispatcher\->\fBcollectLocation\fR" 4
-.IX Item "Log::Report::Dispatcher->collectLocation"
+.IP "Log::Report::Dispatcher\->\fBaddSkipStack\fR(@CODE)" 4
+.IX Item "Log::Report::Dispatcher->addSkipStack(@CODE)"
+.PD
+[1.13] Add one or more \s-1CODE\s0 blocks of caller lines which should not be
+collected for stack-traces or location display.  A \s-1CODE\s0 gets
+called with an \s-1ARRAY\s0 of caller information, and returns true
+when that line should get skipped.
+.Sp
+\&\fBWarning:\fR this logic is applied globally: on all dispatchers.
+.Sp
+example:
+.Sp
+By default, all lines in the Log::Report packages are skipped from
+display, with a simple \s-1CODE\s0 as this:
+.Sp
+.Vb 2
+\&  sub in_lr { $_[0][0] =~ m/^Log\e:\e:Report(?:\e:\e:|$)/ }
+\&  Log::Report::Dispatcher\->addSkipStack(\e&in_lr);
+.Ve
+.Sp
+The only parameter to in_lr is the return of \fIcaller()\fR.  The first
+element of that \s-1ARRAY\s0 is the package name of a stack line.
+.ie n .IP "$obj\->\fBcollectLocation\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcollectLocation\fR()" 4
+.IX Item "$obj->collectLocation()"
+.PD 0
+.IP "Log::Report::Dispatcher\->\fBcollectLocation\fR()" 4
+.IX Item "Log::Report::Dispatcher->collectLocation()"
 .PD
 Collect the information to be displayed as line where the error occurred.
-Probably, this needs improvement, where carp and die show different lines.
-.ie n .IP "$obj\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.IX Item "$obj->collectStack([MAXDEPTH])"
+.ie n .IP "$obj\->\fBcollectStack\fR( [$maxdepth] )" 4
+.el .IP "\f(CW$obj\fR\->\fBcollectStack\fR( [$maxdepth] )" 4
+.IX Item "$obj->collectStack( [$maxdepth] )"
 .PD 0
-.IP "Log::Report::Dispatcher\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.IX Item "Log::Report::Dispatcher->collectStack([MAXDEPTH])"
+.IP "Log::Report::Dispatcher\->\fBcollectStack\fR( [$maxdepth] )" 4
+.IX Item "Log::Report::Dispatcher->collectStack( [$maxdepth] )"
 .PD
 Returns an \s-1ARRAY\s0 of ARRAYs with text, filename, line-number.
-.ie n .IP "$obj\->\fBlog\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBlog\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.IX Item "$obj->log(HASH-of-OPTIONS, REASON, MESSAGE)"
+.ie n .IP "$obj\->\fBlog\fR(HASH\-$of\-%options, $reason, $message, $domain)" 4
+.el .IP "\f(CW$obj\fR\->\fBlog\fR(HASH\-$of\-%options, \f(CW$reason\fR, \f(CW$message\fR, \f(CW$domain\fR)" 4
+.IX Item "$obj->log(HASH-$of-%options, $reason, $message, $domain)"
 This method is called by \fILog::Report::report()\fR and should not be called
-directly.  Internally, it will call \fItranslate()\fR, which does most of
+directly.  Internally, it will call \fItranslate()\fR, which does most \f(CW$of\fR
 the work.
-.ie n .IP "$obj\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->stackTraceLine(OPTIONS)"
+.ie n .IP "$obj\->\fBskipStack\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBskipStack\fR()" 4
+.IX Item "$obj->skipStack()"
+[1.13] Returns the number of nestings in the stack which should be skipped
+to get outside the Log::Report (and related) modules.  The end-user
+does not want to see those internals in stack-traces.
+.ie n .IP "$obj\->\fBstackTraceLine\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBstackTraceLine\fR(%options)" 4
+.IX Item "$obj->stackTraceLine(%options)"
 .PD 0
-.IP "Log::Report::Dispatcher\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.IX Item "Log::Report::Dispatcher->stackTraceLine(OPTIONS)"
+.IP "Log::Report::Dispatcher\->\fBstackTraceLine\fR(%options)" 4
+.IX Item "Log::Report::Dispatcher->stackTraceLine(%options)"
 .PD
 .Vb 9
 \& \-Option    \-\-Default
@@ -331,9 +365,9 @@ margin.
 .RE
 .RS 4
 .RE
-.ie n .IP "$obj\->\fBtranslate\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBtranslate\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.IX Item "$obj->translate(HASH-of-OPTIONS, REASON, MESSAGE)"
+.ie n .IP "$obj\->\fBtranslate\fR(HASH\-$of\-%options, $reason, $message)" 4
+.el .IP "\f(CW$obj\fR\->\fBtranslate\fR(HASH\-$of\-%options, \f(CW$reason\fR, \f(CW$message\fR)" 4
+.IX Item "$obj->translate(HASH-$of-%options, $reason, $message)"
 .PD
 See \*(L"Processing the message\*(R", which describes the actions taken by
 this method.  A string is returned, which ends on a new-line, and
@@ -358,6 +392,10 @@ class or be opened before the dispatcher is created.
 .IX Item "Log::Report::Dispatcher::Syslog (abbreviation 'SYSLOG')"
 Send messages into the system's syslog infrastructure, using
 Sys::Syslog.
+.IP "Log::Report::Dispatcher::Callback (abbreviation '\s-1CALLBACK\s0')" 4
+.IX Item "Log::Report::Dispatcher::Callback (abbreviation 'CALLBACK')"
+Calls any \s-1CODE\s0 reference on receipt of each selected message, for
+instance to send important message as email or \s-1SMS\s0.
 .ie n .IP """Log::Dispatch::*""" 4
 .el .IP "\f(CWLog::Dispatch::*\fR" 4
 .IX Item "Log::Dispatch::*"
@@ -371,8 +409,8 @@ Use the Log::Log4perl main object to write to dispatchers.  This
 infrastructure uses a configuration file.
 .IP "Log::Report::Dispatcher::Try (abbreviation '\s-1TRY\s0')" 4
 .IX Item "Log::Report::Dispatcher::Try (abbreviation 'TRY')"
-Used by \fILog::Report::try()\fR, it will translate reports into
-exceptions.
+Used by function \fILog::Report::try()\fR.  It collects the exceptions
+and can produce them on request.
 .SS "Processing the message"
 .IX Subsection "Processing the message"
 \fIAddition information\fR
@@ -415,13 +453,13 @@ Exactly what will be added depends on the actual mode of the dispatcher
 \& warning  program  T..  S    S    SL   SL
 \& error    user     TE.  S    S    SL   SC
 \& fault    system   TE!  S    S    SL   SC
-\& alert    system   T.!  S    S    SC   SC
-\& failure  system   TE!  S    S    SC   SC
+\& alert    system   T.!  SL   SL   SC   SC
+\& failure  system   TE!  SL   SL   SC   SC
 \& panic    program  .E.  SC   SC   SC   SC
 \&
 \& T \- usually translated
 \& E \- exception (execution interrupted)
-\& ! \- will include $! text
+\& ! \- will include $! text at display
 \& L \- include filename and linenumber
 \& S \- show/print when accepted
 \& C \- stack trace (like Carp::confess())
@@ -454,13 +492,39 @@ object which may have a \f(CW\*(C`prepend\*(C'\fR string and \f(CW\*(C`append\*(
 object.  When the call to \fILog::Report::report()\fR contained multiple
 comma-separated components, these will already have been joined together
 using concatenation (see \fILog::Report::Message::concat()\fR.
+.PP
+\&\fB. Example: a filter on syslog\fR
+.PP
+.Vb 1
+\& dispatcher filter => \e&myfilter, \*(Aqsyslog\*(Aq;
+\&
+\& # ignore all translatable and non\-translatable messages containing
+\& # the word "skip"
+\& sub myfilter($$$$)
+\& {   my ($disp, $opts, $reason, $message) = @_;
+\&     return () if $message\->untranslated =~ m/\ebskip\eb/;
+\&     ($reason, $message);
+\& }
+.Ve
+.PP
+\&\fB. Example: take all mistakes and warnings serious\fR
+.PP
+.Vb 7
+\& dispatch filter => \e&take_warns_seriously;
+\& sub take_warns_seriously($$$$)
+\& {   my ($disp, $opts, $reason, $message) = @_;
+\&       $reason eq \*(AqMISTAKE\*(Aq ? (ERROR   => $message)
+\&     : $reason eq \*(AqWARNING\*(Aq ? (FAULT   => $message)
+\&     :                        ($reason => $message);
+\& }
+.Ve
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
+This module is part of Log-Report distribution version 1.19,
+built on February 09, 2017. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

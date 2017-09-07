@@ -1,13 +1,13 @@
-# Copyrights 2007-2011 by Mark Overmeer.
+# Copyrights 2007-2017 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.02.
 use warnings;
 use strict;
 
 package Log::Report::Dispatcher::LogDispatch;
 use vars '$VERSION';
-$VERSION = '0.94';
+$VERSION = '1.19';
 
 use base 'Log::Report::Dispatcher';
 
@@ -71,9 +71,9 @@ sub close()
 sub backend() {shift->{backend}}
 
 
-sub log($$$$)
+sub log($$$$$)
 {   my $self  = shift;
-    my $text  = $self->SUPER::translate(@_) or return;
+    my $text  = $self->translate(@_) or return;
     my $level = $self->reasonToLevel($_[1]);
 
     $self->backend->log(level => $level, message => $text);

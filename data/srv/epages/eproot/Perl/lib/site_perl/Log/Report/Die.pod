@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 Log::Report::Die - compatibility routines with Perl's die/croak/confess
@@ -7,11 +9,18 @@ Log::Report::Die - compatibility routines with Perl's die/croak/confess
  Log::Report::Die
    is a Exporter
 
-=head1 Functions
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+This module is used internally, to translate output of 'die' and Carp
+functions into L<Log::Report::Message|Log::Report::Message> objects.
+
+=head1 FUNCTIONS
 
 =over 4
 
-=item B<die_decode>(STRING)
+=item B<die_decode>(STRING, %options)
 
 The STRING is the content of C<$@> after an eval() caught a die().
 croak(), or confess().  This routine tries to convert this into
@@ -37,19 +46,25 @@ following table is used:
     no      yes      PANIC   (confess) implementation error
     yes     yes      ALERT   (confess) external problem, caught
 
-      = @{$opt{stack}} ? ($opt{errno} ? 'ALERT' : 'PANIC')
-      :                  ($opt{errno} ? 'FAULT' : 'ERROR');
+ -Option--Default
+  on_die  'ERROR'
+
+=over 2
+
+=item on_die => REASON
+
+=back
 
 =back
 
 =head1 SEE ALSO
 
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: F<http://perl.overmeer.net/log-report/>
+This module is part of Log-Report distribution version 1.19,
+built on February 09, 2017. Website: F<http://perl.overmeer.net/log-report/>
 
 =head1 LICENSE
 
-Copyrights 2007-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

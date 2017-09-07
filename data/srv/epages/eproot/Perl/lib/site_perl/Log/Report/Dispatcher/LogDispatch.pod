@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 Log::Report::Dispatcher::LogDispatch - send messages to Log::Dispatch back-end
@@ -33,17 +35,23 @@ the trickery in Perl programs.
 The default translation table is list below.  You can change the mapping
 using L<new(to_level)|Log::Report::Dispatcher::LogDispatch/"Constructors">.  See example in SYNOPSIS.
 
+Extends L<"DESCRIPTION" in Log::Report::Dispatcher|Log::Report::Dispatcher/"DESCRIPTION">.
+ 
 =head1 METHODS
 
+Extends L<"METHODS" in Log::Report::Dispatcher|Log::Report::Dispatcher/"METHODS">.
+ 
 =head2 Constructors
 
+Extends L<"Constructors" in Log::Report::Dispatcher|Log::Report::Dispatcher/"Constructors">.
+ 
 =over 4
 
-=item $obj-E<gt>B<close>
+=item $obj-E<gt>B<close>()
 
-See L<Log::Report::Dispatcher/"Constructors">
+Inherited, see L<Log::Report::Dispatcher/"Constructors">
 
-=item Log::Report::Dispatcher::LogDispatch-E<gt>B<new>(TYPE, NAME, OPTIONS)
+=item Log::Report::Dispatcher::LogDispatch-E<gt>B<new>($type, $name, %options)
 
 The Log::Dispatch infrastructure has quite a large number of output
 TYPEs, each extending the Log::Dispatch::Output base-class.  You
@@ -54,16 +62,16 @@ parameters, so you will need to restrict the options to what is supported
 for the specific back-end.  See their respective manual-pages.  The errors
 produced by the back-ends quite horrible and untranslated, sorry.
 
- -Option       --Defined in     --Default
+ -Option       --Defined in             --Default
   accept         Log::Report::Dispatcher  depend on mode
-  callbacks                       []
+  callbacks                               []
   charset        Log::Report::Dispatcher  <undef>
   format_reason  Log::Report::Dispatcher  'LOWERCASE'
   locale         Log::Report::Dispatcher  <system locale>
-  max_level                       undef
-  min_level                       debug
+  max_level                               undef
+  min_level                               debug
   mode           Log::Report::Dispatcher  'NORMAL'
-  to_level                        []
+  to_level                                []
 
 =over 2
 
@@ -101,79 +109,97 @@ See L<reasonToLevel()|Log::Report::Dispatcher::LogDispatch/"Logging">.
 
 =head2 Accessors
 
+Extends L<"Accessors" in Log::Report::Dispatcher|Log::Report::Dispatcher/"Accessors">.
+ 
 =over 4
 
-=item $obj-E<gt>B<backend>
+=item $obj-E<gt>B<backend>()
 
 Returns the Log::Dispatch::Output object which is used for logging.
 
-=item $obj-E<gt>B<isDisabled>
+=item $obj-E<gt>B<isDisabled>()
 
-See L<Log::Report::Dispatcher/"Accessors">
+Inherited, see L<Log::Report::Dispatcher/"Accessors">
 
-=item $obj-E<gt>B<mode>
+=item $obj-E<gt>B<mode>()
 
-See L<Log::Report::Dispatcher/"Accessors">
+Inherited, see L<Log::Report::Dispatcher/"Accessors">
 
-=item $obj-E<gt>B<name>
+=item $obj-E<gt>B<name>()
 
-See L<Log::Report::Dispatcher/"Accessors">
+Inherited, see L<Log::Report::Dispatcher/"Accessors">
 
-=item $obj-E<gt>B<needs>
+=item $obj-E<gt>B<needs>( [$reason] )
 
-See L<Log::Report::Dispatcher/"Accessors">
+Inherited, see L<Log::Report::Dispatcher/"Accessors">
 
-=item $obj-E<gt>B<type>
+=item $obj-E<gt>B<type>()
 
-See L<Log::Report::Dispatcher/"Accessors">
+Inherited, see L<Log::Report::Dispatcher/"Accessors">
 
 =back
 
 =head2 Logging
 
+Extends L<"Logging" in Log::Report::Dispatcher|Log::Report::Dispatcher/"Logging">.
+ 
 =over 4
 
-=item $obj-E<gt>B<collectLocation>
+=item $obj-E<gt>B<addSkipStack>(@CODE)
 
-=item Log::Report::Dispatcher::LogDispatch-E<gt>B<collectLocation>
+=item Log::Report::Dispatcher::LogDispatch-E<gt>B<addSkipStack>(@CODE)
 
-See L<Log::Report::Dispatcher/"Logging">
+Inherited, see L<Log::Report::Dispatcher/"Logging">
 
-=item $obj-E<gt>B<collectStack>([MAXDEPTH])
+=item $obj-E<gt>B<collectLocation>()
 
-=item Log::Report::Dispatcher::LogDispatch-E<gt>B<collectStack>([MAXDEPTH])
+=item Log::Report::Dispatcher::LogDispatch-E<gt>B<collectLocation>()
 
-See L<Log::Report::Dispatcher/"Logging">
+Inherited, see L<Log::Report::Dispatcher/"Logging">
 
-=item $obj-E<gt>B<log>(HASH-of-OPTIONS, REASON, MESSAGE)
+=item $obj-E<gt>B<collectStack>( [$maxdepth] )
 
-See L<Log::Report::Dispatcher/"Logging">
+=item Log::Report::Dispatcher::LogDispatch-E<gt>B<collectStack>( [$maxdepth] )
 
-=item $obj-E<gt>B<reasonToLevel>(REASON)
+Inherited, see L<Log::Report::Dispatcher/"Logging">
+
+=item $obj-E<gt>B<log>(HASH-$of-%options, $reason, $message, $domain)
+
+Inherited, see L<Log::Report::Dispatcher/"Logging">
+
+=item $obj-E<gt>B<reasonToLevel>($reason)
 
 Returns a level which is understood by Log::Dispatch, based on
 a translation table.  This can be changed with L<new(to_level)|Log::Report::Dispatcher::LogDispatch/"Constructors">.
 
-=item $obj-E<gt>B<stackTraceLine>(OPTIONS)
+=item $obj-E<gt>B<skipStack>()
 
-=item Log::Report::Dispatcher::LogDispatch-E<gt>B<stackTraceLine>(OPTIONS)
+Inherited, see L<Log::Report::Dispatcher/"Logging">
 
-See L<Log::Report::Dispatcher/"Logging">
+=item $obj-E<gt>B<stackTraceLine>(%options)
 
-=item $obj-E<gt>B<translate>(HASH-of-OPTIONS, REASON, MESSAGE)
+=item Log::Report::Dispatcher::LogDispatch-E<gt>B<stackTraceLine>(%options)
 
-See L<Log::Report::Dispatcher/"Logging">
+Inherited, see L<Log::Report::Dispatcher/"Logging">
+
+=item $obj-E<gt>B<translate>(HASH-$of-%options, $reason, $message)
+
+Inherited, see L<Log::Report::Dispatcher/"Logging">
 
 =back
 
+=head1 DETAILS
+
+Extends L<"DETAILS" in Log::Report::Dispatcher|Log::Report::Dispatcher/"DETAILS">.
+ 
 =head1 SEE ALSO
 
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: F<http://perl.overmeer.net/log-report/>
+This module is part of Log-Report distribution version 1.19,
+built on February 09, 2017. Website: F<http://perl.overmeer.net/log-report/>
 
 =head1 LICENSE
 
-Copyrights 2007-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

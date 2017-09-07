@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Log::Report::Dispatcher::Callback 3"
-.TH Log::Report::Dispatcher::Callback 3 "2011-08-23" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Log::Report::Dispatcher::Callback 3 "2017-02-09" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -141,7 +141,7 @@ Log::Report::Dispatcher::Callback \- call a code\-ref for each log\-line
 .IX Header "SYNOPSIS"
 .Vb 4
 \& sub cb($$$)
-\& {   my ($options, $reason, $message) = @_;
+\& {   my ($disp, $options, $reason, $message) = @_;
 \&     ...
 \& }
 \&
@@ -157,20 +157,40 @@ This basic file logger accepts a callback, which is called for each
 message which is to be logged. When you need complex things, you
 may best make your own extension to Log::Report::Dispatcher, but
 for simple things this will do.
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in Log::Report::Dispatcher.
+.PP
+\&\fB. Example\fR
+.PP
+.Vb 8
+\&  sub send_mail($$$)
+\&  {   my ($disp, $options, $reason, $message) = @_;
+\&      my $msg = Mail::Send\->new(Subject => $reason
+\&        , To => \*(Aqadmin@localhost\*(Aq);
+\&      my $fh  = $msg\->open(\*(Aqsendmail\*(Aq);
+\&      print $fh $disp\->translate($reason, $message);
+\&      close $fh;
+\&  }
+\&
+\&  dispatcher CALLBACK => \*(Aqmail\*(Aq, callback => \e&send_mail;
+.Ve
 .SH "METHODS"
 .IX Header "METHODS"
+Extends \*(L"\s-1METHODS\s0\*(R" in Log::Report::Dispatcher.
 .SS "Constructors"
 .IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBclose\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBclose\fR" 4
-.IX Item "$obj->close"
-See \*(L"Constructors\*(R" in Log::Report::Dispatcher
-.IP "Log::Report::Dispatcher::Callback\->\fBnew\fR(\s-1TYPE\s0, \s-1NAME\s0, \s-1OPTIONS\s0)" 4
-.IX Item "Log::Report::Dispatcher::Callback->new(TYPE, NAME, OPTIONS)"
+Extends \*(L"Constructors\*(R" in Log::Report::Dispatcher.
+.ie n .IP "$obj\->\fBclose\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBclose\fR()" 4
+.IX Item "$obj->close()"
+Inherited, see \*(L"Constructors\*(R" in Log::Report::Dispatcher
+.ie n .IP "Log::Report::Dispatcher::Callback\->\fBnew\fR($type, $name, %options)" 4
+.el .IP "Log::Report::Dispatcher::Callback\->\fBnew\fR($type, \f(CW$name\fR, \f(CW%options\fR)" 4
+.IX Item "Log::Report::Dispatcher::Callback->new($type, $name, %options)"
 .Vb 7
-\& \-Option       \-\-Defined in     \-\-Default
+\& \-Option       \-\-Defined in             \-\-Default
 \&  accept         Log::Report::Dispatcher  depend on mode
-\&  callback                        <required>
+\&  callback                                <required>
 \&  charset        Log::Report::Dispatcher  <undef>
 \&  format_reason  Log::Report::Dispatcher  \*(AqLOWERCASE\*(Aq
 \&  locale         Log::Report::Dispatcher  <system locale>
@@ -183,11 +203,11 @@ See \*(L"Constructors\*(R" in Log::Report::Dispatcher
 .IP "callback => \s-1CODE\s0" 2
 .IX Item "callback => CODE"
 .PD
-Your \f(CW\*(C`callback\*(C'\fR is called with four parameters: this dispatcher object,
+Your \f(CW\*(C`callback\*(C'\fR is called with five parameters: this dispatcher object,
 the options, a reason and a message.  The \f(CW\*(C`options\*(C'\fR are the first
 parameter of \fILog::Report::report()\fR (read over there).  The \f(CW\*(C`reason\*(C'\fR
-is a capitized string like \f(CW\*(C`ERROR\*(C'\fR. Finally, the \f(CW\*(C`message\*(C'\fR is a
-Log::Report::Message.
+is a capitized string like \f(CW\*(C`ERROR\*(C'\fR. Then, the \f(CW\*(C`message\*(C'\fR (is a
+Log::Report::Message).  Finally the text-domain of the message.
 .IP "charset => \s-1CHARSET\s0" 2
 .IX Item "charset => CHARSET"
 .PD 0
@@ -203,71 +223,88 @@ Log::Report::Message.
 .PD
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBcallback\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcallback\fR" 4
-.IX Item "$obj->callback"
+Extends \*(L"Accessors\*(R" in Log::Report::Dispatcher.
+.ie n .IP "$obj\->\fBcallback\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcallback\fR()" 4
+.IX Item "$obj->callback()"
 Returns the code reference which will handle each logged message.
-.ie n .IP "$obj\->\fBisDisabled\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBisDisabled\fR" 4
-.IX Item "$obj->isDisabled"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBmode\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBmode\fR" 4
-.IX Item "$obj->mode"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBname\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBname\fR" 4
-.IX Item "$obj->name"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBneeds\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBneeds\fR" 4
-.IX Item "$obj->needs"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBtype\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtype\fR" 4
-.IX Item "$obj->type"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBisDisabled\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBisDisabled\fR()" 4
+.IX Item "$obj->isDisabled()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBmode\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBmode\fR()" 4
+.IX Item "$obj->mode()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBname\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBname\fR()" 4
+.IX Item "$obj->name()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBneeds\fR( [$reason] )" 4
+.el .IP "\f(CW$obj\fR\->\fBneeds\fR( [$reason] )" 4
+.IX Item "$obj->needs( [$reason] )"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBtype\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBtype\fR()" 4
+.IX Item "$obj->type()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
 .SS "Logging"
 .IX Subsection "Logging"
-.ie n .IP "$obj\->\fBcollectLocation\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcollectLocation\fR" 4
-.IX Item "$obj->collectLocation"
+Extends \*(L"Logging\*(R" in Log::Report::Dispatcher.
+.ie n .IP "$obj\->\fBaddSkipStack\fR(@CODE)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddSkipStack\fR(@CODE)" 4
+.IX Item "$obj->addSkipStack(@CODE)"
 .PD 0
-.IP "Log::Report::Dispatcher::Callback\->\fBcollectLocation\fR" 4
-.IX Item "Log::Report::Dispatcher::Callback->collectLocation"
+.IP "Log::Report::Dispatcher::Callback\->\fBaddSkipStack\fR(@CODE)" 4
+.IX Item "Log::Report::Dispatcher::Callback->addSkipStack(@CODE)"
 .PD
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.IX Item "$obj->collectStack([MAXDEPTH])"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBcollectLocation\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcollectLocation\fR()" 4
+.IX Item "$obj->collectLocation()"
 .PD 0
-.IP "Log::Report::Dispatcher::Callback\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.IX Item "Log::Report::Dispatcher::Callback->collectStack([MAXDEPTH])"
+.IP "Log::Report::Dispatcher::Callback\->\fBcollectLocation\fR()" 4
+.IX Item "Log::Report::Dispatcher::Callback->collectLocation()"
 .PD
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBlog\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBlog\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.IX Item "$obj->log(HASH-of-OPTIONS, REASON, MESSAGE)"
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->stackTraceLine(OPTIONS)"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBcollectStack\fR( [$maxdepth] )" 4
+.el .IP "\f(CW$obj\fR\->\fBcollectStack\fR( [$maxdepth] )" 4
+.IX Item "$obj->collectStack( [$maxdepth] )"
 .PD 0
-.IP "Log::Report::Dispatcher::Callback\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.IX Item "Log::Report::Dispatcher::Callback->stackTraceLine(OPTIONS)"
+.IP "Log::Report::Dispatcher::Callback\->\fBcollectStack\fR( [$maxdepth] )" 4
+.IX Item "Log::Report::Dispatcher::Callback->collectStack( [$maxdepth] )"
 .PD
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBtranslate\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBtranslate\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.IX Item "$obj->translate(HASH-of-OPTIONS, REASON, MESSAGE)"
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBlog\fR(HASH\-$of\-%options, $reason, $message, $domain)" 4
+.el .IP "\f(CW$obj\fR\->\fBlog\fR(HASH\-$of\-%options, \f(CW$reason\fR, \f(CW$message\fR, \f(CW$domain\fR)" 4
+.IX Item "$obj->log(HASH-$of-%options, $reason, $message, $domain)"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBskipStack\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBskipStack\fR()" 4
+.IX Item "$obj->skipStack()"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBstackTraceLine\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBstackTraceLine\fR(%options)" 4
+.IX Item "$obj->stackTraceLine(%options)"
+.PD 0
+.IP "Log::Report::Dispatcher::Callback\->\fBstackTraceLine\fR(%options)" 4
+.IX Item "Log::Report::Dispatcher::Callback->stackTraceLine(%options)"
+.PD
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBtranslate\fR(HASH\-$of\-%options, $reason, $message)" 4
+.el .IP "\f(CW$obj\fR\->\fBtranslate\fR(HASH\-$of\-%options, \f(CW$reason\fR, \f(CW$message\fR)" 4
+.IX Item "$obj->translate(HASH-$of-%options, $reason, $message)"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.SH "DETAILS"
+.IX Header "DETAILS"
+Extends \*(L"\s-1DETAILS\s0\*(R" in Log::Report::Dispatcher.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
+This module is part of Log-Report distribution version 1.19,
+built on February 09, 2017. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

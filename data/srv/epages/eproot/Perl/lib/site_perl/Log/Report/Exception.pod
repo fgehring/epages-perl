@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 Log::Report::Exception - a collected report
@@ -30,7 +32,7 @@ an (untranslated) report.
 
 =over 4
 
-=item Log::Report::Exception-E<gt>B<new>(OPTIONS)
+=item Log::Report::Exception-E<gt>B<new>(%options)
 
  -Option     --Default
   message      <required>
@@ -53,19 +55,19 @@ an (untranslated) report.
 
 =over 4
 
-=item $obj-E<gt>B<isFatal>
+=item $obj-E<gt>B<isFatal>()
 
 Returns whether this exception has a severity which makes it fatal
-when thrown.  See L<Log::Report::isFatal()|Log::Report/"Reasons">.
+when thrown.  See L<Log::Report::Util::is_fatal()|Log::Report::Util/"Reasons">.
 
 example: 
 
   if($ex->isFatal) { $ex->throw(reason => 'ALERT') }
   else { $ex->throw }
 
-=item $obj-E<gt>B<message>([MESSAGE])
+=item $obj-E<gt>B<message>( [$message] )
 
-Change the MESSAGE of the exception, must be a L<Log::Report::Message|Log::Report::Message>
+Change the $message of the exception, must be a L<Log::Report::Message|Log::Report::Message>
 object.
 
 When you use a C<Log::Report::Message> object, you will get a new one
@@ -78,9 +80,9 @@ example:
  $e->message($e->message->concat('!!'));
  $e->message(__x"some message {msg}", msg => $xyz);
 
-=item $obj-E<gt>B<reason>([REASON])
+=item $obj-E<gt>B<reason>( [$reason] )
 
-=item $obj-E<gt>B<report_opts>
+=item $obj-E<gt>B<report_opts>()
 
 =back
 
@@ -88,12 +90,12 @@ example:
 
 =over 4
 
-=item $obj-E<gt>B<inClass>(CLASS|REGEX)
+=item $obj-E<gt>B<inClass>($class|Regexp)
 
-Check whether any of the classes listed in the message match CLASS
-(string) or the REGEX.  This uses L<Log::Report::Message::inClass()|Log::Report::Message/"Processing">.
+Check whether any of the classes listed in the message match $class
+(string) or the Regexp.  This uses L<Log::Report::Message::inClass()|Log::Report::Message/"Processing">.
 
-=item $obj-E<gt>B<print>([FILEHANDLE])
+=item $obj-E<gt>B<print>( [$fh] )
 
 The default filehandle is STDOUT.
 
@@ -102,13 +104,13 @@ example:
  print $exception;  # via overloading
  $exception->print; # OO style
 
-=item $obj-E<gt>B<throw>(OPTIONS)
+=item $obj-E<gt>B<throw>(%options)
 
 Insert the message contained in the exception into the currently
 defined dispatchers.  The C<throw> name is commonly known
 exception related terminology for C<report>.
 
-The OPTIONS overrule the captured options to L<Log::Report::report()|Log::Report/"Report Production and Configuration">.
+The %options overrule the captured options to L<Log::Report::report()|Log::Report/"Report Production and Configuration">.
 This can be used to overrule a destination.  Also, the reason can
 be changed.
 
@@ -121,7 +123,11 @@ example: overrule defaults to report
 
  $@->wasFatal->throw(reason => 'WARNING');
 
-=item $obj-E<gt>B<toString>
+=item $obj-E<gt>B<toHTML>( [$locale] )
+
+[1.11] as L<toString()|Log::Report::Exception/"Processing">, and escape HTML volatile characters.
+
+=item $obj-E<gt>B<toString>( [$locale] )
 
 Prints the reason and the message.  Differently from L<throw()|Log::Report::Exception/"Processing">, this
 only represents the textual content: it does not re-cast the exceptions to
@@ -146,12 +152,12 @@ Produces "reason: message".
 
 =head1 SEE ALSO
 
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: F<http://perl.overmeer.net/log-report/>
+This module is part of Log-Report distribution version 1.19,
+built on February 09, 2017. Website: F<http://perl.overmeer.net/log-report/>
 
 =head1 LICENSE
 
-Copyrights 2007-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

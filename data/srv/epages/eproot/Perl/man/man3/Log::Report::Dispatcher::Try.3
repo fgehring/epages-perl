@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Log::Report::Dispatcher::Try 3"
-.TH Log::Report::Dispatcher::Try 3 "2011-08-23" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Log::Report::Dispatcher::Try 3 "2017-02-09" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -155,6 +155,7 @@ Log::Report::Dispatcher::Try \- capture all reports as exceptions
 \&    mode => \*(AqDEBUG\*(Aq, accept => \*(AqALL\*(Aq;
 \&
 \& try \e&myhandler, accept => \*(AqERROR\-\*(Aq;
+\& try { ... } hide => \*(AqTRACE\*(Aq;
 \&
 \& print ref $@;      # Log::Report::Dispatcher::Try
 \&
@@ -165,7 +166,7 @@ Log::Report::Dispatcher::Try \- capture all reports as exceptions
 \& if($@\->success) {  # no errors  # }
 \&
 \& try { # something causes an error report, which is caught
-\&       report {to => \*(Aqstderr\*(Aq}, FAILURE => \*(Aqno network\*(Aq;
+\&       failure \*(Aqno network\*(Aq;
 \&     };
 \& $@\->reportFatal(to => \*(Aqsyslog\*(Aq);  # overrule destination
 \&
@@ -185,26 +186,33 @@ the \*(L"try\*(R" should decide what to do with the collected reports.
 These reports are collected as Log::Report::Exception objects.
 They can be ignored, or thrown to a higher level try... causing
 an exit of the program if there is none.
+.PP
+Extends \*(L"\s-1DESCRIPTION\s0\*(R" in Log::Report::Dispatcher.
 .SH "METHODS"
 .IX Header "METHODS"
+Extends \*(L"\s-1METHODS\s0\*(R" in Log::Report::Dispatcher.
 .SS "Constructors"
 .IX Subsection "Constructors"
-.ie n .IP "$obj\->\fBclose\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBclose\fR" 4
-.IX Item "$obj->close"
+Extends \*(L"Constructors\*(R" in Log::Report::Dispatcher.
+.ie n .IP "$obj\->\fBclose\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBclose\fR()" 4
+.IX Item "$obj->close()"
 Only when initiated with a \s-1FILENAME\s0, the file will be closed.  In any
 other case, nothing will be done.
-.IP "Log::Report::Dispatcher::Try\->\fBnew\fR(\s-1TYPE\s0, \s-1NAME\s0, \s-1OPTIONS\s0)" 4
-.IX Item "Log::Report::Dispatcher::Try->new(TYPE, NAME, OPTIONS)"
-.Vb 8
-\& \-Option       \-\-Defined in     \-\-Default
+.ie n .IP "Log::Report::Dispatcher::Try\->\fBnew\fR($type, $name, %options)" 4
+.el .IP "Log::Report::Dispatcher::Try\->\fBnew\fR($type, \f(CW$name\fR, \f(CW%options\fR)" 4
+.IX Item "Log::Report::Dispatcher::Try->new($type, $name, %options)"
+.Vb 10
+\& \-Option       \-\-Defined in             \-\-Default
 \&  accept         Log::Report::Dispatcher  depend on mode
 \&  charset        Log::Report::Dispatcher  <undef>
-\&  died                            undef
-\&  exceptions                      []
+\&  died                                    undef
+\&  exceptions                              []
 \&  format_reason  Log::Report::Dispatcher  \*(AqLOWERCASE\*(Aq
+\&  hide                                    \*(AqNONE\*(Aq
 \&  locale         Log::Report::Dispatcher  <system locale>
 \&  mode           Log::Report::Dispatcher  \*(AqNORMAL\*(Aq
+\&  on_die                                  \*(AqERROR\*(Aq
 .Ve
 .RS 4
 .IP "accept => \s-1REASONS\s0" 2
@@ -216,126 +224,181 @@ other case, nothing will be done.
 .IX Item "died => STRING"
 .PD
 The exit string ($@) of the eval'ed block.
-.IP "exceptions => ARRAY-of-EXCEPTIONS" 2
-.IX Item "exceptions => ARRAY-of-EXCEPTIONS"
-.PD 0
+.IP "exceptions => \s-1ARRAY\s0" 2
+.IX Item "exceptions => ARRAY"
+\&\s-1ARRAY\s0 of Log::Report::Exception objects.
 .IP "format_reason => '\s-1UPPERCASE\s0'|'\s-1LOWERCASE\s0'|'\s-1UCFIRST\s0'|'\s-1IGNORE\s0'|CODE" 2
 .IX Item "format_reason => 'UPPERCASE'|'LOWERCASE'|'UCFIRST'|'IGNORE'|CODE"
+.PD 0
+.IP "hide => REASON|ARRAY|'\s-1ALL\s0'|'\s-1NONE\s0'" 2
+.IX Item "hide => REASON|ARRAY|'ALL'|'NONE'"
+.PD
+[1.09] see \fIhide()\fR
 .IP "locale => \s-1LOCALE\s0" 2
 .IX Item "locale => LOCALE"
+.PD 0
 .IP "mode => '\s-1NORMAL\s0'|'\s-1VERBOSE\s0'|'\s-1ASSERT\s0'|'\s-1DEBUG\s0'|0..3" 2
 .IX Item "mode => 'NORMAL'|'VERBOSE'|'ASSERT'|'DEBUG'|0..3"
+.IP "on_die => '\s-1ERROR\s0'|'\s-1PANIC\s0'" 2
+.IX Item "on_die => 'ERROR'|'PANIC'"
+.PD
+When code which runs in this block exits with a \fIdie()\fR, it will get
+translated into a Log::Report::Exception using
+\&\fILog::Report::Die::die_decode()\fR.  How serious are we about these
+errors?
 .RE
 .RS 4
 .RE
-.PD
 .SS "Accessors"
 .IX Subsection "Accessors"
-.ie n .IP "$obj\->\fBdied\fR([\s-1STRING\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBdied\fR([\s-1STRING\s0])" 4
-.IX Item "$obj->died([STRING])"
+Extends \*(L"Accessors\*(R" in Log::Report::Dispatcher.
+.ie n .IP "$obj\->\fBdie2reason\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBdie2reason\fR()" 4
+.IX Item "$obj->die2reason()"
+Returns the value of new(on_die).
+.ie n .IP "$obj\->\fBdied\fR( [\s-1STRING\s0] )" 4
+.el .IP "\f(CW$obj\fR\->\fBdied\fR( [\s-1STRING\s0] )" 4
+.IX Item "$obj->died( [STRING] )"
 The message which was reported by \f(CW\*(C`eval\*(C'\fR, which is used internally
 to catch problems in the try block.
-.ie n .IP "$obj\->\fBexceptions\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBexceptions\fR" 4
-.IX Item "$obj->exceptions"
+.ie n .IP "$obj\->\fBexceptions\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBexceptions\fR()" 4
+.IX Item "$obj->exceptions()"
 Returns all collected \f(CW\*(C`Log::Report::Exceptions\*(C'\fR.  The last of
 them may be a fatal one.  The other are non-fatal.
-.ie n .IP "$obj\->\fBisDisabled\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBisDisabled\fR" 4
-.IX Item "$obj->isDisabled"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBmode\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBmode\fR" 4
-.IX Item "$obj->mode"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBname\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBname\fR" 4
-.IX Item "$obj->name"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBneeds\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBneeds\fR" 4
-.IX Item "$obj->needs"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBtype\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBtype\fR" 4
-.IX Item "$obj->type"
-See \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBhide\fR(REASON|REASONS|ARRAY|'\s-1ALL\s0'|'\s-1NONE\s0')" 4
+.el .IP "\f(CW$obj\fR\->\fBhide\fR(REASON|REASONS|ARRAY|'\s-1ALL\s0'|'\s-1NONE\s0')" 4
+.IX Item "$obj->hide(REASON|REASONS|ARRAY|'ALL'|'NONE')"
+[1.09] By default, the try will only catch messages which stop the
+execution of the block (errors etc, internally a 'die').  Other messages
+are passed to parent try blocks, if none than to the dispatchers.
+.Sp
+This option gives the opportunity to block, for instance, trace messages.
+Those messages are still collected inside the try object, so may get
+passed-on later via \fIreportAll()\fR if you like.
+.Sp
+Be warned: Using this method will reset the whole 'hide' configuration:
+it's a \fIset\fR not an \fIadd\fR.
+.Sp
+example: change the setting of the running block
+.Sp
+.Vb 2
+\&  my $parent_try = dispatcher \*(Aqactive\-try\*(Aq;
+\&  parent_try\->hide(\*(AqNONE\*(Aq);
+.Ve
+.ie n .IP "$obj\->\fBhides\fR(\s-1REASON\s0)" 4
+.el .IP "\f(CW$obj\fR\->\fBhides\fR(\s-1REASON\s0)" 4
+.IX Item "$obj->hides(REASON)"
+.PD 0
+.ie n .IP "$obj\->\fBisDisabled\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBisDisabled\fR()" 4
+.IX Item "$obj->isDisabled()"
+.PD
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBmode\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBmode\fR()" 4
+.IX Item "$obj->mode()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBname\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBname\fR()" 4
+.IX Item "$obj->name()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBneeds\fR( [$reason] )" 4
+.el .IP "\f(CW$obj\fR\->\fBneeds\fR( [$reason] )" 4
+.IX Item "$obj->needs( [$reason] )"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBtype\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBtype\fR()" 4
+.IX Item "$obj->type()"
+Inherited, see \*(L"Accessors\*(R" in Log::Report::Dispatcher
 .SS "Logging"
 .IX Subsection "Logging"
-.ie n .IP "$obj\->\fBcollectLocation\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBcollectLocation\fR" 4
-.IX Item "$obj->collectLocation"
+Extends \*(L"Logging\*(R" in Log::Report::Dispatcher.
+.ie n .IP "$obj\->\fBaddSkipStack\fR(@CODE)" 4
+.el .IP "\f(CW$obj\fR\->\fBaddSkipStack\fR(@CODE)" 4
+.IX Item "$obj->addSkipStack(@CODE)"
 .PD 0
-.IP "Log::Report::Dispatcher::Try\->\fBcollectLocation\fR" 4
-.IX Item "Log::Report::Dispatcher::Try->collectLocation"
+.IP "Log::Report::Dispatcher::Try\->\fBaddSkipStack\fR(@CODE)" 4
+.IX Item "Log::Report::Dispatcher::Try->addSkipStack(@CODE)"
 .PD
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.el .IP "\f(CW$obj\fR\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.IX Item "$obj->collectStack([MAXDEPTH])"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBcollectLocation\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBcollectLocation\fR()" 4
+.IX Item "$obj->collectLocation()"
 .PD 0
-.IP "Log::Report::Dispatcher::Try\->\fBcollectStack\fR([\s-1MAXDEPTH\s0])" 4
-.IX Item "Log::Report::Dispatcher::Try->collectStack([MAXDEPTH])"
+.IP "Log::Report::Dispatcher::Try\->\fBcollectLocation\fR()" 4
+.IX Item "Log::Report::Dispatcher::Try->collectLocation()"
 .PD
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBlog\fR(\s-1OPTS\s0, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBlog\fR(\s-1OPTS\s0, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.IX Item "$obj->log(OPTS, REASON, MESSAGE)"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBcollectStack\fR( [$maxdepth] )" 4
+.el .IP "\f(CW$obj\fR\->\fBcollectStack\fR( [$maxdepth] )" 4
+.IX Item "$obj->collectStack( [$maxdepth] )"
+.PD 0
+.IP "Log::Report::Dispatcher::Try\->\fBcollectStack\fR( [$maxdepth] )" 4
+.IX Item "Log::Report::Dispatcher::Try->collectStack( [$maxdepth] )"
+.PD
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBlog\fR($opts, $reason, $message)" 4
+.el .IP "\f(CW$obj\fR\->\fBlog\fR($opts, \f(CW$reason\fR, \f(CW$message\fR)" 4
+.IX Item "$obj->log($opts, $reason, $message)"
 Other dispatchers translate the message here, and make it leave the
 program.  However, messages in a \*(L"try\*(R" block are only captured in
 an intermediate layer: they may never be presented to an end-users.
 And for sure, we do not know the language yet.
 .Sp
-The \s-1MESSAGE\s0 is either a \s-1STRING\s0 or a Log::Report::Message.
-.ie n .IP "$obj\->\fBreportAll\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBreportAll\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->reportAll(OPTIONS)"
+The \f(CW$message\fR is either a \s-1STRING\s0 or a Log::Report::Message.
+.ie n .IP "$obj\->\fBreportAll\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBreportAll\fR(%options)" 4
+.IX Item "$obj->reportAll(%options)"
 Re-cast the messages in all collect exceptions into the defined
-dispatchers, which were disabled during the try block. The \s-1OPTIONS\s0
-will end-up as HASH-of-OPTIONS to \fILog::Report::report()\fR; see
+dispatchers, which were disabled during the try block. The \f(CW%options\fR
+will end-up as \s-1HASH\s0 of \f(CW%options\fR to \fILog::Report::report()\fR; see
 \&\fILog::Report::Exception::throw()\fR which does the job.
-.ie n .IP "$obj\->\fBreportFatal\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBreportFatal\fR" 4
-.IX Item "$obj->reportFatal"
+.ie n .IP "$obj\->\fBreportFatal\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBreportFatal\fR()" 4
+.IX Item "$obj->reportFatal()"
 Re-cast only the fatal message to the defined dispatchers.  If the
-block was left without problems, then nothing will be done.  The \s-1OPTIONS\s0
-will end-up as HASH-of-OPTIONS to \fILog::Report::report()\fR; see
+block was left without problems, then nothing will be done.  The \f(CW%options\fR
+will end-up as \s-1HASH\s0 of \f(CW%options\fR to \fILog::Report::report()\fR; see
 \&\fILog::Report::Exception::throw()\fR which does the job.
-.ie n .IP "$obj\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->stackTraceLine(OPTIONS)"
+.ie n .IP "$obj\->\fBskipStack\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBskipStack\fR()" 4
+.IX Item "$obj->skipStack()"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBstackTraceLine\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBstackTraceLine\fR(%options)" 4
+.IX Item "$obj->stackTraceLine(%options)"
 .PD 0
-.IP "Log::Report::Dispatcher::Try\->\fBstackTraceLine\fR(\s-1OPTIONS\s0)" 4
-.IX Item "Log::Report::Dispatcher::Try->stackTraceLine(OPTIONS)"
+.IP "Log::Report::Dispatcher::Try\->\fBstackTraceLine\fR(%options)" 4
+.IX Item "Log::Report::Dispatcher::Try->stackTraceLine(%options)"
 .PD
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
-.ie n .IP "$obj\->\fBtranslate\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBtranslate\fR(HASH-of-OPTIONS, \s-1REASON\s0, \s-1MESSAGE\s0)" 4
-.IX Item "$obj->translate(HASH-of-OPTIONS, REASON, MESSAGE)"
-See \*(L"Logging\*(R" in Log::Report::Dispatcher
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
+.ie n .IP "$obj\->\fBtranslate\fR(HASH\-$of\-%options, $reason, $message)" 4
+.el .IP "\f(CW$obj\fR\->\fBtranslate\fR(HASH\-$of\-%options, \f(CW$reason\fR, \f(CW$message\fR)" 4
+.IX Item "$obj->translate(HASH-$of-%options, $reason, $message)"
+Inherited, see \*(L"Logging\*(R" in Log::Report::Dispatcher
 .SS "Status"
 .IX Subsection "Status"
-.ie n .IP "$obj\->\fBfailed\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBfailed\fR" 4
-.IX Item "$obj->failed"
+.ie n .IP "$obj\->\fBfailed\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBfailed\fR()" 4
+.IX Item "$obj->failed()"
 Returns true if the block was left with an fatal message.
-.ie n .IP "$obj\->\fBshowStatus\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBshowStatus\fR" 4
-.IX Item "$obj->showStatus"
+.ie n .IP "$obj\->\fBshowStatus\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBshowStatus\fR()" 4
+.IX Item "$obj->showStatus()"
 If this object is kept in \f(CW$@\fR, and someone uses this as string, we
 want to show the fatal error message.
 .Sp
 The message is not very informative for the good cause: we do not want
 people to simply print the \f(CW$@\fR, but wish for a re-cast of the message
 using \fIreportAll()\fR or \fIreportFatal()\fR.
-.ie n .IP "$obj\->\fBsuccess\fR" 4
-.el .IP "\f(CW$obj\fR\->\fBsuccess\fR" 4
-.IX Item "$obj->success"
+.ie n .IP "$obj\->\fBsuccess\fR()" 4
+.el .IP "\f(CW$obj\fR\->\fBsuccess\fR()" 4
+.IX Item "$obj->success()"
 Returns true if the block exited normally.
-.ie n .IP "$obj\->\fBwasFatal\fR(\s-1OPTIONS\s0)" 4
-.el .IP "\f(CW$obj\fR\->\fBwasFatal\fR(\s-1OPTIONS\s0)" 4
-.IX Item "$obj->wasFatal(OPTIONS)"
+.ie n .IP "$obj\->\fBwasFatal\fR(%options)" 4
+.el .IP "\f(CW$obj\fR\->\fBwasFatal\fR(%options)" 4
+.IX Item "$obj->wasFatal(%options)"
 Returns the Log::Report::Exception which caused the \*(L"try\*(R" block to
 die, otherwise an empty \s-1LIST\s0 (undef).
 .Sp
@@ -352,6 +415,9 @@ See \fILog::Report::Message::inClass()\fR
 .RE
 .RS 4
 .RE
+.SH "DETAILS"
+.IX Header "DETAILS"
+Extends \*(L"\s-1DETAILS\s0\*(R" in Log::Report::Dispatcher.
 .SH "OVERLOADING"
 .IX Header "OVERLOADING"
 .IP "overload: \fBboolean\fR" 4
@@ -366,11 +432,11 @@ a string content.  In this case, stringify into the fatal error
 or nothing.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-This module is part of Log-Report distribution version 0.94,
-built on August 23, 2011. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
+This module is part of Log-Report distribution version 1.19,
+built on February 09, 2017. Website: \fIhttp://perl.overmeer.net/log\-report/\fR
 .SH "LICENSE"
 .IX Header "LICENSE"
-Copyrights 2007\-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2007\-2017 by [Mark Overmeer]. For other contributors see ChangeLog.
 .PP
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
