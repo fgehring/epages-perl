@@ -9150,7 +9150,7 @@ C<LINKTYPE: dynamic>
 
 =back
 
-=head2 Mon Dec 18 14:44:14 2017: C<Module> L<Test::Mockify|Test::Mockify>
+=head2 Mon Jan 15 14:44:14 2018: C<Module> L<Test::Mockify|Test::Mockify>
 
 =over 4
 
@@ -9164,7 +9164,7 @@ C<EXE_FILES: >
 
 =item *
 
-C<VERSION: 0.10.3>
+C<VERSION: 1.2>
 
 =item *
 
@@ -9194,27 +9194,6 @@ C<LINKTYPE: dynamic>
 
 =back
 
-=head2 Tue Jul 18 14:44:14 2017: C<Module> L<Test::Mockify|Test::Mockify>
-
-=over 4
-
-=item *
-
-C<installed into: /srv/epages/eproot/Perl/lib/linux>
-
-=item *
-
-C<EXE_FILES: >
-
-=item *
-
-C<VERSION: 0.10.1>
-
-=item *
-
-C<LINKTYPE: dynamic>
-
-=back
 =head2 Wed Aug 23 15:20:58 2017: C<Module> L<XML::Compile|XML::Compile>
 
 =over 4
