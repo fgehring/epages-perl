@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Test::Mockify::Matcher 3"
-.TH Test::Mockify::Matcher 3 "2017-12-18" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Test::Mockify::Matcher 3 "2018-01-11" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -148,6 +148,7 @@ The \f(CW\*(C`SupportedTypes\*(C'\fR will return all supported matcher types as 
 .IX Subsection "String"
 The \f(CW\*(C`String\*(C'\fR method will create the matcher in the needed structure to match a string.
 If called with parameter, it will be proved that this value is actually a string. If not, it will create an error.
+Use the Matcher \fINumber()\fR to Check for the string '0' (perl cannot differ that)
 .PP
 .Vb 2
 \&  String();
