@@ -25,30 +25,30 @@ Test::Mockify - minimal mocking framework for perl
 
 =head1 DESCRIPTION
 
-Use L<Test::Mockify> to create and configure mock objects. Use L<Test::Mockify::Verify> to
-verify the interactions with your mocks.
+Use L<Test::Mockify|Test::Mockify> to create and configure mock objects. Use L<Test::Mockify::Verify|Test::Mockify::Verify> to
+verify the interactions with your mocks. Use L<Test::Mockify::Sut|Test::Mockify::Sut> to inject dependencies into your Sut.
+
+You can find a Example Project in L<ExampleProject|https://github.com/ChristianBreitkreutz/Mockify/tree/master/t/ExampleProject>
+
+Also have a look to L<Test::Mockify::Sut|Test::Mockify::SUT>. This Module provides multiple options to inject mocks into your Sut (System Under Test).
 
 =head1 METHODS
 
 =cut
 
 package Test::Mockify;
-use Test::Mockify::Tools qw ( Error ExistsMethod IsValid LoadPackage Isa );
-use Test::Mockify::TypeTests qw ( IsInteger IsFloat IsString IsArrayReference IsHashReference IsObjectReference );
+use Test::Mockify::Tools qw ( Error ExistsMethod LoadPackage );
+use Test::Mockify::TypeTests qw ( IsString IsArrayReference);
 use Test::Mockify::MethodCallCounter;
 use Test::Mockify::Method;
 use Test::Mockify::MethodSpy;
 use Test::MockObject::Extends;
-use Test::Mockify::CompatibilityTools qw (MigrateOldMatchers);
-use Data::Dumper;
 use Scalar::Util qw( blessed );
-use Data::Compare;
-
-use experimental 'switch';
+use Sub::Override;
 
 use strict;
 
-our $VERSION = '1.2';
+our $VERSION = '2';
 
 sub new {
     my $class = shift;
@@ -57,7 +57,14 @@ sub new {
     my $self = bless {}, $class;
 
     LoadPackage( $FakeModulePath );
-    my $FakeClass = $FakeModulePath->can('new') ? $FakeModulePath->new( @{$aFakeParams} ) : $FakeModulePath;
+    if(!$FakeModulePath->can('new')){
+        if(defined $aFakeParams ){
+            Error("'$FakeModulePath' have no constructor. If you like to create a mock of a package without constructor please use it without parameter list");
+        }else{
+            $self->{'MockStaticModule'} = 1;
+        }
+    }
+    my $FakeClass = $aFakeParams ? $FakeModulePath->new( @{$aFakeParams} ) : $FakeModulePath;
     $self->_mockedModulePath($FakeModulePath);
     $self->_mockedSelf(Test::MockObject::Extends->new( $FakeClass ));
     $self->_initMockedModule();
@@ -68,9 +75,9 @@ sub new {
 #----------------------------------------------------------------------------------------
 sub _mockedModulePath {
     my $self = shift;
-    my ($ModulPath) = @_;
-    return $self->{'MockedModulePath'} unless ($ModulPath);
-    $self->{'MockedModulePath'} = $ModulPath;
+    my ($ModulePath) = @_;
+    return $self->{'MockedModulePath'} unless ($ModulePath);
+    $self->{'MockedModulePath'} = $ModulePath;
 }
 #----------------------------------------------------------------------------------------
 sub _mockedSelf {
@@ -87,6 +94,9 @@ sub _initMockedModule {
     $self->_mockedSelf()->{'__isMockified'} = 1;
     $self->_addGetParameterFromMockifyCall();
 
+    $self->{'override'} = Sub::Override->new();
+    $self->{'IsStaticMockStore'} = undef;
+    $self->{'IsImportedMockStore'} = undef;
     return;
 }
 
@@ -112,7 +122,7 @@ sub getMockObject {
 
 =head2 mock
 
-This is place where the mocked methods are defined. The method also proves that the method you like to mock actually exists.
+This is the place where the mocked methods are defined. The method also proves that the method you like to mock actually exists.
 
 =head3 synopsis
 
@@ -129,7 +139,7 @@ For example, the next line will create a mocked version of the method log, but o
 
 =head4 when
 
-To define the signature in the needed structure you must use the L<< Test::Mockify::Matcher >>.
+To define the signature in the needed structure you must use the L<Test::Mockify::Matcher|Test::Mockify::Matcher>.
 
 =head4 whenAny
 
@@ -138,7 +148,7 @@ It is not possible to mix C<whenAny> and C<when> for the same method.
 
 =head4 then ...
 
-For possible return types please look in L<Test::Mockify::ReturnValue>
+For possible return types please look in L<Test::Mockify::ReturnValue|Test::Mockify::ReturnValue>
 
 =cut
 sub mock {
@@ -148,26 +158,22 @@ sub mock {
     my $ParameterAmount = scalar @Parameters;
     if($ParameterAmount == 1 && IsString($Parameters[0]) ){
         return $self->_addMockWithMethod($Parameters[0]);
-    }
-    if($ParameterAmount == 2){
-        my ( $MethodName, $ReturnValueOrFunctionPointer ) = @Parameters;
-        if( ref($ReturnValueOrFunctionPointer) eq 'CODE' ){
-            $self->addMock($MethodName, $ReturnValueOrFunctionPointer);
-        }else{
-            $self->addMockWithReturnValue($MethodName, $ReturnValueOrFunctionPointer);
-        }
-    }
-    if($ParameterAmount == 3){
-        my ( $MethodName, $ReturnValue, $aParameterTypes ) = @_;
-        $self->addMockWithReturnValueAndParameterCheck($MethodName, $ReturnValue, $aParameterTypes);
+    }else{
+        Error('"mock" Needs to be called with one Parameter which needs to be a String. ');
     }
     return;
 }
+#----------------------------------------------------------------------------------------
+
+
+
+
 =pod
+
 
 =head2 spy
 
-Use spy if you want to observe a method. You can use the L<Test::Mockify::Verify> to ensure that the method was called with the expected parameters.
+Use spy if you want to observe a method. You can use the L<Test::Mockify::Verify|Test::Mockify::Verify> to ensure that the method was called with the expected parameters.
 
 =head3 synopsis
 
@@ -188,7 +194,7 @@ For example, the next line will create a method spy of the method log, but only 
 
 =head4 when
 
-To define the signature in the needed structure you must use the L<< Test::Mockify::Matcher >>.
+To define the signature in the needed structure you must use the L<Test::Mockify::Matcher|Test::Mockify::Matcher>.
 
 =head4 whenAny
 
@@ -199,187 +205,156 @@ It is not possible to mix C<whenAny> and C<when> for the same method.
 sub spy {
     my $self = shift;
     my ($MethodName) = @_;
-    my $PointerOriginalMethod = \&{$self->_mockedModulePath().'::'.$MethodName};
+    my $PointerOriginalMethod = \&{sprintf ('%s::%s', $self->_mockedModulePath(), $MethodName)};
     #In order to have the current object available in the parameter list, it has to be injected here.
     return $self->_addMockWithMethodSpy($MethodName, sub {
         return $PointerOriginalMethod->($self->_mockedSelf(), @_);
     });
 }
-
 #----------------------------------------------------------------------------------------
-=pod
-
-=head2 addMethodSpy I<(deprecated)>
-
-With this method it is possible to observe a method. That means, you keep the original functionality but you can get meta data from the mockify-framework.
-
-  $MockObjectBuilder->addMethodSpy('myMethodName');
-
-=cut
-sub addMethodSpy {
-    my $self = shift;
-    my ( $MethodName ) = @_;
-    if (warnings::enabled("deprecated")) {
-        warnings::warn('deprecated', "addMethodSpy is deprecated, use spy('name')->whenAny()");
-    }
-    $self->spy($MethodName)->whenAny();
-    return;
-}
-#----------------------------------------------------------------------------------------
-=pod
-
-=head2 addMethodSpyWithParameterCheck I<(deprecated)>
-
-With this method it is possible to observe a method and check the parameters. That means, you keep the original functionality, but you can get meta data from the mockify- framework and use the parameter check, like B<addMockWithReturnValueAndParameterCheck>.
-
-  my $aParameterTypes = [String(),String(abcd)];
-  $MockObjectBuilder->addMethodSpyWithParameterCheck('myMethodName', $aParameterTypes);
-
-To define it in a nice way the signature you must use the L<< Test::Mockify::Matcher; >>.
-
-=cut
-sub addMethodSpyWithParameterCheck {
-    my $self = shift;
-    my ( $MethodName, $aParameterTypes ) = @_;
-    if (warnings::enabled("deprecated")) {
-        warnings::warn('deprecated', "addMethodSpyWithParameterCheck is deprecated, use spy('name')->when(String('abc'))");
-    }
-    my $aMigratedMatchers = MigrateOldMatchers($aParameterTypes);
-    $self->spy($MethodName)->when(@{$aMigratedMatchers});
-    return;
-}
-
-#----------------------------------------------------------------------------------------
-=pod
-
-=head2 addMock I<(deprecated)>
-
-This is the simplest case. It works like the mock-method from L<Test::MockObject>.
-
-Only handover the B<name> and a B<method pointer>. Mockify will automatically check if the method exists in the original object.
-
-  $MockObjectBuilder->addMock('myMethodName', sub {
-                                    # Your implementation
-                                 }
-  );
-
-=cut
-sub addMock {
-    my $self = shift;
-    my ( $MethodName, $rSub ) = @_;
-    if (warnings::enabled("deprecated")) {
-        warnings::warn('deprecated', "addMock is deprecated, use mock('name')->whenAny()->thenCall(sub{})");
-    }
-    $self->_addMockWithMethod($MethodName)->whenAny()->thenCall(sub {
-        return $rSub->($self->_mockedSelf(), @_);
-    });
-
-    return;
-}
-#-------------------------------------------------------------------------------------
 sub _addMockWithMethod {
     my $self = shift;
     my ( $MethodName ) = @_;
     $self->_testMockTypeUsage($MethodName);
-    return $self->_addMock($MethodName, Test::Mockify::Method->new());
+    if($self->{'IsStaticMockStore'}{$MethodName}){
+        return $self->_addStaticMock($MethodName, Test::Mockify::Method->new());
+    }elsif($self->{'IsImportedMockStore'}{$MethodName}){
+        return $self->_addImportedMock($MethodName, Test::Mockify::Method->new());
+    }else{
+        return $self->_addMock($MethodName, Test::Mockify::Method->new());
+    }
 }
-#-------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
 sub _addMockWithMethodSpy {
     my $self = shift;
     my ( $MethodName, $PointerOriginalMethod ) = @_;
     $self->_testMockTypeUsage($MethodName);
-    return $self->_addMock($MethodName, Test::Mockify::MethodSpy->new($PointerOriginalMethod));
+    if($self->{'IsStaticMockStore'}{$MethodName}){
+        return $self->_addStaticMock($MethodName, Test::Mockify::MethodSpy->new($PointerOriginalMethod));
+    }elsif($self->{'IsImportedMockStore'}{$MethodName}){
+        return $self->_addImportedMock($MethodName, Test::Mockify::MethodSpy->new($PointerOriginalMethod));
+    }else{
+        return $self->_addMock($MethodName, Test::Mockify::MethodSpy->new($PointerOriginalMethod));
+    }
 }
 #-------------------------------------------------------------------------------------
 sub _addMock {
+    my $self = shift;
+    my ($MethodName, $Method) = @_;
+
+    ExistsMethod( $self->_mockedModulePath(), $MethodName );
+    $self->_mockedSelf()->{'__MethodCallCounter'}->addMethod( $MethodName );
+    if(not $self->{'MethodStore'}{$MethodName}){
+        if($self->{'MockStaticModule'}){
+            return $self->_addStaticMock($MethodName, Test::Mockify::Method->new());
+        }else{
+            $self->{'MethodStore'}{$MethodName} //= $Method;
+            $self->_mockedSelf()->mock($MethodName, sub {
+                my $MockedSelf = shift;
+                $MockedSelf->{'__MethodCallCounter'}->increment( $MethodName );
+                my @MockedParameters = @_;
+                push @{$MockedSelf->{$MethodName.'_MockifyParams'}}, \@MockedParameters;
+                my $WantAList = wantarray ? 1 : 0;
+                return _callInjectedMethod($Method, \@MockedParameters, $WantAList, $MethodName);
+            });
+        }
+    }
+    return $self->{'MethodStore'}{$MethodName};
+}
+#----------------------------------------------------------------------------------------
+sub _callInjectedMethod {
+#    my $self = shift; #In Order to keep the mockify object out of the mocked method, I can't use the self.
+    my ($Method, $aMockedParameters, $WantAList, $MethodName) = @_;
+    my $ReturnValue;
+            my @ReturnValue;
+    eval {
+        if($WantAList){
+            @ReturnValue = $Method->call(@{$aMockedParameters});
+        }else{
+            $ReturnValue = $Method->call(@{$aMockedParameters});
+        }
+    };
+    # $@ -> current error
+    if ($@) {
+        Error("\nError when calling method '$MethodName'\n".$@)
+    }
+    if($WantAList){
+        return @ReturnValue;
+    }else{
+        return $ReturnValue;
+    }
+    return;
+}
+#----------------------------------------------------------------------------------------
+sub _buildMockSub{
+    my $self = shift;
+    my ($MockedSelf, $MethodName, $Method) = @_;
+    return sub {
+            $MockedSelf->{'__MethodCallCounter'}->increment( $MethodName );
+            my @MockedParameters = @_;
+            push( @{$MockedSelf->{$MethodName.'_MockifyParams'}}, \@MockedParameters );
+            my $WantAList = wantarray ? 1 : 0;
+            return _callInjectedMethod($Method, \@MockedParameters, $WantAList, $MethodName);
+        };
+}
+#----------------------------------------------------------------------------------------
+sub _addStaticMock {
     my $self = shift;
     my ( $MethodName, $Method) = @_;
 
     ExistsMethod( $self->_mockedModulePath(), $MethodName );
     $self->_mockedSelf()->{'__MethodCallCounter'}->addMethod( $MethodName );
     if(not $self->{'MethodStore'}{$MethodName}){
-        $self->{'MethodStore'}{$MethodName} //= $Method;
-        $self->_mockedSelf()->mock($MethodName, sub {
-            $self->_mockedSelf()->{'__MethodCallCounter'}->increment( $MethodName );
-            my $MockedSelf = shift;
-            my @MockedParameters = @_;
-            $self->_storeParameters( $MethodName, $MockedSelf, \@MockedParameters );
-            return $self->{'MethodStore'}{$MethodName}->call(@MockedParameters);
-        });
+        $self->{'MethodStore'}{$MethodName} = $Method;
+        my $MockedSelf = $self->_mockedSelf();
+         my $MockedMethodBody = $self->_buildMockSub($MockedSelf, $MethodName, $Method);
+         if(!($MethodName =~ qr/::/sm)){
+             $self->_overrideInternalFunction($MethodName, $MockedMethodBody);
+         }else{
+             $self->_overrideExternalFunction($MethodName, $MockedMethodBody);
+         }
     }
     return $self->{'MethodStore'}{$MethodName};
 }
 #----------------------------------------------------------------------------------------
-=pod
-
-=head2 addMockWithReturnValue I<(deprecated)>
-
-Does the same as C<addMock>, but here you can handover a B<value> which will be returned if you call the mocked method.
-
-  $MockObjectBuilder->addMockWithReturnValue('myMethodName','the return value');
-
-=cut
-sub addMockWithReturnValue {
+sub _overrideInternalFunction {
     my $self = shift;
-    my ( $MethodName, $ReturnValue ) = @_;
-    if (warnings::enabled("deprecated")) {
-        warnings::warn('deprecated', "addMockWithReturnValue is deprecated, use mock('name')->when()->thenReturn('Value')");
-    }
-    if($ReturnValue){
-        $self->_addMockWithMethod($MethodName)->when()->thenReturn($ReturnValue);
-    }else {
-        $self->_addMockWithMethod($MethodName)->when()->thenReturnUndef();
-    }
+    my ($MethodName, $MockedMethodBody) = @_;
+
+    my $FullyQualifiedMethodName = sprintf('%s::%s', $self->_mockedModulePath(), $MethodName);
+    $self->{'override'}->replace($FullyQualifiedMethodName, $MockedMethodBody);
 
     return;
 }
 #----------------------------------------------------------------------------------------
-=pod
-
-=head2 addMockWithReturnValueAndParameterCheck I<(deprecated)>
-
-This method is an extension of B<addMockWithReturnValue>. Here you can also check the parameters which will be passed.
-
-You can check if they have a specific B<data type> or even check if they have a given B<value>.
-
-In the following example two strings will be expected, and the second one has to have the value "abcd".
-
-  my $aParameterTypes = [String(),String('abcd')];
-  $MockObjectBuilder->addMockWithReturnValueAndParameterCheck('myMethodName','the return value',$aParameterTypes);
-
-To define it in a nice way the signature you must use the L<< Test::Mockify::Matcher; >>.
-
-=cut
-sub addMockWithReturnValueAndParameterCheck {
+sub _overrideExternalFunction {
     my $self = shift;
-    my ( $MethodName, $ReturnValue, $aParameterTypes ) = @_;
-    if (warnings::enabled("deprecated")) {
-        warnings::warn('deprecated', "addMockWithReturnValue is deprecated, use mock('name')->when(String('abc'))->thenReturn('Value')");
-    }
-    if ( not IsArrayReference( $aParameterTypes ) ){
-        Error( 'ParameterTypesNotProvided', {
-            'Method' => $self->_mockedModulePath()."->$MethodName",
-            'ParameterList' => $aParameterTypes,
-        } );
-    }
-    $aParameterTypes = MigrateOldMatchers($aParameterTypes);
-
-    if($ReturnValue){
-        $self->_addMockWithMethod($MethodName)->when(@{$aParameterTypes})->thenReturn($ReturnValue);
-    }else {
-        $self->_addMockWithMethod($MethodName)->when(@{$aParameterTypes})->thenReturnUndef();
-    }
-
+    my ($FullyQualifiedMethodName, $MockedMethodBody) = @_;
+    $self->{'override'}->replace($FullyQualifiedMethodName, $MockedMethodBody);
     return;
 }
 #----------------------------------------------------------------------------------------
-sub _storeParameters {
+sub _addImportedMock {
     my $self = shift;
-    my ( $MethodName, $MockedSelf, $aMockedParameters ) = @_;
+    my ( $MethodName, $Method) = @_;
 
-    push( @{$MockedSelf->{$MethodName.'_MockifyParams'}}, $aMockedParameters );
+    ExistsMethod(
+        $self->{'IsImportedMockStore'}{$MethodName}->{'Path'},
+        $self->{'IsImportedMockStore'}{$MethodName}->{'MethodName'},
+        {'Mock Imported In' => $self->_mockedModulePath()}
+    );
 
-    return;
+    $self->_mockedSelf()->{'__MethodCallCounter'}->addMethod( $MethodName );
+    if(not $self->{'MethodStore'}{$MethodName}){
+        $self->{'MethodStore'}{$MethodName} = $Method;
+        my $MockedSelf = $self->_mockedSelf();
+        my $MockedMethodBody = $self->_buildMockSub($MockedSelf, $MethodName, $Method);
+        $self->{'override'}->replace(
+            sprintf ('%s::%s', $self->_mockedModulePath(), $self->{'IsImportedMockStore'}{$MethodName}->{'MethodName'}),
+            $MockedMethodBody
+        );
+    }
+    return $self->{'MethodStore'}{$MethodName};
 }
 
 #----------------------------------------------------------------------------------------
@@ -418,7 +393,7 @@ sub _testMockTypeUsage {
     my $PositionInCallerStack = 2;
     my $MethodMockType = (caller($PositionInCallerStack))[3]; # autodetect mock type (spy or mock)
     if($self->{'MethodMockType'}{$MethodName} && $self->{'MethodMockType'}{$MethodName} ne $MethodMockType){
-        die('It is not possible to mix spy and mock');
+        Error('It is not possible to mix spy and mock');
     }else{
         $self->{'MethodMockType'}{$MethodName} = $MethodMockType;
     }
@@ -438,6 +413,10 @@ it under the same terms as Perl itself.
 =head1 AUTHOR
 
 Christian Breitkreutz E<lt>christianbreitkreutz@gmx.deE<gt>
+
+=head1 ACKNOWLEDGEMENTS
+
+Thanks to Dustin Buckenmeyer E<lt>dustin.buckenmeyer@gmail.comE<gt> and L<ECS Tuning|https://www.ecstuning.com/> for giving Dustin the opportunity to pursue this idea and ultimately give it back to the community!
 
 =cut
 
