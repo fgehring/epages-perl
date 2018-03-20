@@ -1,7 +1,5 @@
 package Module::Build::Tiny;
-{
-  $Module::Build::Tiny::VERSION = '0.030';
-}
+$Module::Build::Tiny::VERSION = '0.039';
 use strict;
 use warnings;
 use Exporter 5.57 'import';
@@ -16,7 +14,7 @@ use File::Basename qw/basename dirname/;
 use File::Find ();
 use File::Path qw/mkpath rmtree/;
 use File::Spec::Functions qw/catfile catdir rel2abs abs2rel splitdir curdir/;
-use Getopt::Long qw/GetOptions/;
+use Getopt::Long 2.36 qw/GetOptionsFromArray/;
 use JSON::PP 2 qw/encode_json decode_json/;
 
 sub write_file {
@@ -50,9 +48,9 @@ sub process_xs {
         my ($source, $options) = @_;
 
         die "Can't build xs files under --pureperl-only\n" if $options->{'pureperl-only'};
-        my (undef, @dirnames) = splitdir(dirname($source));
-        my $file_base = basename($source, '.xs');
-        my $archdir = catdir(qw/blib arch auto/, @dirnames, $file_base);
+        my (undef, @parts) = splitdir(dirname($source));
+        push @parts, my $file_base = basename($source, '.xs');
+        my $archdir = catdir(qw/blib arch auto/, @parts);
         my $tempdir = 'temp';
 
         my $c_file = catfile($tempdir, "$file_base.c");
@@ -63,11 +61,14 @@ sub process_xs {
         my $version = $options->{meta}->version;
         require ExtUtils::CBuilder;
         my $builder = ExtUtils::CBuilder->new(config => $options->{config}->values_set);
-        my $ob_file = $builder->compile(source => $c_file, defines => { VERSION => qq/"$version"/, XS_VERSION => qq/"$version"/ }, include_dirs => [ curdir ]);
+        my $ob_file = $builder->compile(source => $c_file, defines => { VERSION => qq/"$version"/, XS_VERSION => qq/"$version"/ }, include_dirs => [ curdir, dirname($source) ]);
+
+        require DynaLoader;
+        my $mod2fname = defined &DynaLoader::mod2fname ? \&DynaLoader::mod2fname : sub { return $_[0][-1] };
 
         mkpath($archdir, $options->{verbose}, oct '755') unless -d $archdir;
-        my $lib_file = catfile($archdir, "$file_base." . $options->{config}->get('dlext'));
-        return $builder->link(objects => $ob_file, lib_file => $lib_file, module_name => join '::', @dirnames, $file_base);
+        my $lib_file = catfile($archdir, $mod2fname->(\@parts) . '.' . $options->{config}->get('dlext'));
+        return $builder->link(objects => $ob_file, lib_file => $lib_file, module_name => join '::', @parts);
 }
 
 sub find {
@@ -80,7 +81,10 @@ sub find {
 my %actions = (
         build => sub {
                 my %opt = @_;
-                system $^X, $_ and die "$_ returned $?\n" for find(qr/\.PL$/, 'lib');
+                for my $pl_file (find(qr/\.PL$/, 'lib')) {
+                       (my $pm = $pl_file) =~ s/\.PL$//;
+                        system $^X, $pl_file, $pm and die "$pl_file returned $?\n";
+                }
                 my %modules = map { $_ => catfile('blib', $_) } find(qr/\.p(?:m|od)$/, 'lib');
                 my %scripts = map { $_ => catfile('blib', $_) } find(qr//, 'script');
                 my %shared  = map { $_ => catfile(qw/blib lib auto share dist/, $opt{meta}->name, abs2rel($_, 'share')) } find(qr//, 'share');
@@ -100,7 +104,13 @@ my %actions = (
                 my %opt = @_;
                 die "Must run `./Build build` first\n" if not -d 'blib';
                 require TAP::Harness::Env;
-                my $tester = TAP::Harness::Env->create({ verbosity => $opt{verbose}, lib => [ map { rel2abs(catdir(qw/blib/, $_)) } qw/arch lib/ ], color => -t STDOUT });
+                my %test_args = (
+                        (verbosity => $opt{verbose}) x!! exists $opt{verbose},
+                        (jobs => $opt{jobs}) x!! exists $opt{jobs},
+                        (color => 1) x !!-t STDOUT,
+                        lib => [ map { rel2abs(catdir(qw/blib/, $_)) } qw/arch lib/ ],
+                );
+                my $tester = TAP::Harness::Env->create(\%test_args);
                 $tester->runtests(sort +find(qr/\.t$/, 't'))->has_errors and exit 1;
         },
         install => sub {
@@ -121,8 +131,9 @@ my %actions = (
 sub Build {
         my $action = @ARGV && $ARGV[0] =~ /\A\w+\z/ ? shift @ARGV : 'build';
         die "No such action '$action'\n" if not $actions{$action};
-        unshift @ARGV, @{ decode_json(read_file('_build_params')) };
-        GetOptions(\my %opt, qw/install_base=s install_path=s% installdirs=s destdir=s prefix=s config=s% uninst:1 verbose:1 dry_run:1 pureperl-only:1 create_packlist=i/);
+        my($env, $bargv) = @{ decode_json(read_file('_build_params')) };
+        my %opt;
+        GetOptionsFromArray($_, \%opt, qw/install_base=s install_path=s% installdirs=s destdir=s prefix=s config=s% uninst:1 verbose:1 dry_run:1 pureperl-only:1 create_packlist=i jobs=i/) for ($env, $bargv, \@ARGV);
         $_ = detildefy($_) for grep { defined } @opt{qw/install_base destdir prefix/}, values %{ $opt{install_path} };
         @opt{ 'config', 'meta' } = (ExtUtils::Config->new($opt{config}), get_meta());
         $actions{$action}->(%opt, install_paths => ExtUtils::InstallPaths->new(%opt, dist_name => $opt{meta}->name));
@@ -135,7 +146,7 @@ sub Build_PL {
         write_file('Build', "#!perl\n$dir\nuse Module::Build::Tiny;\nBuild();\n");
         make_executable('Build');
         my @env = defined $ENV{PERL_MB_OPT} ? split_like_shell($ENV{PERL_MB_OPT}) : ();
-        write_file('_build_params', encode_json([ @env, @ARGV ]));
+        write_file('_build_params', encode_json([ \@env, \@ARGV ]));
         $meta->save(@$_) for ['MYMETA.json'], [ 'MYMETA.yml' => { version => 1.4 } ];
 }
 
@@ -150,13 +161,15 @@ __END__
 
 =pod
 
+=encoding UTF-8
+
 =head1 NAME
 
 Module::Build::Tiny - A tiny replacement for Module::Build
 
 =head1 VERSION
 
-version 0.030
+version 0.039
 
 =head1 SYNOPSIS
 
@@ -266,7 +279,7 @@ Module::Build has an extremely permissive way of argument handling, Module::Buil
 
 =item * .modulebuildrc
 
-Module::Build::Tiny does not support .modulebuildrc files. In particular, this means that versions of local::lib older than 1.006008 may break. Upgrading it resolves this issue.
+Module::Build::Tiny does not support .modulebuildrc files. In particular, this means that versions of local::lib older than 1.006008 may break with C<ERROR: Can't create /usr/local/somepath>. If the output of C<perl -Mlocal::lib> contains C<MODULEBUILDRC> but not C<PERL_MB_OPT >, you will need to upgrade it to resolve this issue.
 
 =back
 
