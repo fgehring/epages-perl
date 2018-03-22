@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Test::Mockify::Sut 3"
-.TH Test::Mockify::Sut 3 "2018-03-19" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Test::Mockify::Sut 3 "2018-03-21" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -142,7 +142,7 @@ Test::Mockify::Sut \- injection options for your System under test (Sut) based o
 \&  my $MockifySut = Test::Mockify::Sut\->new(\*(AqPackage::I::Like::To::Test\*(Aq, []);
 \&  $MockifySut\->mockImported(\*(AqPackage::Name\*(Aq, \*(AqImportedFunctionName\*(Aq)\->when(String())\->thenReturn(\*(AqHello\*(Aq);
 \&  $MockifySut\->mockStatic(\*(AqFully::Qualified::FunctionName\*(Aq)\->when(String())\->thenReturn(\*(AqHello\*(Aq);
-\&  $MockifySut\->overrideConstructor(\*(AqPackage::Name\*(Aq, $Object);#  hint: build this object also with Mockify
+\&  $MockifySut\->mockConstructor(\*(AqPackage::Name\*(Aq, $Object);#  hint: build this object also with Mockify
 \&  my $PackageILikeToTest = $MockifySut\->getMockObject();
 \&
 \&  $PackageILikeToTest\->do_something();# all injections are used here
@@ -200,7 +200,7 @@ In the Test it can be mocked
 \&  1;
 .Ve
 .PP
-It can be mixed with normal \f(CW\*(C`spy\*(C'\fR and \f(CW\*(C`mock\*(C'\fR
+It can be mixed with normal \f(CW\*(C`spy\*(C'\fR
 .SS "spyImported"
 .IX Subsection "spyImported"
 \&\f(CW\*(C`spyImported\*(C'\fR provides the possibility to spy imported functions inside the mock.
@@ -238,7 +238,7 @@ In the Test it can be mocked
 \&  1;
 .Ve
 .PP
-It can be mixed with normal \f(CW\*(C`spy\*(C'\fR and \f(CW\*(C`mock\*(C'\fR
+It can be mixed with normal \f(CW\*(C`spy\*(C'\fR
 .SS "mockStatic"
 .IX Subsection "mockStatic"
 Sometimes it is not possible to inject the dependencies from the outside.
@@ -279,7 +279,7 @@ In the Test it can be mocked like:
 \&  is(Magic::Tools::Rabbit(\*(Aqblack\*(Aq), \*(AqsomeValue\*(Aq); # The orignal method in in place again
 .Ve
 .PP
-It can be mixed with normal \f(CW\*(C`spy\*(C'\fR and \f(CW\*(C`mock\*(C'\fR
+It can be mixed with normal \f(CW\*(C`spy\*(C'\fR
 .PP
 \s-1ACKNOWLEDGEMENTS\s0 Thanks to \f(CW@dbucky\fR for this amazing idea
 .IX Subsection "ACKNOWLEDGEMENTS Thanks to @dbucky for this amazing idea"
@@ -319,7 +319,7 @@ In the Test it can be mocked
 \&  1;
 .Ve
 .PP
-It can be mixed with normal \f(CW\*(C`spy\*(C'\fR and \f(CW\*(C`mock\*(C'\fR. For more options see, \f(CW\*(C`mockStatic\*(C'\fR
+It can be mixed with normal \f(CW\*(C`spy\*(C'\fR. For more options see, \f(CW\*(C`mockStatic\*(C'\fR
 .SS "mockConstructor"
 .IX Subsection "mockConstructor"
 Sometimes it is not possible to inject the dependencies from the outside. This method gives you the posibility to override the constructor of a package where your Sut depends on.
@@ -360,7 +360,7 @@ In the Test it can be mocked like:
 \&  }
 .Ve
 .PP
-It can be mixed with normal \f(CW\*(C`spy\*(C'\fR and \f(CW\*(C`mock\*(C'\fR
+It can be mixed with normal \f(CW\*(C`spy\*(C'\fR.
 .SS "getVerificationObject"
 .IX Subsection "getVerificationObject"
 Provides the actual mock object, which you can use for verification.

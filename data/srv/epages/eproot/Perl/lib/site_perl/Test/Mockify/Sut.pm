@@ -14,7 +14,7 @@ Test::Mockify::Sut - injection options for your System under test (Sut) based on
   my $MockifySut = Test::Mockify::Sut->new('Package::I::Like::To::Test', []);
   $MockifySut->mockImported('Package::Name', 'ImportedFunctionName')->when(String())->thenReturn('Hello');
   $MockifySut->mockStatic('Fully::Qualified::FunctionName')->when(String())->thenReturn('Hello');
-  $MockifySut->overrideConstructor('Package::Name', $Object);#  hint: build this object also with Mockify
+  $MockifySut->mockConstructor('Package::Name', $Object);#  hint: build this object also with Mockify
   my $PackageILikeToTest = $MockifySut->getMockObject();
 
   $PackageILikeToTest->do_something();# all injections are used here
@@ -102,7 +102,7 @@ In the Test it can be mocked
   1;
 
 
-It can be mixed with normal C<spy> and C<mock>
+It can be mixed with normal C<spy>
 
 =cut
 sub mockImported {
@@ -156,7 +156,7 @@ In the Test it can be mocked
   is(GetCallCount($Magician, 'Rabbit'), 1);
   1;
 
-It can be mixed with normal C<spy> and C<mock>
+It can be mixed with normal C<spy>
 
 =cut
 sub spyImported {
@@ -215,7 +215,7 @@ In the Test it can be mocked like:
   is(Magic::Tools::Rabbit('black'), 'someValue'); # The orignal method in in place again
 
 
-It can be mixed with normal C<spy> and C<mock>
+It can be mixed with normal C<spy>
 
 =head4 ACKNOWLEDGEMENTS
 Thanks to @dbucky for this amazing idea
@@ -271,7 +271,7 @@ In the Test it can be mocked
 
   1;
 
-It can be mixed with normal C<spy> and C<mock>. For more options see, C<mockStatic>
+It can be mixed with normal C<spy>. For more options see, C<mockStatic>
 
 =cut
 sub spyStatic {
@@ -328,7 +328,7 @@ In the Test it can be mocked like:
       return $Mockify->getMockObject();
   }
 
-It can be mixed with normal C<spy> and C<mock>
+It can be mixed with normal C<spy>.
 
 =cut
 sub mockConstructor {

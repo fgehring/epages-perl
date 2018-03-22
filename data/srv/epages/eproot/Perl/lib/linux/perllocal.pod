@@ -9150,7 +9150,7 @@ C<LINKTYPE: dynamic>
 
 =back
 
-=head2 Mon Jan 15 14:44:14 2018: C<Module> L<Test::Mockify|Test::Mockify>
+=head2 Thu Mar 22 14:44:14 2018: C<Module> L<Test::Mockify|Test::Mockify>
 
 =over 4
 
@@ -9164,7 +9164,7 @@ C<EXE_FILES: >
 
 =item *
 
-C<VERSION: 1.2>
+C<VERSION: 2.1>
 
 =item *
 

@@ -80,7 +80,7 @@
    "provides" : {
       "Test::Mockify" : {
          "file" : "lib/Test/Mockify.pm",
-         "version" : "2"
+         "version" : "2.1"
       },
       "Test::Mockify::Matcher" : {
          "file" : "lib/Test/Mockify/Matcher.pm"
@@ -125,7 +125,7 @@
          "web" : "https://github.com/ChristianBreitkreutz/Mockify"
       }
    },
-   "version" : "2",
+   "version" : "2.1",
    "x_authority" : "cpan:CHRBR",
    "x_contributors" : [
       "Alexander Sandau <a.sandau@epages.com>",
