@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Test::Mockify::Method 3"
-.TH Test::Mockify::Method 3 "2018-03-19" "perl v5.12.3" "User Contributed Perl Documentation"
+.TH Test::Mockify::Method 3 "2018-03-21" "perl v5.12.3" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -140,7 +140,7 @@ Test::Mockify::Method is used to provide the chained mock setup
 .SS "when"
 .IX Subsection "when"
 \&\f(CW\*(C`when\*(C'\fR have to be called with a Test::Mockify::Matcher to specify the expected parameter list (signature).
-This will create for every signature a Parameter Object which will stored and also returned. So it is possible to create multiple signatures for one Method.
+This will create for every signature a Test::Mockify::Parameter Object which will stored and also returned. So it is possible to create multiple signatures for one Method.
 It is not possible to mix \f(CW\*(C`when\*(C'\fR with \f(CW\*(C`whenAny\*(C'\fR.
 .PP
 .Vb 2
@@ -149,7 +149,7 @@ It is not possible to mix \f(CW\*(C`when\*(C'\fR with \f(CW\*(C`whenAny\*(C'\fR.
 .Ve
 .SS "whenAny"
 .IX Subsection "whenAny"
-\&\f(CW\*(C`whenAny\*(C'\fR have to be called without parameter, when called it will accept any type and amount of parameter. It will return a Parameter Object.
+\&\f(CW\*(C`whenAny\*(C'\fR have to be called without parameter, when called it will accept any type and amount of parameter. It will return a Test::Mockify::Parameter Object.
 It is not possible to mix \f(CW\*(C`whenAny\*(C'\fR with \f(CW\*(C`when\*(C'\fR.
 .PP
 .Vb 1
